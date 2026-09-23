@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSV・テキストの文字化け直しツール（Shift_JIS・EUC-JP→UTF-8変換、BOM追加/削除）| てのひらツール</title>
+<meta name="description" content="Shift_JIS（CP932）やEUC-JPで文字化けしたCSV・テキストファイルを、ブラウザだけでUTF-8に変換。ExcelでCSVが文字化けする原因のBOM追加・削除にも対応。ファイルはサーバーに送信されません。Fix mojibake: convert Shift_JIS/EUC-JP CSV files to UTF-8 and add or remove a BOM, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/csv-fix/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:820px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+label{font-size:.92rem}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileInfo{font-size:.92rem;color:var(--muted);margin-top:10px}
+#encStatus{font-weight:600}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.scroll{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+.checkline{display:flex;align-items:center;gap:8px;margin-top:10px}
+.checkline input{width:auto;min-height:auto}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">CSV・テキストの文字化け直しツール</h1>
+    <p class="sub" data-i="sub">Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換します。ExcelでCSVが文字化けするときのBOM追加・削除にも対応。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">CSV・TSV・テキストファイル対応。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/*" style="display:none">
+  <p id="fileInfo" aria-live="polite"></p>
+</section>
+
+<section class="card" id="encCard" style="display:none">
+  <h2 data-i="detectedLabel">検出した文字コード</h2>
+  <p id="encStatus" aria-live="polite"></p>
+  <div class="row">
+    <label for="encSelect" data-i="encSelectLabel">文字コードを指定（自動判定がおかしい場合に変更）</label>
+    <select id="encSelect">
+      <option value="utf-8">UTF-8</option>
+      <option value="shift_jis">Shift_JIS（CP932）</option>
+      <option value="euc-jp">EUC-JP</option>
+      <option value="iso-2022-jp">ISO-2022-JP（JIS）</option>
+    </select>
+  </div>
+  <div class="note" id="warnBox"></div>
+</section>
+
+<section class="card" id="previewCard" style="display:none">
+  <h2 data-i="previewHeading">プレビュー</h2>
+  <div id="previewBox"></div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="outputHeading">ダウンロード設定</h2>
+  <div class="checkline">
+    <input type="checkbox" id="bomCheck" checked>
+    <label for="bomCheck" data-i="bomLabel">BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）</label>
+  </div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">UTF-8に変換してダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にCSVやテキストファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>文字コードが自動で判定され、プレビューに表示されます。文字化けしたままなら「文字コードを指定」で候補（Shift_JIS・EUC-JP・ISO-2022-JPなど）を試してください。</li>
+      <li>正しく表示されたら、必要に応じてBOMのON/OFFを選び、「UTF-8に変換してダウンロード」を押します。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで変換されます。通信も発生しません。</p>
+    <h3>Q. ExcelでCSVを開くと文字化けするのはなぜですか？</h3>
+    <p>A. Windows版Excelは、BOMの無いUTF-8のCSVをShift_JISだと誤認識して開いてしまうことがあります。「BOM付きUTF-8で保存する」を選んでダウンロードし直すと解消することが多いです。</p>
+    <h3>Q. Shift_JISとCP932の違いは何ですか？</h3>
+    <p>A. Windowsで作られる日本語CSVのほとんどは、Shift_JISを拡張したCP932です。このツールはブラウザ標準のShift_JISデコーダーを使うため、CP932の文字（丸数字など）も扱えます。</p>
+    <h3>Q. 変換後のファイルが正しいか確認するには？</h3>
+    <p>A. ダウンロード前のプレビュー表で文字が正しく表示されているか確認してください。一部が「�」になっている場合は、上部の文字コードを別の候補に切り替えてみてください。</p>
+    <h3>Q. 大きなファイルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。非常に大きなファイルでは表示が遅くなる場合があります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop a CSV or text file into the box above, or click it to choose a file.</li>
+      <li>The character encoding is auto-detected and shown in the preview. If it still looks garbled, try another option (Shift_JIS, EUC-JP, ISO-2022-JP, …) from the encoding selector.</li>
+      <li>Once it looks right, choose whether to include a BOM and click "Convert to UTF-8 and download".</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is converted inside your browser, on this device, with no network requests.</p>
+    <h3>Q. Why does my CSV look garbled in Excel?</h3>
+    <p>A. Excel on Windows sometimes misreads a UTF-8 CSV without a BOM as Shift_JIS. Re-downloading with "Save as UTF-8 with BOM" checked usually fixes this.</p>
+    <h3>Q. What's the difference between Shift_JIS and CP932?</h3>
+    <p>A. Most Japanese CSV files created on Windows actually use CP932, an extended version of Shift_JIS. This tool uses the browser's built-in Shift_JIS decoder, which also covers CP932 characters (like circled numbers).</p>
+    <h3>Q. How do I know the conversion worked correctly?</h3>
+    <p>A. Check the preview table before downloading. If some characters show as "�", try a different encoding from the selector above.</p>
+    <h3>Q. Can it handle large files?</h3>
+    <p>A. Everything runs in browser memory, so it's built for files up to tens of megabytes. Very large files may make the page slower.</p>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで変換されます。通信も発生しません。"}},
+    {"@type":"Question","name":"ExcelでCSVを開くと文字化けするのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"Windows版Excelは、BOMの無いUTF-8のCSVをShift_JISだと誤認識することがあります。BOM付きUTF-8で保存し直すと解消することが多いです。"}},
+    {"@type":"Question","name":"Shift_JISとCP932の違いは何ですか？","acceptedAnswer":{"@type":"Answer","text":"Windowsで作られる日本語CSVのほとんどは、Shift_JISを拡張したCP932です。このツールはブラウザ標準のデコーダーでCP932の文字も扱えます。"}},
+    {"@type":"Question","name":"大きなファイルは扱えますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+var ENC_LABEL={
+  "utf-8":{ja:"UTF-8",en:"UTF-8"},
+  "shift_jis":{ja:"Shift_JIS（CP932）",en:"Shift_JIS (CP932)"},
+  "euc-jp":{ja:"EUC-JP",en:"EUC-JP"},
+  "iso-2022-jp":{ja:"ISO-2022-JP（JIS）",en:"ISO-2022-JP (JIS)"}
+};
+
+var T={
+ ja:{title:"CSV・テキストの文字化け直しツール",
+  sub:"Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換します。ExcelでCSVが文字化けするときのBOM追加・削除にも対応。ファイルはどこにも送信されません。",
+  dropzoneText:"ここにファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"CSV・TSV・テキストファイル対応。ファイルは選択した端末の中だけで処理されます。",
+  fileLabel:"ファイル",detectedLabel:"検出した文字コード",
+  encSelectLabel:"文字コードを指定（自動判定がおかしい場合に変更）",
+  warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。上の文字コードを別の候補に変更してみてください。",
+  warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。手動で文字コードを選び直してください。",
+  previewHeading:"プレビュー",previewNote:"先頭の一部のみ表示しています（ダウンロードするファイルは全体を変換します）。",
+  noData:"プレビューできる内容がありません。",
+  outputHeading:"ダウンロード設定",
+  bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
+  downloadBtn:"UTF-8に変換してダウンロード",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"CSV / Text Mojibake Fixer",
+  sub:"Convert Shift_JIS or EUC-JP files that show garbled text (mojibake) to UTF-8. Also add or remove a BOM to fix CSV files that look garbled in Excel. Nothing is uploaded.",
+  dropzoneText:"Drag and drop a file here, or click to choose one",
+  dropzoneHint:"Works with CSV, TSV and plain text files. Everything happens on this device.",
+  fileLabel:"File",detectedLabel:"Detected encoding",
+  encSelectLabel:"Choose encoding manually (if auto-detect looks wrong)",
+  warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding above.",
+  warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose the correct encoding manually.",
+  previewHeading:"Preview",previewNote:"Showing only the first part of the file (the downloaded file will contain the whole thing).",
+  noData:"Nothing to preview yet.",
+  outputHeading:"Download options",
+  bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
+  downloadBtn:"Convert to UTF-8 and download",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={bytes:null,name:"",text:""};
+
+function tryDecode(bytes,label){
+  try{ return new TextDecoder(label,{fatal:true}).decode(bytes); }
+  catch(e){ return null; }
+}
+function hasBOM(bytes){ return bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF; }
+
+function detectEncoding(bytes){
+  var order=["utf-8","shift_jis","euc-jp","iso-2022-jp"];
+  for(var i=0;i<order.length;i++){
+    var t=tryDecode(bytes,order[i]);
+    if(t!==null) return {enc:order[i], ok:true};
+  }
+  return {enc:"utf-8", ok:false};
+}
+
+function parseLine(line){
+  var cells=[],cur="",inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(inQ){
+      if(c==='"'){ if(line.charAt(i+1)==='"'){cur+='"';i++;} else inQ=false; }
+      else cur+=c;
+    } else {
+      if(c==='"') inQ=true;
+      else if(c===','){cells.push(cur);cur="";}
+      else cur+=c;
+    }
+  }
+  cells.push(cur);
+  return cells;
+}
+function escTrunc(s){ s=String(s); var t = s.length>60 ? s.slice(0,60)+"…" : s; return esc(t); }
+
+function renderPreview(text){
+  var box=$("previewBox");
+  var lines=text.split(/\r\n|\r|\n/);
+  while(lines.length && lines[lines.length-1]==="") lines.pop();
+  if(!lines.length){ box.innerHTML="<p class='hint'>"+esc(T[lang].noData)+"</p>"; return; }
+  var maxRows=15,maxCols=12;
+  var rows=lines.slice(0,maxRows).map(parseLine);
+  var widest=0; for(var i=0;i<rows.length;i++) widest=Math.max(widest,rows[i].length);
+  var colCount=Math.min(maxCols,widest);
+  var h="<div class='scroll'><table><thead><tr>";
+  for(var c=0;c<colCount;c++) h+="<th>"+(rows[0][c]!==undefined?escTrunc(rows[0][c]):"")+"</th>";
+  h+="</tr></thead><tbody>";
+  for(var r=1;r<rows.length;r++){
+    h+="<tr>";
+    for(var c2=0;c2<colCount;c2++) h+="<td>"+(rows[r][c2]!==undefined?escTrunc(rows[r][c2]):"")+"</td>";
+    h+="</tr>";
+  }
+  h+="</tbody></table></div>";
+  if(lines.length>maxRows||widest>maxCols) h+="<p class='hint'>"+esc(T[lang].previewNote)+"</p>";
+  box.innerHTML=h;
+}
+
+function applyEncoding(enc, forcedFallback){
+  var bytes=state.bytes;
+  var t=tryDecode(bytes,enc);
+  var warn="";
+  if(t===null){
+    t=new TextDecoder(enc,{fatal:false}).decode(bytes);
+    warn=T[lang].warnReplace;
+  } else if(forcedFallback){
+    warn=T[lang].warnUnknown;
+  }
+  state.text=t;
+  var label=ENC_LABEL[enc]?ENC_LABEL[enc][lang]:enc;
+  $("encStatus").innerHTML="<span id='encStatusLabel'>"+esc(label)+"</span>";
+  $("warnBox").textContent=warn;
+  renderPreview(t);
+  $("previewCard").style.display="";
+  $("outCard").style.display="";
+  $("downloadBtn").disabled=false;
+}
+
+function handleFile(file){
+  state.name=file.name;
+  file.arrayBuffer().then(function(buf){
+    state.bytes=new Uint8Array(buf);
+    var d=detectEncoding(state.bytes);
+    $("encSelect").value=d.enc;
+    $("encCard").style.display="";
+    var bom=hasBOM(state.bytes);
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(bom?", BOM":"")+")";
+    applyEncoding(d.enc, !d.ok);
+  }).catch(function(){
+    $("fileInfo").textContent=T[lang].warnUnknown;
+  });
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) handleFile(f);
+});
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){
+  var f=e.target.files && e.target.files[0];
+  if(f) handleFile(f);
+});
+$("encSelect").addEventListener("change",function(){
+  if(state.bytes) applyEncoding(this.value,false);
+});
+$("downloadBtn").addEventListener("click",function(){
+  if(!state.text) return;
+  var addBom=$("bomCheck").checked;
+  var encoded=new TextEncoder().encode(state.text);
+  var out;
+  if(addBom){
+    out=new Uint8Array(encoded.length+3);
+    out[0]=0xEF;out[1]=0xBB;out[2]=0xBF;
+    out.set(encoded,3);
+  } else out=encoded;
+  var blob=new Blob([out],{type:"text/csv;charset=utf-8"});
+  var m=/\.[^.]+$/.exec(state.name);
+  var ext=m?m[0]:".csv";
+  var base=state.name.replace(/\.[^.]+$/,"")||"file";
+  var outName=base+"_utf8"+ext;
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download=outName;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  if(state.bytes){
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
+    applyEncoding($("encSelect").value,false);
+  }
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+</body>
+</html>
