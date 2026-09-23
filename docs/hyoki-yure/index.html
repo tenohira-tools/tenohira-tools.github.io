@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>表記ゆれ・全角半角チェッカー（サーバ/サーバーなどを検出して統一）| てのひらツール</title>
+<meta name="description" content="「サーバ／サーバー」「お問い合わせ／お問合せ」などの表記ゆれ、全角英数字・半角カタカナ・全角スペースの混在を、ブラウザ内だけで検出して一括統一。文章はサーバーに送信されません。Detect and unify inconsistent Japanese word forms and full/half-width characters, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/hyoki-yure/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:820px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+textarea{width:100%;font:15px/1.6 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical}
+#ta{min-height:180px}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
+button.small{font:inherit;font-size:.85rem;font-weight:600;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:6px;padding:4px 10px;cursor:pointer}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.statList,.yureList{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.statList li,.yureList li{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.statList .lbl,.yureList .lbl{font-weight:600}
+.count{color:var(--muted);font-size:.9rem;margin-left:6px;font-weight:400}
+.zero{opacity:.55}
+.terms{display:flex;flex-wrap:wrap;gap:6px}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.toast{margin-top:8px;padding:6px 12px;background:var(--accent-bg);color:var(--accent);border-radius:8px;font-size:.88rem;display:none}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">表記ゆれ・全角半角チェッカー</h1>
+    <p class="sub" data-i="sub">「サーバ／サーバー」のような表記ゆれや、全角英数字・半角カタカナ・全角スペースの混在をブラウザ内だけで検出し、ボタン一つで統一できます。文章はどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="inputHeading">文章を貼り付け</h2>
+  <textarea id="ta" data-i-ph="taPlaceholder" placeholder="ここに文章を貼り付けてください。例：このサーバーの設定はサーバ管理者にお問い合わせください。"></textarea>
+  <div class="row">
+    <button type="button" class="primary" id="checkBtn" data-i="checkBtn">チェックする</button>
+    <button type="button" class="secondary" id="sampleBtn" data-i="sampleBtn">サンプル文章を試す</button>
+  </div>
+  <p class="hint" data-i="inputHint">日本語の文章専用です（表記ゆれ辞書は日本語の単語を対象にしています）。</p>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">全角・半角の混在</h2>
+  <ul class="statList" id="statList"></ul>
+  <p class="toast" id="statToast"></p>
+</section>
+
+<section class="card" id="yureCard" style="display:none">
+  <h2 data-i="yureHeading">表記ゆれの検出</h2>
+  <p class="hint" id="yureEmpty" data-i="yureEmpty">表記ゆれは見つかりませんでした。</p>
+  <ul class="yureList" id="yureList"></ul>
+  <div class="note" data-i="yureCaution">検出は単語の出現をそのまま数える簡易チェックです。文脈によって誤検出することがあるため、統一する前に前後を確認してください。</div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="outputHeading">結果をコピー・保存</h2>
+  <div class="row">
+    <button type="button" class="secondary" id="copyBtn" data-i="copyBtn">結果をコピー</button>
+    <button type="button" class="secondary" id="downloadBtn" data-i="downloadBtn">テキストとしてダウンロード</button>
+  </div>
+  <p class="toast" id="outToast"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠に文章を貼り付け、「チェックする」を押します。</li>
+      <li>「全角・半角の混在」で全角英数字・半角カタカナ・全角スペースの件数が表示されます。「半角に統一」などのボタンを押すと、その場で本文が書き換わります。</li>
+      <li>「表記ゆれの検出」で、あらかじめ用意した約40組の辞書（サーバ／サーバー、お問い合わせ／お問合せ　など）に一致した箇所が一覧表示されます。統一したい表記のボタンを押すと、その表記に揃えられます。</li>
+      <li>仕上がったら「結果をコピー」または「テキストとしてダウンロード」で取り出します。</li>
+    </ol>
+    <h3>Q. 文章はサーバーに送信されますか？</h3>
+    <p>A. いいえ。すべてこのページを開いているブラウザの中だけで処理され、通信は発生しません。</p>
+    <h3>Q. どんな表記ゆれを検出できますか？</h3>
+    <p>A. 「サーバ／サーバー」のようなカタカナ語の長音ゆれ、「お問い合わせ／お問合せ」のような送り仮名のゆれ、「または／又は」のようなかな・漢字のゆれなど、約40組をプリセットしています。すべてを検出できるわけではありません。</p>
+    <h3>Q. 検出結果は完全に正確ですか？</h3>
+    <p>A. いいえ。文字列としての一致を数える簡易的な仕組みのため、文脈によっては意図しない箇所を検出することがあります（例えば固有名詞の一部など）。統一ボタンを押す前に、どの表記が何件あるかを確認してください。</p>
+    <h3>Q. 半角カタカナはなぜ全角に統一したほうがよいのですか？</h3>
+    <p>A. 半角カタカナ（ｱｲｳｴｵなど）はフォントによって読みづらく、システムによっては正しく表示・処理されないことがあるため、Web上の文章では全角カタカナに統一するのが一般的です。</p>
+    <h3>Q. 辞書に無い表記ゆれを追加できますか？</h3>
+    <p>A. 現在のバージョンでは辞書の編集機能はありません。追加してほしい表記ゆれがあれば、下のフィードバックからお知らせください。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Paste your Japanese text into the box above and click "Check".</li>
+      <li>"Full/half-width mix" shows counts of full-width alphanumerics, half-width katakana and full-width spaces. Click a "Unify" button to rewrite the text instantly.</li>
+      <li>"Inconsistent word forms" lists matches against a built-in dictionary of about 40 common Japanese variant groups (e.g. サーバ／サーバー, お問い合わせ／お問合せ). Click a button to unify to that form.</li>
+      <li>When you're done, use "Copy result" or "Download as text" to get the cleaned text.</li>
+    </ol>
+    <h3>Q. Is my text sent to a server?</h3>
+    <p>A. No. Everything runs inside your browser on this page — no network requests are made.</p>
+    <h3>Q. What kinds of inconsistencies does it find?</h3>
+    <p>A. About 40 preset groups: long-vowel variants in loanwords (サーバ／サーバー), okurigana variants in business phrases (お問い合わせ／お問合せ), and kana/kanji variants (または／又は), among others. It does not catch every possible inconsistency.</p>
+    <h3>Q. How accurate is the detection?</h3>
+    <p>A. It's a simple substring match, so it can occasionally flag text inside unrelated words or proper nouns. Review the counts before clicking a "unify" button.</p>
+    <h3>Q. Why unify half-width katakana to full-width?</h3>
+    <p>A. Half-width katakana can render poorly in some fonts and cause issues in some systems, so full-width katakana is the common convention for Japanese web text.</p>
+    <h3>Q. Can I add my own word pairs to the dictionary?</h3>
+    <p>A. Not yet — this version doesn't support editing the dictionary. Let us know what you'd like added via the feedback link below.</p>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">入力した文章はサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"文章はサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。すべてこのページを開いているブラウザの中だけで処理され、通信は発生しません。"}},
+    {"@type":"Question","name":"どんな表記ゆれを検出できますか？","acceptedAnswer":{"@type":"Answer","text":"サーバ／サーバーのようなカタカナ語の長音ゆれ、お問い合わせ／お問合せのような送り仮名のゆれ、または／又はのようなかな・漢字のゆれなど、約40組をプリセットしています。"}},
+    {"@type":"Question","name":"検出結果は完全に正確ですか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。文字列としての一致を数える簡易的な仕組みのため、文脈によっては意図しない箇所を検出することがあります。統一する前に件数を確認してください。"}},
+    {"@type":"Question","name":"半角カタカナはなぜ全角に統一したほうがよいのですか？","acceptedAnswer":{"@type":"Answer","text":"半角カタカナはフォントによって読みづらく、システムによっては正しく表示・処理されないことがあるため、全角カタカナに統一するのが一般的です。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
+
+var T={
+ ja:{title:"表記ゆれ・全角半角チェッカー",
+  sub:"「サーバ／サーバー」のような表記ゆれや、全角英数字・半角カタカナ・全角スペースの混在をブラウザ内だけで検出し、ボタン一つで統一できます。文章はどこにも送信されません。",
+  inputHeading:"文章を貼り付け",
+  taPlaceholder:"ここに文章を貼り付けてください。例：このサーバーの設定はサーバ管理者にお問い合わせください。",
+  checkBtn:"チェックする",sampleBtn:"サンプル文章を試す",
+  inputHint:"日本語の文章専用です（表記ゆれ辞書は日本語の単語を対象にしています）。",
+  statsHeading:"全角・半角の混在",
+  yureHeading:"表記ゆれの検出",
+  yureEmpty:"表記ゆれは見つかりませんでした。",
+  yureCaution:"検出は単語の出現をそのまま数える簡易チェックです。文脈によって誤検出することがあるため、統一する前に前後を確認してください。",
+  outputHeading:"結果をコピー・保存",
+  copyBtn:"結果をコピー",downloadBtn:"テキストとしてダウンロード",
+  feedback:"フィードバックはこちら",privacy:"入力した文章はサーバーに送信されません。すべてこのブラウザの中で処理されます。",
+  unify:"に統一",copied:"コピーしました。",noMatch:"（0件）",updated:"更新しました。",
+  statZenkakuAlnum:"全角英数字",statHankakuKana:"半角カタカナ・記号",statZenkakuSpace:"全角スペース",
+  toHalf:"半角に統一",toFullKana:"全角カタカナに統一",toHalfSpace:"半角スペースに統一"},
+ en:{title:"Notation &amp; Full/Half-width Checker",
+  sub:"Detect inconsistent Japanese word forms (like サーバ／サーバー) and mixed full/half-width characters, then unify them with one click. Nothing leaves your browser.",
+  inputHeading:"Paste your text",
+  taPlaceholder:"Paste Japanese text here.",
+  checkBtn:"Check",sampleBtn:"Try a sample",
+  inputHint:"This tool works on Japanese text — the dictionary is Japanese-specific.",
+  statsHeading:"Full/half-width mix",
+  yureHeading:"Inconsistent word forms",
+  yureEmpty:"No inconsistencies found.",
+  yureCaution:"Detection is a simple substring count, so context can cause false positives. Review the counts before unifying.",
+  outputHeading:"Copy or save the result",
+  copyBtn:"Copy result",downloadBtn:"Download as text",
+  feedback:"Feedback",privacy:"Your text is never uploaded — everything is processed inside this browser.",
+  unify:"Unify to this",copied:"Copied.",noMatch:"(0)",updated:"Updated.",
+  statZenkakuAlnum:"Full-width alphanumerics",statHankakuKana:"Half-width katakana/punct.",statZenkakuSpace:"Full-width spaces",
+  toHalf:"Unify to half-width",toFullKana:"Unify to full-width katakana",toHalfSpace:"Unify to half-width space"}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var SAMPLE="このサーバーの設定は、サーバ管理者にお問い合わせください。ユーザーの追加はシステム担当者が行います。なお、お問合せの際はユーザ名を添えてください。全角ＡＢＣや全角１２３、半角ｶﾀｶﾅも含まれています。　（全角スペースも1つ）";
+
+var YURE_GROUPS=[
+["サーバー","サーバ"],["ユーザー","ユーザ"],["コンピューター","コンピュータ"],["プリンター","プリンタ"],
+["ブラウザー","ブラウザ"],["フォルダー","フォルダ"],["メモリー","メモリ"],["ドライバー","ドライバ"],
+["コネクター","コネクタ"],["エディター","エディタ"],["モニター","モニタ"],["カウンター","カウンタ"],
+["フィルター","フィルタ"],["ポインター","ポインタ"],["スキャナー","スキャナ"],
+["できる","出来る"],["わかる","分かる"],["おこなう","行う"],["いただく","頂く"],
+["したがって","従って"],["または","又は"],["および","及び"],["ただし","但し"],["さらに","更に"],["すべて","全て"],
+["いろいろ","色々"],["ほとんど","殆ど"],["ぜひ","是非"],["たとえば","例えば"],["なお","尚"],["いろんな","色んな"],
+["お問い合わせ","お問合せ","お問合わせ"],["申し込み","申込み","申込"],["打ち合わせ","打合せ","打合わせ"],
+["引き渡し","引渡し"],["取り扱い","取扱い","取扱"],["受け付け","受付け","受付"],["組み合わせ","組合せ"]
+];
+
+var HALF_KANA_MAP={
+"ｶﾞ":"ガ","ｷﾞ":"ギ","ｸﾞ":"グ","ｹﾞ":"ゲ","ｺﾞ":"ゴ","ｻﾞ":"ザ","ｼﾞ":"ジ","ｽﾞ":"ズ","ｾﾞ":"ゼ","ｿﾞ":"ゾ",
+"ﾀﾞ":"ダ","ﾁﾞ":"ヂ","ﾂﾞ":"ヅ","ﾃﾞ":"デ","ﾄﾞ":"ド","ﾊﾞ":"バ","ﾋﾞ":"ビ","ﾌﾞ":"ブ","ﾍﾞ":"ベ","ﾎﾞ":"ボ",
+"ﾊﾟ":"パ","ﾋﾟ":"ピ","ﾌﾟ":"プ","ﾍﾟ":"ペ","ﾎﾟ":"ポ","ｳﾞ":"ヴ",
+"ｱ":"ア","ｲ":"イ","ｳ":"ウ","ｴ":"エ","ｵ":"オ","ｶ":"カ","ｷ":"キ","ｸ":"ク","ｹ":"ケ","ｺ":"コ",
+"ｻ":"サ","ｼ":"シ","ｽ":"ス","ｾ":"セ","ｿ":"ソ","ﾀ":"タ","ﾁ":"チ","ﾂ":"ツ","ﾃ":"テ","ﾄ":"ト",
+"ﾅ":"ナ","ﾆ":"ニ","ﾇ":"ヌ","ﾈ":"ネ","ﾉ":"ノ","ﾊ":"ハ","ﾋ":"ヒ","ﾌ":"フ","ﾍ":"ヘ","ﾎ":"ホ",
+"ﾏ":"マ","ﾐ":"ミ","ﾑ":"ム","ﾒ":"メ","ﾓ":"モ","ﾔ":"ヤ","ﾕ":"ユ","ﾖ":"ヨ",
+"ﾗ":"ラ","ﾘ":"リ","ﾙ":"ル","ﾚ":"レ","ﾛ":"ロ","ﾜ":"ワ","ｦ":"ヲ","ﾝ":"ン",
+"ｧ":"ァ","ｨ":"ィ","ｩ":"ゥ","ｪ":"ェ","ｫ":"ォ","ｯ":"ッ","ｬ":"ャ","ｭ":"ュ","ｮ":"ョ",
+"｡":"。","､":"、","･":"・","ｰ":"ー","｢":"「","｣":"」","ﾞ":"゛","ﾟ":"゜"
+};
+var HALF_KANA_KEYS=Object.keys(HALF_KANA_MAP).sort(function(a,b){return b.length-a.length});
+var HALF_KANA_RE=new RegExp(HALF_KANA_KEYS.map(escapeRegExp).join("|"),"g");
+
+function countMatches(text,term){
+  var re=new RegExp(escapeRegExp(term),"g");
+  var m=text.match(re);
+  return m?m.length:0;
+}
+function maskTerm(text,term){
+  return text.split(term).join(" ".repeat(term.length));
+}
+function unifyGroup(text,terms,target){
+  var sorted=terms.slice().sort(function(a,b){return b.length-a.length});
+  var re=new RegExp(sorted.map(escapeRegExp).join("|"),"g");
+  return text.replace(re,target);
+}
+
+function toHalfAlnum(text){
+  return text.replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0xFEE0)});
+}
+function toFullKana(text){
+  return text.replace(HALF_KANA_RE,function(m){return HALF_KANA_MAP[m]});
+}
+function toHalfSpace(text){
+  return text.split("　").join(" ");
+}
+
+function flash(id,msg){
+  var el=$(id);
+  el.textContent=msg;
+  el.style.display="block";
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){el.style.display="none"},2200);
+}
+
+function analyze(){
+  var text=$("ta").value;
+  $("statsCard").style.display="";
+  $("yureCard").style.display="";
+  $("outCard").style.display="";
+
+  var zenAlnum=(text.match(/[Ａ-Ｚａ-ｚ０-９]/g)||[]).length;
+  var halfKana=(text.match(/[｡-ﾟ]/g)||[]).length;
+  var zenSpace=(text.split("　").length-1);
+
+  var statList=$("statList");
+  statList.innerHTML="";
+  var stats=[
+    {key:"statZenkakuAlnum",n:zenAlnum,fn:toHalfAlnum,btn:"toHalf"},
+    {key:"statHankakuKana",n:halfKana,fn:toFullKana,btn:"toFullKana"},
+    {key:"statZenkakuSpace",n:zenSpace,fn:toHalfSpace,btn:"toHalfSpace"}
+  ];
+  stats.forEach(function(s){
+    var li=document.createElement("li");
+    if(s.n===0) li.className="zero";
+    var lbl=document.createElement("span");
+    lbl.className="lbl";
+    lbl.textContent=T[lang][s.key]+" ";
+    var cnt=document.createElement("span");
+    cnt.className="count";
+    cnt.textContent=s.n+(lang==="ja"?"件":"");
+    lbl.appendChild(cnt);
+    li.appendChild(lbl);
+    if(s.n>0){
+      var b=document.createElement("button");
+      b.type="button";b.className="small";
+      b.textContent=T[lang][s.btn];
+      b.addEventListener("click",function(){
+        $("ta").value=s.fn($("ta").value);
+        analyze();
+        flash("statToast",T[lang].updated);
+      });
+      li.appendChild(b);
+    }
+    statList.appendChild(li);
+  });
+
+  var yureList=$("yureList");
+  yureList.innerHTML="";
+  var foundAny=false;
+  YURE_GROUPS.forEach(function(terms){
+    var working=text;
+    var counts=[];
+    terms.slice().sort(function(a,b){return b.length-a.length}).forEach(function(term){
+      var n=countMatches(working,term);
+      counts.push({term:term,n:n});
+      if(n>0) working=maskTerm(working,term);
+    });
+    var present=counts.filter(function(c){return c.n>0});
+    if(present.length<2) return;
+    foundAny=true;
+    var li=document.createElement("li");
+    var head=document.createElement("div");
+    head.className="terms";
+    counts.forEach(function(c){
+      var span=document.createElement("span");
+      span.className="lbl";
+      span.textContent=c.term+"（"+c.n+(lang==="ja"?"件":"")+"）";
+      head.appendChild(span);
+    });
+    li.appendChild(head);
+    var actions=document.createElement("div");
+    actions.className="terms";
+    present.forEach(function(c){
+      var b=document.createElement("button");
+      b.type="button";b.className="small";
+      b.textContent=c.term+T[lang].unify;
+      b.addEventListener("click",function(){
+        $("ta").value=unifyGroup($("ta").value,terms,c.term);
+        analyze();
+        flash("statToast",T[lang].updated);
+      });
+      actions.appendChild(b);
+    });
+    li.appendChild(actions);
+    yureList.appendChild(li);
+  });
+  $("yureEmpty").style.display=foundAny?"none":"block";
+}
+
+$("checkBtn").addEventListener("click",analyze);
+$("sampleBtn").addEventListener("click",function(){
+  $("ta").value=SAMPLE;
+  analyze();
+});
+$("copyBtn").addEventListener("click",function(){
+  var text=$("ta").value;
+  function done(){flash("outToast",T[lang].copied)}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(function(){
+      var ta=$("ta");ta.focus();ta.select();
+      try{document.execCommand("copy")}catch(e){}
+      done();
+    });
+  } else {
+    var ta=$("ta");ta.focus();ta.select();
+    try{document.execCommand("copy")}catch(e){}
+    done();
+  }
+});
+$("downloadBtn").addEventListener("click",function(){
+  var blob=new Blob([$("ta").value],{type:"text/plain;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download="hyoki-yure.txt";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
+  var phs=document.querySelectorAll("[data-i-ph]");
+  for(var j=0;j<phs.length;j++){var pk=phs[j].getAttribute("data-i-ph");if(T[lang][pk]!==undefined)phs[j].setAttribute("placeholder",T[lang][pk])}
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  if($("statsCard").style.display!=="none" && $("ta").value) analyze();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+</body>
+</html>
