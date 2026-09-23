@@ -1,0 +1,23 @@
+{
+  "experiments": [
+    {
+      "slug": "wareki",
+      "title": "和暦・西暦・年齢 変換と早見表",
+      "url": "https://tenohira-tools.github.io/wareki/",
+      "published": "2026-09-23",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog",
+      "metrics": [
+        {
+          "date": "2026-09-23",
+          "note": "公開当日。計測値なし（Pages未有効化・トラフィックAPIへのアクセス手段なし）"
+        }
+      ],
+      "notes": "西暦⇄和暦、満年齢・数え年・干支、入学卒業年（履歴書向け）、年齢早見表。30日判定は2026-10-23頃。"
+    }
+  ]
+}
