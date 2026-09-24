@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>正規表現テスター（日本語で自動解説）| てのひらツール</title>
+<meta name="description" content="正規表現とテスト文字列を入力すると、マッチ箇所をハイライトしながら「数字1文字をちょうど3回繰り返す」のように自然な日本語の文章でパターンの意味を自動解説。郵便番号・電話番号・メールアドレスなどのサンプルつき。ブラウザ内だけで動作し、入力はサーバーに送信されません。A regex tester that explains what your pattern means in a natural Japanese sentence, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/regex-ja/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--err:#a03535;--err-bg:#fbe9e9;--mark:#ffe28a}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--err:#f0a3a3;--err-bg:#3a1f1f;--mark:#7a5e12}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+label.fieldLabel{display:block;font-weight:600;font-size:.92rem;margin:0 0 6px}
+input[type=text],textarea{width:100%;font:15px/1.6 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical}
+input[type=text]{white-space:pre}
+#ta{min-height:140px}
+#replaceOut{min-height:100px}
+.slashwrap{display:flex;align-items:center;gap:6px}
+.slash{color:var(--muted);font-weight:700}
+.flags{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.flags label{display:flex;align-items:center;gap:5px;font-size:.9rem;color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
+button.small{font:inherit;font-size:.85rem;font-weight:600;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:6px;padding:4px 10px;cursor:pointer}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips button{font:inherit;font-size:.85rem;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:20px;padding:6px 14px;cursor:pointer}
+.explain{white-space:normal;line-height:1.9;font-size:.98rem}
+.errBox{padding:10px 14px;background:var(--err-bg);color:var(--err);border-radius:8px;font-size:.92rem}
+.matchView{white-space:pre-wrap;word-break:break-all;font:14px/1.8 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg)}
+.matchView mark{background:var(--mark);color:#1c1c1a;border-radius:3px;padding:0 1px}
+.matchList{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.matchList li{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:.9rem}
+.matchList .idx{color:var(--muted);margin-right:6px}
+.matchList code{background:var(--accent-bg);color:var(--accent);border-radius:4px;padding:1px 5px}
+.matchList .grp{color:var(--muted);margin-top:4px;font-size:.86rem}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.toast{margin-top:8px;padding:6px 12px;background:var(--accent-bg);color:var(--accent);border-radius:8px;font-size:.88rem;display:none}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">正規表現テスター（日本語で自動解説）</h1>
+    <p class="sub" data-i="sub">正規表現とテスト文字列を入れると、マッチ箇所をその場でハイライトしながら、パターンの意味を「数字を3回繰り返す」のような自然な日本語の文章で自動解説します。入力はどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="patternHeading">正規表現パターン</h2>
+  <div class="slashwrap">
+    <span class="slash">/</span>
+    <input type="text" id="pattern" data-i-ph="patternPh" placeholder="例：^\d{3}-\d{4}$" autocomplete="off" spellcheck="false">
+    <span class="slash">/</span>
+    <span id="flagsSuffix" class="slash"></span>
+  </div>
+  <div class="flags">
+    <label><input type="checkbox" id="flag-i"> <span data-i="flagI">i（大文字・小文字を区別しない）</span></label>
+    <label><input type="checkbox" id="flag-m"> <span data-i="flagM">m（^ $ が行ごとに機能する）</span></label>
+    <label><input type="checkbox" id="flag-s"> <span data-i="flagS">s（. が改行にもマッチする）</span></label>
+    <label><input type="checkbox" id="flag-u"> <span data-i="flagU">u（Unicodeモード）</span></label>
+  </div>
+  <p class="hint" data-i="patternHint">よく使うパターン例：</p>
+  <div class="chips" id="presetChips"></div>
+</section>
+
+<section class="card">
+  <h2 data-i="testHeading">テスト文字列</h2>
+  <textarea id="ta" data-i-ph="taPh" placeholder="ここに照合したい文字列を貼り付けてください。"></textarea>
+  <div class="row">
+    <button type="button" class="primary" id="runBtn" data-i="runBtn">解析する</button>
+  </div>
+  <p class="hint" data-i="runHint">パターン・テスト文字列・フラグのいずれかを変更すると自動で再解析します。</p>
+</section>
+
+<section class="card" id="errCard" style="display:none">
+  <div class="errBox" id="errBox"></div>
+</section>
+
+<section class="card" id="explainCard" style="display:none">
+  <h2 data-i="explainHeading">日本語での解説</h2>
+  <p class="explain" id="explainText"></p>
+  <p class="hint" id="flagsText"></p>
+  <div class="note" data-i="explainCaution">自動生成の解説です。特殊な構文（Unicodeプロパティ指定など一部）は簡略化・省略されることがあります。最終的な動作は必ずテスト文字列で確認してください。</div>
+</section>
+
+<section class="card" id="matchCard" style="display:none">
+  <h2 data-i="matchViewHeading">マッチ箇所のハイライト</h2>
+  <div class="matchView" id="matchView"></div>
+  <p class="hint" id="matchCount"></p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="listHeading">マッチの一覧</h2>
+  <ul class="matchList" id="matchList"></ul>
+  <div class="row">
+    <button type="button" class="secondary" id="copyListBtn" data-i="copyListBtn">一覧をコピー</button>
+    <button type="button" class="secondary" id="downloadListBtn" data-i="downloadListBtn">一覧をダウンロード</button>
+  </div>
+  <p class="toast" id="listToast"></p>
+</section>
+
+<section class="card" id="replaceCard" style="display:none">
+  <h2 data-i="replaceHeading">置換プレビュー</h2>
+  <label class="fieldLabel" for="replacePattern" data-i="replaceLabel">置換後の文字列（$1・$2… でグループを参照、$&lt;name&gt; で名前付きグループを参照）</label>
+  <input type="text" id="replacePattern" data-i-ph="replacePh" placeholder="例：$1年$2月$3日" autocomplete="off" spellcheck="false">
+  <label class="fieldLabel" for="replaceOut" style="margin-top:12px" data-i="replaceOutLabel">置換結果</label>
+  <textarea id="replaceOut" readonly></textarea>
+  <div class="row">
+    <button type="button" class="secondary" id="copyReplaceBtn" data-i="copyReplaceBtn">結果をコピー</button>
+  </div>
+  <p class="toast" id="replaceToast"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>「正規表現パターン」に調べたいパターンを入力します。必要なら i・m・s・u のフラグにチェックを入れます。</li>
+      <li>「テスト文字列」に照合したい文章を貼り付けます。「解析する」を押す（または内容を変更する）と自動で結果が更新されます。</li>
+      <li>「日本語での解説」に、パターンの意味を文章で自動生成した説明が表示されます。「マッチ箇所のハイライト」でテスト文字列中の一致箇所を確認できます。</li>
+      <li>「マッチの一覧」で各マッチの位置・キャプチャグループの中身を確認し、コピーやダウンロードができます。</li>
+      <li>「置換プレビュー」に置換後の文字列（$1 などでグループを参照可）を入れると、置換結果をその場で確認できます。</li>
+    </ol>
+    <h3>Q. 入力した正規表現やテスト文字列はサーバーに送信されますか？</h3>
+    <p>A. いいえ。すべてこのページを開いているブラウザの中だけで処理され、通信は発生しません。</p>
+    <h3>Q. 日本語の解説はどこまで正確ですか？</h3>
+    <p>A. 文字クラス・量指定子（*, +, ?, {n,m}）・グループ・先読み/後読み・アンカーなど、よく使う構文には対応していますが、簡易的な文章生成のため、複雑なUnicodeプロパティ指定などの一部構文は省略・簡略化されることがあります。最終的な動作は必ずハイライトやマッチ一覧で確認してください。</p>
+    <h3>Q. どの正規表現の方言（フレーバー）に対応していますか？</h3>
+    <p>A. このツールはブラウザのJavaScriptの正規表現エンジンをそのまま使っています。PythonやPHP（PCRE）など他言語の正規表現とは、細かい構文が一部異なる場合があります。</p>
+    <h3>Q. マッチが0件のときはどうすればよいですか？</h3>
+    <p>A. パターンとテスト文字列の両方を確認してください。フラグ（特に大文字・小文字を区別するかどうかの i）や、日本語の全角・半角の違いが原因であることもよくあります。</p>
+    <h3>Q. グループの中身が一覧に出ないのですが？</h3>
+    <p>A. パターンに () によるキャプチャグループが含まれていない場合、グループの中身は表示されません。(?:...) は中身を取り出さない非キャプチャグループです。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Type the pattern you want to test into "Regex pattern". Check the i / m / s / u flags if needed.</li>
+      <li>Paste the text you want to match against into "Test string". Results update automatically as you type, or click "Run".</li>
+      <li>"Explanation" shows an auto-generated Japanese sentence describing what the pattern means. "Match highlighting" shows where it matches inside your test string.</li>
+      <li>"Match list" shows each match's position and captured groups, with copy/download options.</li>
+      <li>"Replacement preview" lets you type a replacement string (using $1 etc. to reference groups) and see the result live.</li>
+    </ol>
+    <h3>Q. Is my pattern or test string sent to a server?</h3>
+    <p>A. No. Everything runs inside your browser on this page — no network requests are made.</p>
+    <h3>Q. Why is the explanation written in Japanese?</h3>
+    <p>A. The natural-language explanation is generated in Japanese by design — it's the main feature that sets this tool apart. The rest of the interface can be switched to English.</p>
+    <h3>Q. How accurate is the explanation?</h3>
+    <p>A. It covers common syntax (character classes, quantifiers, groups, lookaround, anchors), but as a simple generator it may simplify or skip some advanced constructs (like Unicode property escapes). Always double-check with the highlighting and match list.</p>
+    <h3>Q. Which regex flavor does this use?</h3>
+    <p>A. Your browser's native JavaScript regex engine. Details can differ slightly from other languages such as Python or PHP (PCRE).</p>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">入力したパターン・文字列はサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"入力した正規表現やテスト文字列はサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。すべてこのページを開いているブラウザの中だけで処理され、通信は発生しません。"}},
+    {"@type":"Question","name":"日本語の解説はどこまで正確ですか？","acceptedAnswer":{"@type":"Answer","text":"文字クラス・量指定子・グループ・先読み/後読み・アンカーなど、よく使う構文には対応していますが、簡易的な文章生成のため一部の複雑な構文は省略・簡略化されることがあります。最終的な動作は必ずハイライトやマッチ一覧で確認してください。"}},
+    {"@type":"Question","name":"どの正規表現の方言（フレーバー）に対応していますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザのJavaScriptの正規表現エンジンをそのまま使っています。PythonやPHP（PCRE）など他言語とは細かい構文が異なる場合があります。"}},
+    {"@type":"Question","name":"マッチが0件のときはどうすればよいですか？","acceptedAnswer":{"@type":"Answer","text":"パターンとテスト文字列を確認してください。大文字・小文字を区別するかどうかのiフラグや、全角・半角の違いが原因であることがよくあります。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ===== 正規表現パターンの日本語解説パーサー ===== */
+function parsePattern(src){
+  var pos=0,len=src.length,groupIndex=0;
+  function peek(){return src[pos]}
+  function eof(){return pos>=len}
+  function parseAlternation(){
+    var branches=[parseSequence()];
+    while(!eof() && peek()==="|"){pos++;branches.push(parseSequence())}
+    return {type:"alt",branches:branches};
+  }
+  function parseSequence(){
+    var atoms=[];
+    while(!eof() && peek()!=="|" && peek()!==")"){atoms.push(parseQuantified())}
+    return {type:"seq",atoms:atoms};
+  }
+  function parseQuantified(){
+    var atom=parseAtom();
+    if(eof())return atom;
+    var c=peek(),quant=null;
+    if(c==="*"){quant={min:0,max:null};pos++}
+    else if(c==="+"){quant={min:1,max:null};pos++}
+    else if(c==="?"){quant={min:0,max:1};pos++}
+    else if(c==="{"){
+      var m=/^\{(\d+)(,(\d*)?)?\}/.exec(src.slice(pos));
+      if(m){
+        var min=parseInt(m[1],10);
+        var max=m[2]===undefined?min:((m[3]===""||m[3]===undefined)?null:parseInt(m[3],10));
+        quant={min:min,max:max};pos+=m[0].length;
+      }
+    }
+    if(quant){
+      var lazy=false;
+      if(!eof() && peek()==="?"){lazy=true;pos++}
+      return {type:"quant",atom:atom,min:quant.min,max:quant.max,lazy:lazy};
+    }
+    return atom;
+  }
+  function parseAtom(){
+    var c=peek();
+    if(c==="^"){pos++;return {type:"anchorStart"}}
+    if(c==="$"){pos++;return {type:"anchorEnd"}}
+    if(c==="."){pos++;return {type:"any"}}
+    if(c==="(")return parseGroup();
+    if(c==="[")return parseClass();
+    if(c==="\\")return parseEscape();
+    pos++;
+    return {type:"literal",ch:c};
+  }
+  function parseGroup(){
+    pos++;
+    var kind="capture",name=null;
+    if(peek()==="?"){
+      var c2=src[pos+1];
+      if(c2===":"){kind="noncapture";pos+=2}
+      else if(c2==="="){kind="lookahead";pos+=2}
+      else if(c2==="!"){kind="neglookahead";pos+=2}
+      else if(c2==="<"){
+        var c3=src[pos+2];
+        if(c3==="="){kind="lookbehind";pos+=3}
+        else if(c3==="!"){kind="neglookbehind";pos+=3}
+        else{
+          var mEnd=src.indexOf(">",pos+2);
+          if(mEnd!==-1){name=src.slice(pos+2,mEnd);kind="named";pos=mEnd+1}
+          else{kind="capture";pos+=1}
+        }
+      } else {kind="noncapture";pos+=1}
+    }
+    var myIndex=null;
+    if(kind==="capture"||kind==="named"){groupIndex++;myIndex=groupIndex}
+    var body=parseAlternation();
+    if(!eof() && peek()===")")pos++;
+    return {type:"group",kind:kind,name:name,index:myIndex,body:body};
+  }
+  function parseClass(){
+    pos++;
+    var neg=false;
+    if(peek()==="^"){neg=true;pos++}
+    var items=[];
+    while(!eof() && peek()!=="]"){
+      var start=readClassChar();
+      if(!eof() && peek()==="-" && src[pos+1]!=="]" && src[pos+1]!==undefined){
+        pos++;
+        var end=readClassChar();
+        items.push({type:"range",from:start,to:end});
+      } else {items.push(start)}
+    }
+    if(!eof() && peek()==="]")pos++;
+    return {type:"class",neg:neg,items:items};
+  }
+  function readClassChar(){
+    if(peek()==="\\"){pos++;var c=peek();pos++;return classEscapeToken(c)}
+    var c=peek();pos++;return {type:"char",ch:c};
+  }
+  function classEscapeToken(c){
+    if(c==="d")return {type:"digit"};
+    if(c==="D")return {type:"nondigit"};
+    if(c==="w")return {type:"word"};
+    if(c==="W")return {type:"nonword"};
+    if(c==="s")return {type:"space"};
+    if(c==="S")return {type:"nonspace"};
+    if(c==="n")return {type:"char",ch:"\n"};
+    if(c==="t")return {type:"char",ch:"\t"};
+    if(c==="r")return {type:"char",ch:"\r"};
+    return {type:"char",ch:c};
+  }
+  function parseEscape(){
+    pos++;
+    var c=peek();pos++;
+    if(c==="d")return {type:"digit"};
+    if(c==="D")return {type:"nondigit"};
+    if(c==="w")return {type:"word"};
+    if(c==="W")return {type:"nonword"};
+    if(c==="s")return {type:"space"};
+    if(c==="S")return {type:"nonspace"};
+    if(c==="b")return {type:"boundary"};
+    if(c==="B")return {type:"nonboundary"};
+    if(c==="n")return {type:"literal",ch:"\n"};
+    if(c==="t")return {type:"literal",ch:"\t"};
+    if(c==="r")return {type:"literal",ch:"\r"};
+    if(c>="1" && c<="9"){
+      var numStr=c;
+      while(!eof() && /\d/.test(peek())){numStr+=peek();pos++}
+      return {type:"backref",n:parseInt(numStr,10)};
+    }
+    if(c==="k" && peek()==="<"){
+      var mEnd=src.indexOf(">",pos);
+      var name=src.slice(pos+1,mEnd);
+      pos=mEnd+1;
+      return {type:"backrefName",name:name};
+    }
+    return {type:"literal",ch:c};
+  }
+  var ast=parseAlternation();
+  return {ast:ast,groupCount:groupIndex};
+}
+function quoteChar(ch){
+  if(ch==="\n")return "改行";
+  if(ch==="\t")return "タブ";
+  if(ch==="\r")return "復帰(CR)";
+  if(ch===" ")return "半角スペース";
+  return "「"+ch+"」";
+}
+function classItemText(item){
+  if(item.type==="range")return quoteChar(item.from.ch)+"〜"+quoteChar(item.to.ch);
+  if(item.type==="char")return quoteChar(item.ch);
+  if(item.type==="digit")return "数字";
+  if(item.type==="nondigit")return "数字以外";
+  if(item.type==="word")return "英数字・アンダースコア";
+  if(item.type==="nonword")return "英数字・アンダースコア以外";
+  if(item.type==="space")return "空白文字";
+  if(item.type==="nonspace")return "空白以外";
+  return "";
+}
+function describeAtom(node){
+  switch(node.type){
+    case "anchorStart":return "行の先頭";
+    case "anchorEnd":return "行の末尾";
+    case "any":return "任意の1文字（改行を除く）";
+    case "digit":return "数字1文字";
+    case "nondigit":return "数字以外の1文字";
+    case "word":return "英数字またはアンダースコア1文字";
+    case "nonword":return "英数字・アンダースコア以外の1文字";
+    case "space":return "空白文字1文字";
+    case "nonspace":return "空白以外の1文字";
+    case "boundary":return "単語の境界";
+    case "nonboundary":return "単語の境界でない位置";
+    case "literal":return quoteChar(node.ch)+"という文字";
+    case "literalRun":return "「"+node.text+"」という文字列";
+    case "backref":return "グループ"+node.n+"と同じ文字列（後方参照）";
+    case "backrefName":return "名前付きグループ「"+node.name+"」と同じ文字列（後方参照）";
+    case "class":{
+      var body=node.items.map(classItemText).join("、");
+      if(node.items.length===0)body="（空）";
+      return (node.neg?"次のいずれにも一致しない1文字：":"次のいずれか1文字：")+body;
+    }
+    case "quant":{
+      var inner=describeAtom(node.atom);
+      var times;
+      if(node.min===0 && node.max===null)times="0回以上（あってもなくてもよい、何度でも）";
+      else if(node.min===1 && node.max===null)times="1回以上";
+      else if(node.min===0 && node.max===1)times="0回または1回（あってもなくてもよい）";
+      else if(node.max===node.min)times="ちょうど"+node.min+"回";
+      else if(node.max===null)times=node.min+"回以上";
+      else times=node.min+"〜"+node.max+"回";
+      if(node.lazy)times+="（最短一致）";
+      return inner+"を"+times+"繰り返す";
+    }
+    case "group":{
+      var innerText=describeSeqOrAlt(node.body);
+      if(node.kind==="capture")return "（グループ"+node.index+"："+innerText+"）";
+      if(node.kind==="named")return "（名前付きグループ「"+node.name+"」："+innerText+"）";
+      if(node.kind==="noncapture")return "（"+innerText+"）";
+      if(node.kind==="lookahead")return "【この直後に "+innerText+" が続く（そこは消費しない）】";
+      if(node.kind==="neglookahead")return "【この直後に "+innerText+" が続かない】";
+      if(node.kind==="lookbehind")return "【この直前に "+innerText+" がある（そこは消費しない）】";
+      if(node.kind==="neglookbehind")return "【この直前に "+innerText+" がない】";
+      return innerText;
+    }
+    default:return "";
+  }
+}
+function mergeLiteralRuns(atoms){
+  var out=[],buf="";
+  function flush(){
+    if(buf.length===0)return;
+    if(buf.length===1)out.push({type:"literal",ch:buf});
+    else out.push({type:"literalRun",text:buf});
+    buf="";
+  }
+  for(var i=0;i<atoms.length;i++){
+    var a=atoms[i];
+    if(a.type==="literal" && a.ch.length===1 && !/[\n\t\r]/.test(a.ch)){buf+=a.ch}
+    else{flush();out.push(a)}
+  }
+  flush();
+  return out;
+}
+function describeSeq(seq){
+  if(seq.atoms.length===0)return "（空の並び）";
+  var merged=mergeLiteralRuns(seq.atoms);
+  return merged.map(describeAtom).join("、続けて");
+}
+function describeSeqOrAlt(node){
+  if(node.type==="seq")return describeSeq(node);
+  if(node.type==="alt"){
+    if(node.branches.length===1)return describeSeqOrAlt(node.branches[0]);
+    return node.branches.map(function(b){return describeSeqOrAlt(b)}).join(" ／または／ ");
+  }
+  return "";
+}
+function explainPattern(src){
+  var parsed=parsePattern(src);
+  return {text:describeSeqOrAlt(parsed.ast),groupCount:parsed.groupCount};
+}
+/* ===== ここまでパーサー ===== */
+
+var T={
+ ja:{title:"正規表現テスター（日本語で自動解説）",
+  sub:"正規表現とテスト文字列を入れると、マッチ箇所をその場でハイライトしながら、パターンの意味を「数字を3回繰り返す」のような自然な日本語の文章で自動解説します。入力はどこにも送信されません。",
+  patternHeading:"正規表現パターン",patternPh:"例：^\\d{3}-\\d{4}$",
+  flagI:"i（大文字・小文字を区別しない）",flagM:"m（^ $ が行ごとに機能する）",flagS:"s（. が改行にもマッチする）",flagU:"u（Unicodeモード）",
+  patternHint:"よく使うパターン例：",
+  testHeading:"テスト文字列",taPh:"ここに照合したい文字列を貼り付けてください。",
+  runBtn:"解析する",runHint:"パターン・テスト文字列・フラグのいずれかを変更すると自動で再解析します。",
+  explainHeading:"日本語での解説",
+  explainCaution:"自動生成の解説です。特殊な構文（Unicodeプロパティ指定など一部）は簡略化・省略されることがあります。最終的な動作は必ずテスト文字列で確認してください。",
+  matchViewHeading:"マッチ箇所のハイライト",
+  listHeading:"マッチの一覧",copyListBtn:"一覧をコピー",downloadListBtn:"一覧をダウンロード",
+  replaceHeading:"置換プレビュー",replaceLabel:"置換後の文字列（$1・$2… でグループを参照、$<name> で名前付きグループを参照）",
+  replacePh:"例：$1年$2月$3日",replaceOutLabel:"置換結果",copyReplaceBtn:"結果をコピー",
+  feedback:"フィードバックはこちら",privacy:"入力したパターン・文字列はサーバーに送信されません。すべてこのブラウザの中で処理されます。",
+  copied:"コピーしました。",noPattern:"パターンを入力してください。",invalidPattern:"正規表現として正しくありません：",
+  matchCount0:"マッチ：0件",matchCountN:"マッチ：{n}件",
+  groupsNone:"（キャプチャグループなし）",groupLabel:"グループ",fullMatch:"全体一致",
+  flagsUsed:"使用中のフラグ：",flagsNone:"（フラグなし）",
+  presets:[
+    {label:"郵便番号（日本）",pattern:"^\\d{3}-\\d{4}$",flags:"m",sample:"100-0001\n1000001\n東京都千代田区"},
+    {label:"電話番号（日本）",pattern:"0\\d{1,4}-\\d{1,4}-\\d{4}",flags:"g",sample:"固定電話 03-1234-5678\n携帯 090-1234-5678\n市外局番なし 1234-5678"},
+    {label:"メールアドレス",pattern:"[\\w.+-]+@[\\w-]+\\.[A-Za-z]{2,}",flags:"g",sample:"連絡先: sample.user+test@example.co.jp まで"},
+    {label:"URL",pattern:"https?:\\/\\/[\\w!?\\/+\\-_~;.,*&@#$%()'[\\]]+",flags:"g",sample:"公式サイト https://tenohira-tools.github.io/ をご覧ください。"},
+    {label:"ひらがなのみ",pattern:"^[ぁ-んー]+$",flags:"",sample:"ひらがなだけのぶんしょう"},
+    {label:"カタカナのみ",pattern:"^[ァ-ンー]+$",flags:"",sample:"カタカナダケノブンショウ"},
+    {label:"半角英数字のみ",pattern:"^[A-Za-z0-9]+$",flags:"",sample:"Tenohira2026"},
+    {label:"日付（YYYY-MM-DD）",pattern:"(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})",flags:"g",sample:"公開日は2026-09-24、更新は2026-10-01です。"}
+  ]},
+ en:{title:"Regex Tester with Japanese Auto-Explanation",
+  sub:"Enter a pattern and a test string: matches are highlighted live, and the pattern's meaning is explained as a natural Japanese sentence (e.g. \"repeat a digit exactly 3 times\"). Nothing is sent anywhere.",
+  patternHeading:"Regex pattern",patternPh:"e.g. ^\\d{3}-\\d{4}$",
+  flagI:"i (case-insensitive)",flagM:"m (^ $ match line boundaries)",flagS:"s (. also matches newlines)",flagU:"u (Unicode mode)",
+  patternHint:"Common pattern examples:",
+  testHeading:"Test string",taPh:"Paste the text you want to test against here.",
+  runBtn:"Run",runHint:"Results update automatically whenever the pattern, test string, or flags change.",
+  explainHeading:"Explanation (written in Japanese)",
+  explainCaution:"This explanation is auto-generated. Some advanced syntax (like Unicode property escapes) may be simplified or omitted. Always double-check the actual behavior against your test string.",
+  matchViewHeading:"Match highlighting",
+  listHeading:"Match list",copyListBtn:"Copy list",downloadListBtn:"Download list",
+  replaceHeading:"Replacement preview",replaceLabel:"Replacement string (use $1, $2… for groups, $<name> for named groups)",
+  replacePh:"e.g. $1/$2/$3",replaceOutLabel:"Result",copyReplaceBtn:"Copy result",
+  feedback:"Feedback",privacy:"Your pattern and text are never uploaded — everything is processed inside this browser.",
+  copied:"Copied.",noPattern:"Enter a pattern.",invalidPattern:"Not a valid regular expression: ",
+  matchCount0:"Matches: 0",matchCountN:"Matches: {n}",
+  groupsNone:"(no capture groups)",groupLabel:"Group",fullMatch:"Full match",
+  flagsUsed:"Active flags: ",flagsNone:"(none)",
+  presets:[
+    {label:"Japanese postal code",pattern:"^\\d{3}-\\d{4}$",flags:"m",sample:"100-0001\n1000001\nChiyoda, Tokyo"},
+    {label:"Japanese phone number",pattern:"0\\d{1,4}-\\d{1,4}-\\d{4}",flags:"g",sample:"Landline 03-1234-5678\nMobile 090-1234-5678"},
+    {label:"Email address",pattern:"[\\w.+-]+@[\\w-]+\\.[A-Za-z]{2,}",flags:"g",sample:"Contact: sample.user+test@example.co.jp"},
+    {label:"URL",pattern:"https?:\\/\\/[\\w!?\\/+\\-_~;.,*&@#$%()'[\\]]+",flags:"g",sample:"Official site: https://tenohira-tools.github.io/"},
+    {label:"Hiragana only",pattern:"^[ぁ-んー]+$",flags:"",sample:"ひらがなだけのぶんしょう"},
+    {label:"Katakana only",pattern:"^[ァ-ンー]+$",flags:"",sample:"カタカナダケノブンショウ"},
+    {label:"Alphanumeric only",pattern:"^[A-Za-z0-9]+$",flags:"",sample:"Tenohira2026"},
+    {label:"Date (YYYY-MM-DD)",pattern:"(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})",flags:"g",sample:"Published 2026-09-24, updated 2026-10-01."}
+  ]}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+function currentFlags(){
+  var f="g";
+  if($("flag-i").checked)f+="i";
+  if($("flag-m").checked)f+="m";
+  if($("flag-s").checked)f+="s";
+  if($("flag-u").checked)f+="u";
+  return f;
+}
+
+function renderPresets(){
+  var wrap=$("presetChips");
+  wrap.innerHTML="";
+  T[lang].presets.forEach(function(p){
+    var b=document.createElement("button");
+    b.type="button";
+    b.textContent=p.label;
+    b.addEventListener("click",function(){
+      $("pattern").value=p.pattern;
+      $("flag-i").checked=p.flags.indexOf("i")!==-1;
+      $("flag-m").checked=p.flags.indexOf("m")!==-1;
+      $("flag-s").checked=p.flags.indexOf("s")!==-1;
+      $("flag-u").checked=p.flags.indexOf("u")!==-1;
+      $("ta").value=p.sample;
+      runAnalyze();
+    });
+    wrap.appendChild(b);
+  });
+}
+
+function flash(id,msg){
+  var el=$(id);
+  el.textContent=msg;
+  el.style.display="block";
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){el.style.display="none"},2200);
+}
+
+function flagsLabel(flagsStr){
+  var names={i:"i",m:"m",s:"s",u:"u"};
+  var used=[];
+  ["i","m","s","u"].forEach(function(f){if(flagsStr.indexOf(f)!==-1)used.push(names[f])});
+  return used.length?used.join(", "):T[lang].flagsNone;
+}
+
+var lastMatches=[];
+
+function runAnalyze(){
+  var patternStr=$("pattern").value;
+  var text=$("ta").value;
+  var flagsStr=currentFlags();
+  $("flagsSuffix").textContent=flagsStr.replace("g","")||"";
+
+  $("errCard").style.display="none";
+  $("explainCard").style.display="none";
+  $("matchCard").style.display="none";
+  $("listCard").style.display="none";
+  $("replaceCard").style.display="none";
+
+  if(!patternStr){
+    return;
+  }
+
+  var re;
+  try{
+    re=new RegExp(patternStr,flagsStr);
+  }catch(e){
+    $("errCard").style.display="";
+    $("errBox").textContent=T[lang].invalidPattern+e.message;
+    return;
+  }
+
+  var explanation;
+  try{
+    explanation=explainPattern(patternStr);
+  }catch(e){
+    explanation={text:"",groupCount:0};
+  }
+  $("explainCard").style.display="";
+  $("explainText").textContent=explanation.text||"";
+  $("flagsText").textContent=T[lang].flagsUsed+flagsLabel(flagsStr);
+
+  var matches=[];
+  var m;
+  var guard=0;
+  var scanRe=new RegExp(re.source,flagsStr.indexOf("g")===-1?flagsStr+"g":flagsStr);
+  while((m=scanRe.exec(text))!==null){
+    matches.push(m);
+    guard++;
+    if(m[0]===""){scanRe.lastIndex++}
+    if(guard>5000)break;
+  }
+  lastMatches=matches;
+
+  $("matchCard").style.display="";
+  var view=$("matchView");
+  if(matches.length===0){
+    view.textContent=text;
+  } else {
+    var html="",cursor=0;
+    matches.forEach(function(mm){
+      html+=esc(text.slice(cursor,mm.index));
+      html+="<mark>"+esc(mm[0])+"</mark>";
+      cursor=mm.index+mm[0].length;
+    });
+    html+=esc(text.slice(cursor));
+    view.innerHTML=html || esc(text);
+  }
+  $("matchCount").textContent=matches.length===0?T[lang].matchCount0:T[lang].matchCountN.replace("{n}",matches.length);
+
+  $("listCard").style.display="";
+  var listEl=$("matchList");
+  listEl.innerHTML="";
+  matches.slice(0,500).forEach(function(mm,i){
+    var li=document.createElement("li");
+    var head=document.createElement("div");
+    head.innerHTML=(i+1)+". <code>"+esc(mm[0])+"</code> <span class=\"idx\">(index "+mm.index+")</span>";
+    li.appendChild(head);
+    var groupKeys=Object.keys(mm.groups||{});
+    if(mm.length>1 || groupKeys.length>0){
+      var grp=document.createElement("div");
+      grp.className="grp";
+      var parts=[];
+      for(var g=1;g<mm.length;g++){
+        parts.push(T[lang].groupLabel+" "+g+": "+(mm[g]===undefined?"—":"「"+mm[g]+"」"));
+      }
+      groupKeys.forEach(function(k){
+        parts.push(T[lang].groupLabel+" \""+k+"\": "+(mm.groups[k]===undefined?"—":"「"+mm.groups[k]+"」"));
+      });
+      grp.textContent=parts.join(" / ");
+      li.appendChild(grp);
+    }
+    listEl.appendChild(li);
+  });
+  if(matches.length===0){
+    var li0=document.createElement("li");
+    li0.textContent=T[lang].groupsNone;
+    listEl.appendChild(li0);
+  }
+
+  $("replaceCard").style.display="";
+  updateReplace();
+}
+
+function updateReplace(){
+  var patternStr=$("pattern").value;
+  var text=$("ta").value;
+  var flagsStr=currentFlags();
+  var replacement=$("replacePattern").value;
+  if(!patternStr){$("replaceOut").value="";return}
+  try{
+    var re=new RegExp(patternStr,flagsStr);
+    $("replaceOut").value=text.replace(re,replacement);
+  }catch(e){
+    $("replaceOut").value="";
+  }
+}
+
+$("runBtn").addEventListener("click",runAnalyze);
+["pattern","ta"].forEach(function(id){$(id).addEventListener("input",debounce(runAnalyze,250))});
+["flag-i","flag-m","flag-s","flag-u"].forEach(function(id){$(id).addEventListener("change",runAnalyze)});
+$("replacePattern").addEventListener("input",debounce(updateReplace,150));
+
+function debounce(fn,ms){
+  var t;
+  return function(){
+    var args=arguments;
+    clearTimeout(t);
+    t=setTimeout(function(){fn.apply(null,args)},ms);
+  };
+}
+
+$("copyListBtn").addEventListener("click",function(){
+  var lines=lastMatches.map(function(mm,i){
+    var s=(i+1)+"\t"+mm[0]+"\tindex="+mm.index;
+    var groupKeys=Object.keys(mm.groups||{});
+    var gp=[];
+    for(var g=1;g<mm.length;g++)gp.push("$"+g+"="+(mm[g]===undefined?"":mm[g]));
+    groupKeys.forEach(function(k){gp.push("$"+k+"="+(mm.groups[k]===undefined?"":mm.groups[k]))});
+    if(gp.length)s+="\t"+gp.join(", ");
+    return s;
+  });
+  var text=lines.join("\n");
+  function done(){flash("listToast",T[lang].copied)}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(done);
+  } else {
+    done();
+  }
+});
+$("downloadListBtn").addEventListener("click",function(){
+  var lines=lastMatches.map(function(mm,i){return (i+1)+"\t"+mm[0]+"\tindex="+mm.index});
+  var blob=new Blob([lines.join("\n")],{type:"text/plain;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download="regex-matches.txt";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+$("copyReplaceBtn").addEventListener("click",function(){
+  var text=$("replaceOut").value;
+  function done(){flash("replaceToast",T[lang].copied)}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(done);
+  } else {
+    done();
+  }
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
+  var phs=document.querySelectorAll("[data-i-ph]");
+  for(var j=0;j<phs.length;j++){var pk=phs[j].getAttribute("data-i-ph");if(T[lang][pk]!==undefined)phs[j].setAttribute("placeholder",T[lang][pk])}
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  renderPresets();
+  if($("pattern").value) runAnalyze();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+</body>
+</html>
