@@ -112,7 +112,7 @@ html[lang=en] .en-only{display:block}
       <li>正しく表示されたら、必要に応じてBOMのON/OFFを選び、「UTF-8に変換してダウンロード」を押します。</li>
     </ol>
     <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
-    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで変換されます。通信も発生しません。</p>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで変換されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
     <h3>Q. ExcelでCSVを開くと文字化けするのはなぜですか？</h3>
     <p>A. Windows版Excelは、BOMの無いUTF-8のCSVをShift_JISだと誤認識して開いてしまうことがあります。「BOM付きUTF-8で保存する」を選んでダウンロードし直すと解消することが多いです。</p>
     <h3>Q. Shift_JISとCP932の違いは何ですか？</h3>
@@ -152,7 +152,7 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで変換されます。通信も発生しません。"}},
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで変換されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
     {"@type":"Question","name":"ExcelでCSVを開くと文字化けするのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"Windows版Excelは、BOMの無いUTF-8のCSVをShift_JISだと誤認識することがあります。BOM付きUTF-8で保存し直すと解消することが多いです。"}},
     {"@type":"Question","name":"Shift_JISとCP932の違いは何ですか？","acceptedAnswer":{"@type":"Answer","text":"Windowsで作られる日本語CSVのほとんどは、Shift_JISを拡張したCP932です。このツールはブラウザ標準のデコーダーでCP932の文字も扱えます。"}},
     {"@type":"Question","name":"大きなファイルは扱えますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。"}}
@@ -352,5 +352,6 @@ for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(
 applyLang();
 })();
 </script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

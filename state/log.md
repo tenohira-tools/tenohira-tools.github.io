@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-09-25 計測タグの設置と表記修正
+- やったこと：全公開ページ（wareki・csv-fix・hyoki-yure・tozan-checklist・regex-ja・index.html、計6ページ。所有権確認ファイルgoogleXXX.htmlは除く）の`</body>`直前にGoatCounter（Cookieなし・個人非特定のアクセス数計測、サイトコード`tenohira`）のタグを設置。RULES.mdの「実験の作り方」に、これが「外部読み込みなし」原則の唯一の例外である旨を1行追記（「絶対に守ること」は変更なし）。README.mdとdocs/index.htmlの「追跡なし」という表現を「Cookieなし・個人を特定しないアクセス数の計測のみ（GoatCounter）。入力内容は端末の外に送られない」に修正。GoatCounter設置後は厳密には「通信が一切発生しない」とは言えなくなるため、csv-fix・hyoki-yure・regex-jaのFAQにあった「通信は発生しません」という言い切り（本文・JSON-LD FAQPage双方）を、「入力内容は送信されないが、匿名の閲覧数計測の通信のみ発生する」という正確な表現に修正。
+- 数値：`curl "https://tenohira.goatcounter.com/api/v0/stats/hits..."`と`stats/total`をこのセッションのネットワークポリシーで試したが、プロキシが`CONNECT tunnel failed, response 403`（goatcounter.comへの接続を拒否）を返し取得不可。state/experiments.jsonの各実験にその旨を追記し、state/escalations.mdにも1行記載（作業は継続）。タグ設置自体は今回で全ページ完了したため、次回以降に環境側でgoatcounter.comへのアクセスが許可されれば数値が取れる見込み。
+- 検証：push後にGitHub Pages（反映まで1〜2分待機）上で6ページ全てにGoatCounterタグが含まれることと、修正後の文言に矛盾がないことを確認。
+- 次回：GoatCounter APIが読めるようになったか再確認。読めれば直近14日の閲覧数をページ別に整理してmetricsに反映し、閲覧が付いたページがあれば新規作成より改善を優先する。読めないままなら、他の計測手段（Issue・スター）を見ながら通常のバックログ運用（新規ツール／health.md対応）に戻る。
+
 ## 2026-09-23（初回ブートストラップ＋実験1）
 - やったこと：RULES.md・state・backlog・README・ツール一覧を作成。最初の実験「和暦・西暦・年齢 変換と早見表」（docs/wareki/）を公開。
 - 数値：公開中の実験がなかったため計測なし。このセッションにはGitHubのトラフィックAPI／Pages設定APIを呼ぶ手段がない（gh CLIなし）。

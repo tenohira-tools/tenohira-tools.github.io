@@ -150,7 +150,7 @@ html[lang=en] .en-only{display:block}
       <li>「置換プレビュー」に置換後の文字列（$1 などでグループを参照可）を入れると、置換結果をその場で確認できます。</li>
     </ol>
     <h3>Q. 入力した正規表現やテスト文字列はサーバーに送信されますか？</h3>
-    <p>A. いいえ。すべてこのページを開いているブラウザの中だけで処理され、通信は発生しません。</p>
+    <p>A. いいえ。入力したパターンやテスト文字列はすべてこのページを開いているブラウザの中だけで処理され、外部に送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
     <h3>Q. 日本語の解説はどこまで正確ですか？</h3>
     <p>A. 文字クラス・量指定子（*, +, ?, {n,m}）・グループ・先読み/後読み・アンカーなど、よく使う構文には対応していますが、簡易的な文章生成のため、複雑なUnicodeプロパティ指定などの一部構文は省略・簡略化されることがあります。最終的な動作は必ずハイライトやマッチ一覧で確認してください。</p>
     <h3>Q. どの正規表現の方言（フレーバー）に対応していますか？</h3>
@@ -190,7 +190,7 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"入力した正規表現やテスト文字列はサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。すべてこのページを開いているブラウザの中だけで処理され、通信は発生しません。"}},
+    {"@type":"Question","name":"入力した正規表現やテスト文字列はサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。入力したパターンやテスト文字列はブラウザの中だけで処理され、外部に送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
     {"@type":"Question","name":"日本語の解説はどこまで正確ですか？","acceptedAnswer":{"@type":"Answer","text":"文字クラス・量指定子・グループ・先読み/後読み・アンカーなど、よく使う構文には対応していますが、簡易的な文章生成のため一部の複雑な構文は省略・簡略化されることがあります。最終的な動作は必ずハイライトやマッチ一覧で確認してください。"}},
     {"@type":"Question","name":"どの正規表現の方言（フレーバー）に対応していますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザのJavaScriptの正規表現エンジンをそのまま使っています。PythonやPHP（PCRE）など他言語とは細かい構文が異なる場合があります。"}},
     {"@type":"Question","name":"マッチが0件のときはどうすればよいですか？","acceptedAnswer":{"@type":"Answer","text":"パターンとテスト文字列を確認してください。大文字・小文字を区別するかどうかのiフラグや、全角・半角の違いが原因であることがよくあります。"}}
@@ -725,5 +725,6 @@ for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(
 applyLang();
 })();
 </script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

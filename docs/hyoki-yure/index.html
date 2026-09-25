@@ -103,7 +103,7 @@ html[lang=en] .en-only{display:block}
       <li>仕上がったら「結果をコピー」または「テキストとしてダウンロード」で取り出します。</li>
     </ol>
     <h3>Q. 文章はサーバーに送信されますか？</h3>
-    <p>A. いいえ。すべてこのページを開いているブラウザの中だけで処理され、通信は発生しません。</p>
+    <p>A. いいえ。入力した文章はすべてこのページを開いているブラウザの中だけで処理され、外部に送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
     <h3>Q. どんな表記ゆれを検出できますか？</h3>
     <p>A. 「サーバ／サーバー」のようなカタカナ語の長音ゆれ、「お問い合わせ／お問合せ」のような送り仮名のゆれ、「または／又は」のようなかな・漢字のゆれなど、約40組をプリセットしています。すべてを検出できるわけではありません。</p>
     <h3>Q. 検出結果は完全に正確ですか？</h3>
@@ -144,7 +144,7 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"文章はサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。すべてこのページを開いているブラウザの中だけで処理され、通信は発生しません。"}},
+    {"@type":"Question","name":"文章はサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。入力した文章はブラウザの中だけで処理され、外部に送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
     {"@type":"Question","name":"どんな表記ゆれを検出できますか？","acceptedAnswer":{"@type":"Answer","text":"サーバ／サーバーのようなカタカナ語の長音ゆれ、お問い合わせ／お問合せのような送り仮名のゆれ、または／又はのようなかな・漢字のゆれなど、約40組をプリセットしています。"}},
     {"@type":"Question","name":"検出結果は完全に正確ですか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。文字列としての一致を数える簡易的な仕組みのため、文脈によっては意図しない箇所を検出することがあります。統一する前に件数を確認してください。"}},
     {"@type":"Question","name":"半角カタカナはなぜ全角に統一したほうがよいのですか？","acceptedAnswer":{"@type":"Answer","text":"半角カタカナはフォントによって読みづらく、システムによっては正しく表示・処理されないことがあるため、全角カタカナに統一するのが一般的です。"}}
@@ -386,5 +386,6 @@ for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(
 applyLang();
 })();
 </script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
