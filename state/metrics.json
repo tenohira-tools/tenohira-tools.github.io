@@ -1,0 +1,18 @@
+{
+  "history": [
+    {
+      "date": "2026-09-25T07:05:44Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 0,
+        "/csv-fix/": 0,
+        "/hyoki-yure/": 0,
+        "/regex-ja/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "total": 0,
+      "note": "計測タグ設置後、初めて数値が取得できた回。stats API (/api/v0/stats/*) は引き続きプロキシに403で拒否されるが、公開カウンター (/counter/<path>.json) はネットワークポリシーで取得できた。全ページ0件は、タグ設置（同日早い時間）からまだ日が浅いことと符合する。timezone-planner は本記録時点では未公開のため未収録。"
+    }
+  ]
+}

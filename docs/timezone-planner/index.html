@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>海外との会議 時差計算プランナー（複数タイムゾーン比較）| てのひらツール</title>
+<meta name="description" content="日本と海外拠点の現地時間をグリッドで並べて比較し、クリックした時間をまとめてコピーできる時差計算ツール。24時間分の営業時間・起床時間・深夜帯を色分け表示。ブラウザ内だけで動作し、入力はサーバーに送信されません。Compare local times across multiple timezones on one grid and copy the result — runs entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/timezone-planner/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--sleep:#e3e3de;--sleepfg:#6b6b66}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--sleep:#2a2a27;--sleepfg:#8f8f88}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:900px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.35rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.05rem;margin:0 0 12px}
+label.fieldLabel{display:block;font-weight:600;font-size:.9rem;margin:0 0 6px}
+select,input[type=date],input[type=time]{font:inherit;font-size:.95rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:40px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;min-height:42px}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:40px}
+.zonelist{display:flex;flex-direction:column;gap:6px;margin:0 0 10px}
+.zonechip{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:8px}
+.zonechip.base{border-color:var(--accent);background:var(--accent-bg)}
+.zonechip b{font-weight:600;font-size:.95rem}
+.zonechip .off{color:var(--muted);font-size:.82rem;margin-left:6px}
+.zonechip button{border:0;background:transparent;color:var(--muted);font-size:1.05rem;line-height:1;cursor:pointer;padding:4px 8px}
+.addrow select{flex:1;min-width:180px}
+.ztable-wrap{overflow-x:auto;margin:0 0 6px;border:1px solid var(--line);border-radius:10px}
+table.ztable{border-collapse:collapse;font-size:.8rem;min-width:100%}
+table.ztable td{border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+table.ztable tr:last-child td{border-bottom:0}
+td.zname{position:sticky;left:0;background:var(--card);text-align:left;padding:8px 10px;white-space:nowrap;font-weight:600;font-size:.82rem;border-right:2px solid var(--line);z-index:1}
+tr.base td.zname{color:var(--accent)}
+td.hcell{width:34px;min-width:34px;height:42px;cursor:pointer;text-align:center;position:relative;user-select:none}
+td.hcell .hh{display:block;font-weight:700;font-size:.85rem}
+td.hcell .dd{display:block;font-size:.6rem;opacity:.8;margin-top:-2px}
+td.hcell.hb{background:var(--accent-bg);color:var(--accent)}
+td.hcell.ha{background:var(--warn-bg);color:var(--warn)}
+td.hcell.hs{background:var(--sleep);color:var(--sleepfg)}
+td.hcell.we{box-shadow:inset 0 -3px 0 0 var(--muted)}
+td.hcell.sel{outline:3px solid var(--fg);outline-offset:-2px;z-index:2}
+td.hcell:hover{filter:brightness(0.95)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin:6px 0 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.legend i.lb{background:var(--accent-bg)}
+.legend i.la{background:var(--warn-bg)}
+.legend i.ls{background:var(--sleep)}
+.legend i.lw{background:var(--card);box-shadow:inset 0 -3px 0 0 var(--muted)}
+.summary{display:flex;flex-direction:column;gap:6px;margin:0 0 10px}
+.sumrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:.95rem;flex-wrap:wrap}
+.sumrow.base{border-color:var(--accent);background:var(--accent-bg)}
+.sumrow .off{color:var(--muted);font-size:.82rem;margin-left:6px}
+.sumrow>span:first-child{word-break:keep-all;overflow-wrap:break-word}
+.sumrow>span:last-child{white-space:nowrap}
+.zonechip b{word-break:keep-all;overflow-wrap:break-word}
+.toast{margin-top:2px;padding:6px 12px;background:var(--accent-bg);color:var(--accent);border-radius:8px;font-size:.88rem;display:none}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">海外との会議 時差計算プランナー</h1>
+    <p class="sub" data-i="sub">複数のタイムゾーンを追加して、24時間分の現地時間を一覧グリッドで比較。セルをクリックした時間の各拠点の日時をまとめてコピーできます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="zonesHeading">拠点（タイムゾーン）</h2>
+  <label class="fieldLabel" data-i="baseLabel">基準にする拠点</label>
+  <div class="row">
+    <select id="baseSelect" aria-label="Base timezone"></select>
+  </div>
+  <div class="zonelist" id="zoneList"></div>
+  <label class="fieldLabel" data-i="addLabel">拠点を追加</label>
+  <div class="row addrow">
+    <select id="addSelect" aria-label="Add timezone"></select>
+    <button type="button" class="secondary" id="addBtn" data-i="addBtn">追加</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2 data-i="whenHeading">日時を選ぶ</h2>
+  <div class="row">
+    <input type="date" id="dateInput">
+    <input type="time" id="timeInput">
+    <button type="button" class="secondary" id="nowBtn" data-i="nowBtn">現在時刻</button>
+  </div>
+  <p class="sub" data-i="gridHint" style="margin:0 0 10px">グリッドの列は、基準拠点のその日の0〜23時です。セルをクリックすると、その時刻を選べます。</p>
+  <div class="ztable-wrap"><table class="ztable" id="ztable"></table></div>
+  <div class="legend">
+    <span><i class="lb"></i><span data-i="legendBiz">営業時間の目安（9–18時）</span></span>
+    <span><i class="la"></i><span data-i="legendAwake">起きている時間帯</span></span>
+    <span><i class="ls"></i><span data-i="legendSleep">深夜・早朝（22–7時）</span></span>
+    <span><i class="lw"></i><span data-i="legendWeekend">その拠点では土日</span></span>
+  </div>
+</section>
+
+<section class="card">
+  <h2 data-i="summaryHeading">選んだ時間の各拠点の日時</h2>
+  <div class="summary" id="summary"></div>
+  <div class="row">
+    <button type="button" class="secondary" id="copyBtn" data-i="copyBtn">この結果をコピー</button>
+  </div>
+  <p class="toast" id="toast"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>「基準にする拠点」を選び、比較したい海外拠点を「拠点を追加」から選んで追加します（最大6件）。</li>
+      <li>日付と時刻を指定するか、グリッドのセルをクリックすると、その時刻での各拠点の現地時間が下に表示されます。</li>
+      <li>「この結果をコピー」で、各拠点の日時をまとめたテキストをクリップボードにコピーできます。会議の招待メールやチャットに貼り付けられます。</li>
+    </ol>
+    <h3>Q. グリッドの列（0〜23）は誰の時間ですか？</h3>
+    <p>A. 「基準にする拠点」で選んだ場所の、指定した日の0時から23時です。他の拠点の行には、その瞬間の現地時間が表示されます。日付が基準拠点と異なる場合は「+1」「-1」のように表示されます。</p>
+    <h3>Q. 入力した内容はどこかに送信されますか？</h3>
+    <p>A. されません。時差の計算はすべてお使いのブラウザ内（JavaScriptの標準機能）で行われ、サーバーには何も送信されません。選んだ拠点の並びだけがこの端末のブラウザ内（localStorage）に保存され、次回開いたときに復元されます。</p>
+    <h3>Q. サマータイム（夏時間）には対応していますか？</h3>
+    <p>A. はい。ブラウザに搭載されているタイムゾーン情報を使っているため、サマータイムの開始・終了も自動的に反映されます。</p>
+    <h3>Q. 「営業時間」の色分けの基準は？</h3>
+    <p>A. 一般的な目安として9〜18時を営業時間、7〜9時と18〜22時を起きている時間帯、22〜7時を深夜・早朝として色分けしています。実際の営業時間は拠点ごとに異なりますので目安としてお使いください。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Choose your base location, then add the overseas locations you want to compare (up to 6).</li>
+      <li>Pick a date and time, or click a cell in the grid — the local date and time for every location appears below.</li>
+      <li>Use "Copy this result" to copy a plain-text summary you can paste into a meeting invite or chat.</li>
+    </ol>
+    <h3>Q. Whose time do the grid columns (0–23) represent?</h3>
+    <p>A. The base location's hours for the date you chose. Each other row shows what its own local time is at that same instant, with a "+1"/"-1" badge when its date differs from the base date.</p>
+    <h3>Q. Is anything I enter sent anywhere?</h3>
+    <p>A. No. All conversion happens in your browser using its built-in timezone data; nothing is sent to a server. Only your chosen list of locations is saved in this browser's local storage so it's there next time you open the page.</p>
+    <h3>Q. Does it handle daylight saving time?</h3>
+    <p>A. Yes — it uses your browser's timezone database, which already accounts for each region's daylight-saving rules and transition dates.</p>
+    <h3>Q. What do the color bands mean?</h3>
+    <p>A. They're general guides: 9:00–18:00 as typical business hours, 7:00–9:00 and 18:00–22:00 as "awake but off-hours", and 22:00–7:00 as late night/early morning. Actual business hours vary by location.</p>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">選んだ日時や拠点はサーバーに送信されません。拠点の並びだけがこの端末のブラウザに保存されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"グリッドの列（0〜23）は誰の時間ですか？","acceptedAnswer":{"@type":"Answer","text":"基準にする拠点で選んだ場所の、指定した日の0時から23時です。他の拠点の行にはその瞬間の現地時間が表示され、日付が異なる場合は+1/-1のように表示されます。"}},
+    {"@type":"Question","name":"入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。時差の計算はすべてブラウザ内で行われ、サーバーには何も送信されません。選んだ拠点の並びだけがこの端末のブラウザ内（localStorage）に保存されます。"}},
+    {"@type":"Question","name":"サマータイム（夏時間）には対応していますか？","acceptedAnswer":{"@type":"Answer","text":"はい。ブラウザに搭載されているタイムゾーン情報を使っているため、サマータイムの開始・終了も自動的に反映されます。"}},
+    {"@type":"Question","name":"「営業時間」の色分けの基準は？","acceptedAnswer":{"@type":"Answer","text":"9〜18時を営業時間、7〜9時と18〜22時を起きている時間帯、22〜7時を深夜・早朝として色分けした目安です。実際の営業時間は拠点ごとに異なります。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function pad2(n){return (n<10?"0":"")+n}
+
+var ZONES=[
+ {tz:"Asia/Tokyo",ja:"東京（日本）",en:"Tokyo (Japan)",g:"asia"},
+ {tz:"Asia/Seoul",ja:"ソウル（韓国）",en:"Seoul (South Korea)",g:"asia"},
+ {tz:"Asia/Shanghai",ja:"上海（中国）",en:"Shanghai (China)",g:"asia"},
+ {tz:"Asia/Taipei",ja:"台北（台湾）",en:"Taipei (Taiwan)",g:"asia"},
+ {tz:"Asia/Hong_Kong",ja:"香港",en:"Hong Kong",g:"asia"},
+ {tz:"Asia/Singapore",ja:"シンガポール",en:"Singapore",g:"asia"},
+ {tz:"Asia/Bangkok",ja:"バンコク（タイ）",en:"Bangkok (Thailand)",g:"asia"},
+ {tz:"Asia/Jakarta",ja:"ジャカルタ（インドネシア）",en:"Jakarta (Indonesia)",g:"asia"},
+ {tz:"Asia/Manila",ja:"マニラ（フィリピン）",en:"Manila (Philippines)",g:"asia"},
+ {tz:"Asia/Ho_Chi_Minh",ja:"ホーチミン（ベトナム）",en:"Ho Chi Minh City (Vietnam)",g:"asia"},
+ {tz:"Asia/Kolkata",ja:"デリー・ムンバイ（インド）",en:"Delhi / Mumbai (India)",g:"asia"},
+ {tz:"Asia/Dhaka",ja:"ダッカ（バングラデシュ）",en:"Dhaka (Bangladesh)",g:"asia"},
+ {tz:"Asia/Karachi",ja:"カラチ（パキスタン）",en:"Karachi (Pakistan)",g:"asia"},
+ {tz:"Asia/Dubai",ja:"ドバイ（UAE）",en:"Dubai (UAE)",g:"asia"},
+ {tz:"Australia/Sydney",ja:"シドニー（オーストラリア）",en:"Sydney (Australia)",g:"oceania"},
+ {tz:"Australia/Perth",ja:"パース（オーストラリア）",en:"Perth (Australia)",g:"oceania"},
+ {tz:"Pacific/Auckland",ja:"オークランド（ニュージーランド）",en:"Auckland (New Zealand)",g:"oceania"},
+ {tz:"Pacific/Honolulu",ja:"ホノルル（ハワイ）",en:"Honolulu (Hawaii)",g:"oceania"},
+ {tz:"Europe/London",ja:"ロンドン（英国）",en:"London (UK)",g:"europe"},
+ {tz:"Europe/Paris",ja:"パリ（フランス）",en:"Paris (France)",g:"europe"},
+ {tz:"Europe/Berlin",ja:"ベルリン（ドイツ）",en:"Berlin (Germany)",g:"europe"},
+ {tz:"Europe/Madrid",ja:"マドリード（スペイン）",en:"Madrid (Spain)",g:"europe"},
+ {tz:"Europe/Rome",ja:"ローマ（イタリア）",en:"Rome (Italy)",g:"europe"},
+ {tz:"Europe/Amsterdam",ja:"アムステルダム（オランダ）",en:"Amsterdam (Netherlands)",g:"europe"},
+ {tz:"Europe/Athens",ja:"アテネ（ギリシャ）",en:"Athens (Greece)",g:"europe"},
+ {tz:"Europe/Helsinki",ja:"ヘルシンキ（フィンランド）",en:"Helsinki (Finland)",g:"europe"},
+ {tz:"Europe/Istanbul",ja:"イスタンブール（トルコ）",en:"Istanbul (Turkey)",g:"europe"},
+ {tz:"Europe/Moscow",ja:"モスクワ（ロシア）",en:"Moscow (Russia)",g:"europe"},
+ {tz:"Africa/Cairo",ja:"カイロ（エジプト）",en:"Cairo (Egypt)",g:"africa"},
+ {tz:"Africa/Lagos",ja:"ラゴス（ナイジェリア）",en:"Lagos (Nigeria)",g:"africa"},
+ {tz:"Africa/Johannesburg",ja:"ヨハネスブルグ（南アフリカ）",en:"Johannesburg (South Africa)",g:"africa"},
+ {tz:"America/New_York",ja:"ニューヨーク（米国東部）",en:"New York (US Eastern)",g:"americas"},
+ {tz:"America/Chicago",ja:"シカゴ（米国中部）",en:"Chicago (US Central)",g:"americas"},
+ {tz:"America/Denver",ja:"デンバー（米国山地部）",en:"Denver (US Mountain)",g:"americas"},
+ {tz:"America/Los_Angeles",ja:"ロサンゼルス（米国西部）",en:"Los Angeles (US Pacific)",g:"americas"},
+ {tz:"America/Anchorage",ja:"アンカレジ（アラスカ）",en:"Anchorage (Alaska)",g:"americas"},
+ {tz:"America/Toronto",ja:"トロント（カナダ）",en:"Toronto (Canada)",g:"americas"},
+ {tz:"America/Mexico_City",ja:"メキシコシティ",en:"Mexico City",g:"americas"},
+ {tz:"America/Sao_Paulo",ja:"サンパウロ（ブラジル）",en:"São Paulo (Brazil)",g:"americas"},
+ {tz:"America/Argentina/Buenos_Aires",ja:"ブエノスアイレス（アルゼンチン）",en:"Buenos Aires (Argentina)",g:"americas"},
+ {tz:"UTC",ja:"協定世界時（UTC）",en:"UTC",g:"other"}
+];
+var GROUP_LABEL={
+ ja:{asia:"アジア",oceania:"オセアニア",europe:"ヨーロッパ",africa:"アフリカ",americas:"アメリカ",other:"その他"},
+ en:{asia:"Asia",oceania:"Oceania",europe:"Europe",africa:"Africa",americas:"Americas",other:"Other"}
+};
+function zoneByTz(tz){for(var i=0;i<ZONES.length;i++){if(ZONES[i].tz===tz)return ZONES[i]}return null}
+function zoneLabel(tz){var z=zoneByTz(tz);if(!z)return tz;return z[lang]||z.ja}
+
+var T={
+ ja:{title:"海外との会議 時差計算プランナー",
+  sub:"複数のタイムゾーンを追加して、24時間分の現地時間を一覧グリッドで比較。セルをクリックした時間の各拠点の日時をまとめてコピーできます。",
+  zonesHeading:"拠点（タイムゾーン）",baseLabel:"基準にする拠点",addLabel:"拠点を追加",addBtn:"追加",
+  whenHeading:"日時を選ぶ",nowBtn:"現在時刻",
+  gridHint:"グリッドの列は、基準拠点のその日の0〜23時です。セルをクリックすると、その時刻を選べます。",
+  legendBiz:"営業時間の目安（9–18時）",legendAwake:"起きている時間帯",legendSleep:"深夜・早朝（22–7時）",legendWeekend:"その拠点では土日",
+  summaryHeading:"選んだ時間の各拠点の日時",copyBtn:"この結果をコピー",copied:"コピーしました。",
+  removeTitle:"削除",baseTag:"（基準）",
+  todayLabel:"当日",dayOffsetPlus:"日後",dayOffsetMinus:"日前",
+  weekdays:["日","月","火","水","木","金","土"],
+  copyHeader:"会議の時間"},
+ en:{title:"Meeting Time Planner for Multiple Timezones",
+  sub:"Add the timezones you're coordinating across and compare a full day at a glance. Click any cell to pick a time, then copy the result for everyone.",
+  zonesHeading:"Locations",baseLabel:"Base location",addLabel:"Add a location",addBtn:"Add",
+  whenHeading:"Pick date & time",nowBtn:"Now",
+  gridHint:"Grid columns are the base location's hours (0–23) for the chosen date. Click a cell to select that time.",
+  legendBiz:"Typical business hours (9–18)",legendAwake:"Awake, off-hours",legendSleep:"Late night / early morning (22–7)",legendWeekend:"Weekend there",
+  summaryHeading:"Local time at every location",copyBtn:"Copy this result",copied:"Copied.",
+  removeTitle:"Remove",baseTag:"(base)",
+  todayLabel:"same day",dayOffsetPlus:"day(s) later",dayOffsetMinus:"day(s) earlier",
+  weekdays:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+  copyHeader:"Meeting time"}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+// ---- timezone math ----
+function tzOffsetMs(utcMs,zone){
+  var d=new Date(utcMs);
+  var dtf=new Intl.DateTimeFormat("en-US",{timeZone:zone,hour12:false,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  var parts={};
+  dtf.formatToParts(d).forEach(function(p){if(p.type!=="literal")parts[p.type]=p.value});
+  var hh=parts.hour==="24"?"00":parts.hour;
+  var asUTC=Date.UTC(+parts.year,+parts.month-1,+parts.day,+hh,+parts.minute,+parts.second);
+  return asUTC-utcMs;
+}
+function civilToUtc(y,mo,d,h,mi,zone){
+  var guess=Date.UTC(y,mo-1,d,h,mi,0);
+  var off1=tzOffsetMs(guess,zone);
+  var utc=guess-off1;
+  var off2=tzOffsetMs(utc,zone);
+  if(off2!==off1){utc=guess-off2}
+  return utc;
+}
+function utcToZoneParts(utcMs,zone){
+  var d=new Date(utcMs);
+  var dtf=new Intl.DateTimeFormat("en-US",{timeZone:zone,hour12:false,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+  var parts={};
+  dtf.formatToParts(d).forEach(function(p){if(p.type!=="literal")parts[p.type]=p.value});
+  var hh=parts.hour==="24"?"00":parts.hour;
+  return {y:+parts.year,mo:+parts.month,d:+parts.day,h:+hh,mi:+parts.minute};
+}
+function weekdayOf(y,mo,d){return new Date(Date.UTC(y,mo-1,d)).getUTCDay()}
+function dayDiff(y1,mo1,d1,y2,mo2,d2){return Math.round((Date.UTC(y1,mo1-1,d1)-Date.UTC(y2,mo2-1,d2))/86400000)}
+
+// ---- state ----
+var DEFAULT_BASE="Asia/Tokyo";
+var browserTz="Asia/Tokyo";
+try{var bt=Intl.DateTimeFormat().resolvedOptions().timeZone;if(bt&&zoneByTz(bt))browserTz=bt}catch(e){}
+var state=loadState();
+
+function loadState(){
+  var s=null;
+  try{var raw=localStorage.getItem("tp_state_v1");if(raw)s=JSON.parse(raw)}catch(e){}
+  if(!s||!s.baseTz||!zoneByTz(s.baseTz)){
+    var base=browserTz;
+    var candidates=["America/New_York","Europe/London","Asia/Tokyo","Asia/Singapore"].filter(function(t){return t!==base});
+    s={baseTz:base,zones:candidates.slice(0,2)};
+  }
+  s.zones=(s.zones||[]).filter(function(t){return zoneByTz(t)&&t!==s.baseTz});
+  return s;
+}
+function saveState(){
+  try{localStorage.setItem("tp_state_v1",JSON.stringify({baseTz:state.baseTz,zones:state.zones}))}catch(e){}
+}
+
+var now=new Date();
+var nowInBase=utcToZoneParts(now.getTime(),state.baseTz);
+var sel={y:nowInBase.y,mo:nowInBase.mo,d:nowInBase.d,h:nowInBase.h,mi:nowInBase.mi};
+
+// ---- rendering ----
+function fillSelect(sel,excludeTzs){
+  sel.innerHTML="";
+  var groups={};
+  ZONES.forEach(function(z){
+    if(excludeTzs.indexOf(z.tz)!==-1)return;
+    (groups[z.g]=groups[z.g]||[]).push(z);
+  });
+  ["asia","oceania","europe","africa","americas","other"].forEach(function(g){
+    if(!groups[g])return;
+    var og=document.createElement("optgroup");
+    og.label=GROUP_LABEL[lang][g]||g;
+    groups[g].forEach(function(z){
+      var op=document.createElement("option");
+      op.value=z.tz;op.textContent=z[lang]||z.ja;
+      og.appendChild(op);
+    });
+    sel.appendChild(og);
+  });
+}
+
+function renderZonePickers(){
+  fillSelect($("baseSelect"),[]);
+  $("baseSelect").value=state.baseTz;
+  fillSelect($("addSelect"),[state.baseTz].concat(state.zones));
+  $("addBtn").disabled=state.zones.length>=6;
+}
+
+function renderZoneList(){
+  var wrap=$("zoneList");
+  wrap.innerHTML="";
+  var baseChip=document.createElement("div");
+  baseChip.className="zonechip base";
+  baseChip.innerHTML="<b>"+zoneLabel(state.baseTz)+"</b><span class=\"off\">"+T[lang].baseTag+"</span>";
+  wrap.appendChild(baseChip);
+  state.zones.forEach(function(tz){
+    var row=document.createElement("div");
+    row.className="zonechip";
+    var b=document.createElement("b");b.textContent=zoneLabel(tz);
+    var rm=document.createElement("button");rm.type="button";rm.title=T[lang].removeTitle;rm.textContent="✕";
+    rm.addEventListener("click",function(){
+      state.zones=state.zones.filter(function(t){return t!==tz});
+      saveState();renderAll();
+    });
+    row.appendChild(b);row.appendChild(rm);
+    wrap.appendChild(row);
+  });
+}
+
+function hourClass(h){
+  if(h>=9&&h<18)return "hb";
+  if((h>=7&&h<9)||(h>=18&&h<22))return "ha";
+  return "hs";
+}
+
+function renderGrid(){
+  var cols=[];
+  for(var h=0;h<24;h++){
+    cols.push(civilToUtc(sel.y,sel.mo,sel.d,h,0,state.baseTz));
+  }
+  var rows=[state.baseTz].concat(state.zones);
+  var table=$("ztable");
+  table.innerHTML="";
+  rows.forEach(function(tz,ri){
+    var tr=document.createElement("tr");
+    if(ri===0)tr.className="base";
+    var tdName=document.createElement("td");
+    tdName.className="zname";
+    tdName.textContent=zoneLabel(tz);
+    tr.appendChild(tdName);
+    cols.forEach(function(utcMs,h){
+      var p=utcToZoneParts(utcMs,tz);
+      var off=dayDiff(p.y,p.mo,p.d,sel.y,sel.mo,sel.d);
+      var wd=weekdayOf(p.y,p.mo,p.d);
+      var isWeekend=wd===0||wd===6;
+      var td=document.createElement("td");
+      td.className="hcell "+hourClass(p.h)+(isWeekend?" we":"")+(h===sel.h?" sel":"");
+      td.setAttribute("data-h",h);
+      var hhSpan="<span class=\"hh\">"+pad2(p.h)+"</span>";
+      var ddSpan=off!==0?"<span class=\"dd\">"+(off>0?"+":"")+off+"</span>":"";
+      td.innerHTML=hhSpan+ddSpan;
+      td.title=zoneLabel(tz)+" "+p.y+"/"+p.mo+"/"+p.d+" "+pad2(p.h)+":"+pad2(p.mi);
+      td.addEventListener("click",function(){
+        sel.h=+this.getAttribute("data-h");
+        sel.mi=0;
+        syncTimeInput();
+        renderGrid();
+        renderSummary();
+      });
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+}
+
+function fmtDateTime(p){
+  var wd=T[lang].weekdays[weekdayOf(p.y,p.mo,p.d)];
+  if(lang==="ja")return p.y+"/"+pad2(p.mo)+"/"+pad2(p.d)+"("+wd+") "+pad2(p.h)+":"+pad2(p.mi);
+  return p.mo+"/"+p.d+" ("+wd+") "+pad2(p.h)+":"+pad2(p.mi);
+}
+
+function renderSummary(){
+  var utcMs=civilToUtc(sel.y,sel.mo,sel.d,sel.h,sel.mi,state.baseTz);
+  var basep=utcToZoneParts(utcMs,state.baseTz);
+  var rows=[state.baseTz].concat(state.zones);
+  var wrap=$("summary");
+  wrap.innerHTML="";
+  rows.forEach(function(tz,ri){
+    var p=utcToZoneParts(utcMs,tz);
+    var off=dayDiff(p.y,p.mo,p.d,basep.y,basep.mo,basep.d);
+    var offLabel=off===0?"":(" ("+(off>0?"+":"")+off+(lang==="ja"?"日":"d")+")");
+    var div=document.createElement("div");
+    div.className="sumrow"+(ri===0?" base":"");
+    div.innerHTML="<span>"+zoneLabel(tz)+(ri===0?" "+T[lang].baseTag:"")+"</span><span>"+fmtDateTime(p)+"<span class=\"off\">"+offLabel+"</span></span>";
+    wrap.appendChild(div);
+  });
+}
+
+function syncTimeInput(){
+  $("timeInput").value=pad2(sel.h)+":"+pad2(sel.mi);
+  $("dateInput").value=sel.y+"-"+pad2(sel.mo)+"-"+pad2(sel.d);
+}
+
+function renderAll(){
+  renderZonePickers();
+  renderZoneList();
+  syncTimeInput();
+  renderGrid();
+  renderSummary();
+}
+
+// ---- events ----
+$("baseSelect").addEventListener("change",function(){
+  var newBase=this.value;
+  state.zones=state.zones.filter(function(t){return t!==newBase});
+  state.baseTz=newBase;
+  var np=utcToZoneParts(Date.now(),state.baseTz);
+  sel={y:np.y,mo:np.mo,d:np.d,h:np.h,mi:np.mi};
+  saveState();renderAll();
+});
+$("addBtn").addEventListener("click",function(){
+  var v=$("addSelect").value;
+  if(v&&state.zones.indexOf(v)===-1&&v!==state.baseTz&&state.zones.length<6){
+    state.zones.push(v);saveState();renderAll();
+  }
+});
+$("dateInput").addEventListener("change",function(){
+  var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(this.value);
+  if(m){sel.y=+m[1];sel.mo=+m[2];sel.d=+m[3];renderGrid();renderSummary();}
+});
+$("timeInput").addEventListener("change",function(){
+  var m=/^(\d{2}):(\d{2})$/.exec(this.value);
+  if(m){sel.h=+m[1];sel.mi=+m[2];renderGrid();renderSummary();}
+});
+$("nowBtn").addEventListener("click",function(){
+  var np=utcToZoneParts(Date.now(),state.baseTz);
+  sel={y:np.y,mo:np.mo,d:np.d,h:np.h,mi:np.mi};
+  syncTimeInput();renderGrid();renderSummary();
+});
+function flash(msg){
+  var t=$("toast");t.textContent=msg;t.style.display="block";
+  clearTimeout(flash._t);flash._t=setTimeout(function(){t.style.display="none"},2200);
+}
+$("copyBtn").addEventListener("click",function(){
+  var utcMs=civilToUtc(sel.y,sel.mo,sel.d,sel.h,sel.mi,state.baseTz);
+  var rows=[state.baseTz].concat(state.zones);
+  var lines=[T[lang].copyHeader+":"];
+  rows.forEach(function(tz){
+    var p=utcToZoneParts(utcMs,tz);
+    lines.push(zoneLabel(tz)+": "+fmtDateTime(p));
+  });
+  var text=lines.join("\n");
+  function done(){flash(T[lang].copied)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(done);
+  } else { done(); }
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  renderAll();
+}
+document.querySelectorAll(".lang button").forEach(function(b){
+  b.addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+});
+
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
