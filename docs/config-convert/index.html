@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSON・YAML・TOML 相互変換エディタ（3形式をリアルタイム同期）| てのひらツール</title>
+<meta name="description" content="JSON・YAML・TOMLのいずれかを貼り付けると、残り2つの形式にその場で変換して表示します。構文エラーは行番号付きで表示、コピー・ダウンロードにも対応。ブラウザ内だけで処理しサーバーには送信されません。Convert between JSON, YAML and TOML in real time, entirely in your browser — no upload, no sign-up.">
+<link rel="canonical" href="https://tenohira-tools.github.io/config-convert/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--err:#a3341f;--err-bg:#fbe9e5;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Noto Sans Mono",monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--err:#f0a08c;--err-bg:#3a1f19}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1080px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem;max-width:70ch}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:14px}
+.controls label{font-size:.9rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.88rem}
+button.ghost:hover{border-color:var(--accent)}
+button.small{background:transparent;border:1px solid var(--line);color:var(--fg);border-radius:6px;padding:4px 9px;cursor:pointer;font-size:.82rem}
+button.small:hover{border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.panel h3{margin:0 0 6px;font-size:1rem;display:flex;align-items:center;gap:8px}
+.panel .fmtdesc{color:var(--muted);font-size:.82rem;margin:0 0 8px}
+textarea{width:100%;min-height:340px;resize:vertical;font-family:var(--mono);font-size:.86rem;line-height:1.55;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);tab-size:2}
+textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+textarea.haserror{border-color:var(--err)}
+.msg{margin-top:6px;padding:7px 10px;border-radius:8px;font-size:.85rem;white-space:pre-wrap}
+.msg:empty{display:none;padding:0;margin:0}
+.msg.err{background:var(--err-bg);color:var(--err)}
+.msg.warn{background:var(--warn-bg);color:var(--warn)}
+.btnrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+.limits{font-size:.9rem;color:var(--muted)}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">JSON・YAML・TOML 相互変換エディタ</h1>
+    <p class="sub" data-i="sub">3つの枠のどれかを編集すると、正しく書けた時点で残り2つの形式にその場で変換されます。設定ファイルの見比べや形式変換に。ブラウザ内だけで処理し、どこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div class="controls">
+    <label for="indentSelect"><span data-i="indentLabel">インデント幅（JSON・YAML）</span>
+      <select id="indentSelect">
+        <option value="2">2</option>
+        <option value="4">4</option>
+      </select>
+    </label>
+    <button type="button" class="ghost" id="sampleBtn" data-i="sampleBtn">サンプルを読み込む</button>
+    <button type="button" class="ghost" id="clearBtn" data-i="clearBtn">すべてクリア</button>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h3>JSON</h3>
+      <p class="fmtdesc" data-i="jsonDesc">JavaScriptやAPIで一般的なデータ形式。</p>
+      <textarea id="jsonBox" spellcheck="false" aria-label="JSON"></textarea>
+      <div class="msg" id="jsonMsg" aria-live="polite"></div>
+      <div class="btnrow">
+        <button type="button" class="small" data-copy="jsonBox" data-i="copyBtn">コピー</button>
+        <button type="button" class="small" data-download="json" data-i="downloadBtn">ダウンロード</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>YAML</h3>
+      <p class="fmtdesc" data-i="yamlDesc">GitHub Actions・docker-compose・Kubernetesなどでよく使う形式。</p>
+      <textarea id="yamlBox" spellcheck="false" aria-label="YAML"></textarea>
+      <div class="msg" id="yamlMsg" aria-live="polite"></div>
+      <div class="btnrow">
+        <button type="button" class="small" data-copy="yamlBox" data-i="copyBtn">コピー</button>
+        <button type="button" class="small" data-download="yaml" data-i="downloadBtn">ダウンロード</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>TOML</h3>
+      <p class="fmtdesc" data-i="tomlDesc">Cargo.toml・pyproject.tomlなどでよく使う形式。</p>
+      <textarea id="tomlBox" spellcheck="false" aria-label="TOML"></textarea>
+      <div class="msg" id="tomlMsg" aria-live="polite"></div>
+      <div class="btnrow">
+        <button type="button" class="small" data-copy="tomlBox" data-i="copyBtn">コピー</button>
+        <button type="button" class="small" data-download="toml" data-i="downloadBtn">ダウンロード</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>JSON・YAML・TOMLのどれか1つの枠に、既存の設定ファイルの内容を貼り付ける（または直接書く）。</li>
+      <li>正しく書けている間は、残り2つの枠が自動的にその内容に変換されます。</li>
+      <li>構文にエラーがある間は、そのエラーが出た枠の下に行番号付きでエラーを表示します（他の2つの枠の内容はそのまま残ります）。</li>
+      <li>できあがった内容は「コピー」または「ダウンロード」で取り出せます。</li>
+    </ol>
+    <h3>Q. 変換に失敗するときは？</h3>
+    <p>A. エラーが出た枠の下に、原因と行番号が表示されます。その行を直すと、正しく書けた時点で自動的に変換が再開されます。</p>
+    <h3>Q. コメント（#で始まる行など）は変換後も残りますか？</h3>
+    <p>A. 残りません。YAMLやTOMLのコメントは、変換の際に失われます（JSONにはコメントを書く仕組みがないため）。コメントを残したい場合は、変換前のファイルを別途保管してください。</p>
+    <h3>Q. 対応していない書き方はありますか？</h3>
+    <p>A. あります。<strong>YAML</strong>はアンカー・エイリアス（&amp;・*）、タグ（!）、ブロックスカラー（|・&gt;）、複数ドキュメント（---区切り）に対応していません。<strong>TOML</strong>は配列テーブル（[[ ]]）、複数行・triple-quote文字列、日付型（貼り付けると文字列として扱われます）に対応していません。また、TOMLには「値なし（null）」という概念が無いため、null を含むデータはTOMLに変換できません（エラーで知らせます）。これらに該当する行は、エラーメッセージで具体的に指摘されます。</p>
+    <h3>Q. 大きな設定ファイルでも使えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、数千行程度までを想定しています。非常に大きなファイルでは表示や変換が遅くなる場合があります。</p>
+    <h3>Q. 入力した内容はどこかに送信されますか？</h3>
+    <p>A. いいえ。入力・変換はすべてこのブラウザの中だけで行われ、どこにも送信されません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。設定ファイルにパスワードやAPIキーなどの秘密情報が含まれる場合でも、このページの外に出ることはありません。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Paste (or type) an existing config file into any one of the JSON, YAML or TOML boxes.</li>
+      <li>While it parses successfully, the other two boxes are automatically regenerated from it.</li>
+      <li>While there's a syntax error, that box shows the error with a line number, and the other two boxes are left untouched.</li>
+      <li>Use "Copy" or "Download" to grab the result.</li>
+    </ol>
+    <h3>Q. Why did conversion stop working?</h3>
+    <p>A. The box with the problem shows what's wrong and which line. Fix that line and conversion resumes automatically once it parses again.</p>
+    <h3>Q. Are comments preserved?</h3>
+    <p>A. No. Comments in YAML or TOML are dropped during conversion, since JSON has no way to represent them. Keep a copy of the original file if you need to preserve comments.</p>
+    <h3>Q. What syntax isn't supported?</h3>
+    <p>A. <strong>YAML:</strong> anchors/aliases (&amp;, *), tags (!), block scalars (|, &gt;), and multi-document streams (--- separators) are not supported. <strong>TOML:</strong> array-of-tables ([[ ]]), multi-line/triple-quoted strings, and date/time types (kept as plain strings if pasted) are not supported. Also, TOML has no concept of null, so data containing null cannot be converted to TOML (you'll get a clear error instead of silent data loss). Any of these will be pointed out in the error message.</p>
+    <h3>Q. Can it handle large config files?</h3>
+    <p>A. Everything runs in browser memory, so it's built for files up to a few thousand lines. Very large files may make the page slower.</p>
+    <h3>Q. Is anything I type sent anywhere?</h3>
+    <p>A. No. Everything happens inside this browser — nothing is uploaded (only an anonymous, cookie-free page-view count via GoatCounter for the site as a whole). Even config files containing secrets or API keys never leave this page.</p>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">入力した内容はサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"変換に失敗するときは？","acceptedAnswer":{"@type":"Answer","text":"エラーが出た枠の下に、原因と行番号が表示されます。その行を直すと自動的に変換が再開されます。"}},
+    {"@type":"Question","name":"コメントは変換後も残りますか？","acceptedAnswer":{"@type":"Answer","text":"残りません。YAMLやTOMLのコメントは変換の際に失われます。JSONにはコメントを書く仕組みがないためです。"}},
+    {"@type":"Question","name":"対応していない書き方はありますか？","acceptedAnswer":{"@type":"Answer","text":"YAMLはアンカー・エイリアス・タグ・ブロックスカラー・複数ドキュメントに未対応です。TOMLは配列テーブル([[ ]])・複数行文字列・日付型・null値に未対応です。"}},
+    {"@type":"Question","name":"入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。すべてブラウザの中で処理され、どこにも送信されません（サイト全体の匿名アクセス計測の通信のみ発生します）。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+/* ============================================================
+   Parser/serializer core (YAML + TOML subset). See FAQ above for
+   documented limitations. Errors are thrown as {code, detail, line}
+   so the UI can render them in either language.
+   ============================================================ */
+function ParseError(code, detail, line){
+  var e = new Error(code + (detail ? ": " + detail : ""));
+  e.code = code; e.detail = detail; e.line = line; e.isParseError = true;
+  return e;
+}
+
+function yamlParse(src){
+  var rawLines = src.replace(/\r\n?/g, "\n").split("\n");
+  var lines = [];
+  for (var i = 0; i < rawLines.length; i++){
+    var raw = rawLines[i];
+    if (/^\s*---\s*$/.test(raw)) { continue; }
+    if (/^\s*\.\.\.\s*$/.test(raw)) { break; }
+    if (/\t/.test(raw.match(/^\s*/)[0])) throw ParseError("YAML_TAB_INDENT", null, i + 1);
+    var stripped = stripYamlComment(raw);
+    if (/^\s*$/.test(stripped)) continue;
+    lines.push({ text: stripped, indent: stripped.match(/^ */)[0].length, no: i + 1 });
+  }
+  if (!lines.length) return null;
+  var pos = { i: 0 };
+  return parseBlock(lines, pos, 0);
+}
+function stripYamlComment(line){
+  var inS = false, inD = false;
+  for (var i = 0; i < line.length; i++){
+    var c = line[i];
+    if (inS){ if (c === "'") inS = false; continue; }
+    if (inD){ if (c === '"' && line[i-1] !== "\\") inD = false; continue; }
+    if (c === "'") { inS = true; continue; }
+    if (c === '"') { inD = true; continue; }
+    if (c === "#" && (i === 0 || /\s/.test(line[i-1]))) return line.slice(0, i).replace(/\s+$/, "");
+  }
+  return line.replace(/\s+$/, "");
+}
+function parseBlock(lines, pos, minIndent){
+  if (pos.i >= lines.length) return null;
+  var first = lines[pos.i];
+  if (first.indent < minIndent) return null;
+  var indent = first.indent;
+  if (/^-(\s|$)/.test(first.text.slice(indent))) return parseSeq(lines, pos, indent);
+  return parseMap(lines, pos, indent);
+}
+function parseSeq(lines, pos, indent){
+  var arr = [];
+  while (pos.i < lines.length) {
+    var line = lines[pos.i];
+    if (line.indent !== indent) break;
+    var content = line.text.slice(indent);
+    if (!/^-(\s|$)/.test(content)) break;
+    var rest = content.slice(1).replace(/^\s+/, "");
+    if (rest === "") {
+      pos.i++;
+      var child = parseBlock(lines, pos, indent + 1);
+      arr.push(child === undefined ? null : child);
+    } else {
+      var restIndent = indent + (content.length - content.replace(/^-\s*/, "").length);
+      lines[pos.i] = { text: pad(restIndent) + rest, indent: restIndent, no: line.no };
+      if (looksLikeMapEntry(rest)) arr.push(parseMap(lines, pos, restIndent));
+      else { pos.i++; arr.push(parseScalarOrFlow(rest, line.no)); }
+    }
+  }
+  return arr;
+}
+function pad(n){ return new Array(n + 1).join(" "); }
+function looksLikeMapEntry(text){ return splitKeyValue(text) !== null; }
+function splitKeyValue(text){
+  var inS = false, inD = false, depth = 0;
+  for (var i = 0; i < text.length; i++){
+    var c = text[i];
+    if (inS){ if (c === "'") inS = false; continue; }
+    if (inD){ if (c === '"' && text[i-1] !== "\\") inD = false; continue; }
+    if (c === "'") { inS = true; continue; }
+    if (c === '"') { inD = true; continue; }
+    if (c === "[" || c === "{") depth++;
+    else if (c === "]" || c === "}") depth--;
+    else if (c === ":" && depth === 0 && (i === text.length - 1 || /\s/.test(text[i+1]))) {
+      return { key: text.slice(0, i), valueText: text.slice(i + 1).replace(/^\s+/, "") };
+    }
+  }
+  return null;
+}
+function parseMap(lines, pos, indent){
+  var obj = {};
+  while (pos.i < lines.length) {
+    var line = lines[pos.i];
+    if (line.indent !== indent) break;
+    var content = line.text.slice(indent);
+    if (/^-(\s|$)/.test(content)) break;
+    var kv = splitKeyValue(content);
+    if (!kv) throw ParseError("YAML_NOT_KEY_VALUE", content, line.no);
+    var key = parseYamlKey(kv.key);
+    if (kv.valueText === "") {
+      pos.i++;
+      var next = lines[pos.i];
+      obj[key] = (next && next.indent > indent) ? parseBlock(lines, pos, indent + 1) : null;
+    } else { pos.i++; obj[key] = parseScalarOrFlow(kv.valueText, line.no); }
+  }
+  return obj;
+}
+function parseYamlKey(raw){ raw = raw.trim(); var v = parseScalarOrFlow(raw, 0); return v === null ? "null" : String(v); }
+function parseScalarOrFlow(text, lineNo){
+  text = text.trim();
+  if (text === "") return null;
+  if (text[0] === "[" || text[0] === "{") {
+    var p = { i: 0, s: text, line: lineNo };
+    var v = parseFlow(p);
+    skipFlowSpace(p);
+    if (p.i < p.s.length) throw ParseError("YAML_TRAILING_CHARS", text, lineNo);
+    return v;
+  }
+  if (text[0] === "&" || text[0] === "*") throw ParseError("YAML_ANCHOR_ALIAS", null, lineNo);
+  if (text[0] === "!") throw ParseError("YAML_TAG", null, lineNo);
+  if (text[0] === "|" || text[0] === ">") throw ParseError("YAML_BLOCK_SCALAR", null, lineNo);
+  return parsePlainOrQuoted(text, lineNo);
+}
+function parsePlainOrQuoted(text, lineNo){
+  if (text[0] === '"') { var m = matchDoubleQuoted(text, 0); if (!m || m.end !== text.length) throw ParseError("YAML_STRING_UNCLOSED", text, lineNo); return m.value; }
+  if (text[0] === "'") { var m2 = matchSingleQuoted(text, 0); if (!m2 || m2.end !== text.length) throw ParseError("YAML_STRING_UNCLOSED", text, lineNo); return m2.value; }
+  return coercePlain(text);
+}
+function coercePlain(text){
+  if (text === "~" || text === "null" || text === "Null" || text === "NULL") return null;
+  if (text === "true" || text === "True" || text === "TRUE") return true;
+  if (text === "false" || text === "False" || text === "FALSE") return false;
+  if (/^[-+]?(\d+)$/.test(text)) return parseInt(text, 10);
+  if (/^[-+]?(\d+\.\d*|\.\d+|\d+)([eE][-+]?\d+)?$/.test(text) && /[\d]/.test(text)) {
+    if (/^[-+]?\d+$/.test(text)) return parseInt(text, 10);
+    return parseFloat(text);
+  }
+  if (/^[-+]?\.(inf|Inf|INF)$/.test(text)) return text[0] === "-" ? -Infinity : Infinity;
+  if (/^\.nan$|^\.NaN$|^\.NAN$/.test(text)) return NaN;
+  return text;
+}
+function matchDoubleQuoted(s, start){
+  var i = start + 1, out = "";
+  while (i < s.length) {
+    var c = s[i];
+    if (c === '"') return { value: out, end: i + 1 };
+    if (c === "\\") {
+      var n = s[i+1];
+      var esc = { n:"\n", t:"\t", r:"\r", '"':'"', "\\":"\\", "0":"\0", b:"\b", f:"\f" };
+      if (esc.hasOwnProperty(n)) { out += esc[n]; i += 2; continue; }
+      if (n === "u") { out += String.fromCharCode(parseInt(s.substr(i+2,4),16)); i += 6; continue; }
+      out += n; i += 2; continue;
+    }
+    out += c; i++;
+  }
+  return null;
+}
+function matchSingleQuoted(s, start){
+  var i = start + 1, out = "";
+  while (i < s.length) {
+    var c = s[i];
+    if (c === "'") { if (s[i+1] === "'") { out += "'"; i += 2; continue; } return { value: out, end: i + 1 }; }
+    out += c; i++;
+  }
+  return null;
+}
+function skipFlowSpace(p){ while (p.i < p.s.length && /\s/.test(p.s[p.i])) p.i++; }
+function parseFlow(p){
+  skipFlowSpace(p);
+  var c = p.s[p.i];
+  if (c === "[") return parseFlowSeq(p);
+  if (c === "{") return parseFlowMap(p);
+  if (c === '"') { var m = matchDoubleQuoted(p.s, p.i); if(!m) throw ParseError("YAML_FLOW_STRING_UNCLOSED", null, p.line); p.i = m.end; return m.value; }
+  if (c === "'") { var m2 = matchSingleQuoted(p.s, p.i); if(!m2) throw ParseError("YAML_FLOW_STRING_UNCLOSED", null, p.line); p.i = m2.end; return m2.value; }
+  return parseFlowPlain(p);
+}
+function parseFlowPlain(p){
+  var start = p.i, depth = 0;
+  while (p.i < p.s.length) {
+    var c = p.s[p.i];
+    if ((c === "," || c === "]" || c === "}" || c === ":") && depth === 0) break;
+    if (c === "[" || c === "{") depth++;
+    if (c === "]" || c === "}") depth--;
+    p.i++;
+  }
+  var text = p.s.slice(start, p.i).trim();
+  if (text === "") throw ParseError("YAML_FLOW_VALUE_MISSING", null, p.line);
+  return coercePlain(text);
+}
+function parseFlowSeq(p){
+  p.i++;
+  var arr = [];
+  skipFlowSpace(p);
+  if (p.s[p.i] === "]") { p.i++; return arr; }
+  while (true) {
+    arr.push(parseFlow(p));
+    skipFlowSpace(p);
+    if (p.s[p.i] === ",") { p.i++; skipFlowSpace(p); if (p.s[p.i] === "]") { p.i++; break; } continue; }
+    if (p.s[p.i] === "]") { p.i++; break; }
+    throw ParseError("YAML_ARRAY_NO_CLOSE", null, p.line);
+  }
+  return arr;
+}
+function parseFlowMap(p){
+  p.i++;
+  var obj = {};
+  skipFlowSpace(p);
+  if (p.s[p.i] === "}") { p.i++; return obj; }
+  while (true) {
+    skipFlowSpace(p);
+    var key = parseFlow(p);
+    skipFlowSpace(p);
+    if (p.s[p.i] !== ":") throw ParseError("YAML_FLOW_NO_COLON", null, p.line);
+    p.i++;
+    skipFlowSpace(p);
+    var val = parseFlow(p);
+    obj[String(key)] = val;
+    skipFlowSpace(p);
+    if (p.s[p.i] === ",") { p.i++; skipFlowSpace(p); if (p.s[p.i] === "}") { p.i++; break; } continue; }
+    if (p.s[p.i] === "}") { p.i++; break; }
+    throw ParseError("YAML_OBJECT_NO_CLOSE", null, p.line);
+  }
+  return obj;
+}
+function yamlNeedsQuote(s){
+  if (s === "") return true;
+  if (/^\s|\s$/.test(s)) return true;
+  if (/^[-?:,\[\]{}#&*!|>'"%@`]/.test(s)) return true;
+  if (/[:#]\s|\s#/.test(s)) return true;
+  if (/:\s|:$/.test(s)) return true;
+  if (/^(true|false|null|~|yes|no|True|False|Null|TRUE|FALSE|NULL)$/i.test(s)) return true;
+  if (/^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/.test(s)) return true;
+  if (/^[-+]?\.(inf|nan)/i.test(s)) return true;
+  if (/[\n\t]/.test(s)) return true;
+  return false;
+}
+function yamlScalar(v){
+  if (v === null || v === undefined) return "null";
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (typeof v === "number") return isFinite(v) ? String(v) : (v > 0 ? ".inf" : (v < 0 ? "-.inf" : ".nan"));
+  var s = String(v);
+  return yamlNeedsQuote(s) ? JSON.stringify(s) : s;
+}
+function yamlStringify(data, indentSize){
+  indentSize = indentSize || 2;
+  var out = yamlNode(data, 0, indentSize);
+  return out === "" ? "{}\n" : out.replace(/\n?$/, "\n");
+}
+function yamlNode(v, depth, ind){
+  var padStr = new Array(depth * ind + 1).join(" ");
+  if (Array.isArray(v)) {
+    if (v.length === 0) return padStr + "[]";
+    return v.map(function(item){
+      if (item !== null && typeof item === "object") {
+        var child = yamlNode(item, depth + 1, ind);
+        var lns = child.split("\n");
+        lns[0] = lns[0].replace(new RegExp("^ {" + ((depth+1)*ind) + "}"), "");
+        return padStr + "- " + lns.join("\n");
+      }
+      return padStr + "- " + yamlScalar(item);
+    }).join("\n");
+  }
+  if (v !== null && typeof v === "object") {
+    var keys = Object.keys(v);
+    if (keys.length === 0) return padStr + "{}";
+    return keys.map(function(k){
+      var val = v[k];
+      var keyStr = yamlNeedsQuote(k) ? JSON.stringify(k) : k;
+      if (val !== null && typeof val === "object" && Object.keys(val).length !== 0 && (!Array.isArray(val) || val.length !== 0)) {
+        return padStr + keyStr + ":\n" + yamlNode(val, depth + 1, ind);
+      }
+      if (Array.isArray(val) && val.length === 0) return padStr + keyStr + ": []";
+      if (val !== null && typeof val === "object" && Object.keys(val).length === 0) return padStr + keyStr + ": {}";
+      return padStr + keyStr + ": " + yamlScalar(val);
+    }).join("\n");
+  }
+  return padStr + yamlScalar(v);
+}
+
+function tomlParse(src){
+  var s = src.replace(/\r\n?/g, "\n");
+  var p = { s: s, i: 0, line: 1 };
+  var root = {}, current = root;
+  while (true) {
+    tomlSkipSpaceAndComments(p);
+    if (p.i >= s.length) break;
+    if (s[p.i] === "[") {
+      if (s[p.i+1] === "[") throw ParseError("TOML_ARRAY_OF_TABLES", null, p.line);
+      p.i++;
+      var path = tomlReadKeyPath(p);
+      tomlSkipInlineSpace(p);
+      if (s[p.i] !== "]") throw ParseError("TOML_NO_CLOSE_BRACKET", null, p.line);
+      p.i++;
+      current = tomlGetOrCreatePath(root, path);
+      tomlExpectEOL(p);
+      continue;
+    }
+    var keyPath = tomlReadKeyPath(p);
+    tomlSkipInlineSpace(p);
+    if (s[p.i] !== "=") throw ParseError("TOML_NO_EQUALS", keyPath.join("."), p.line);
+    p.i++;
+    tomlSkipInlineSpace(p);
+    var val = tomlReadValue(p);
+    tomlSetPath(current, keyPath, val);
+    tomlExpectEOL(p);
+  }
+  return root;
+}
+function tomlExpectEOL(p){
+  tomlSkipInlineSpace(p);
+  if (p.i >= p.s.length) return;
+  if (p.s[p.i] === "#") { while (p.i < p.s.length && p.s[p.i] !== "\n") p.i++; }
+  if (p.s[p.i] === "\n") { p.i++; p.line++; return; }
+  if (p.i >= p.s.length) return;
+  throw ParseError("TOML_UNEXPECTED_EOL", null, p.line);
+}
+function tomlSkipInlineSpace(p){ while (p.i < p.s.length && (p.s[p.i] === " " || p.s[p.i] === "\t")) p.i++; }
+function tomlSkipSpaceAndComments(p){
+  while (p.i < p.s.length) {
+    var c = p.s[p.i];
+    if (c === " " || c === "\t") { p.i++; continue; }
+    if (c === "\n") { p.i++; p.line++; continue; }
+    if (c === "#") { while (p.i < p.s.length && p.s[p.i] !== "\n") p.i++; continue; }
+    break;
+  }
+}
+function tomlReadBareOrQuotedKey(p){
+  tomlSkipInlineSpace(p);
+  var c = p.s[p.i];
+  if (c === '"') { var m = matchDoubleQuoted(p.s, p.i); if (!m) throw ParseError("TOML_KEY_STRING_UNCLOSED", null, p.line); p.i = m.end; return m.value; }
+  if (c === "'") { var m2 = matchSingleQuoted(p.s, p.i); if (!m2) throw ParseError("TOML_KEY_STRING_UNCLOSED", null, p.line); p.i = m2.end; return m2.value; }
+  var start = p.i;
+  while (p.i < p.s.length && /[A-Za-z0-9_-]/.test(p.s[p.i])) p.i++;
+  if (p.i === start) throw ParseError("TOML_KEY_MISSING", null, p.line);
+  return p.s.slice(start, p.i);
+}
+function tomlReadKeyPath(p){
+  var parts = [tomlReadBareOrQuotedKey(p)];
+  tomlSkipInlineSpace(p);
+  while (p.s[p.i] === ".") { p.i++; parts.push(tomlReadBareOrQuotedKey(p)); tomlSkipInlineSpace(p); }
+  return parts;
+}
+function tomlGetOrCreatePath(root, path){
+  var cur = root;
+  for (var i = 0; i < path.length; i++) {
+    if (!(path[i] in cur)) cur[path[i]] = {};
+    if (typeof cur[path[i]] !== "object" || Array.isArray(cur[path[i]])) throw ParseError("TOML_TABLE_KEY_CONFLICT", path.join("."), 0);
+    cur = cur[path[i]];
+  }
+  return cur;
+}
+function tomlSetPath(obj, path, val){
+  var cur = obj;
+  for (var i = 0; i < path.length - 1; i++) { if (!(path[i] in cur)) cur[path[i]] = {}; cur = cur[path[i]]; }
+  cur[path[path.length - 1]] = val;
+}
+function tomlReadValue(p){
+  var s = p.s, c = s[p.i];
+  if (c === '"') { var m = matchDoubleQuoted(s, p.i); if(!m) throw ParseError("TOML_VALUE_STRING_UNCLOSED", null, p.line); p.i = m.end; return m.value; }
+  if (c === "'") { var m2 = matchSingleQuoted(s, p.i); if(!m2) throw ParseError("TOML_VALUE_STRING_UNCLOSED", null, p.line); p.i = m2.end; return m2.value; }
+  if (c === "[") return tomlReadArray(p);
+  if (c === "{") return tomlReadInlineTable(p);
+  return tomlReadBareValue(p);
+}
+function tomlReadArray(p){
+  p.i++;
+  var arr = [];
+  while (true) {
+    tomlSkipSpaceAndComments(p);
+    if (p.s[p.i] === "]") { p.i++; break; }
+    arr.push(tomlReadValue(p));
+    tomlSkipSpaceAndComments(p);
+    if (p.s[p.i] === ",") { p.i++; continue; }
+    tomlSkipSpaceAndComments(p);
+    if (p.s[p.i] === "]") { p.i++; break; }
+    throw ParseError("TOML_ARRAY_NO_COMMA_CLOSE", null, p.line);
+  }
+  return arr;
+}
+function tomlReadInlineTable(p){
+  p.i++;
+  var obj = {};
+  tomlSkipInlineSpace(p);
+  if (p.s[p.i] === "}") { p.i++; return obj; }
+  while (true) {
+    tomlSkipInlineSpace(p);
+    var path = tomlReadKeyPath(p);
+    tomlSkipInlineSpace(p);
+    if (p.s[p.i] !== "=") throw ParseError("TOML_INLINE_NO_EQUALS", null, p.line);
+    p.i++;
+    tomlSkipInlineSpace(p);
+    var v = tomlReadValue(p);
+    tomlSetPath(obj, path, v);
+    tomlSkipInlineSpace(p);
+    if (p.s[p.i] === ",") { p.i++; continue; }
+    if (p.s[p.i] === "}") { p.i++; break; }
+    throw ParseError("TOML_INLINE_NO_COMMA_CLOSE", null, p.line);
+  }
+  return obj;
+}
+function tomlReadBareValue(p){
+  var s = p.s, start = p.i;
+  while (p.i < s.length && !/[,\]\}\n#]/.test(s[p.i])) p.i++;
+  var text = s.slice(start, p.i).trim();
+  if (text === "") throw ParseError("TOML_VALUE_MISSING", null, p.line);
+  if (text === "true") return true;
+  if (text === "false") return false;
+  if (/^[+-]?\d[\d_]*$/.test(text)) return parseInt(text.replace(/_/g, ""), 10);
+  if (/^[+-]?(\d[\d_]*)?\.\d[\d_]*([eE][+-]?\d+)?$/.test(text) || /^[+-]?\d[\d_]*[eE][+-]?\d+$/.test(text)) return parseFloat(text.replace(/_/g, ""));
+  if (/^[+-]?(inf|nan)$/.test(text)) return text.indexOf("-") === 0 ? -Infinity : (text.indexOf("nan")>=0?NaN:Infinity);
+  return text;
+}
+function tomlKeyStr(k){ return /^[A-Za-z0-9_-]+$/.test(k) ? k : JSON.stringify(k); }
+function tomlScalar(v){
+  if (v === null || v === undefined) throw new Error("TOML_NULL_UNSUPPORTED");
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (typeof v === "number") return isFinite(v) ? String(v) : (isNaN(v) ? "nan" : (v>0?"inf":"-inf"));
+  return JSON.stringify(String(v));
+}
+function tomlIsPlainObject(v){ return v !== null && typeof v === "object" && !Array.isArray(v); }
+function tomlInlineValue(v){
+  if (Array.isArray(v)) return "[" + v.map(tomlInlineValue).join(", ") + "]";
+  if (tomlIsPlainObject(v)) return "{ " + Object.keys(v).map(function(k){ return tomlKeyStr(k) + " = " + tomlInlineValue(v[k]); }).join(", ") + " }";
+  return tomlScalar(v);
+}
+function tomlArrayValue(arr){
+  if (arr.every(tomlIsPlainObject)) return "[" + arr.map(function(o){ return tomlInlineValue(o); }).join(", ") + "]";
+  return tomlInlineValue(arr);
+}
+function tomlStringify(data){
+  if (!tomlIsPlainObject(data)) throw new Error("TOML_ROOT_MUST_BE_OBJECT");
+  var lines = [];
+  tomlEmitTable(data, [], lines);
+  return lines.join("\n").replace(/\n*$/, "\n");
+}
+function tomlEmitTable(obj, path, lines){
+  var scalarKeys = [], tableKeys = [];
+  Object.keys(obj).forEach(function(k){ (tomlIsPlainObject(obj[k]) ? tableKeys : scalarKeys).push(k); });
+  var isEmptyLeaf = scalarKeys.length === 0 && tableKeys.length === 0;
+  if (path.length && (scalarKeys.length > 0 || isEmptyLeaf)) lines.push("[" + path.map(tomlKeyStr).join(".") + "]");
+  scalarKeys.forEach(function(k){
+    var v = obj[k];
+    lines.push(tomlKeyStr(k) + " = " + (Array.isArray(v) ? tomlArrayValue(v) : tomlScalar(v)));
+  });
+  if (path.length && scalarKeys.length) lines.push("");
+  tableKeys.forEach(function(k){ tomlEmitTable(obj[k], path.concat([k]), lines); });
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+function $(id){return document.getElementById(id)}
+
+var ERR_MSG = {
+  ja: {
+    YAML_TAB_INDENT: "インデントにタブは使えません（スペースのみ対応です）",
+    YAML_NOT_KEY_VALUE: function(d){return "「キー: 値」の形式ではありません: " + d;},
+    YAML_TRAILING_CHARS: function(d){return "行の末尾に余分な文字があります: " + d;},
+    YAML_ANCHOR_ALIAS: "アンカー(&)・エイリアス(*)は未対応です",
+    YAML_TAG: "タグ(!)は未対応です",
+    YAML_BLOCK_SCALAR: "ブロックスカラー（| や >）は未対応です",
+    YAML_STRING_UNCLOSED: function(d){return "文字列の引用符が閉じていません: " + d;},
+    YAML_FLOW_STRING_UNCLOSED: "文字列の引用符が閉じていません",
+    YAML_FLOW_VALUE_MISSING: "値がありません",
+    YAML_ARRAY_NO_CLOSE: "配列の閉じ括弧 ] がありません",
+    YAML_FLOW_NO_COLON: "「キー: 値」の : がありません",
+    YAML_OBJECT_NO_CLOSE: "オブジェクトの閉じ括弧 } がありません",
+    TOML_ARRAY_OF_TABLES: "配列テーブル [[ ]] は未対応です",
+    TOML_NO_CLOSE_BRACKET: "] がありません",
+    TOML_NO_EQUALS: function(d){return "= がありません: " + d;},
+    TOML_UNEXPECTED_EOL: "行の末尾に予期しない文字があります",
+    TOML_KEY_STRING_UNCLOSED: "キーの引用符が閉じていません",
+    TOML_KEY_MISSING: "キーがありません",
+    TOML_TABLE_KEY_CONFLICT: function(d){return "既存のキーとテーブルが衝突しています: " + d;},
+    TOML_VALUE_STRING_UNCLOSED: "文字列が閉じていません",
+    TOML_ARRAY_NO_COMMA_CLOSE: "配列の , または ] がありません",
+    TOML_INLINE_NO_EQUALS: "インラインテーブルに = がありません",
+    TOML_INLINE_NO_COMMA_CLOSE: "インラインテーブルの , または } がありません",
+    TOML_VALUE_MISSING: "値がありません",
+    TOML_NULL_UNSUPPORTED: "TOMLはnull（値なし）を表現できません。該当データを削除するか、空文字列など別の値にしてください。",
+    TOML_ROOT_MUST_BE_OBJECT: "TOMLの最上位はオブジェクト（{ }）である必要があります。配列や単一の値は変換できません。"
+  },
+  en: {
+    YAML_TAB_INDENT: "Tabs can't be used for indentation (spaces only)",
+    YAML_NOT_KEY_VALUE: function(d){return "Not a \"key: value\" line: " + d;},
+    YAML_TRAILING_CHARS: function(d){return "Unexpected extra characters at the end of the line: " + d;},
+    YAML_ANCHOR_ALIAS: "Anchors (&) and aliases (*) are not supported",
+    YAML_TAG: "Tags (!) are not supported",
+    YAML_BLOCK_SCALAR: "Block scalars (| or >) are not supported",
+    YAML_STRING_UNCLOSED: function(d){return "Unclosed quoted string: " + d;},
+    YAML_FLOW_STRING_UNCLOSED: "Unclosed quoted string",
+    YAML_FLOW_VALUE_MISSING: "Missing value",
+    YAML_ARRAY_NO_CLOSE: "Missing closing ] for array",
+    YAML_FLOW_NO_COLON: "Missing : in \"key: value\"",
+    YAML_OBJECT_NO_CLOSE: "Missing closing } for object",
+    TOML_ARRAY_OF_TABLES: "Array-of-tables ([[ ]]) is not supported",
+    TOML_NO_CLOSE_BRACKET: "Missing ]",
+    TOML_NO_EQUALS: function(d){return "Missing = after: " + d;},
+    TOML_UNEXPECTED_EOL: "Unexpected character at the end of the line",
+    TOML_KEY_STRING_UNCLOSED: "Unclosed quoted key",
+    TOML_KEY_MISSING: "Missing key",
+    TOML_TABLE_KEY_CONFLICT: function(d){return "Key conflicts with an existing table: " + d;},
+    TOML_VALUE_STRING_UNCLOSED: "Unclosed quoted string",
+    TOML_ARRAY_NO_COMMA_CLOSE: "Missing , or ] in array",
+    TOML_INLINE_NO_EQUALS: "Missing = in inline table",
+    TOML_INLINE_NO_COMMA_CLOSE: "Missing , or } in inline table",
+    TOML_VALUE_MISSING: "Missing value",
+    TOML_NULL_UNSUPPORTED: "TOML has no concept of null. Remove that data or use another value (like an empty string) instead.",
+    TOML_ROOT_MUST_BE_OBJECT: "The top level of a TOML document must be an object ({ }). An array or a single value can't be converted."
+  }
+};
+
+function formatError(e){
+  if (e && e.isParseError) {
+    var table = ERR_MSG[lang] || ERR_MSG.ja;
+    var entry = table[e.code];
+    var msg = typeof entry === "function" ? entry(e.detail) : (entry || e.code);
+    if (e.line) msg += (lang === "en" ? " (line " + e.line + ")" : "（" + e.line + "行目）");
+    return msg;
+  }
+  if (e && e.message === "TOML_NULL_UNSUPPORTED") return ERR_MSG[lang].TOML_NULL_UNSUPPORTED;
+  if (e && e.message === "TOML_ROOT_MUST_BE_OBJECT") return ERR_MSG[lang].TOML_ROOT_MUST_BE_OBJECT;
+  if (e instanceof SyntaxError) return formatJsonError(e);
+  return (e && e.message) ? e.message : String(e);
+}
+function formatJsonError(e){
+  var m = /position (\d+)/.exec(e.message);
+  if (m) {
+    var pos = parseInt(m[1], 10);
+    var lineNo = jsonBoxText().slice(0, pos).split("\n").length;
+    return (lang === "en" ? "JSON syntax error (near line " + lineNo + "): " : "JSONの構文エラー（" + lineNo + "行目付近）: ") + e.message;
+  }
+  return (lang === "en" ? "JSON syntax error: " : "JSONの構文エラー: ") + e.message;
+}
+function jsonBoxText(){ return $("jsonBox").value; }
+
+var T = {
+ ja:{
+  title:"JSON・YAML・TOML 相互変換エディタ",
+  sub:"3つの枠のどれかを編集すると、正しく書けた時点で残り2つの形式にその場で変換されます。設定ファイルの見比べや形式変換に。ブラウザ内だけで処理し、どこにも送信されません。",
+  indentLabel:"インデント幅（JSON・YAML）",
+  sampleBtn:"サンプルを読み込む", clearBtn:"すべてクリア",
+  jsonDesc:"JavaScriptやAPIで一般的なデータ形式。",
+  yamlDesc:"GitHub Actions・docker-compose・Kubernetesなどでよく使う形式。",
+  tomlDesc:"Cargo.toml・pyproject.tomlなどでよく使う形式。",
+  copyBtn:"コピー", copiedBtn:"コピーしました", downloadBtn:"ダウンロード",
+  feedback:"フィードバックはこちら", privacy:"入力した内容はサーバーに送信されません。すべてこのブラウザの中で処理されます。"
+ },
+ en:{
+  title:"JSON / YAML / TOML Converter",
+  sub:"Edit any one of the three boxes and, as soon as it parses, the other two formats update to match. Great for comparing or converting config files. Everything runs in your browser — nothing is uploaded.",
+  indentLabel:"Indent width (JSON, YAML)",
+  sampleBtn:"Load sample", clearBtn:"Clear all",
+  jsonDesc:"A common data format for JavaScript and APIs.",
+  yamlDesc:"Common in GitHub Actions, docker-compose, Kubernetes, etc.",
+  tomlDesc:"Common in Cargo.toml, pyproject.toml, etc.",
+  copyBtn:"Copy", copiedBtn:"Copied", downloadBtn:"Download",
+  feedback:"Feedback", privacy:"Nothing you enter is uploaded — everything is processed inside this browser."
+ }
+};
+
+var lang = "ja";
+try { var q = new URLSearchParams(location.search).get("lang"); if (q === "en" || q === "ja") lang = q; else if (!/^ja/i.test(navigator.language || "ja")) lang = "en"; } catch(e){}
+
+var SAMPLE = {
+  name: "sample-app",
+  version: "1.0.0",
+  port: 8080,
+  debug: false,
+  tags: ["web", "api"],
+  database: { host: "127.0.0.1", port: 5432, user: "admin" }
+};
+
+var canonical = SAMPLE;
+var timers = {};
+
+function indentSize(){ return parseInt($("indentSelect").value, 10) || 2; }
+
+function setMsg(fmt, text, kind){
+  var el = $(fmt + "Msg");
+  el.textContent = text || "";
+  el.className = "msg" + (text ? " " + (kind || "err") : "");
+  $(fmt + "Box").classList.toggle("haserror", !!(text && kind !== "warn"));
+}
+
+function renderFormat(fmt, data){
+  try {
+    var text;
+    if (fmt === "json") text = JSON.stringify(data, null, indentSize()) + "\n";
+    else if (fmt === "yaml") text = yamlStringify(data, indentSize());
+    else text = tomlStringify(data);
+    $(fmt + "Box").value = text;
+    setMsg(fmt, "", null);
+    return true;
+  } catch (e) {
+    setMsg(fmt, formatError(e), "warn");
+    return false;
+  }
+}
+
+function renderAll(){
+  ["json", "yaml", "toml"].forEach(function(fmt){ renderFormat(fmt, canonical); });
+}
+
+function parseFormat(fmt, text){
+  if (fmt === "json") return JSON.parse(text);
+  if (fmt === "yaml") return yamlParse(text);
+  return tomlParse(text);
+}
+
+function onEdit(fmt){
+  clearTimeout(timers[fmt]);
+  timers[fmt] = setTimeout(function(){
+    var text = $(fmt + "Box").value;
+    if (text.trim() === "") { setMsg(fmt, "", null); return; }
+    try {
+      var data = parseFormat(fmt, text);
+      canonical = data;
+      setMsg(fmt, "", null);
+      ["json", "yaml", "toml"].forEach(function(other){ if (other !== fmt) renderFormat(other, canonical); });
+    } catch (e) {
+      setMsg(fmt, formatError(e), "err");
+    }
+  }, 300);
+}
+
+["json", "yaml", "toml"].forEach(function(fmt){
+  $(fmt + "Box").addEventListener("input", function(){ onEdit(fmt); });
+});
+
+$("indentSelect").addEventListener("change", function(){ renderAll(); });
+$("sampleBtn").addEventListener("click", function(){ canonical = SAMPLE; renderAll(); });
+$("clearBtn").addEventListener("click", function(){
+  ["json", "yaml", "toml"].forEach(function(fmt){ $(fmt + "Box").value = ""; setMsg(fmt, "", null); });
+});
+
+document.querySelectorAll("[data-copy]").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var box = $(btn.getAttribute("data-copy"));
+    var restore = btn.textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(box.value) : Promise.reject()).then(function(){
+      btn.textContent = T[lang].copiedBtn;
+      setTimeout(function(){ btn.textContent = restore; }, 1500);
+    }).catch(function(){
+      box.focus(); box.select();
+      try { document.execCommand("copy"); btn.textContent = T[lang].copiedBtn; setTimeout(function(){ btn.textContent = restore; }, 1500); } catch(e2){}
+    });
+  });
+});
+document.querySelectorAll("[data-download]").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var fmt = btn.getAttribute("data-download");
+    var box = $(fmt + "Box");
+    var mime = fmt === "json" ? "application/json" : "text/plain";
+    var ext = fmt === "yaml" ? "yaml" : fmt;
+    var blob = new Blob([box.value], { type: mime + ";charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "config." + ext;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  });
+});
+
+function applyLang(){
+  document.documentElement.lang = lang;
+  var els = document.querySelectorAll("[data-i]");
+  for (var i = 0; i < els.length; i++){ var k = els[i].getAttribute("data-i"); if (T[lang][k] !== undefined) els[i].textContent = T[lang][k]; }
+  var bs = document.querySelectorAll(".lang button");
+  for (var j = 0; j < bs.length; j++) bs[j].setAttribute("aria-pressed", bs[j].getAttribute("data-lang") === lang ? "true" : "false");
+  document.querySelectorAll("[data-copy]").forEach(function(btn){ btn.textContent = T[lang].copyBtn; });
+  document.querySelectorAll("[data-download]").forEach(function(btn){ btn.textContent = T[lang].downloadBtn; });
+}
+document.querySelectorAll(".lang button").forEach(function(b){ b.addEventListener("click", function(){ lang = this.getAttribute("data-lang"); applyLang(); }); });
+
+applyLang();
+renderAll();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
