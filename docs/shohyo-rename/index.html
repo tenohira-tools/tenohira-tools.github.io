@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>証憑ファイル名整理ツール｜領収書・請求書のファイル名を一括作成 | てのひらツール</title>
+<meta name="description" content="領収書・請求書などのPDFや画像に「日付・取引先・金額」を入力するだけで、わかりやすいファイル名に一括リネーム。対応ブラウザではフォルダを選んで直接リネーム、それ以外は名前を付けたコピーを一括ダウンロード。ファイルはこの端末の中だけで処理されます。Rename receipts and invoices with date/vendor/amount, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/shohyo-rename/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--bad:#f19a9d;--bad-bg:#3a2022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.35rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.08rem;margin:0 0 12px}
+.optlabel{color:var(--muted);font-size:.88rem;margin:14px 0 6px}
+.optlabel:first-child{margin-top:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{font:inherit;font-size:.9rem;font-weight:600;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;min-height:36px}
+.opts button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.fieldOrder{display:grid;gap:6px}
+.fieldRow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.fieldRow label{display:flex;align-items:center;gap:8px;flex:1;font-size:.95rem;cursor:pointer}
+.fieldRow input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.fieldRow .arrows{display:flex;gap:4px}
+.fieldRow .arrows button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;width:30px;height:30px;cursor:pointer}
+.fieldRow .arrows button:disabled{opacity:.35;cursor:not-allowed}
+.preview{margin-top:14px;padding:10px 12px;background:var(--accent-bg);color:var(--accent);border-radius:8px;font-size:.95rem;font-weight:600;word-break:break-all}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
+button.secondary:disabled{opacity:.4;cursor:not-allowed}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.drop input{display:none}
+.note{margin-top:10px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.88rem}
+.status{margin-top:10px;font-size:.9rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:.92rem}
+table th{text-align:left;color:var(--muted);font-weight:600;font-size:.82rem;padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+table td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+table input[type=text],table input[type=date]{width:100%;min-width:96px;font:inherit;font-size:.9rem;padding:6px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+table input.amount{width:100%;min-width:80px}
+.newname{font-weight:600;word-break:break-all}
+.newname.dup{color:var(--bad)}
+.rowmsg{font-size:.8rem;margin-top:2px}
+.rowmsg.ok{color:var(--accent)}
+.rowmsg.bad{color:var(--bad)}
+.rmbtn{border:0;background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:2px 6px}
+.tablewrap{overflow-x:auto}
+.batchbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;padding:10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.batchbar input{font:inherit;font-size:.88rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);max-width:150px}
+.summary{margin-top:10px;font-size:.9rem}
+.summary b.ok{color:var(--accent)}
+.summary b.bad{color:var(--bad)}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">証憑ファイル名整理ツール</h1>
+    <p class="sub" data-i="sub">領収書・請求書などのファイルに「日付・取引先・金額」を入力して、わかりやすい名前に一括リネームします。処理はすべてこの端末の中だけで行われます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="h_settings">命名ルールの設定</h2>
+  <p class="optlabel" data-i="orderLabel">項目の並び順（チェックを外すと使いません／↑↓で順番を変更）</p>
+  <div class="fieldOrder" id="fieldOrder"></div>
+  <p class="optlabel" data-i="sepLabel">区切り文字</p>
+  <div class="opts" id="sepOpts"></div>
+  <p class="optlabel" data-i="dateFmtLabel">日付の形式</p>
+  <div class="opts" id="dateFmtOpts"></div>
+  <p class="optlabel" data-i="amountUnitLabel">金額の表記</p>
+  <div class="opts" id="amountUnitOpts"></div>
+  <div class="preview" id="previewText"></div>
+</section>
+
+<section class="card">
+  <h2 data-i="h_source">ファイルを追加</h2>
+  <div class="row" id="folderRow" style="display:none">
+    <button type="button" class="primary" id="folderBtn" data-i="folderBtn">フォルダを選んで読み込む</button>
+    <span class="status" data-i="folderHint">対応ブラウザでは、フォルダ内のファイルを直接リネームできます。</span>
+  </div>
+  <div class="drop" id="dropZone">
+    <span data-i="dropText">ここにファイルをドラッグ＆ドロップ、またはクリックして選択</span>
+    <input type="file" id="fileInput" multiple>
+  </div>
+  <p class="note" id="noFolderNote" data-i="noFolderNote" style="display:none">このブラウザはフォルダへの直接リネームに対応していません。ファイルを追加すると、名前を付けたコピーを一括ダウンロードできます（Google ChromeやMicrosoft Edgeでは直接リネームできます）。</p>
+  <p class="status" id="loadStatus"></p>
+</section>
+
+<section class="card" id="tableCard" style="display:none">
+  <h2 data-i="h_table">ファイル一覧</h2>
+  <div class="batchbar">
+    <span class="optlabel" style="margin:0" data-i="batchLabel">まとめて設定：</span>
+    <input type="date" id="batchDate">
+    <button type="button" class="secondary" id="batchDateBtn" data-i="applyBtn">全行に適用</button>
+    <input type="text" id="batchVendor" data-i-ph="vendorPh">
+    <button type="button" class="secondary" id="batchVendorBtn" data-i="applyBtn">全行に適用</button>
+    <input type="text" id="batchDoctype" list="doctypeList" data-i-ph="doctypePh">
+    <button type="button" class="secondary" id="batchDoctypeBtn" data-i="applyBtn">全行に適用</button>
+  </div>
+  <datalist id="doctypeList">
+    <option value="領収書"><option value="請求書"><option value="納品書"><option value="見積書"><option value="契約書">
+  </datalist>
+  <div class="tablewrap">
+  <table>
+    <thead><tr>
+      <th data-i="col_orig">元のファイル名</th>
+      <th data-i="col_date">日付</th>
+      <th data-i="col_vendor">取引先</th>
+      <th data-i="col_amount">金額</th>
+      <th data-i="col_doctype">書類種別</th>
+      <th data-i="col_new">新しいファイル名</th>
+      <th></th>
+    </tr></thead>
+    <tbody id="fileRows"></tbody>
+  </table>
+  </div>
+  <div class="row">
+    <button type="button" class="primary" id="renameFolderBtn" data-i="renameFolderBtn" style="display:none">フォルダ内で直接リネーム</button>
+    <button type="button" class="primary" id="downloadAllBtn" data-i="downloadAllBtn">名前を付けてまとめてダウンロード</button>
+    <button type="button" class="secondary" id="csvBtn" data-i="csvBtn">対応表をCSVでダウンロード</button>
+    <button type="button" class="secondary" id="clearBtn" data-i="clearBtn">すべてクリア</button>
+  </div>
+  <div class="summary" id="summary"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上で命名ルール（並び順・区切り文字・日付形式）を決めます。あとから変更しても構いません。</li>
+      <li>Google ChromeやMicrosoft Edgeなど対応ブラウザでは「フォルダを選んで読み込む」でフォルダ内のファイルを直接読み込めます。それ以外のブラウザやiPhone/iPadでは、ファイルをドラッグ＆ドロップ（またはタップして選択）してください。</li>
+      <li>各行に日付・取引先・金額・書類種別を入力すると、右側に新しいファイル名がその場でプレビューされます。「まとめて設定」を使うと同じ値を全行に一括で入れられます。</li>
+      <li>フォルダから読み込んだ場合は「フォルダ内で直接リネーム」で元のファイルをその場でリネームできます。それ以外の場合は「名前を付けてまとめてダウンロード」で、新しい名前が付いたコピーを保存します。</li>
+      <li>あとで見返せるように、元のファイル名と新しいファイル名の対応表をCSVで保存できます。</li>
+    </ol>
+    <h3>Q. ファイルはどこかにアップロードされますか？</h3>
+    <p>A. されません。ファイルの内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。</p>
+    <h3>Q. これは電子帳簿保存法などの要件を満たすことを保証しますか？</h3>
+    <p>A. いいえ。このツールは、日付・取引先・金額などを組み合わせたファイル名を機械的に組み立てる補助ツールにすぎません。電子帳簿保存法の検索要件や保存要件を実際に満たしているかどうかは、取引の内容や社内の運用によって異なります。正式な要件は国税庁の資料や、顧問税理士など専門家にご確認ください。本ツールは税務・法律上の助言を行うものではありません。</p>
+    <h3>Q. 「フォルダを選んで読み込む」が表示されません。</h3>
+    <p>A. この機能はGoogle ChromeやMicrosoft Edgeなど一部のブラウザのみに対応しています（Safari・Firefox・iPhone/iPadでは利用できません）。その場合はファイルをドラッグ＆ドロップしてください。名前を付けたコピーをダウンロードする形で利用できます。</p>
+    <h3>Q. 元のファイルは上書きされますか？</h3>
+    <p>A. 「フォルダ内で直接リネーム」を使った場合のみ、選んだフォルダ内のファイルの名前がその場で変わります（内容は変わりません）。「まとめてダウンロード」の場合は元のファイルはそのまま残り、新しい名前のコピーがダウンロードフォルダに追加されます。</p>
+    <h3>Q. 一度に多数のファイルをダウンロードすると失敗します。</h3>
+    <p>A. ブラウザによっては「複数のファイルをダウンロードしようとしています」という確認が出ることがあります。表示された場合は許可してください。それでも一部失敗する場合は、件数を分けてダウンロードすることをお試しください。</p>
+    <h3>Q. 取引先名に記号を入れるとどうなりますか？</h3>
+    <p>A. ファイル名に使えない記号（<code>/ \ : * ? " &lt; &gt; |</code>）は自動的に取り除かれ、スペースも詰められます。</p>
+    <h3>Q. 同じ内容のファイルが複数あるとどうなりますか？</h3>
+    <p>A. 生成される名前が重複する場合は、自動的に「-2」「-3」を末尾に付けて区別します。</p>
+    <h3>Q. ダウンロードしたファイルの名前が、画面のプレビューと違うことがありますか？</h3>
+    <p>A. まれに、ブラウザや環境によっては、ダウンロードされたコピーのファイル名が正しく反映されないことがあります。その場合は、画面上の「新しいファイル名」の表示、または「対応表をCSVでダウンロード」で保存した対応表を見ながら、手動でファイル名を付け直してください。Google ChromeやMicrosoft Edgeで「フォルダ内で直接リネーム」を使う方法では、この問題は起きません。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Set your naming rule above (field order, separator, date format). You can change it anytime.</li>
+      <li>On Chrome or Edge, use "Choose a folder" to load files directly from a folder. On other browsers (including iPhone/iPad), drag and drop files instead.</li>
+      <li>Fill in date, vendor, amount and document type for each row — the new filename previews instantly. Use the batch bar to apply the same value to every row at once.</li>
+      <li>If you loaded a folder, "Rename in folder" renames the original files in place. Otherwise, "Download all with new names" saves renamed copies.</li>
+      <li>Download a CSV mapping of old → new filenames for your records.</li>
+    </ol>
+    <h3>Q. Are my files uploaded anywhere?</h3>
+    <p>A. No. Everything happens inside this browser on your device; files are never sent to a server (only anonymous, cookie-free page-view counts are collected for this page).</p>
+    <h3>Q. Does this guarantee compliance with Japan's electronic bookkeeping law?</h3>
+    <p>A. No. This tool only mechanically assembles a filename from fields you enter (date, vendor, amount, etc). Whether a given filename actually satisfies the law's search/retention requirements depends on your transactions and internal rules. Check official guidance from Japan's National Tax Agency or a qualified tax professional — this tool does not provide tax or legal advice.</p>
+    <h3>Q. "Choose a folder" isn't showing up.</h3>
+    <p>A. That feature only works in browsers with File System Access support (Chrome, Edge) — not Safari, Firefox, or iPhone/iPad. Drag and drop your files instead; you'll get renamed copies to download.</p>
+    <h3>Q. Are my original files overwritten?</h3>
+    <p>A. Only if you use "Rename in folder" — that renames the files in the folder you chose (content is unchanged). "Download all" leaves originals untouched and adds renamed copies to your downloads.</p>
+    <h3>Q. Downloading many files at once fails.</h3>
+    <p>A. Your browser may ask to confirm multiple downloads — allow it. If some still fail, try downloading fewer files at a time.</p>
+    <h3>Q. What happens to symbols in the vendor name?</h3>
+    <p>A. Characters not allowed in filenames (<code>/ \ : * ? " &lt; &gt; |</code>) are removed automatically, and spaces are stripped.</p>
+    <h3>Q. What if several files end up with the same name?</h3>
+    <p>A. A "-2", "-3" suffix is added automatically to keep them unique.</p>
+    <h3>Q. Can a downloaded file's name differ from what the page previews?</h3>
+    <p>A. In rare cases, depending on your browser or environment, a downloaded copy's filename may not come through correctly. If that happens, rename it manually using the "new filename" shown on this page, or the CSV mapping you downloaded. Using "Rename in folder" on Chrome or Edge avoids this entirely.</p>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">ファイルの内容やファイル名はサーバーに送信されません。すべてこの端末のブラウザだけで処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"ファイルはどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。ファイルの内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません。"}},
+    {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。日付・取引先・金額などを組み合わせたファイル名を機械的に組み立てる補助ツールです。正式な要件は国税庁の資料や専門家にご確認ください。税務・法律上の助言ではありません。"}},
+    {"@type":"Question","name":"「フォルダを選んで読み込む」が表示されません。","acceptedAnswer":{"@type":"Answer","text":"Google ChromeやMicrosoft Edgeなど一部のブラウザのみに対応した機能です。それ以外のブラウザではファイルをドラッグ＆ドロップしてください。"}},
+    {"@type":"Question","name":"元のファイルは上書きされますか？","acceptedAnswer":{"@type":"Answer","text":"「フォルダ内で直接リネーム」を使った場合のみ、選んだフォルダ内のファイル名がその場で変わります。それ以外はコピーがダウンロードされ、元のファイルは残ります。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* ---------- core (pure) logic ---------- */
+var FORBIDDEN_RE = /[\\/:*?"<>|\x00-\x1f]/g;
+function sanitizePart(str){
+  str = (str==null?"":String(str));
+  str = str.replace(FORBIDDEN_RE,"");
+  str = str.replace(/\s+/g,"");
+  str = str.replace(/^\.+/,"");
+  return str;
+}
+function digitsOnly(str){
+  str = (str==null?"":String(str));
+  var m = str.replace(/[,，]/g,"").match(/-?\d+/);
+  return m ? m[0] : "";
+}
+function formatDate(dateStr, fmt){
+  if(!dateStr) return "";
+  var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if(!m) return "";
+  var y=m[1],mo=m[2],d=m[3];
+  switch(fmt){
+    case "yyyymmdd": return y+mo+d;
+    case "yymmdd": return y.slice(2)+mo+d;
+    case "yyyy-mm-dd": return y+"-"+mo+"-"+d;
+    case "yyyy_mm_dd": return y+"_"+mo+"_"+d;
+    default: return y+mo+d;
+  }
+}
+var SEP_CHARS={underscore:"_",hyphen:"-",none:""};
+function buildStem(fields,settings){
+  var sep = SEP_CHARS[settings.sep]!=null ? SEP_CHARS[settings.sep] : "_";
+  var parts=[];
+  settings.order.forEach(function(key){
+    if(!settings.enabled || settings.enabled[key]!==false){
+      var v="";
+      if(key==="date") v=formatDate(fields.date,settings.dateFormat);
+      else if(key==="amount"){
+        var d=digitsOnly(fields.amount);
+        if(d) v=d+(settings.amountUnit||"");
+      } else {
+        v=sanitizePart(fields[key]);
+      }
+      if(v) parts.push(v);
+    }
+  });
+  return parts.join(sep);
+}
+function splitExt(name){
+  var i=name.lastIndexOf(".");
+  if(i<=0) return {base:name,ext:""};
+  return {base:name.slice(0,i),ext:name.slice(i)};
+}
+function buildRenamePlan(files,settings){
+  var seen=Object.create(null);
+  return files.map(function(f){
+    var origExt=splitExt(f.name).ext;
+    var stem=buildStem(f.fields,settings) || splitExt(f.name).base;
+    var key=(stem+origExt).toLowerCase();
+    var n=(seen[key]||0)+1;
+    seen[key]=n;
+    var finalStem = n>1 ? stem+"-"+n : stem;
+    return {name:f.name,newName:finalStem+origExt,stem:finalStem,deduped:n>1};
+  });
+}
+function csvEscape(v){
+  v = v==null?"":String(v);
+  if(/[",\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function buildCsv(rows){
+  var header=["元のファイル名","新しいファイル名","日付","取引先","金額","書類種別"];
+  var lines=[header.map(csvEscape).join(",")];
+  rows.forEach(function(r){
+    lines.push([r.name,r.newName,r.fields.date||"",r.fields.vendor||"",r.fields.amount||"",r.fields.doctype||""].map(csvEscape).join(","));
+  });
+  return lines.join("\r\n");
+}
+
+/* ---------- i18n ---------- */
+var T={
+ ja:{title:"証憑ファイル名整理ツール",
+  sub:"領収書・請求書などのファイルに「日付・取引先・金額」を入力して、わかりやすい名前に一括リネームします。処理はすべてこの端末の中だけで行われます。",
+  h_settings:"命名ルールの設定",orderLabel:"項目の並び順（チェックを外すと使いません／↑↓で順番を変更）",
+  sepLabel:"区切り文字",dateFmtLabel:"日付の形式",amountUnitLabel:"金額の表記",
+  h_source:"ファイルを追加",folderBtn:"フォルダを選んで読み込む",folderHint:"対応ブラウザでは、フォルダ内のファイルを直接リネームできます。",
+  dropText:"ここにファイルをドラッグ＆ドロップ、またはクリックして選択",
+  noFolderNote:"このブラウザはフォルダへの直接リネームに対応していません。ファイルを追加すると、名前を付けたコピーを一括ダウンロードできます（Google ChromeやMicrosoft Edgeでは直接リネームできます）。",
+  h_table:"ファイル一覧",batchLabel:"まとめて設定：",applyBtn:"全行に適用",
+  vendorPh:"取引先名",doctypePh:"書類種別",
+  col_orig:"元のファイル名",col_date:"日付",col_vendor:"取引先",col_amount:"金額",col_doctype:"書類種別",col_new:"新しいファイル名",
+  renameFolderBtn:"フォルダ内で直接リネーム",downloadAllBtn:"名前を付けてまとめてダウンロード",csvBtn:"対応表をCSVでダウンロード",clearBtn:"すべてクリア",
+  feedback:"フィードバックはこちら",privacy:"ファイルの内容やファイル名はサーバーに送信されません。すべてこの端末のブラウザだけで処理されます。",
+  field_date:"日付",field_vendor:"取引先",field_amount:"金額",field_doctype:"書類種別",
+  sep_underscore:"_（アンダースコア）",sep_hyphen:"-（ハイフン）",sep_none:"なし",
+  df_yyyymmdd:"20260125",df_yyyy_mm_dd:"2026-01-25",df_yyyy_mm_dd2:"2026_01_25",df_yymmdd:"260125",
+  au_none:"数字のみ（110000）",au_yen:"円を付ける（110000円）",
+  previewPrefix:"例：",filesLoaded:"件のファイルを読み込みました。",noFiles:"まだファイルがありません。",
+  folderPermFail:"フォルダへのアクセスを許可できませんでした。",
+  renaming:"リネーム中…",renameDone:"完了：成功",renameFailPart:"件、失敗",
+  downloaded:"ダウンロードを開始しました（ブラウザの確認が出た場合は許可してください）。",
+  csvDownloaded:"CSVをダウンロードしました。",cleared:"クリアしました。",
+  ok:"OK",failGeneric:"リネームできませんでした（この端末で直接開いているファイルなど）。"
+  },
+ en:{title:"Receipt Filename Organizer",
+  sub:"Enter date, vendor and amount for your receipts and invoices to rename them in bulk. Everything happens inside this browser.",
+  h_settings:"Naming rule",orderLabel:"Field order (uncheck to skip a field, use ↑↓ to reorder)",
+  sepLabel:"Separator",dateFmtLabel:"Date format",amountUnitLabel:"Amount format",
+  h_source:"Add files",folderBtn:"Choose a folder",folderHint:"Supported browsers can rename files in the folder directly.",
+  dropText:"Drag & drop files here, or click to choose",
+  noFolderNote:"This browser doesn't support direct in-folder renaming. Add files to download renamed copies instead (Chrome and Edge support direct renaming).",
+  h_table:"Files",batchLabel:"Apply to all:",applyBtn:"Apply to all rows",
+  vendorPh:"Vendor",doctypePh:"Document type",
+  col_orig:"Original name",col_date:"Date",col_vendor:"Vendor",col_amount:"Amount",col_doctype:"Type",col_new:"New filename",
+  renameFolderBtn:"Rename in folder",downloadAllBtn:"Download all with new names",csvBtn:"Download CSV mapping",clearBtn:"Clear all",
+  feedback:"Feedback",privacy:"File contents and names are never sent to a server — everything stays in this browser.",
+  field_date:"Date",field_vendor:"Vendor",field_amount:"Amount",field_doctype:"Type",
+  sep_underscore:"_ (underscore)",sep_hyphen:"- (hyphen)",sep_none:"none",
+  df_yyyymmdd:"20260125",df_yyyy_mm_dd:"2026-01-25",df_yyyy_mm_dd2:"2026_01_25",df_yymmdd:"260125",
+  au_none:"digits only (110000)",au_yen:"with 円 (110000円)",
+  previewPrefix:"e.g. ",filesLoaded:" file(s) loaded.",noFiles:"No files yet.",
+  folderPermFail:"Couldn't get access to that folder.",
+  renaming:"Renaming…",renameDone:"Done: ",renameFailPart:" failed",
+  downloaded:"Download started (allow multiple downloads if your browser asks).",
+  csvDownloaded:"CSV downloaded.",cleared:"Cleared.",
+  ok:"OK",failGeneric:"Couldn't rename this file."
+  }
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+/* ---------- state ---------- */
+var FIELD_KEYS=["date","vendor","amount","doctype"];
+var state={
+  files: [], // {name, file, handle(optional), fields:{date,vendor,amount,doctype}}
+  dirHandle: null,
+  supportsFolder: typeof window.showDirectoryPicker === "function",
+  order: FIELD_KEYS.slice(),
+  enabled: {date:true,vendor:true,amount:true,doctype:false},
+  sep: "underscore",
+  dateFormat: "yyyymmdd",
+  amountUnit: ""
+};
+
+function currentSettings(){
+  return {order:state.order,enabled:state.enabled,sep:state.sep,dateFormat:state.dateFormat,amountUnit:state.amountUnit};
+}
+
+function toDateInputValue(ms){
+  try{
+    var dt=new Date(ms);
+    var y=dt.getFullYear(),m=("0"+(dt.getMonth()+1)).slice(-2),d=("0"+dt.getDate()).slice(-2);
+    return y+"-"+m+"-"+d;
+  }catch(e){return ""}
+}
+
+/* ---------- settings UI ---------- */
+function renderFieldOrder(){
+  var wrap=$("fieldOrder");
+  wrap.innerHTML="";
+  state.order.forEach(function(key,idx){
+    var row=document.createElement("div");
+    row.className="fieldRow";
+    var label=document.createElement("label");
+    var cb=document.createElement("input");
+    cb.type="checkbox";
+    cb.checked=state.enabled[key]!==false;
+    cb.addEventListener("change",function(){state.enabled[key]=cb.checked;renderAll()});
+    var span=document.createElement("span");
+    span.textContent=T[lang]["field_"+key];
+    label.appendChild(cb);label.appendChild(span);
+    var arrows=document.createElement("div");
+    arrows.className="arrows";
+    var up=document.createElement("button");
+    up.type="button";up.textContent="↑";up.disabled=idx===0;
+    up.addEventListener("click",function(){
+      var a=state.order;var t=a[idx];a[idx]=a[idx-1];a[idx-1]=t;renderAll();
+    });
+    var down=document.createElement("button");
+    down.type="button";down.textContent="↓";down.disabled=idx===state.order.length-1;
+    down.addEventListener("click",function(){
+      var a=state.order;var t=a[idx];a[idx]=a[idx+1];a[idx+1]=t;renderAll();
+    });
+    arrows.appendChild(up);arrows.appendChild(down);
+    row.appendChild(label);row.appendChild(arrows);
+    wrap.appendChild(row);
+  });
+}
+function buildPillGroup(container,items,current,onPick){
+  container.innerHTML="";
+  items.forEach(function(it){
+    var b=document.createElement("button");
+    b.type="button";
+    b.textContent=it.label;
+    b.setAttribute("aria-pressed", it.value===current ? "true":"false");
+    b.addEventListener("click",function(){onPick(it.value)});
+    container.appendChild(b);
+  });
+}
+function renderSettingsPills(){
+  buildPillGroup($("sepOpts"),[
+    {value:"underscore",label:T[lang].sep_underscore},
+    {value:"hyphen",label:T[lang].sep_hyphen},
+    {value:"none",label:T[lang].sep_none}
+  ],state.sep,function(v){state.sep=v;renderAll()});
+  buildPillGroup($("dateFmtOpts"),[
+    {value:"yyyymmdd",label:T[lang].df_yyyymmdd},
+    {value:"yyyy-mm-dd",label:T[lang].df_yyyy_mm_dd},
+    {value:"yyyy_mm_dd",label:T[lang].df_yyyy_mm_dd2},
+    {value:"yymmdd",label:T[lang].df_yymmdd}
+  ],state.dateFormat,function(v){state.dateFormat=v;renderAll()});
+  buildPillGroup($("amountUnitOpts"),[
+    {value:"",label:T[lang].au_none},
+    {value:"円",label:T[lang].au_yen}
+  ],state.amountUnit,function(v){state.amountUnit=v;renderAll()});
+}
+function renderPreview(){
+  var sample={date:"2026-01-25",vendor:lang==="ja"?"国税太郎":"Acme",amount:"110000",doctype:lang==="ja"?"領収書":"receipt"};
+  var stem=buildStem(sample,currentSettings());
+  $("previewText").textContent=T[lang].previewPrefix + (stem||"—") + ".pdf";
+}
+
+/* ---------- file list UI ---------- */
+function addFiles(fileLikeList){
+  var arr=Array.prototype.slice.call(fileLikeList);
+  arr.forEach(function(file){
+    state.files.push({
+      name:file.name,
+      file:file,
+      handle: null,
+      fields:{date:toDateInputValue(file.lastModified),vendor:"",amount:"",doctype:""},
+      lastResult:null
+    });
+  });
+  renderAll();
+}
+
+function renderRows(){
+  var tbody=$("fileRows");
+  tbody.innerHTML="";
+  var plan=buildRenamePlan(state.files,currentSettings());
+  state.files.forEach(function(f,idx){
+    var tr=document.createElement("tr");
+
+    var tdOrig=document.createElement("td");
+    tdOrig.textContent=f.name;
+    tr.appendChild(tdOrig);
+
+    // Field edits must NOT rebuild the row (that would destroy the input the
+    // user is typing into and reset focus/cursor on every keystroke). Only
+    // mutate state and refresh the lightweight preview cell.
+    function makeInputTd(type,onInput,value,ph){
+      var td=document.createElement("td");
+      var inp=document.createElement("input");
+      inp.type=type;
+      inp.value=value||"";
+      if(ph) inp.placeholder=ph;
+      inp.addEventListener("input",function(){onInput(inp.value);f.lastResult=null;updatePreviews();renderSummary()});
+      td.appendChild(inp);
+      return td;
+    }
+    tr.appendChild(makeInputTd("date",function(v){f.fields.date=v},f.fields.date));
+    tr.appendChild(makeInputTd("text",function(v){f.fields.vendor=v},f.fields.vendor,T[lang].vendorPh));
+    var amtTd=makeInputTd("text",function(v){f.fields.amount=v},f.fields.amount);
+    amtTd.firstChild.className="amount";
+    amtTd.firstChild.inputMode="numeric";
+    tr.appendChild(amtTd);
+    var dtTd=makeInputTd("text",function(v){f.fields.doctype=v},f.fields.doctype,T[lang].doctypePh);
+    dtTd.firstChild.setAttribute("list","doctypeList");
+    tr.appendChild(dtTd);
+
+    var newTd=document.createElement("td");
+    var nameSpan=document.createElement("div");
+    nameSpan.className="newname"+(plan[idx].deduped ? " dup" : "");
+    nameSpan.textContent=plan[idx].newName;
+    newTd.appendChild(nameSpan);
+    if(f.lastResult){
+      var msg=document.createElement("div");
+      msg.className="rowmsg "+(f.lastResult.ok?"ok":"bad");
+      msg.textContent=f.lastResult.ok?T[lang].ok:(f.lastResult.msg||T[lang].failGeneric);
+      newTd.appendChild(msg);
+    }
+    tr.appendChild(newTd);
+
+    var rmTd=document.createElement("td");
+    var rmBtn=document.createElement("button");
+    rmBtn.type="button";rmBtn.className="rmbtn";rmBtn.textContent="✕";
+    rmBtn.addEventListener("click",function(){state.files.splice(idx,1);renderAll()});
+    rmTd.appendChild(rmBtn);
+    tr.appendChild(rmTd);
+
+    tbody.appendChild(tr);
+  });
+}
+
+// Cheap refresh used while the user is typing in a row: updates only the
+// "new filename" preview cell text/class and the per-row result note,
+// without touching any <input> so focus and cursor position are preserved.
+function updatePreviews(){
+  var plan=buildRenamePlan(state.files,currentSettings());
+  var trs=$("fileRows").children;
+  for(var idx=0;idx<state.files.length;idx++){
+    var tr=trs[idx];
+    if(!tr) continue;
+    var newTd=tr.children[5];
+    if(!newTd) continue;
+    var nameDiv=newTd.querySelector(".newname");
+    if(nameDiv){
+      nameDiv.className="newname"+(plan[idx].deduped?" dup":"");
+      nameDiv.textContent=plan[idx].newName;
+    }
+    var msgDiv=newTd.querySelector(".rowmsg");
+    var f=state.files[idx];
+    if(f.lastResult){
+      if(!msgDiv){msgDiv=document.createElement("div");newTd.appendChild(msgDiv)}
+      msgDiv.className="rowmsg "+(f.lastResult.ok?"ok":"bad");
+      msgDiv.textContent=f.lastResult.ok?T[lang].ok:(f.lastResult.msg||T[lang].failGeneric);
+    } else if(msgDiv){
+      msgDiv.remove();
+    }
+  }
+}
+
+function renderSummary(){
+  var el=$("summary");
+  if(state.files.length===0){el.textContent="";return}
+  var okCount=state.files.filter(function(f){return f.lastResult && f.lastResult.ok}).length;
+  var badCount=state.files.filter(function(f){return f.lastResult && !f.lastResult.ok}).length;
+  if(okCount===0 && badCount===0){el.textContent="";return}
+  el.innerHTML = T[lang].renameDone+" <b class=\"ok\">"+okCount+"</b>"+(badCount>0?"、<b class=\"bad\">"+badCount+"</b>"+T[lang].renameFailPart:"");
+}
+
+function renderTopStatus(){
+  $("loadStatus").textContent = state.files.length>0 ? (state.files.length+T[lang].filesLoaded) : "";
+  $("tableCard").style.display = state.files.length>0 ? "" : "none";
+  $("renameFolderBtn").style.display = state.dirHandle ? "" : "none";
+}
+
+function renderAll(){
+  renderFieldOrder();
+  renderSettingsPills();
+  renderPreview();
+  renderRows();
+  renderSummary();
+  renderTopStatus();
+}
+
+/* ---------- folder mode ---------- */
+if(state.supportsFolder){
+  $("folderRow").style.display="";
+}else{
+  $("noFolderNote").style.display="";
+}
+
+$("folderBtn") && $("folderBtn").addEventListener("click",function(){
+  if(!state.supportsFolder) return;
+  window.showDirectoryPicker({mode:"readwrite"}).then(function(dirHandle){
+    state.dirHandle=dirHandle;
+    state.files=[];
+    return (async function(){
+      for await (var entry of dirHandle.values()){
+        if(entry.kind==="file"){
+          var file=await entry.getFile();
+          state.files.push({name:entry.name,file:file,handle:entry,fields:{date:toDateInputValue(file.lastModified),vendor:"",amount:"",doctype:""},lastResult:null});
+        }
+      }
+      renderAll();
+    })();
+  }).catch(function(err){
+    if(err && err.name==="AbortError") return;
+    alert(T[lang].folderPermFail);
+  });
+});
+
+/* ---------- drag & drop / file input ---------- */
+var dropZone=$("dropZone");
+var fileInput=$("fileInput");
+dropZone.addEventListener("click",function(){fileInput.click()});
+fileInput.addEventListener("change",function(){
+  if(fileInput.files && fileInput.files.length) addFiles(fileInput.files);
+  fileInput.value="";
+});
+["dragenter","dragover"].forEach(function(ev){
+  dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.add("over")});
+});
+["dragleave","drop"].forEach(function(ev){
+  dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.remove("over")});
+});
+dropZone.addEventListener("drop",function(e){
+  var dt=e.dataTransfer;
+  if(dt && dt.files && dt.files.length) addFiles(dt.files);
+});
+
+/* ---------- batch apply ---------- */
+$("batchDateBtn").addEventListener("click",function(){
+  var v=$("batchDate").value;
+  if(!v) return;
+  state.files.forEach(function(f){f.fields.date=v;f.lastResult=null});
+  renderAll();
+});
+$("batchVendorBtn").addEventListener("click",function(){
+  var v=$("batchVendor").value;
+  state.files.forEach(function(f){f.fields.vendor=v;f.lastResult=null});
+  renderAll();
+});
+$("batchDoctypeBtn").addEventListener("click",function(){
+  var v=$("batchDoctype").value;
+  state.files.forEach(function(f){f.fields.doctype=v;f.lastResult=null});
+  renderAll();
+});
+
+/* ---------- actions ---------- */
+$("renameFolderBtn").addEventListener("click",async function(){
+  if(!state.dirHandle) return;
+  var plan=buildRenamePlan(state.files,currentSettings());
+  for(var i=0;i<state.files.length;i++){
+    var f=state.files[i];
+    var newName=plan[i].newName;
+    if(newName===f.name){f.lastResult={ok:true};continue}
+    try{
+      if(f.handle && typeof f.handle.move==="function"){
+        await f.handle.move(newName);
+        f.name=newName;
+        f.lastResult={ok:true};
+      } else {
+        throw new Error("no-move-support");
+      }
+    }catch(err){
+      f.lastResult={ok:false,msg:T[lang].failGeneric};
+    }
+    renderAll();
+  }
+  renderAll();
+});
+
+$("downloadAllBtn").addEventListener("click",function(){
+  if(state.files.length===0) return;
+  var plan=buildRenamePlan(state.files,currentSettings());
+  var i=0;
+  function next(){
+    if(i>=state.files.length) return;
+    var f=state.files[i];
+    var newName=plan[i].newName;
+    try{
+      var url=URL.createObjectURL(f.file);
+      var a=document.createElement("a");
+      a.href=url;a.download=newName;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url)},4000);
+      f.lastResult={ok:true};
+    }catch(err){
+      f.lastResult={ok:false,msg:T[lang].failGeneric};
+    }
+    i++;
+    setTimeout(next,300);
+  }
+  next();
+  renderAll();
+  flash(T[lang].downloaded);
+});
+
+$("csvBtn").addEventListener("click",function(){
+  if(state.files.length===0) return;
+  var plan=buildRenamePlan(state.files,currentSettings());
+  var rows=state.files.map(function(f,idx){return {name:f.name,newName:plan[idx].newName,fields:f.fields}});
+  var csv=buildCsv(rows);
+  var blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download="shohyo-rename.csv";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+  flash(T[lang].csvDownloaded);
+});
+
+$("clearBtn").addEventListener("click",function(){
+  state.files=[];
+  state.dirHandle=null;
+  renderAll();
+  flash(T[lang].cleared);
+});
+
+function flash(msg){
+  var el=$("loadStatus");
+  var prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){renderTopStatus()},2500);
+}
+
+/* ---------- language ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
+  var phEls=document.querySelectorAll("[data-i-ph]");
+  for(var j=0;j<phEls.length;j++){var pk=phEls[j].getAttribute("data-i-ph");if(T[lang][pk]!==undefined)phEls[j].placeholder=T[lang][pk]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  renderAll();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
