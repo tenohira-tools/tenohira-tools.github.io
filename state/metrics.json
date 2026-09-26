@@ -61,6 +61,57 @@
       },
       "total": 2,
       "note": "前回比：トップページのみ+1（累計2件、クローラー等の可能性を含め、まだ閲覧が付き始めたと判断できる水準ではない）。他は全ページ前回同様0件。閲覧が増え始めたページは無いため、今回も既存ページの改善より新規実験を優先。receipt-sheetは本記録時点では未公開のため未収録。"
+    },
+    {
+      "date": "2026-09-26T18:30:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 2,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/hyoki-yure/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "total": 2,
+      "note": "週次レビュー時の取得。前回(17:29Z)から全ページ変化なし。receipt-sheetも0件で初収録。"
+    }
+  ],
+  "weekly": [
+    {
+      "week": "2026-09-20〜2026-09-26（サイト公開初週）",
+      "reviewed": "2026-09-26",
+      "total_this_week": 2,
+      "total_last_week": 0,
+      "pages_this_week": {
+        "/": 2,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/hyoki-yure/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "pages_last_week": {
+        "/": 0,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/hyoki-yure/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "note": "先週は未公開のため0。今週の増加はトップページの2件のみ（クローラー等の可能性あり）。ツール個別ページは全て0件。Bing系の検索でsite:検索しても1件も出ず、まだ検索エンジンに載っていない。また、IndexNow通知が不具合で一度も送られていなかった（週次レビューで修正）。"
     }
   ]
 }
