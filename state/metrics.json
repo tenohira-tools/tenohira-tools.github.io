@@ -79,6 +79,24 @@
       },
       "total": 2,
       "note": "週次レビュー時の取得。前回(17:29Z)から全ページ変化なし。receipt-sheetも0件で初収録。"
+    },
+    {
+      "date": "2026-09-26T20:13:22Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 2,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/hyoki-yure/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "total": 2,
+      "note": "前回(週次レビュー18:30Z)から全ページ変化なし。閲覧が増え始めたページはまだ無い。"
     }
   ],
   "weekly": [
