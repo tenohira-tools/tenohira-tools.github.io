@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>領収書まとめ台紙メーカー｜複数のレシート写真を1枚のPDFに整列 | てのひらツール</title>
+<meta name="description" content="スマホで撮った領収書・レシートの写真を並べ方（2×2〜3×4）を選ぶだけでA4のPDFにまとめて整列。経費精算の添付・紙の台紙貼り付けに。写真はこの端末の中だけで処理され、外部には送信されません。Arrange multiple receipt photos into a printable A4 PDF sheet, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/receipt-sheet/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--bad:#f19a9d;--bad-bg:#3a2022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.3rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.optlabel{color:var(--muted);font-size:.88rem;margin:14px 0 6px}
+.optlabel:first-child{margin-top:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{font:inherit;font-size:.9rem;font-weight:600;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;min-height:36px}
+.opts button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.drop input{display:none}
+.status{margin-top:10px;font-size:.9rem;color:var(--muted)}
+.note{margin-top:10px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.88rem}
+.thumbs{display:grid;gap:8px;margin-top:4px}
+.thumbrow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0}
+.thumbrow img{width:52px;height:52px;object-fit:cover;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
+.thumbrow .idx{width:1.6em;text-align:right;color:var(--muted);font-size:.85rem;flex:none}
+.thumbrow .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
+.thumbrow .err{color:var(--bad);font-size:.82rem}
+.thumbrow .btns{display:flex;gap:4px;flex:none}
+.thumbrow button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:.95rem}
+.thumbrow button:disabled{opacity:.35;cursor:not-allowed}
+.thumbrow button.rm{color:var(--bad)}
+.previewGrid{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px}
+.pagecard{text-align:center}
+.pagecard canvas{max-width:100%;border:1px solid var(--line);border-radius:6px;background:#fff;display:block}
+.pagecard p{margin:4px 0 0;color:var(--muted);font-size:.82rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
+button.secondary:disabled{opacity:.4;cursor:not-allowed}
+label.chk{display:inline-flex;align-items:center;gap:6px;font-size:.9rem;cursor:pointer}
+label.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.summary{margin-top:10px;font-size:.9rem;color:var(--muted)}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">領収書まとめ台紙メーカー</h1>
+    <p class="sub" data-i="sub">複数のレシート・領収書の写真を並べ方を選ぶだけでA4のPDFにまとめて整列します。処理はすべてこの端末の中だけで行われます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="h_layout">並べ方の設定</h2>
+  <p class="optlabel" data-i="orientLabel">用紙の向き</p>
+  <div class="opts" id="orientOpts"></div>
+  <p class="optlabel" data-i="gridLabel">1ページの枚数</p>
+  <div class="opts" id="gridOpts"></div>
+  <p class="optlabel" data-i="captionLabel">番号の表示</p>
+  <label class="chk"><input type="checkbox" id="captionChk" checked><span data-i="captionChkLabel">各写真の下に通し番号を印字する</span></label>
+</section>
+
+<section class="card">
+  <h2 data-i="h_source">写真を追加</h2>
+  <div class="drop" id="dropZone">
+    <span data-i="dropText">ここに写真をドラッグ＆ドロップ、またはクリックして選択（複数可）</span>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+  </div>
+  <p class="note" data-i="formatNote">JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。うまく読み込めない場合はFAQをご覧ください。</p>
+  <p class="status" id="loadStatus"></p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="h_list">写真一覧（並び替え・回転）</h2>
+  <div class="thumbs" id="thumbList"></div>
+  <div class="row">
+    <button type="button" class="secondary" id="clearBtn" data-i="clearBtn">すべてクリア</button>
+  </div>
+</section>
+
+<section class="card" id="previewCard" style="display:none">
+  <h2 data-i="h_preview">プレビュー</h2>
+  <div class="previewGrid" id="previewGrid"></div>
+  <div class="row">
+    <button type="button" class="primary" id="makePdfBtn" data-i="makePdfBtn">PDFを作成してダウンロード</button>
+  </div>
+  <div class="summary" id="summary"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>用紙の向きと、1ページあたりの枚数（4〜12枚）を選びます。</li>
+      <li>レシート・領収書の写真をドラッグ＆ドロップ、またはタップして選択します（スマートフォンではカメラロールから選べます）。</li>
+      <li>一覧で並び順を↑↓ボタンで入れ替えたり、向きが違う写真を回転ボタンで直したり、不要な写真を削除できます。</li>
+      <li>プレビューで仕上がりを確認し、「PDFを作成してダウンロード」でA4サイズのPDFファイルとして保存します。印刷して紙の台紙に貼る、または経費精算システムに1つのファイルとして添付する用途に使えます。</li>
+    </ol>
+    <h3>Q. 写真はどこかにアップロードされますか？</h3>
+    <p>A. されません。写真の内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。生成したPDFの組み立ても、この端末の中だけで行っています。</p>
+    <h3>Q. これは電子帳簿保存法などの要件を満たすことを保証しますか？</h3>
+    <p>A. いいえ。このツールは、複数の写真を1枚のPDFに見やすく並べるだけの補助ツールです。電子帳簿保存法では原則として取引ごとに検索・確認できる形での保存が求められるため、税務上の保存書類としてまとめてしまうと、かえって個々の取引を探しにくくなる場合があります。税務上の保存が目的の場合は、1つのファイルにまとめず、姉妹ツールの「<a href="../shohyo-rename/">証憑ファイル名整理ツール</a>」で取引ごとに分かりやすいファイル名を付けて個別に保存することをおすすめします。本ツールは経費精算の添付やコピー時の一覧化など、まとめて見返す・提出する用途を想定しています。正式な保存要件は国税庁の資料や顧問税理士など専門家にご確認ください。本ツールは税務・法律上の助言を行うものではありません。</p>
+    <h3>Q. 写真の向き（縦横）が違って読み込まれます。</h3>
+    <p>A. スマートフォンで撮った写真の向きは自動補正を試みますが、ブラウザや環境によっては正しく反映されないことがあります。その場合は一覧の回転ボタンで手動で直してください。</p>
+    <h3>Q. iPhoneの写真（HEIC形式）が読み込めません。</h3>
+    <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
+    <h3>Q. キャプションに好きな文字を入れられますか？</h3>
+    <p>A. 現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。対応表が必要な場合は、番号と写真の対応をメモとして別途残すことをおすすめします。</p>
+    <h3>Q. 何枚まで対応していますか？</h3>
+    <p>A. 枚数に上限は設けていませんが、写真が多くなるほど処理に時間がかかり、生成されるPDFのファイルサイズも大きくなります。数十枚を超える場合は、複数回に分けて作成することをおすすめします。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Choose the page orientation and how many photos per page (4–12).</li>
+      <li>Drag and drop your receipt photos, or tap to choose them from your camera roll.</li>
+      <li>Reorder with the ↑↓ buttons, rotate a photo that's sideways, or remove ones you don't need.</li>
+      <li>Check the preview, then click "Create PDF" to save an A4 PDF — print it to paste onto a paper sheet, or attach the single file to an expense report.</li>
+    </ol>
+    <h3>Q. Are my photos uploaded anywhere?</h3>
+    <p>A. No. Everything happens inside this browser on your device, including building the PDF; nothing is sent to a server (only anonymous, cookie-free page-view counts are collected for this page).</p>
+    <h3>Q. Does this guarantee compliance with Japan's electronic bookkeeping law?</h3>
+    <p>A. No. This tool only arranges photos onto a printable sheet. Japanese tax law generally expects each transaction to stay individually searchable, so bundling receipts into one file can make that harder. For tax records, use the companion "<a href="../shohyo-rename/">receipt filename organizer</a>" to keep files separate with clear names instead. This tool is meant for expense-report attachments or a quick visual overview. Check official guidance or a tax professional for actual requirements — this is not tax or legal advice.</p>
+    <h3>Q. Photo orientation looks wrong.</h3>
+    <p>A. Phone photo orientation is auto-corrected when possible, but this isn't reliable in every browser. Use the rotate button in the list to fix it manually.</p>
+    <h3>Q. My iPhone photos (HEIC) won't load.</h3>
+    <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
+    <h3>Q. Can I add custom caption text?</h3>
+    <p>A. Only auto-numbering (1, 2, 3…) is supported. Since the PDF is generated without embedding a Japanese font, free-text Japanese captions can't be rendered correctly. Keep a separate note mapping numbers to receipts if you need one.</p>
+    <h3>Q. Is there a limit on how many photos?</h3>
+    <p>A. No hard limit, but more photos means more processing time and a larger PDF file. For dozens of photos, consider splitting into a few runs.</p>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">写真の内容はサーバーに送信されません。PDFの生成もこの端末のブラウザだけで行われます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、PDFの生成も含めて外部のサーバーに送信されることはありません。"}},
+    {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。複数の写真を1枚のPDFに並べるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}},
+    {"@type":"Question","name":"iPhoneの写真（HEIC形式）が読み込めません。","acceptedAnswer":{"@type":"Answer","text":"HEIC形式の読み込みはブラウザに依存します。読み込めない場合は、写真の設定を「互換性優先（JPEG）」にするか、JPEGとして書き出してからお試しください。"}},
+    {"@type":"Question","name":"キャプションに好きな文字を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"通し番号のみに対応しています。日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは表示できません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =========================================================
+   コア（レイアウト計算・PDF生成）：外部ライブラリ不使用の自作実装
+   ========================================================= */
+function pageSizePt(orientation){
+  var w=595.28, h=841.89;
+  if(orientation==="landscape") return {width:h, height:w};
+  return {width:w, height:h};
+}
+function computeCells(pageW,pageH,margin,gutter,cols,rows,captionH){
+  cols=Math.max(1,cols|0); rows=Math.max(1,rows|0);
+  captionH = captionH||0;
+  var innerW = pageW - margin*2 - gutter*(cols-1);
+  var innerH = pageH - margin*2 - gutter*(rows-1);
+  var cellW = innerW/cols;
+  var cellH = innerH/rows;
+  if(cellW<=0 || cellH<=0) throw new Error("cell-too-small");
+  var cells=[];
+  for(var r=0;r<rows;r++){
+    for(var c=0;c<cols;c++){
+      var x = margin + c*(cellW+gutter);
+      var yTop = pageH - margin - r*(cellH+gutter);
+      var yBottom = yTop - cellH;
+      cells.push({
+        x:x, y:yBottom, w:cellW, h:cellH,
+        photoBox:{x:x, y:yBottom+captionH, w:cellW, h:cellH-captionH},
+        captionBox: captionH>0 ? {x:x, y:yBottom, w:cellW, h:captionH} : null
+      });
+    }
+  }
+  return cells;
+}
+function fitContain(imgW,imgH,box){
+  if(imgW<=0||imgH<=0) return {x:box.x,y:box.y,w:0,h:0};
+  var scale = Math.min(box.w/imgW, box.h/imgH);
+  var w = imgW*scale, h = imgH*scale;
+  var x = box.x + (box.w-w)/2;
+  var y = box.y + (box.h-h)/2;
+  return {x:x,y:y,w:w,h:h};
+}
+function pageCount(imageCount, perPage){
+  return Math.max(1, Math.ceil(imageCount/perPage));
+}
+function pdfEscape(str){
+  return String(str).replace(/([\\()])/g,"\\$1");
+}
+function pad10(n){
+  var s=String(Math.round(n));
+  while(s.length<10) s="0"+s;
+  return s;
+}
+function buildPdf(pages){
+  var enc = new TextEncoder();
+  function toBytes(str){ return enc.encode(str); }
+  var chunks=[];
+  var offset=0;
+  var objOffsets=[];
+  function push(bytesOrStr){
+    var b = (typeof bytesOrStr==="string") ? toBytes(bytesOrStr) : bytesOrStr;
+    chunks.push(b);
+    offset += b.length;
+  }
+  function beginObj(num){ objOffsets[num]=offset; push(num+" 0 obj\n"); }
+  function endObj(){ push("endobj\n"); }
+
+  push("%PDF-1.4\n");
+  push(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+
+  var CATALOG=1, PAGES=2, FONT=3;
+  var nextObj = 4;
+  var pageObjNums=[], pageContentNums=[], pageImageObjNums=[];
+  pages.forEach(function(p){
+    pageObjNums.push(nextObj++);
+    pageContentNums.push(nextObj++);
+    var arr=[]; p.images.forEach(function(){ arr.push(nextObj++); });
+    pageImageObjNums.push(arr);
+  });
+
+  beginObj(CATALOG);
+  push("<< /Type /Catalog /Pages "+PAGES+" 0 R >>\n");
+  endObj();
+
+  beginObj(PAGES);
+  push("<< /Type /Pages /Kids ["+pageObjNums.map(function(n){return n+" 0 R"}).join(" ")+"] /Count "+pages.length+" >>\n");
+  endObj();
+
+  beginObj(FONT);
+  push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\n");
+  endObj();
+
+  pages.forEach(function(p,pi){
+    var pageNum=pageObjNums[pi], contentNum=pageContentNums[pi], imgNums=pageImageObjNums[pi];
+    beginObj(pageNum);
+    var xobjEntries = p.images.map(function(im,ii){return "/Im"+ii+" "+imgNums[ii]+" 0 R"}).join(" ");
+    push("<< /Type /Page /Parent "+PAGES+" 0 R /MediaBox [0 0 "+p.width+" "+p.height+"] "+
+      "/Resources << /XObject << "+xobjEntries+" >> /Font << /F1 "+FONT+" 0 R >> >> "+
+      "/Contents "+contentNum+" 0 R >>\n");
+    endObj();
+
+    var cs=[];
+    cs.push("q\n");
+    (p.rects||[]).forEach(function(r){
+      cs.push("0.7 0.7 0.7 RG 0.75 w\n");
+      cs.push(r.x.toFixed(2)+" "+r.y.toFixed(2)+" "+r.w.toFixed(2)+" "+r.h.toFixed(2)+" re S\n");
+    });
+    p.images.forEach(function(im,ii){
+      cs.push("q\n");
+      cs.push(im.drawW.toFixed(2)+" 0 0 "+im.drawH.toFixed(2)+" "+im.x.toFixed(2)+" "+im.y.toFixed(2)+" cm\n");
+      cs.push("/Im"+ii+" Do\n");
+      cs.push("Q\n");
+    });
+    (p.texts||[]).forEach(function(t){
+      cs.push("BT /F1 "+t.size+" Tf 0.35 0.35 0.35 rg "+t.x.toFixed(2)+" "+t.y.toFixed(2)+" Td ("+pdfEscape(t.str)+") Tj ET\n");
+    });
+    cs.push("Q\n");
+    var contentBytes = toBytes(cs.join(""));
+
+    beginObj(contentNum);
+    push("<< /Length "+contentBytes.length+" >>\nstream\n");
+    push(contentBytes);
+    push("\nendstream\n");
+    endObj();
+
+    p.images.forEach(function(im,ii){
+      beginObj(imgNums[ii]);
+      push("<< /Type /XObject /Subtype /Image /Width "+im.w+" /Height "+im.h+
+        " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "+im.jpeg.length+" >>\nstream\n");
+      push(im.jpeg);
+      push("\nendstream\n");
+      endObj();
+    });
+  });
+
+  var xrefStart = offset;
+  var count = nextObj;
+  push("xref\n0 "+count+"\n");
+  push(pad10(0)+" 65535 f \n");
+  for(var i=1;i<count;i++){
+    push(pad10(objOffsets[i])+" 00000 n \n");
+  }
+  push("trailer\n<< /Size "+count+" /Root "+CATALOG+" 0 R >>\nstartxref\n"+xrefStart+"\n%%EOF");
+
+  var total=0; chunks.forEach(function(c){total+=c.length});
+  var out=new Uint8Array(total); var p2=0;
+  chunks.forEach(function(c){out.set(c,p2);p2+=c.length});
+  return out;
+}
+
+/* =========================================================
+   状態・UI
+   ========================================================= */
+var MARGIN=24, GUTTER=8, CAPTION_H=16;
+var GRID_PRESETS=[
+  {cols:2,rows:2,ja:"4枚 (2×2)",en:"4 (2×2)"},
+  {cols:2,rows:3,ja:"6枚 (2×3)",en:"6 (2×3)"},
+  {cols:2,rows:4,ja:"8枚 (2×4)",en:"8 (2×4)"},
+  {cols:3,rows:3,ja:"9枚 (3×3)",en:"9 (3×3)"},
+  {cols:3,rows:4,ja:"12枚 (3×4)",en:"12 (3×4)"}
+];
+var ORIENT_OPTS=[
+  {key:"portrait",ja:"縦（ポートレート）",en:"Portrait"},
+  {key:"landscape",ja:"横（ランドスケープ）",en:"Landscape"}
+];
+
+var lang="ja";
+var uid=1;
+var state={ orientation:"portrait", gridIdx:1, captionOn:true, files:[] };
+
+var T={
+  ja:{
+    title:"領収書まとめ台紙メーカー",
+    sub:"複数のレシート・領収書の写真を並べ方を選ぶだけでA4のPDFにまとめて整列します。処理はすべてこの端末の中だけで行われます。",
+    h_layout:"並べ方の設定", orientLabel:"用紙の向き", gridLabel:"1ページの枚数",
+    captionLabel:"番号の表示", captionChkLabel:"各写真の下に通し番号を印字する",
+    h_source:"写真を追加", dropText:"ここに写真をドラッグ＆ドロップ、またはクリックして選択（複数可）",
+    formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。うまく読み込めない場合はFAQをご覧ください。",
+    h_list:"写真一覧（並び替え・回転）", clearBtn:"すべてクリア",
+    h_preview:"プレビュー", makePdfBtn:"PDFを作成してダウンロード",
+    feedback:"フィードバックはこちら", privacy:"写真の内容はサーバーに送信されません。PDFの生成もこの端末のブラウザだけで行われます。",
+    loadError:"読み込めませんでした", filesAdded:function(n){return n+"件読み込みました"},
+    noValid:"表示できる写真がありません。",
+    summaryText:function(n,pages,perPage){return "写真 "+n+"枚 → "+pages+"ページ（1ページ"+perPage+"枚）"},
+    building:"PDFを作成中…", done:function(pages){return "PDFを作成しました（"+pages+"ページ）。ダウンロードを確認してください。"},
+    rotateTitle:"回転", upTitle:"上へ", downTitle:"下へ", removeTitle:"削除",
+    pageLabel:function(i,n){return (i)+" / "+n+" ページ目"}
+  },
+  en:{
+    title:"Receipt Sheet Maker",
+    sub:"Arrange multiple receipt photos onto a printable A4 PDF sheet. Everything happens in this browser.",
+    h_layout:"Layout settings", orientLabel:"Page orientation", gridLabel:"Photos per page",
+    captionLabel:"Numbering", captionChkLabel:"Print a running number under each photo",
+    h_source:"Add photos", dropText:"Drag and drop photos here, or click to choose (multiple allowed)",
+    formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser — see the FAQ if it fails.",
+    h_list:"Photo list (reorder / rotate)", clearBtn:"Clear all",
+    h_preview:"Preview", makePdfBtn:"Create PDF &amp; download",
+    feedback:"Feedback", privacy:"Photos are never sent to a server. The PDF is built entirely in this browser.",
+    loadError:"Could not load", filesAdded:function(n){return "Added "+n+" file(s)"},
+    noValid:"No photos to show yet.",
+    summaryText:function(n,pages,perPage){return n+" photo(s) → "+pages+" page(s) ("+perPage+" per page)"},
+    building:"Building PDF…", done:function(pages){return "PDF created ("+pages+" page(s)). Check your download."},
+    rotateTitle:"Rotate", upTitle:"Move up", downTitle:"Move down", removeTitle:"Remove",
+    pageLabel:function(i,n){return "Page "+i+" / "+n}
+  }
+};
+
+/* ---------- 画像読み込み ---------- */
+function loadViaImgTag(file){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){ resolve(img); };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error("img-load-failed")); };
+    img.src=url;
+  });
+}
+function getBitmapSize(bmp){
+  if("naturalWidth" in bmp) return {w:bmp.naturalWidth, h:bmp.naturalHeight};
+  return {w:bmp.width, h:bmp.height};
+}
+async function loadImageEntry(file){
+  var bmp=null, err=null;
+  try{
+    bmp = await createImageBitmap(file, {imageOrientation:"from-image"});
+  }catch(e1){
+    try{ bmp = await createImageBitmap(file); }
+    catch(e2){
+      try{ bmp = await loadViaImgTag(file); }
+      catch(e3){ err = T[lang].loadError; }
+    }
+  }
+  var size = bmp ? getBitmapSize(bmp) : {w:0,h:0};
+  return { id:uid++, name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, error: err || (size.w===0?T[lang].loadError:null) };
+}
+
+/* ---------- 回転を反映した実効サイズ ---------- */
+function rotatedSize(entry){
+  if(entry.rotate%180===90) return {w:entry.h,h:entry.w};
+  return {w:entry.w,h:entry.h};
+}
+
+/* ---------- サムネイル（一覧用の小さいプレビュー画像） ---------- */
+function drawRotated(ctx, bmp, entryW, entryH, rotate, dx, dy, dw, dh){
+  // (dx,dy,dw,dh) は回転後の見た目の矩形。中心を軸に回転して原寸を描画する。
+  ctx.save();
+  ctx.translate(dx+dw/2, dy+dh/2);
+  ctx.rotate(rotate*Math.PI/180);
+  var rs = (rotate%180===90) ? {w:dh,h:dw} : {w:dw,h:dh};
+  ctx.drawImage(bmp, -rs.w/2, -rs.h/2, rs.w, rs.h);
+  ctx.restore();
+}
+function makeThumbDataUrl(entry){
+  if(!entry.bitmap) return null;
+  var SIZE=104;
+  var c=document.createElement("canvas"); c.width=SIZE; c.height=SIZE;
+  var ctx=c.getContext("2d");
+  ctx.fillStyle="#f2f2ee"; ctx.fillRect(0,0,SIZE,SIZE);
+  var rs = rotatedSize(entry);
+  var scale = Math.max(SIZE/rs.w, SIZE/rs.h); // cover
+  var dw=rs.w*scale, dh=rs.h*scale;
+  var dx=(SIZE-dw)/2, dy=(SIZE-dh)/2;
+  try{ drawRotated(ctx, entry.bitmap, entry.w, entry.h, entry.rotate, dx, dy, dw, dh); }
+  catch(e){ return null; }
+  return c.toDataURL("image/jpeg",0.7);
+}
+
+/* ---------- 高解像度JPEG（PDF埋め込み用）を生成 ---------- */
+function canvasToBlob(canvas, type, quality){
+  return new Promise(function(resolve){ canvas.toBlob(resolve, type, quality); });
+}
+async function makeEmbedJpeg(entry){
+  var rs = rotatedSize(entry);
+  var rotCanvas=document.createElement("canvas");
+  rotCanvas.width=Math.max(1,Math.round(rs.w));
+  rotCanvas.height=Math.max(1,Math.round(rs.h));
+  var rctx=rotCanvas.getContext("2d");
+  rctx.save();
+  rctx.translate(rotCanvas.width/2, rotCanvas.height/2);
+  rctx.rotate(entry.rotate*Math.PI/180);
+  rctx.drawImage(entry.bitmap, -entry.w/2, -entry.h/2, entry.w, entry.h);
+  rctx.restore();
+
+  var TARGET_LONG=1400;
+  var longSide=Math.max(rotCanvas.width, rotCanvas.height);
+  var scale=Math.min(1, TARGET_LONG/longSide);
+  var outW=Math.max(1,Math.round(rotCanvas.width*scale));
+  var outH=Math.max(1,Math.round(rotCanvas.height*scale));
+  var outCanvas=rotCanvas;
+  if(scale<1){
+    outCanvas=document.createElement("canvas");
+    outCanvas.width=outW; outCanvas.height=outH;
+    outCanvas.getContext("2d").drawImage(rotCanvas,0,0,outW,outH);
+  }
+  var blob = await canvasToBlob(outCanvas, "image/jpeg", 0.85);
+  var buf = await blob.arrayBuffer();
+  return { bytes:new Uint8Array(buf), w:outCanvas.width, h:outCanvas.height };
+}
+
+/* ---------- レイアウト取得 ---------- */
+function currentGrid(){ return GRID_PRESETS[state.gridIdx]; }
+function currentCells(){
+  var ps=pageSizePt(state.orientation);
+  var g=currentGrid();
+  return { pageSize:ps, cells: computeCells(ps.width, ps.height, MARGIN, GUTTER, g.cols, g.rows, state.captionOn?CAPTION_H:0) };
+}
+function validFiles(){ return state.files.filter(function(f){return !f.error && f.bitmap}); }
+
+/* ---------- 描画：一覧 ---------- */
+function renderThumbs(){
+  var listCard=$("listCard");
+  if(state.files.length===0){ listCard.style.display="none"; return; }
+  listCard.style.display="";
+  var wrap=$("thumbList");
+  wrap.innerHTML="";
+  var validCounter=0;
+  state.files.forEach(function(entry,i){
+    var row=document.createElement("div");
+    row.className="thumbrow";
+
+    var idx=document.createElement("span");
+    idx.className="idx";
+    if(entry.error){ idx.textContent="!"; }
+    else { validCounter++; idx.textContent="No."+validCounter; }
+    row.appendChild(idx);
+
+    var url=makeThumbDataUrl(entry);
+    if(url){
+      var img=document.createElement("img");
+      img.src=url; img.alt="";
+      row.appendChild(img);
+    }
+
+    var nameWrap=document.createElement("div");
+    nameWrap.className="name";
+    if(entry.error){
+      nameWrap.innerHTML='<span class="err">'+escapeHtml(entry.name)+" — "+escapeHtml(entry.error)+"</span>";
+    } else {
+      nameWrap.textContent=entry.name;
+    }
+    row.appendChild(nameWrap);
+
+    var btns=document.createElement("div");
+    btns.className="btns";
+
+    var rotBtn=document.createElement("button");
+    rotBtn.type="button"; rotBtn.textContent="⟳"; rotBtn.title=T[lang].rotateTitle;
+    rotBtn.disabled=!entry.bitmap;
+    rotBtn.addEventListener("click",function(){ entry.rotate=(entry.rotate+90)%360; renderAll(); });
+    btns.appendChild(rotBtn);
+
+    var upBtn=document.createElement("button");
+    upBtn.type="button"; upBtn.textContent="↑"; upBtn.title=T[lang].upTitle;
+    upBtn.disabled=(i===0);
+    upBtn.addEventListener("click",function(){
+      if(i===0) return;
+      var tmp=state.files[i-1]; state.files[i-1]=state.files[i]; state.files[i]=tmp;
+      renderAll();
+    });
+    btns.appendChild(upBtn);
+
+    var downBtn=document.createElement("button");
+    downBtn.type="button"; downBtn.textContent="↓"; downBtn.title=T[lang].downTitle;
+    downBtn.disabled=(i===state.files.length-1);
+    downBtn.addEventListener("click",function(){
+      if(i===state.files.length-1) return;
+      var tmp=state.files[i+1]; state.files[i+1]=state.files[i]; state.files[i]=tmp;
+      renderAll();
+    });
+    btns.appendChild(downBtn);
+
+    var rmBtn=document.createElement("button");
+    rmBtn.type="button"; rmBtn.textContent="✕"; rmBtn.title=T[lang].removeTitle; rmBtn.className="rm";
+    rmBtn.addEventListener("click",function(){
+      var idx2=state.files.indexOf(entry);
+      if(idx2>=0) state.files.splice(idx2,1);
+      renderAll();
+    });
+    btns.appendChild(rmBtn);
+
+    row.appendChild(btns);
+    wrap.appendChild(row);
+  });
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+  });
+}
+
+/* ---------- 描画：プレビュー ---------- */
+function renderPreview(){
+  var card=$("previewCard");
+  var valid=validFiles();
+  if(valid.length===0){ card.style.display="none"; return; }
+  card.style.display="";
+  var layout=currentCells();
+  var perPage=layout.cells.length;
+  var totalPages=pageCount(valid.length, perPage);
+  var grid=$("previewGrid");
+  grid.innerHTML="";
+  var DISPLAY_W=240;
+  var dispScale=DISPLAY_W/layout.pageSize.width;
+  var dispH=layout.pageSize.height*dispScale;
+
+  for(var pi=0; pi<totalPages; pi++){
+    var pageWrap=document.createElement("div");
+    pageWrap.className="pagecard";
+    var canvas=document.createElement("canvas");
+    canvas.width=Math.round(DISPLAY_W*2); canvas.height=Math.round(dispH*2); // retina
+    canvas.style.width=DISPLAY_W+"px"; canvas.style.height=Math.round(dispH)+"px";
+    var ctx=canvas.getContext("2d");
+    var s=dispScale*2;
+    ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle="#cfcfc8"; ctx.lineWidth=1;
+
+    var startIdx=pi*perPage;
+    for(var ci=0; ci<perPage; ci++){
+      var cell=layout.cells[ci];
+      var cx=cell.x*s, cy=canvas.height-(cell.y+cell.h)*s, cw=cell.w*s, ch=cell.h*s;
+      ctx.strokeRect(cx,cy,cw,ch);
+      var gi=startIdx+ci;
+      if(gi>=valid.length) continue;
+      var entry=valid[gi];
+      var rs=rotatedSize(entry);
+      var fit=fitContain(rs.w, rs.h, cell.photoBox);
+      var fx=fit.x*s, fy=canvas.height-(fit.y+fit.h)*s, fw=fit.w*s, fh=fit.h*s;
+      try{ drawRotated(ctx, entry.bitmap, entry.w, entry.h, entry.rotate, fx, fy, fw, fh); }catch(e){}
+      if(state.captionOn && cell.captionBox){
+        ctx.fillStyle="#8a8a84";
+        ctx.font=(11*s/2)+"px sans-serif";
+        ctx.textAlign="center";
+        var capCx=(cell.captionBox.x+cell.captionBox.w/2)*s;
+        var capCy=canvas.height-(cell.captionBox.y+cell.captionBox.h/2)*s+4*s/2;
+        ctx.fillText(String(gi+1), capCx, capCy);
+        ctx.textAlign="left";
+      }
+    }
+    pageWrap.appendChild(canvas);
+    var label=document.createElement("p");
+    label.textContent=T[lang].pageLabel(pi+1,totalPages);
+    pageWrap.appendChild(label);
+    grid.appendChild(pageWrap);
+  }
+
+  $("summary").textContent=T[lang].summaryText(valid.length, totalPages, perPage);
+}
+
+/* ---------- PDF生成 ---------- */
+async function makeAndDownloadPdf(){
+  var valid=validFiles();
+  if(valid.length===0) return;
+  var makeBtn=$("makePdfBtn");
+  makeBtn.disabled=true;
+  var status=$("summary");
+  var prevText=status.textContent;
+  status.textContent=T[lang].building;
+  try{
+    var layout=currentCells();
+    var perPage=layout.cells.length;
+    var totalPages=pageCount(valid.length, perPage);
+    var pages=[];
+    for(var pi=0; pi<totalPages; pi++){
+      var startIdx=pi*perPage;
+      var images=[]; var texts=[];
+      var rects=layout.cells.map(function(c){return {x:c.x,y:c.y,w:c.w,h:c.h}});
+      for(var ci=0; ci<perPage; ci++){
+        var gi=startIdx+ci;
+        if(gi>=valid.length) break;
+        var entry=valid[gi];
+        var jpeg=await makeEmbedJpeg(entry);
+        var cell=layout.cells[ci];
+        var fit=fitContain(jpeg.w, jpeg.h, cell.photoBox);
+        images.push({jpeg:jpeg.bytes, w:jpeg.w, h:jpeg.h, drawW:fit.w, drawH:fit.h, x:fit.x, y:fit.y});
+        if(state.captionOn && cell.captionBox){
+          var label=String(gi+1);
+          texts.push({x:cell.captionBox.x+cell.captionBox.w/2-3*label.length, y:cell.captionBox.y+cell.captionBox.h/2-3, size:9, str:label});
+        }
+      }
+      pages.push({width:layout.pageSize.width, height:layout.pageSize.height, images:images, rects:rects, texts:texts});
+    }
+    var pdfBytes=buildPdf(pages);
+    var blob=new Blob([pdfBytes],{type:"application/pdf"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url; a.download="receipt-sheet.pdf";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},4000);
+    status.textContent=T[lang].done(totalPages);
+  } finally {
+    makeBtn.disabled=false;
+  }
+}
+
+/* ---------- 設定ボタン群の生成 ---------- */
+function buildOptButtons(container, items, isActive, onPick){
+  container.innerHTML="";
+  items.forEach(function(item,i){
+    var b=document.createElement("button");
+    b.type="button";
+    b.textContent=item[lang];
+    b.setAttribute("aria-pressed", isActive(item,i)?"true":"false");
+    b.addEventListener("click",function(){ onPick(item,i); renderAll(); });
+    container.appendChild(b);
+  });
+}
+function renderOptButtons(){
+  buildOptButtons($("orientOpts"), ORIENT_OPTS, function(item){return item.key===state.orientation}, function(item){ state.orientation=item.key; });
+  buildOptButtons($("gridOpts"), GRID_PRESETS, function(item,i){return i===state.gridIdx}, function(item,i){ state.gridIdx=i; });
+}
+
+/* ---------- 全体再描画 ---------- */
+function renderAll(){
+  renderThumbs();
+  renderPreview();
+  renderOptButtons();
+}
+
+/* ---------- ファイル追加 ---------- */
+async function addFiles(fileList){
+  var files=Array.prototype.slice.call(fileList);
+  if(files.length===0) return;
+  $("loadStatus").textContent="…";
+  var added=0;
+  for(var i=0;i<files.length;i++){
+    var entry = await loadImageEntry(files[i]);
+    state.files.push(entry);
+    added++;
+  }
+  $("loadStatus").textContent=T[lang].filesAdded(added);
+  renderAll();
+}
+
+/* ---------- イベント配線 ---------- */
+var dropZone=$("dropZone");
+var fileInput=$("fileInput");
+dropZone.addEventListener("click",function(){fileInput.click()});
+fileInput.addEventListener("change",function(){
+  if(fileInput.files && fileInput.files.length) addFiles(fileInput.files);
+  fileInput.value="";
+});
+["dragenter","dragover"].forEach(function(ev){
+  dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.add("over")});
+});
+["dragleave","drop"].forEach(function(ev){
+  dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.remove("over")});
+});
+dropZone.addEventListener("drop",function(e){
+  var dt=e.dataTransfer;
+  if(dt && dt.files && dt.files.length) addFiles(dt.files);
+});
+
+$("captionChk").addEventListener("change",function(){
+  state.captionOn=$("captionChk").checked;
+  renderAll();
+});
+$("clearBtn").addEventListener("click",function(){
+  state.files=[];
+  $("loadStatus").textContent="";
+  renderAll();
+});
+$("makePdfBtn").addEventListener("click",function(){ makeAndDownloadPdf(); });
+
+/* ---------- 言語切替 ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  renderAll();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0; li<langBtns.length; li++){
+  langBtns[li].addEventListener("click",function(){ lang=this.getAttribute("data-lang"); applyLang(); });
+}
+
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
