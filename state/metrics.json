@@ -97,6 +97,24 @@
       },
       "total": 2,
       "note": "前回(週次レビュー18:30Z)から全ページ変化なし。閲覧が増え始めたページはまだ無い。"
+    },
+    {
+      "date": "2026-09-27T09:00:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 3,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/hyoki-yure/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "total": 3,
+      "note": "前回(週次レビュー翌日20:13Z)からトップページのみ+1（累計3件）。ツール個別ページは全て引き続き0件で、閲覧が増え始めたページはまだ無い。今回は新規実験より、全ツール共通の改善（関連ツール相互リンク＋docs/index.htmlの分野別見出し）を優先した。"
     }
   ],
   "weekly": [
