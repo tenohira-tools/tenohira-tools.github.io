@@ -115,6 +115,24 @@
       },
       "total": 3,
       "note": "前回(週次レビュー翌日20:13Z)からトップページのみ+1（累計3件）。ツール個別ページは全て引き続き0件で、閲覧が増え始めたページはまだ無い。今回は新規実験より、全ツール共通の改善（関連ツール相互リンク＋docs/index.htmlの分野別見出し）を優先した。"
+    },
+    {
+      "date": "2026-09-27T09:20:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 3,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/hyoki-yure/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "total": 3,
+      "note": "前回(同日09:00Z)から全ページ変化なし。閲覧が増え始めたページは無いため、今回は計測タグ・表記の不備の修正を優先した（timezone-planner・tozan-checklistのFAQ/JSON-LDに残っていた『サーバーには何も送信されません』等の断定表現を、GoatCounter導入後の実態に合わせて修正）。"
     }
   ],
   "weekly": [

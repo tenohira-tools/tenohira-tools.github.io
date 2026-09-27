@@ -137,7 +137,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. グリッドの列（0〜23）は誰の時間ですか？</h3>
     <p>A. 「基準にする拠点」で選んだ場所の、指定した日の0時から23時です。他の拠点の行には、その瞬間の現地時間が表示されます。日付が基準拠点と異なる場合は「+1」「-1」のように表示されます。</p>
     <h3>Q. 入力した内容はどこかに送信されますか？</h3>
-    <p>A. されません。時差の計算はすべてお使いのブラウザ内（JavaScriptの標準機能）で行われ、サーバーには何も送信されません。選んだ拠点の並びだけがこの端末のブラウザ内（localStorage）に保存され、次回開いたときに復元されます。</p>
+    <p>A. されません。時差の計算はすべてお使いのブラウザ内（JavaScriptの標準機能）で行われ、入力内容がサーバーに送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。選んだ拠点の並びだけがこの端末のブラウザ内（localStorage）に保存され、次回開いたときに復元されます。</p>
     <h3>Q. サマータイム（夏時間）には対応していますか？</h3>
     <p>A. はい。ブラウザに搭載されているタイムゾーン情報を使っているため、サマータイムの開始・終了も自動的に反映されます。</p>
     <h3>Q. 「営業時間」の色分けの基準は？</h3>
@@ -153,7 +153,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. Whose time do the grid columns (0–23) represent?</h3>
     <p>A. The base location's hours for the date you chose. Each other row shows what its own local time is at that same instant, with a "+1"/"-1" badge when its date differs from the base date.</p>
     <h3>Q. Is anything I enter sent anywhere?</h3>
-    <p>A. No. All conversion happens in your browser using its built-in timezone data; nothing is sent to a server. Only your chosen list of locations is saved in this browser's local storage so it's there next time you open the page.</p>
+    <p>A. No. All conversion happens in your browser using its built-in timezone data; what you enter is never sent to a server (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter). Only your chosen list of locations is saved in this browser's local storage so it's there next time you open the page.</p>
     <h3>Q. Does it handle daylight saving time?</h3>
     <p>A. Yes — it uses your browser's timezone database, which already accounts for each region's daylight-saving rules and transition dates.</p>
     <h3>Q. What do the color bands mean?</h3>
@@ -187,7 +187,7 @@ html[lang=en] .en-only{display:block}
   "@type": "FAQPage",
   "mainEntity": [
     {"@type":"Question","name":"グリッドの列（0〜23）は誰の時間ですか？","acceptedAnswer":{"@type":"Answer","text":"基準にする拠点で選んだ場所の、指定した日の0時から23時です。他の拠点の行にはその瞬間の現地時間が表示され、日付が異なる場合は+1/-1のように表示されます。"}},
-    {"@type":"Question","name":"入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。時差の計算はすべてブラウザ内で行われ、サーバーには何も送信されません。選んだ拠点の並びだけがこの端末のブラウザ内（localStorage）に保存されます。"}},
+    {"@type":"Question","name":"入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。時差の計算はすべてブラウザ内で行われ、入力内容がサーバーに送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。選んだ拠点の並びだけがこの端末のブラウザ内（localStorage）に保存されます。"}},
     {"@type":"Question","name":"サマータイム（夏時間）には対応していますか？","acceptedAnswer":{"@type":"Answer","text":"はい。ブラウザに搭載されているタイムゾーン情報を使っているため、サマータイムの開始・終了も自動的に反映されます。"}},
     {"@type":"Question","name":"「営業時間」の色分けの基準は？","acceptedAnswer":{"@type":"Answer","text":"9〜18時を営業時間、7〜9時と18〜22時を起きている時間帯、22〜7時を深夜・早朝として色分けした目安です。実際の営業時間は拠点ごとに異なります。"}}
   ]
