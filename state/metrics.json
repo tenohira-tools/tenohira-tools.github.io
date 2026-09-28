@@ -133,6 +133,24 @@
       },
       "total": 3,
       "note": "前回(同日09:00Z)から全ページ変化なし。閲覧が増え始めたページは無いため、今回は計測タグ・表記の不備の修正を優先した（timezone-planner・tozan-checklistのFAQ/JSON-LDに残っていた『サーバーには何も送信されません』等の断定表現を、GoatCounter導入後の実態に合わせて修正）。"
+    },
+    {
+      "date": "2026-09-28T17:15:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 3,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/hyoki-yure/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "total": 3,
+      "note": "前回(09-27 09:20Z)から全ページ変化なし。タグ・表記の不備も見当たらなかったため、経理・事務書類分野に新規実験shorui-scan（書類写真のスキャン風補正）を追加。shorui-scanは本記録時点では未公開のため未収録。"
     }
   ],
   "weekly": [

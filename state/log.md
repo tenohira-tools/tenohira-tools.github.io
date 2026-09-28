@@ -53,6 +53,11 @@
 - 検証：Node.jsでタイムゾーン変換ロジック（Tokyo⇔NY・ロンドンの夏時間切替・日付またぎ・NYの夏時間切替直後の存在しない時刻）を単体テストしてから組み込み。Playwright（Chromiumヘッドレス、ja-JPロケール）でグリッドクリック・拠点の追加削除・基準拠点変更・現在時刻ボタン・結果コピー（クリップボード内容を実際に検証）・言語切替・localStorageでの拠点構成の永続化・モバイル幅（390px）でのレイアウト崩れ無しを確認。JSエラー無し（file://での GoatCounter読み込みエラーのみ、https配信では発生しない想定）。
 - 次回：timezone-plannerを含む7ページ全てで公開カウンターの値を再取得し、増え始めたページがあれば改善を優先する。wareki/csv-fix/hyoki-yureの30日判定（2026-10-23頃）、tozan-checklist/regex-jaの30日判定（2026-10-24頃）が近づいてきたら、その時点の累計閲覧数で継続・改善・撤退を判断する。
 
+## 2026-09-28 実験10（shorui-scan）
+- やったこと：計測（累計3、前回から全ページ変化なし）・health.md（10ページ・問題0件）・GoatCounterタグとGoatCounter導入後の表記いずれも不備なしを確認。バックログ1番目「書類写真のスキャン風補正」（docs/shorui-scan/）を公開。四隅を手動ドラッグして台形補正（Heckbertのsquare-to-quad射影変換を自作実装）し、カラー／グレースケール／白黒くっきり（自動レベル補正）で仕上げ、JPEG単体ダウンロードまたは複数枚をPDFにまとめて出力できる。receipt-sheet・shohyo-renameと相互リンク（経理・事務書類群への追加）。
+- 検証：Node.jsで射影変換の中核関数を先に単体テスト。Playwright（Chromiumヘッドレス、ja-JPロケール）で台形の書類画像を使い、アップロード→回転（4回転で復元）→四隅ドラッグ→白黒くっきり適用（グレースケール確認）→JPEGダウンロード→2件目追加→PDF生成をpdfjs-distでパースしページ数・画像埋め込みを確認→日英切替→一覧クリアまでの一連動作とJSエラー無し、モバイル幅（390px）でも横スクロール無しを確認。
+- 次回：30日判定は2026-10-28頃。他9実験も引き続き閲覧ほぼゼロのため、health.mdとタグ・表記の不備を優先しつつ、反応が出た分野があれば改善を優先する。
+
 ## 2026-09-25 計測タグの設置と表記修正
 - やったこと：全公開ページ（wareki・csv-fix・hyoki-yure・tozan-checklist・regex-ja・index.html、計6ページ。所有権確認ファイルgoogleXXX.htmlは除く）の`</body>`直前にGoatCounter（Cookieなし・個人非特定のアクセス数計測、サイトコード`tenohira`）のタグを設置。RULES.mdの「実験の作り方」に、これが「外部読み込みなし」原則の唯一の例外である旨を1行追記（「絶対に守ること」は変更なし）。README.mdとdocs/index.htmlの「追跡なし」という表現を「Cookieなし・個人を特定しないアクセス数の計測のみ（GoatCounter）。入力内容は端末の外に送られない」に修正。GoatCounter設置後は厳密には「通信が一切発生しない」とは言えなくなるため、csv-fix・hyoki-yure・regex-jaのFAQにあった「通信は発生しません」という言い切り（本文・JSON-LD FAQPage双方）を、「入力内容は送信されないが、匿名の閲覧数計測の通信のみ発生する」という正確な表現に修正。
 - 数値：`curl "https://tenohira.goatcounter.com/api/v0/stats/hits..."`と`stats/total`をこのセッションのネットワークポリシーで試したが、プロキシが`CONNECT tunnel failed, response 403`（goatcounter.comへの接続を拒否）を返し取得不可。state/experiments.jsonの各実験にその旨を追記し、state/escalations.mdにも1行記載（作業は継続）。タグ設置自体は今回で全ページ完了したため、次回以降に環境側でgoatcounter.comへのアクセスが許可されれば数値が取れる見込み。
