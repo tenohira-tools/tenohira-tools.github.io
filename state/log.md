@@ -1,5 +1,12 @@
 # 実行ログ
 
+## 2026-09-28 表記の不備修正（receipt-sheet・shohyo-rename・shorui-scan・regex-ja）
+- 数値：サイト全体の累計閲覧数3件（前回17:15Zから+0）。ツール個別10ページは全て引き続き0件。health.mdは2026-09-28付10ページ・問題0件で対応不要。
+- やったこと：GoatCounterタグの設置漏れは無かったが、全ページ横断でgrepし直したところ、receipt-sheet・shohyo-rename・shorui-scanの3ページで、JSON-LD（FAQPage）内の「サーバーに送信されることはありません」の回答文だけGoatCounterの計測に触れる注記が抜けており、同じページの本文FAQ（他ページと同じ形式）と食い違っていた。3ページのJSON-LDに注記を追記して本文と揃えた。加えてregex-jaの英語版サブタイトルが"Nothing is sent anywhere."と無条件の断定になっており、対応する日本語版「入力はどこにも送信されません」（入力に限定した表現）と範囲がずれていたため、"Nothing you enter is sent anywhere."に修正した。
+- 検証：修正3ファイルのJSON-LDをPythonのjson.loadsでパースし構文が壊れていないことを確認。regex-jaのインラインJSをNode.jsのnew Function()で構文チェックし、GoatCounterタグの残存も再確認した。push前にgrepで実名・個人アカウント名が含まれないことも確認。
+- オーナーへ：state/escalations.mdのSearch Console登録依頼は、今回の実行指示に「登録済み」とあったため解消として整理した。
+- 次回：閲覧が増え始めたページがまだ無いため、health.mdの確認と表記の再点検を優先しつつ、反応が出た分野があれば改善を優先する。
+
 ## 2026-09-27 表記の不備修正（timezone-planner・tozan-checklist）
 - 数値：サイト全体の累計閲覧数3件（前回9:00Zから+0、トップページのみ）。ツール個別10ページは全て引き続き0件。health.mdは2026-09-27付10ページ・問題0件で対応不要。
 - やったこと：全ページを横断でgrepし、「サーバーには何も送信されません」「Nothing is sent anywhere」のようなGoatCounter導入前の断定表現が2ページに残っていることを発見。timezone-planner（日本語FAQ・英語FAQ・JSON-LD）とtozan-checklist（日本語FAQ・英語FAQ・JSON-LD）を、他ページと同じ「入力内容は送信されない旨＋GoatCounterの匿名閲覧数計測のみ発生する」注記付きの表現に修正した。フッターの短い一行プライバシー表記（他ページと同じ簡潔な形式）は対象外とした。
