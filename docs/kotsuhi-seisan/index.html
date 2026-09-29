@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>交通費精算書メーカー｜区間・金額を入力してその場で集計・印刷 | てのひらツール</title>
+<meta name="description" content="日付・区間・手段・金額を行ごとに入力すると自動で合計し、A4で印刷できる交通費精算書をブラウザだけで作成。よく使う区間はプリセット保存で翌月も入力の手間を省け、CSV保存にも対応。入力内容はサーバーに送信されません。A browser-only travel expense report builder — save frequent routes as presets, print an A4 sheet with the running total, no sign-up or upload.">
+<link rel="canonical" href="https://tenohira-tools.github.io/kotsuhi-seisan/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--bad:#f19a9d;--bad-bg:#3a2022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:960px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.35rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.08rem;margin:0 0 12px}
+.metaGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.metaGrid label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.metaGrid input{width:100%;font:inherit;font-size:.95rem;padding:8px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.presetRow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.presetRow button.chip{font:inherit;font-size:.86rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 10px 6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.presetRow button.chip:hover{border-color:var(--accent)}
+.presetRow button.chip .x{color:var(--muted);font-size:.85em}
+.presetHint{color:var(--muted);font-size:.86rem;margin:0}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:.92rem}
+table th{text-align:left;color:var(--muted);font-weight:600;font-size:.8rem;padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+table td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+table input[type=text],table input[type=date],table input[type=number]{width:100%;min-width:88px;font:inherit;font-size:.9rem;padding:6px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+table input.route{min-width:150px}
+table input.amount{min-width:90px;text-align:right}
+table input.method{min-width:96px}
+.tripBtn{font:inherit;font-size:.82rem;font-weight:600;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 10px;cursor:pointer;white-space:nowrap}
+.tripBtn[data-trip="round"]{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.rowbtn{border:0;background:transparent;color:var(--muted);font-size:1rem;cursor:pointer;padding:4px 6px}
+.rowbtn:hover{color:var(--accent)}
+.rowbtn.rm:hover{color:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
+button.secondary:disabled{opacity:.4;cursor:not-allowed}
+.totalBar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;background:var(--accent-bg);border-radius:10px}
+.totalBar .label{color:var(--muted);font-size:.9rem}
+.totalBar .val{font-size:1.4rem;font-weight:700;color:var(--accent)}
+.toast{margin-top:10px;font-size:.9rem;color:var(--accent);min-height:1.4em}
+.printOnly{display:none}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+.hidden{display:none !important}
+@media print{
+  .lang,.top,.presetsCard,#addRowBtn,.outputCard,footer,.about,.related,.rowbtn,th.actionCol,td.actionCol{display:none !important}
+  section.card{border:0;box-shadow:none;padding:0;margin:0 0 14px}
+  body{background:#fff;color:#000}
+  table input[type=text],table input[type=date],table input[type=number],.metaGrid input{border:none;background:transparent;padding:2px 3px;color:#000}
+  table input::placeholder{color:transparent}
+  table input[type=date]::-webkit-calendar-picker-indicator,.metaGrid input::-webkit-calendar-picker-indicator{display:none}
+  table input[type=number]::-webkit-inner-spin-button,table input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  table input[type=number]{-moz-appearance:textfield}
+  .tripBtn{border:none !important;background:transparent !important;padding:2px 0 !important;color:#000 !important;pointer-events:none}
+  table th,table td{border-bottom:1px solid #999}
+  .totalBar{background:transparent;border:1px solid #999}
+  .totalBar .val{color:#000}
+  .printOnly{display:block}
+  .signBoxes{display:flex;gap:14px;margin-top:24px}
+  .signBoxes div{flex:1;border:1px solid #999;border-radius:4px;min-height:64px;padding:6px 8px;font-size:.85rem;color:#333}
+}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">交通費精算書メーカー</h1>
+    <p class="sub" data-i="sub">日付・区間・手段・金額を行ごとに入力すると自動で合計し、A4で印刷できる交通費精算書を作ります。入力内容はこの端末のブラウザだけに保存されます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="h_meta">基本情報</h2>
+  <div class="metaGrid">
+    <div><label for="metaName" data-i="nameLabel">氏名</label><input type="text" id="metaName" autocomplete="off"></div>
+    <div><label for="metaDept" data-i="deptLabel">所属</label><input type="text" id="metaDept" autocomplete="off"></div>
+    <div><label for="metaPeriod" data-i="periodLabel">対象年月</label><input type="month" id="metaPeriod"></div>
+  </div>
+</section>
+
+<section class="card presetsCard">
+  <h2 data-i="h_presets">よく使う区間</h2>
+  <p class="presetHint" data-i="presetsHint">クリックすると今日の日付でその内容の行を追加します。表の行にある「☆」ボタンで新しく登録できます。</p>
+  <div class="presetRow" id="presetRow"></div>
+</section>
+
+<section class="card">
+  <h2 data-i="h_rows">明細</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr>
+      <th data-i="col_date">日付</th>
+      <th data-i="col_route">区間</th>
+      <th data-i="col_method">手段</th>
+      <th data-i="col_trip">片道/往復</th>
+      <th data-i="col_purpose">摘要</th>
+      <th data-i="col_amount">金額</th>
+      <th class="actionCol"></th>
+    </tr></thead>
+    <tbody id="rowsBody"></tbody>
+  </table>
+  </div>
+  <datalist id="methodList"></datalist>
+  <div class="row">
+    <button type="button" class="secondary" id="addRowBtn" data-i="addRowBtn">＋ 行を追加</button>
+  </div>
+  <div class="totalBar">
+    <span class="label" id="countLabel"></span>
+    <span class="val" id="totalVal">¥0</span>
+  </div>
+  <div class="printOnly signBoxes">
+    <div data-i="signApplicant">申請者</div>
+    <div data-i="signApprover">承認者</div>
+    <div data-i="signAccounting">経理確認</div>
+  </div>
+</section>
+
+<section class="card outputCard">
+  <h2 data-i="h_output">出力</h2>
+  <div class="row">
+    <button type="button" class="primary" id="printBtn" data-i="printBtn">印刷 / PDF保存</button>
+    <button type="button" class="secondary" id="csvBtn" data-i="csvBtn">CSVでダウンロード</button>
+    <button type="button" class="secondary" id="clearBtn" data-i="clearBtn">すべてクリア</button>
+  </div>
+  <p class="toast" id="toast"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上部に氏名・所属・対象年月を入力します（未入力でも動作します）。</li>
+      <li>「明細」の各行に日付・区間・手段・摘要・金額を入力します。「片道/往復」ボタンはクリックするたびに切り替わり、印刷結果に反映されます。</li>
+      <li>よく使う区間は、行の「☆」ボタンでプリセットとして登録できます。次回からは上部のプリセットをクリックするだけで、今日の日付でその内容の行を追加できます。</li>
+      <li>入力した内容はこの端末のブラウザに自動保存されるため、閉じても翌月また続きから使えます。「すべてクリア」を押すまで消えません。</li>
+      <li>「印刷 / PDF保存」でA4サイズの精算書として印刷でき、ブラウザの印刷ダイアログから「PDFに保存」も選べます。「CSVでダウンロード」は明細データをExcel等で開ける形式で保存します。</li>
+    </ol>
+    <h3>Q. 運賃を自動で調べてくれますか？</h3>
+    <p>A. いいえ、経路検索サービスとの連携や運賃の自動取得は行っていません。乗換案内アプリ等で調べた金額を、ご自身で「金額」欄に入力してください（他社サービスの規約に反する自動取得を避けるための仕様です）。</p>
+    <h3>Q. 入力した内容はどこかに送信されますか？</h3>
+    <p>A. されません。氏名・区間・金額などの入力内容はこの端末のブラウザ内（localStorage）だけに保存され、外部のサーバーに送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。ブラウザの閲覧データを削除すると保存内容も消えるため、大事な記録はCSVダウンロードやPDF印刷で控えておくことをおすすめします。</p>
+    <h3>Q. これは会社や税務上の様式として、そのまま使えますか？</h3>
+    <p>A. 様式は勤務先の規定に合わせて調整してください。本ツールは日付・区間・手段・金額を集計して見やすい表にする補助ツールであり、勤務先の経費規定や税務上の要件を満たすことを保証するものではありません。承認欄は印刷時に空欄で出力されるので、必要に応じて手書き・押印してください。本ツールは税務・法律上の助言を行うものではありません。</p>
+    <h3>Q. プリセットや入力内容を他の端末と共有できますか？</h3>
+    <p>A. できません。保存はこの端末・このブラウザの中だけで完結する設計のため、他の端末やブラウザには引き継がれません。共有したい場合はCSVダウンロードしたファイルを渡してください。</p>
+    <h3>Q. 複数月分の精算書をまとめて作れますか？</h3>
+    <p>A. 現在は1つの精算書（明細一覧）のみを保持する設計です。月が変わったら「対象年月」を更新し、先にCSVダウンロードや印刷で前月分を控えてから、行を編集・入れ替えてご利用ください。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Fill in your name, department and target month at the top (optional).</li>
+      <li>Add a row for each trip: date, route, method, purpose and amount. Click the one-way/round-trip button to toggle it — this is reflected when you print.</li>
+      <li>Save a frequent route as a preset with the ☆ button on any row. Next time, just click a preset above to add a new row with today's date pre-filled.</li>
+      <li>Everything is saved automatically in this browser, so you can close the tab and continue later. It stays until you click "Clear all".</li>
+      <li>"Print / Save as PDF" gives you a printable A4 sheet (choose "Save as PDF" in the print dialog). "Download CSV" exports the rows in a spreadsheet-friendly format.</li>
+    </ol>
+    <h3>Q. Does it look up fares automatically?</h3>
+    <p>A. No. It doesn't connect to any route-finder or fetch fares automatically — enter the amount yourself after checking a transit app, to avoid scraping data against another service's terms.</p>
+    <h3>Q. Is anything I type sent anywhere?</h3>
+    <p>A. No. Your name, routes and amounts are stored only in this browser's local storage and never sent to a server (only anonymous, cookie-free page-view counts are collected for this page). Clearing your browser data will erase them, so download a CSV or print a PDF to keep a record.</p>
+    <h3>Q. Can I use this as an official company or tax form as-is?</h3>
+    <p>A. Adjust the layout to your employer's rules. This tool only totals and formats your entries — it doesn't guarantee compliance with your company's expense policy or tax requirements. The signature boxes print blank for you to sign or stamp. This is not tax or legal advice.</p>
+    <h3>Q. Can I share presets or entries across devices?</h3>
+    <p>A. No — everything stays in this one browser on this one device. Download a CSV if you need to hand the data to someone else.</p>
+    <h3>Q. Can I keep several months at once?</h3>
+    <p>A. This tool keeps one working sheet at a time. When the month changes, update "target month", export the previous month first (CSV or print), then edit the rows for the new month.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../shohyo-rename/">証憑ファイル名整理ツール</a> — 領収書・切符の写真に日付・取引先・金額を入力して一括リネーム。</li>
+      <li><a href="../receipt-sheet/">領収書まとめ台紙メーカー</a> — 交通費精算に添付する領収書・レシートの写真をA4のPDFにまとめて整列。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../shohyo-rename/">Receipt Filename Organizer</a> — Rename receipt photos in bulk with date/vendor/amount.</li>
+      <li><a href="../receipt-sheet/">Receipt Sheet Maker</a> — Arrange receipt photos for this report into a printable A4 PDF.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">入力した内容はサーバーに送信されません。この端末のブラウザ（localStorage）だけに保存されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"運賃を自動で調べてくれますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。経路検索サービスとの連携や運賃の自動取得は行っていません。ご自身で調べた金額を入力してください。"}},
+    {"@type":"Question","name":"入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。入力内容はこの端末のブラウザ内（localStorage）だけに保存され、外部のサーバーに送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"これは会社や税務上の様式として、そのまま使えますか？","acceptedAnswer":{"@type":"Answer","text":"様式は勤務先の規定に合わせて調整してください。集計・整形の補助ツールであり、経費規定や税務上の要件を満たすことを保証するものではありません。税務・法律上の助言ではありません。"}},
+    {"@type":"Question","name":"複数月分の精算書をまとめて作れますか？","acceptedAnswer":{"@type":"Answer","text":"現在は1つの精算書のみを保持する設計です。月が変わったら先にCSVダウンロードや印刷で前月分を控えてから編集してください。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function uid(){ return "r"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+var STORE_KEY="kotsuhi-seisan:v1";
+var PRESET_KEY="kotsuhi-seisan:presets:v1";
+var lang="ja";
+
+function todayISO(){
+  var d=new Date();
+  var m=String(d.getMonth()+1).padStart(2,"0");
+  var day=String(d.getDate()).padStart(2,"0");
+  return d.getFullYear()+"-"+m+"-"+day;
+}
+function blankRow(){
+  return {id:uid(), date:todayISO(), route:"", method:"", trip:"one", purpose:"", amount:""};
+}
+
+function loadState(){
+  try{
+    var raw=localStorage.getItem(STORE_KEY);
+    if(raw){
+      var s=JSON.parse(raw);
+      if(s && Array.isArray(s.rows)) return s;
+    }
+  }catch(e){}
+  return {meta:{name:"",dept:"",period:""}, rows:[blankRow()]};
+}
+function loadPresets(){
+  try{
+    var raw=localStorage.getItem(PRESET_KEY);
+    if(raw){ var a=JSON.parse(raw); if(Array.isArray(a)) return a; }
+  }catch(e){}
+  return [];
+}
+var state=loadState();
+var presets=loadPresets();
+
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function savePresets(){
+  try{ localStorage.setItem(PRESET_KEY, JSON.stringify(presets)); }catch(e){}
+}
+
+var METHODS={
+  ja:["電車","バス","タクシー","自家用車","自転車","飛行機","その他"],
+  en:["Train","Bus","Taxi","Car","Bicycle","Flight","Other"]
+};
+
+var T={
+  ja:{
+    title:"交通費精算書メーカー",
+    sub:"日付・区間・手段・金額を行ごとに入力すると自動で合計し、A4で印刷できる交通費精算書を作ります。入力内容はこの端末のブラウザだけに保存されます。",
+    h_meta:"基本情報", nameLabel:"氏名", deptLabel:"所属", periodLabel:"対象年月",
+    h_presets:"よく使う区間", presetsHint:"クリックすると今日の日付でその内容の行を追加します。表の行にある「☆」ボタンで新しく登録できます。",
+    h_rows:"明細", col_date:"日付", col_route:"区間", col_method:"手段", col_trip:"片道/往復", col_purpose:"摘要", col_amount:"金額",
+    addRowBtn:"＋ 行を追加", countLabel:function(n){return n+"件の合計"}, total:function(v){return "¥"+v.toLocaleString("ja-JP")},
+    tripOne:"片道", tripRound:"往復",
+    h_output:"出力", printBtn:"印刷 / PDF保存", csvBtn:"CSVでダウンロード", clearBtn:"すべてクリア",
+    savedPreset:"プリセットに登録しました", removedPreset:"プリセットを削除しました",
+    confirmClear:"入力した明細・基本情報・プリセットをすべて消去します。よろしいですか？",
+    cleared:"すべて消去しました", csvDone:"CSVをダウンロードしました",
+    routePh:"例：自宅 ⇄ 〇〇支店", purposePh:"例：定例会議",
+    starTitle:"プリセットに登録", dupTitle:"複製", rmTitle:"削除",
+    feedback:"フィードバックはこちら", privacy:"入力した内容はサーバーに送信されません。この端末のブラウザ（localStorage）だけに保存されます。",
+    signApplicant:"申請者", signApprover:"承認者", signAccounting:"経理確認"
+  },
+  en:{
+    title:"Travel Expense Report Maker",
+    sub:"Add a row per trip — date, route, method, amount — and get an automatic total plus a printable A4 report. Everything stays in this browser.",
+    h_meta:"Basic info", nameLabel:"Name", deptLabel:"Department", periodLabel:"Target month",
+    h_presets:"Frequent routes", presetsHint:"Click a preset to add a row with today's date pre-filled. Use the ☆ button on any row to save a new one.",
+    h_rows:"Entries", col_date:"Date", col_route:"Route", col_method:"Method", col_trip:"One-way/Round", col_purpose:"Purpose", col_amount:"Amount",
+    addRowBtn:"＋ Add row", countLabel:function(n){return n+" item(s)"}, total:function(v){return "¥"+v.toLocaleString("en-US")},
+    tripOne:"One-way", tripRound:"Round trip",
+    h_output:"Output", printBtn:"Print / Save as PDF", csvBtn:"Download CSV", clearBtn:"Clear all",
+    savedPreset:"Saved as a preset", removedPreset:"Preset removed",
+    confirmClear:"This clears all entries, basic info and presets. Continue?",
+    cleared:"Cleared", csvDone:"CSV downloaded",
+    routePh:"e.g. Home ⇄ Branch office", purposePh:"e.g. Regular meeting",
+    starTitle:"Save as preset", dupTitle:"Duplicate", rmTitle:"Remove",
+    feedback:"Feedback", privacy:"Nothing you enter is sent to a server. It's saved only in this browser's local storage.",
+    signApplicant:"Applicant", signApprover:"Approver", signAccounting:"Accounting"
+  }
+};
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+  });
+}
+function toast(msg){ $("toast").textContent=msg; }
+
+/* ---------- メタ情報 ---------- */
+function renderMeta(){
+  $("metaName").value=state.meta.name||"";
+  $("metaDept").value=state.meta.dept||"";
+  $("metaPeriod").value=state.meta.period||"";
+}
+$("metaName").addEventListener("input",function(){ state.meta.name=this.value; saveState(); });
+$("metaDept").addEventListener("input",function(){ state.meta.dept=this.value; saveState(); });
+$("metaPeriod").addEventListener("input",function(){ state.meta.period=this.value; saveState(); });
+
+/* ---------- 手段のサジェスト ---------- */
+function renderMethodList(){
+  var dl=$("methodList");
+  dl.innerHTML="";
+  METHODS[lang].forEach(function(m){
+    var o=document.createElement("option"); o.value=m; dl.appendChild(o);
+  });
+}
+
+/* ---------- 明細行 ---------- */
+function amountOf(row){
+  var n=parseFloat(row.amount);
+  return isFinite(n) ? n : 0;
+}
+function renderRows(){
+  var body=$("rowsBody");
+  body.innerHTML="";
+  state.rows.forEach(function(row){
+    var tr=document.createElement("tr");
+
+    var tdDate=document.createElement("td");
+    var dateInput=document.createElement("input");
+    dateInput.type="date"; dateInput.value=row.date||"";
+    dateInput.addEventListener("input",function(){ row.date=this.value; saveState(); });
+    tdDate.appendChild(dateInput); tr.appendChild(tdDate);
+
+    var tdRoute=document.createElement("td");
+    var routeInput=document.createElement("input");
+    routeInput.type="text"; routeInput.className="route"; routeInput.value=row.route||"";
+    routeInput.placeholder=T[lang].routePh;
+    routeInput.addEventListener("input",function(){ row.route=this.value; saveState(); });
+    tdRoute.appendChild(routeInput); tr.appendChild(tdRoute);
+
+    var tdMethod=document.createElement("td");
+    var methodInput=document.createElement("input");
+    methodInput.type="text"; methodInput.className="method"; methodInput.value=row.method||"";
+    methodInput.setAttribute("list","methodList");
+    methodInput.addEventListener("input",function(){ row.method=this.value; saveState(); });
+    tdMethod.appendChild(methodInput); tr.appendChild(tdMethod);
+
+    var tdTrip=document.createElement("td");
+    var tripBtn=document.createElement("button");
+    tripBtn.type="button"; tripBtn.className="tripBtn"; tripBtn.setAttribute("data-trip", row.trip);
+    tripBtn.textContent = row.trip==="round" ? T[lang].tripRound : T[lang].tripOne;
+    tripBtn.addEventListener("click",function(){
+      row.trip = row.trip==="round" ? "one" : "round";
+      saveState(); renderRows();
+    });
+    tdTrip.appendChild(tripBtn); tr.appendChild(tdTrip);
+
+    var tdPurpose=document.createElement("td");
+    var purposeInput=document.createElement("input");
+    purposeInput.type="text"; purposeInput.value=row.purpose||"";
+    purposeInput.placeholder=T[lang].purposePh;
+    purposeInput.addEventListener("input",function(){ row.purpose=this.value; saveState(); });
+    tdPurpose.appendChild(purposeInput); tr.appendChild(tdPurpose);
+
+    var tdAmount=document.createElement("td");
+    var amountInput=document.createElement("input");
+    amountInput.type="number"; amountInput.className="amount"; amountInput.min="0"; amountInput.step="1";
+    amountInput.value=row.amount===undefined||row.amount===null?"":row.amount;
+    amountInput.addEventListener("input",function(){ row.amount=this.value; saveState(); renderTotal(); });
+    tdAmount.appendChild(amountInput); tr.appendChild(tdAmount);
+
+    var tdAction=document.createElement("td");
+    tdAction.className="actionCol";
+    var starBtn=document.createElement("button");
+    starBtn.type="button"; starBtn.className="rowbtn"; starBtn.textContent="☆"; starBtn.title=T[lang].starTitle;
+    starBtn.addEventListener("click",function(){
+      presets.push({id:uid(), route:row.route||"", method:row.method||"", amount:row.amount||""});
+      savePresets(); renderPresets(); toast(T[lang].savedPreset);
+    });
+    tdAction.appendChild(starBtn);
+    var dupBtn=document.createElement("button");
+    dupBtn.type="button"; dupBtn.className="rowbtn"; dupBtn.textContent="⧉"; dupBtn.title=T[lang].dupTitle;
+    dupBtn.addEventListener("click",function(){
+      var i=state.rows.indexOf(row);
+      var copy={id:uid(), date:row.date, route:row.route, method:row.method, trip:row.trip, purpose:row.purpose, amount:row.amount};
+      state.rows.splice(i+1,0,copy);
+      saveState(); renderRows(); renderTotal();
+    });
+    tdAction.appendChild(dupBtn);
+    var rmBtn=document.createElement("button");
+    rmBtn.type="button"; rmBtn.className="rowbtn rm"; rmBtn.textContent="✕"; rmBtn.title=T[lang].rmTitle;
+    rmBtn.addEventListener("click",function(){
+      var i=state.rows.indexOf(row);
+      if(i>=0) state.rows.splice(i,1);
+      saveState(); renderRows(); renderTotal();
+    });
+    tdAction.appendChild(rmBtn);
+    tr.appendChild(tdAction);
+
+    body.appendChild(tr);
+  });
+}
+function renderTotal(){
+  var total=state.rows.reduce(function(sum,r){return sum+amountOf(r)},0);
+  $("countLabel").textContent=T[lang].countLabel(state.rows.length);
+  $("totalVal").textContent=T[lang].total(total);
+}
+
+/* ---------- プリセット ---------- */
+function renderPresets(){
+  var wrap=$("presetRow");
+  wrap.innerHTML="";
+  if(presets.length===0){
+    var p=document.createElement("p");
+    p.className="presetHint";
+    return;
+  }
+  presets.forEach(function(preset){
+    var b=document.createElement("button");
+    b.type="button"; b.className="chip";
+    var label=[preset.route, preset.method].filter(Boolean).join(" / ");
+    if(preset.amount) label += "（¥"+Number(preset.amount).toLocaleString(lang==="ja"?"ja-JP":"en-US")+"）";
+    var span=document.createElement("span");
+    span.textContent=label || "(no label)";
+    b.appendChild(span);
+    var x=document.createElement("span");
+    x.className="x"; x.textContent="✕";
+    b.appendChild(x);
+    b.addEventListener("click",function(e){
+      if(e.target===x){
+        var i=presets.indexOf(preset);
+        if(i>=0) presets.splice(i,1);
+        savePresets(); renderPresets(); toast(T[lang].removedPreset);
+        return;
+      }
+      var row={id:uid(), date:todayISO(), route:preset.route||"", method:preset.method||"", trip:"one", purpose:"", amount:preset.amount||""};
+      state.rows.push(row);
+      saveState(); renderRows(); renderTotal();
+    });
+    wrap.appendChild(b);
+  });
+}
+
+/* ---------- CSV ---------- */
+function csvEscape(v){
+  v=String(v==null?"":v);
+  if(/[",\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function downloadCsv(){
+  var header=["日付","区間","手段","片道/往復","摘要","金額"];
+  var lines=[header.map(csvEscape).join(",")];
+  state.rows.forEach(function(r){
+    lines.push([r.date||"", r.route||"", r.method||"", (r.trip==="round"?"往復":"片道"), r.purpose||"", amountOf(r)].map(csvEscape).join(","));
+  });
+  var total=state.rows.reduce(function(sum,r){return sum+amountOf(r)},0);
+  lines.push(["","","","","合計",total].map(csvEscape).join(","));
+  var csv="﻿"+lines.join("\r\n");
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download="kotsuhi-seisan.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+  toast(T[lang].csvDone);
+}
+
+/* ---------- イベント ---------- */
+$("addRowBtn").addEventListener("click",function(){
+  state.rows.push(blankRow());
+  saveState(); renderRows(); renderTotal();
+});
+$("printBtn").addEventListener("click",function(){ window.print(); });
+$("csvBtn").addEventListener("click",downloadCsv);
+$("clearBtn").addEventListener("click",function(){
+  if(!window.confirm(T[lang].confirmClear)) return;
+  state={meta:{name:"",dept:"",period:""}, rows:[blankRow()]};
+  presets=[];
+  saveState(); savePresets();
+  renderMeta(); renderPresets(); renderRows(); renderTotal();
+  toast(T[lang].cleared);
+});
+
+/* ---------- 言語切替 ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){
+    var k=els[i].getAttribute("data-i");
+    if(typeof T[lang][k]==="string") els[i].innerHTML=T[lang][k];
+  }
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  renderMethodList();
+  renderRows();
+  renderPresets();
+  renderTotal();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0; li<langBtns.length; li++){
+  langBtns[li].addEventListener("click",function(){ lang=this.getAttribute("data-lang"); applyLang(); });
+}
+
+renderMeta();
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

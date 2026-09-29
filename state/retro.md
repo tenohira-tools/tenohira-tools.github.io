@@ -1,5 +1,8 @@
 # ふりかえり
 
+## 2026-09-29（kotsuhi-seisan）
+- 気づいた点：入力欄そのものを印刷する設計（window.print）にしたとき、@media printでborderやbackgroundを消しただけでは、date/number型inputのカレンダーアイコンやスピンボタン、未入力欄のplaceholder文字が印刷結果に残ってしまい、実際にスクリーンショットで確認するまで気付かなかった。次に「画面の入力欄をそのまま印刷物にする」ツールを作るときは、最初から`::-webkit-calendar-picker-indicator`・スピンボタン・`::placeholder`の印刷時非表示をセットで用意し、印刷プレビューのスクリーンショット確認を検証手順に含める。
+
 ## 2026-09-28（表記の不備修正）
 - 気づいた点：新しいページを作る回（shorui-scan等）でJSON-LDのFAQPage回答文をFAQ本文からコピーする際、GoatCounterの注記だけ削って短くしてしまい、後から横断grepで初めて発覚するパターンが3ページ続いた。次に新規ページを作るときは、本文FAQとJSON-LDのFAQPageを別々に書かず、同じ文字列を使い回す（コピペ元を本文からJSON-LDへの引用として扱う）よう意識する。
 
