@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSVの列ごと書式統一ツール（全角半角・カナ・郵便番号・ハイフンをそろえる）| てのひらツール</title>
+<meta name="description" content="CSVファイルを読み込み、列ごとに「全角英数字→半角」「半角カナ→全角カナ」「郵便番号を123-4567形式に統一」「ハイフン類の統一」などの書式をそろえてダウンロード。すべてブラウザ内で処理し、ファイルは送信されません。Clean up a CSV column by column: normalize full/half-width characters, katakana, postal codes and hyphen styles, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/csv-seiri/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:900px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+label{font-size:.92rem}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileInfo{font-size:.92rem;color:var(--muted);margin-top:10px}
+#encStatus{font-weight:600}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.checkline{display:flex;align-items:center;gap:8px;margin-top:10px}
+.checkline input{width:auto;min-height:auto}
+#colsBox{display:grid;gap:10px;margin-top:12px}
+.colCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.colCard .colName{font-weight:700;min-width:140px;word-break:break-all}
+.colCard select{flex:0 0 auto}
+.colCard .colCount{color:var(--muted);font-size:.85rem}
+.scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.changed{color:var(--diff);font-weight:600}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">CSVの列ごと書式統一ツール</h1>
+    <p class="sub" data-i="sub">CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロードします。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにCSVファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/*" style="display:none">
+  <p id="fileInfo" aria-live="polite"></p>
+</section>
+
+<section class="card" id="encCard" style="display:none">
+  <h2 data-i="detectedLabel">検出した文字コード</h2>
+  <p id="encStatus" aria-live="polite"></p>
+  <div class="row">
+    <label for="encSelect" data-i="encSelectLabel">文字コードを指定（自動判定がおかしい場合に変更）</label>
+    <select id="encSelect">
+      <option value="utf-8">UTF-8</option>
+      <option value="shift_jis">Shift_JIS（CP932）</option>
+      <option value="euc-jp">EUC-JP</option>
+      <option value="iso-2022-jp">ISO-2022-JP（JIS）</option>
+    </select>
+  </div>
+  <div class="note" id="warnBox"></div>
+  <div class="checkline">
+    <input type="checkbox" id="headerCheck" checked>
+    <label for="headerCheck" data-i="headerLabel">1行目を見出し（ヘッダー）として扱う</label>
+  </div>
+</section>
+
+<section class="card" id="colsCard" style="display:none">
+  <h2 data-i="colsHeading">列ごとの書式</h2>
+  <p class="hint" data-i="colsHint">列ごとに変換方法を選ぶと、下のプレビューと変更件数がその場で更新されます。</p>
+  <div id="colsBox"></div>
+</section>
+
+<section class="card" id="previewCard" style="display:none">
+  <h2 data-i="previewHeading">プレビュー</h2>
+  <p class="hint" data-i="previewNote2">赤字は変換で値が変わったセルです。</p>
+  <div id="previewBox"></div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="outputHeading">ダウンロード設定</h2>
+  <div class="checkline">
+    <input type="checkbox" id="bomCheck" checked>
+    <label for="bomCheck" data-i="bomLabel">BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）</label>
+  </div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">変換してCSVをダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にCSVファイルをドラッグ＆ドロップするか、クリックして選びます。文字コードが自動判定されます（違う場合は手動で選び直せます）。</li>
+      <li>1行目が見出し行かどうかを確認します（既定でON）。</li>
+      <li>列ごとに「全角英数字→半角」「半角カタカナ→全角カタカナ」「郵便番号を123-4567に統一」「ハイフン類を半角に統一」「前後の空白を削除」から変換方法を選びます。プレビューで変わったセルが赤字で表示されます。</li>
+      <li>「変換してCSVをダウンロード」を押すと、選んだ変換をすべての行に適用したCSVがダウンロードされます。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで変換されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 「郵便番号を123-4567に統一」は何をしていますか？</h3>
+    <p>A. セルの中の全角数字を半角に変換したうえで数字だけを取り出し、ちょうど7桁のときだけ「123-4567」の形式にハイフンを入れ直します。7桁でない場合はハイフンを入れず、全角→半角の変換のみ行います（誤った桁のデータを勝手に作らないため）。</p>
+    <h3>Q. 「ハイフン類を半角に統一」は電話番号の桁を正しく揃えてくれますか？</h3>
+    <p>A. いいえ。全角ハイフンや長音記号（－・ー・―など）を半角の「-」に統一するだけで、ハイフンの位置を新しく作ったり市外局番を判定したりはしません。すでに入っているハイフンの見た目をそろえる用途です。</p>
+    <h3>Q. 変換した内容が正しいか確認するには？</h3>
+    <p>A. ダウンロード前にプレビュー表を確認してください。変換で値が変わったセルは赤字で表示されます。列ごとに変換方法の下に「◯件変更」という件数も出ます。</p>
+    <h3>Q. 大きなファイルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。非常に大きなファイルでは表示が遅くなる場合があります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop a CSV file into the box above, or click it to choose one. The character encoding is auto-detected (you can override it manually).</li>
+      <li>Check whether the first row is a header row (on by default).</li>
+      <li>For each column, choose a transform: full-width → half-width alphanumerics, half-width → full-width katakana, unify postal codes to 123-4567, unify hyphen-like characters to a plain "-", or trim leading/trailing spaces. Cells that changed are shown in red in the preview.</li>
+      <li>Click "Convert and download CSV" to download a file with the chosen transforms applied to every row.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is converted inside your browser, on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. What does "unify postal codes to 123-4567" actually do?</h3>
+    <p>A. It converts full-width digits to half-width, extracts the digits, and only inserts a hyphen as "123-4567" when there are exactly 7 digits. If there aren't exactly 7 digits, it leaves the hyphen alone and only normalizes the digit width — it never invents digits to force a match.</p>
+    <h3>Q. Does "unify hyphen-like characters" fix phone number formatting?</h3>
+    <p>A. No. It only normalizes full-width hyphens, dashes and long vowel marks (－・ー・― etc.) to a plain half-width "-". It doesn't add new hyphens or figure out area codes — it just makes existing hyphens look consistent.</p>
+    <h3>Q. How do I check the conversion is correct?</h3>
+    <p>A. Check the preview table before downloading. Cells whose value changed are shown in red, and each column shows how many cells it changed.</p>
+    <h3>Q. Can it handle large files?</h3>
+    <p>A. Everything runs in browser memory, so it's built for files up to tens of megabytes. Very large files may make the page slower.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../csv-fix/">CSV・テキストの文字化け直し</a> — Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換。ExcelのBOM追加・削除にも対応。</li>
+      <li><a href="../hyoki-yure/">表記ゆれ・全角半角チェッカー</a> — 「サーバ／サーバー」などの表記ゆれ、全角英数字・半角カタカナ・全角スペースの混在を検出してワンクリックで統一。</li>
+      <li><a href="../config-convert/">JSON・YAML・TOML 相互変換エディタ</a> — 3つの枠のどれかを編集すると、残り2つの形式にその場で変換。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../csv-fix/">CSV / Text Mojibake Fixer</a> — Fix mojibake: convert Shift_JIS/EUC-JP files to UTF-8, add or remove a BOM.</li>
+      <li><a href="../hyoki-yure/">Notation &amp; Full/Half-width Checker</a> — Detect and unify inconsistent Japanese word forms and full/half-width characters.</li>
+      <li><a href="../config-convert/">JSON / YAML / TOML Converter</a> — Edit JSON, YAML or TOML and the other two formats update instantly.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで変換されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"「郵便番号を123-4567に統一」は何をしていますか？","acceptedAnswer":{"@type":"Answer","text":"全角数字を半角に変換して数字だけを取り出し、ちょうど7桁のときだけ123-4567の形式にハイフンを入れ直します。7桁でなければハイフンは入れません。"}},
+    {"@type":"Question","name":"「ハイフン類を半角に統一」は電話番号の桁を正しく揃えてくれますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。全角ハイフンや長音記号を半角の「-」に統一するだけで、ハイフンの位置を新しく作ったり市外局番を判定したりはしません。"}},
+    {"@type":"Question","name":"大きなファイルは扱えますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+var ENC_LABEL={
+  "utf-8":{ja:"UTF-8",en:"UTF-8"},
+  "shift_jis":{ja:"Shift_JIS（CP932）",en:"Shift_JIS (CP932)"},
+  "euc-jp":{ja:"EUC-JP",en:"EUC-JP"},
+  "iso-2022-jp":{ja:"ISO-2022-JP（JIS）",en:"ISO-2022-JP (JIS)"}
+};
+
+var T={
+ ja:{title:"CSVの列ごと書式統一ツール",
+  sub:"CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロードします。ファイルはどこにも送信されません。",
+  dropzoneText:"ここにCSVファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。",
+  fileLabel:"ファイル",detectedLabel:"検出した文字コード",
+  encSelectLabel:"文字コードを指定（自動判定がおかしい場合に変更）",
+  headerLabel:"1行目を見出し（ヘッダー）として扱う",
+  warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。上の文字コードを別の候補に変更してみてください。",
+  warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。手動で文字コードを選び直してください。",
+  colsHeading:"列ごとの書式",colsHint:"列ごとに変換方法を選ぶと、下のプレビューと変更件数がその場で更新されます。",
+  colDefault:"列",
+  optNone:"そのまま",optTrim:"前後の空白を削除",optHalf:"全角英数字→半角",optKana:"半角カタカナ→全角カタカナ",
+  optZip:"郵便番号を「123-4567」に統一",optHyphen:"ハイフン類を半角「-」に統一",
+  countSuffix:"件変更",countZero:"変更なし",
+  previewHeading:"プレビュー",previewNote:"先頭の一部のみ表示しています（ダウンロードするファイルは全体を変換します）。",
+  previewNote2:"赤字は変換で値が変わったセルです。",
+  noData:"プレビューできる内容がありません。",
+  outputHeading:"ダウンロード設定",
+  bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
+  downloadBtn:"変換してCSVをダウンロード",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"CSV Column Formatter",
+  sub:"Load a CSV file and normalize full/half-width characters, katakana, postal codes and hyphen styles column by column, then download it. Nothing is uploaded.",
+  dropzoneText:"Drag and drop a CSV file here, or click to choose one",
+  dropzoneHint:"Works with CSV and TSV files. Everything happens on this device.",
+  fileLabel:"File",detectedLabel:"Detected encoding",
+  encSelectLabel:"Choose encoding manually (if auto-detect looks wrong)",
+  headerLabel:"Treat the first row as a header",
+  warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding above.",
+  warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose the correct encoding manually.",
+  colsHeading:"Per-column formatting",colsHint:"Pick a transform for each column — the preview and change counts below update live.",
+  colDefault:"Column",
+  optNone:"No change",optTrim:"Trim leading/trailing spaces",optHalf:"Full-width → half-width alphanumerics",optKana:"Half-width → full-width katakana",
+  optZip:"Unify postal codes to “123-4567”",optHyphen:"Unify hyphens to a plain “-”",
+  countSuffix:" changed",countZero:"no change",
+  previewHeading:"Preview",previewNote:"Showing only the first part of the file (the downloaded file will contain the whole thing).",
+  previewNote2:"Cells shown in red changed value.",
+  noData:"Nothing to preview yet.",
+  outputHeading:"Download options",
+  bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
+  downloadBtn:"Convert and download CSV",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={bytes:null,name:"",text:"",rows:[],cols:0,transforms:[]};
+
+/* ---- encoding (shared pattern with csv-fix) ---- */
+function tryDecode(bytes,label){
+  try{ return new TextDecoder(label,{fatal:true}).decode(bytes); }
+  catch(e){ return null; }
+}
+function hasBOM(bytes){ return bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF; }
+function detectEncoding(bytes){
+  var order=["utf-8","shift_jis","euc-jp","iso-2022-jp"];
+  for(var i=0;i<order.length;i++){
+    var t=tryDecode(bytes,order[i]);
+    if(t!==null) return {enc:order[i], ok:true};
+  }
+  return {enc:"utf-8", ok:false};
+}
+
+/* ---- CSV parse/serialize (handles quoted fields, including embedded newlines/commas) ---- */
+function parseCSV(text){
+  var rows=[],row=[],cur="",inQ=false,i=0,n=text.length;
+  while(i<n){
+    var c=text[i];
+    if(inQ){
+      if(c==='"'){
+        if(text.charAt(i+1)==='"'){cur+='"';i+=2;continue;}
+        inQ=false;i++;continue;
+      }
+      cur+=c;i++;continue;
+    }
+    if(c==='"'){inQ=true;i++;continue;}
+    if(c===','){row.push(cur);cur="";i++;continue;}
+    if(c==='\r'){ if(text.charAt(i+1)==='\n') i++; row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    if(c==='\n'){ row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    cur+=c;i++;
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function csvField(v){
+  v=String(v);
+  if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function serializeCSV(rows){
+  return rows.map(function(r){ return r.map(csvField).join(","); }).join("\r\n");
+}
+
+/* ---- column transforms (reuses hyoki-yure's half/full-width katakana map) ---- */
+var HALF_KANA_MAP={
+"ｶﾞ":"ガ","ｷﾞ":"ギ","ｸﾞ":"グ","ｹﾞ":"ゲ","ｺﾞ":"ゴ","ｻﾞ":"ザ","ｼﾞ":"ジ","ｽﾞ":"ズ","ｾﾞ":"ゼ","ｿﾞ":"ゾ",
+"ﾀﾞ":"ダ","ﾁﾞ":"ヂ","ﾂﾞ":"ヅ","ﾃﾞ":"デ","ﾄﾞ":"ド","ﾊﾞ":"バ","ﾋﾞ":"ビ","ﾌﾞ":"ブ","ﾍﾞ":"ベ","ﾎﾞ":"ボ",
+"ﾊﾟ":"パ","ﾋﾟ":"ピ","ﾌﾟ":"プ","ﾍﾟ":"ペ","ﾎﾟ":"ポ","ｳﾞ":"ヴ",
+"ｱ":"ア","ｲ":"イ","ｳ":"ウ","ｴ":"エ","ｵ":"オ","ｶ":"カ","ｷ":"キ","ｸ":"ク","ｹ":"ケ","ｺ":"コ",
+"ｻ":"サ","ｼ":"シ","ｽ":"ス","ｾ":"セ","ｿ":"ソ","ﾀ":"タ","ﾁ":"チ","ﾂ":"ツ","ﾃ":"テ","ﾄ":"ト",
+"ﾅ":"ナ","ﾆ":"ニ","ﾇ":"ヌ","ﾈ":"ネ","ﾉ":"ノ","ﾊ":"ハ","ﾋ":"ヒ","ﾌ":"フ","ﾍ":"ヘ","ﾎ":"ホ",
+"ﾏ":"マ","ﾐ":"ミ","ﾑ":"ム","ﾒ":"メ","ﾓ":"モ","ﾔ":"ヤ","ﾕ":"ユ","ﾖ":"ヨ",
+"ﾗ":"ラ","ﾘ":"リ","ﾙ":"ル","ﾚ":"レ","ﾛ":"ロ","ﾜ":"ワ","ｦ":"ヲ","ﾝ":"ン",
+"ｧ":"ァ","ｨ":"ィ","ｩ":"ゥ","ｪ":"ェ","ｫ":"ォ","ｯ":"ッ","ｬ":"ャ","ｭ":"ュ","ｮ":"ョ",
+"｡":"。","､":"、","･":"・","ｰ":"ー","｢":"「","｣":"」","ﾞ":"゛","ﾟ":"゜"
+};
+function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
+var HALF_KANA_KEYS=Object.keys(HALF_KANA_MAP).sort(function(a,b){return b.length-a.length});
+var HALF_KANA_RE=new RegExp(HALF_KANA_KEYS.map(escapeRegExp).join("|"),"g");
+var DASH_RE=/[－ー−‐‑‒–—―ｰ]/g;
+
+function toHalfAlnum(text){
+  return text.replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0xFEE0)});
+}
+function toFullKana(text){
+  return text.replace(HALF_KANA_RE,function(m){return HALF_KANA_MAP[m]});
+}
+var TRANSFORMS={
+  none: function(v){ return v; },
+  trim: function(v){ return v.replace(/^[\s　]+|[\s　]+$/g,""); },
+  half: function(v){ return toHalfAlnum(v); },
+  kana: function(v){ return toFullKana(v); },
+  zip: function(v){
+    var t=toHalfAlnum(v);
+    var digits=t.replace(/[^0-9]/g,"");
+    if(digits.length===7) return digits.slice(0,3)+"-"+digits.slice(3);
+    return t;
+  },
+  hyphen: function(v){
+    return toHalfAlnum(v).replace(DASH_RE,"-");
+  }
+};
+var TRANSFORM_ORDER=["none","trim","half","kana","zip","hyphen"];
+var TRANSFORM_KEY={none:"optNone",trim:"optTrim",half:"optHalf",kana:"optKana",zip:"optZip",hyphen:"optHyphen"};
+
+function applyTransform(kind,v){
+  var f=TRANSFORMS[kind];
+  return f?f(v):v;
+}
+
+/* ---- UI ---- */
+function dataRows(){
+  return state.hasHeader ? state.rows.slice(1) : state.rows.slice();
+}
+function colLabel(c){
+  if(state.hasHeader && state.rows[0] && state.rows[0][c]!==undefined && state.rows[0][c]!=="") return state.rows[0][c];
+  return T[lang].colDefault+" "+(c+1);
+}
+function escTrunc(s){ s=String(s); var t = s.length>60 ? s.slice(0,60)+"…" : s; return esc(t); }
+
+function renderCols(){
+  var box=$("colsBox");
+  var h="";
+  for(var c=0;c<state.cols;c++){
+    var cnt=changedCount(c);
+    h+="<div class='colCard'><span class='colName'>"+esc(colLabel(c))+"</span>";
+    h+="<select data-col='"+c+"' class='colSelect'>";
+    for(var i=0;i<TRANSFORM_ORDER.length;i++){
+      var key=TRANSFORM_ORDER[i];
+      var sel=state.transforms[c]===key?" selected":"";
+      h+="<option value='"+key+"'"+sel+">"+esc(T[lang][TRANSFORM_KEY[key]])+"</option>";
+    }
+    h+="</select>";
+    h+="<span class='colCount'>"+(cnt>0?(cnt+T[lang].countSuffix):T[lang].countZero)+"</span>";
+    h+="</div>";
+  }
+  box.innerHTML=h;
+  var sels=box.querySelectorAll(".colSelect");
+  for(var j=0;j<sels.length;j++){
+    sels[j].addEventListener("change",function(){
+      var c=parseInt(this.getAttribute("data-col"),10);
+      state.transforms[c]=this.value;
+      renderCols();
+      renderPreview();
+    });
+  }
+}
+
+function changedCount(c){
+  var kind=state.transforms[c];
+  if(kind==="none") return 0;
+  var rows=dataRows(),n=0;
+  for(var r=0;r<rows.length;r++){
+    var v=rows[r][c];
+    if(v===undefined) continue;
+    if(applyTransform(kind,v)!==v) n++;
+  }
+  return n;
+}
+
+function renderPreview(){
+  var box=$("previewBox");
+  if(!state.rows.length){ box.innerHTML="<p class='hint'>"+esc(T[lang].noData)+"</p>"; return; }
+  var maxRows=15,maxCols=14;
+  var colCount=Math.min(maxCols,state.cols);
+  var startRow=state.hasHeader?1:0;
+  var shown=state.rows.slice(startRow,startRow+maxRows);
+  var h="<div class='scroll'><table><thead><tr>";
+  for(var c=0;c<colCount;c++) h+="<th>"+esc(colLabel(c))+"</th>";
+  h+="</tr></thead><tbody>";
+  for(var r=0;r<shown.length;r++){
+    h+="<tr>";
+    for(var c2=0;c2<colCount;c2++){
+      var orig=shown[r][c2];
+      if(orig===undefined){ h+="<td></td>"; continue; }
+      var out=applyTransform(state.transforms[c2],orig);
+      var cls=out!==orig?" class='changed'":"";
+      h+="<td"+cls+">"+escTrunc(out)+"</td>";
+    }
+    h+="</tr>";
+  }
+  h+="</tbody></table></div>";
+  if(state.rows.length-startRow>maxRows||state.cols>maxCols) h+="<p class='hint'>"+esc(T[lang].previewNote)+"</p>";
+  box.innerHTML=h;
+}
+
+function loadRows(){
+  state.rows=parseCSV(state.text);
+  state.cols=0;
+  for(var i=0;i<state.rows.length;i++) state.cols=Math.max(state.cols,state.rows[i].length);
+  if(!state.transforms || state.transforms.length!==state.cols){
+    state.transforms=[];
+    for(var c=0;c<state.cols;c++) state.transforms.push("none");
+  }
+  var has=state.rows.length>0;
+  $("colsCard").style.display=has?"":"none";
+  $("previewCard").style.display=has?"":"none";
+  $("outCard").style.display=has?"":"none";
+  $("downloadBtn").disabled=!has;
+  if(has){ renderCols(); renderPreview(); }
+}
+
+function applyEncoding(enc, forcedFallback){
+  var bytes=state.bytes;
+  var t=tryDecode(bytes,enc);
+  var warn="";
+  if(t===null){
+    t=new TextDecoder(enc,{fatal:false}).decode(bytes);
+    warn=T[lang].warnReplace;
+  } else if(forcedFallback){
+    warn=T[lang].warnUnknown;
+  }
+  state.text=t;
+  var label=ENC_LABEL[enc]?ENC_LABEL[enc][lang]:enc;
+  $("encStatus").innerHTML="<span id='encStatusLabel'>"+esc(label)+"</span>";
+  $("warnBox").textContent=warn;
+  state.transforms=[];
+  loadRows();
+}
+
+function handleFile(file){
+  state.name=file.name;
+  file.arrayBuffer().then(function(buf){
+    state.bytes=new Uint8Array(buf);
+    var d=detectEncoding(state.bytes);
+    $("encSelect").value=d.enc;
+    $("encCard").style.display="";
+    var bom=hasBOM(state.bytes);
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(bom?", BOM":"")+")";
+    applyEncoding(d.enc, !d.ok);
+  }).catch(function(){
+    $("fileInfo").textContent=T[lang].warnUnknown;
+  });
+}
+
+state.hasHeader=true;
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) handleFile(f);
+});
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){
+  var f=e.target.files && e.target.files[0];
+  if(f) handleFile(f);
+});
+$("encSelect").addEventListener("change",function(){
+  if(state.bytes) applyEncoding(this.value,false);
+});
+$("headerCheck").addEventListener("change",function(){
+  state.hasHeader=this.checked;
+  loadRows();
+});
+
+$("downloadBtn").addEventListener("click",function(){
+  if(!state.rows.length) return;
+  var out=[];
+  if(state.hasHeader && state.rows.length){ out.push(state.rows[0].slice()); }
+  var rows=dataRows();
+  for(var r=0;r<rows.length;r++){
+    var row=rows[r].slice();
+    for(var c=0;c<row.length;c++){
+      row[c]=applyTransform(state.transforms[c],row[c]);
+    }
+    out.push(row);
+  }
+  var csvText=serializeCSV(out);
+  var addBom=$("bomCheck").checked;
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes;
+  if(addBom){
+    bytes=new Uint8Array(encoded.length+3);
+    bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF;
+    bytes.set(encoded,3);
+  } else bytes=encoded;
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var m=/\.[^.]+$/.exec(state.name);
+  var ext=m?m[0]:".csv";
+  var base=state.name.replace(/\.[^.]+$/,"")||"file";
+  var outName=base+"_seiri"+ext;
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download=outName;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  if(state.bytes){
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
+    var label=ENC_LABEL[$("encSelect").value]?ENC_LABEL[$("encSelect").value][lang]:$("encSelect").value;
+    $("encStatus").innerHTML="<span id='encStatusLabel'>"+esc(label)+"</span>";
+  }
+  if(state.rows.length){ renderCols(); renderPreview(); }
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
