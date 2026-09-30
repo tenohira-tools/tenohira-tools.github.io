@@ -32,7 +32,8 @@ h2{font-size:1.05rem;margin:0 0 12px}
 .status{margin-top:10px;font-size:.9rem;color:var(--muted)}
 .note{margin-top:10px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.88rem}
 .thumbs{display:grid;gap:8px;margin-top:4px}
-.thumbrow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0}
+.thumbrow{border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0}
+.thumbrow .mainline{display:flex;align-items:center;gap:10px;min-width:0}
 .thumbrow img{width:52px;height:52px;object-fit:cover;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
 .thumbrow .idx{width:1.6em;text-align:right;color:var(--muted);font-size:.85rem;flex:none}
 .thumbrow .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
@@ -40,6 +41,21 @@ h2{font-size:1.05rem;margin:0 0 12px}
 .thumbrow .btns{display:flex;gap:4px;flex:none}
 .thumbrow button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:.95rem}
 .thumbrow button:disabled{opacity:.35;cursor:not-allowed}
+.thumbrow .detailRow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-width:0}
+.thumbrow .detailRow input{font:inherit;font-size:.85rem;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--bg);color:var(--fg);min-width:0}
+.thumbrow .detailRow .dDate{flex:1 1 128px}
+.thumbrow .detailRow .dPayee{flex:2 1 140px}
+.thumbrow .detailRow .dAmount{flex:1 1 90px;text-align:right}
+.printSheetWrap{display:none}
+#printSheetTable{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:10px}
+#printSheetTable th,#printSheetTable td{border-bottom:1px solid #999;padding:6px 8px;text-align:left}
+#printSheetTable th:last-child,#printSheetTable td:last-child{text-align:right}
+#printSheetTable tfoot td{font-weight:700;border-top:2px solid #333;border-bottom:none}
+@media print{
+  html.printing-summary body *{visibility:hidden}
+  html.printing-summary #printSheetWrap,html.printing-summary #printSheetWrap *{visibility:visible}
+  html.printing-summary #printSheetWrap{display:block;position:absolute;left:0;top:0;width:100%;padding:24px;font:14px/1.6 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#000}
+}
 .thumbrow button.rm{color:var(--bad)}
 .previewGrid{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px}
 .pagecard{text-align:center}
@@ -100,6 +116,7 @@ html[lang=en] .en-only{display:block}
 
 <section class="card" id="listCard" style="display:none">
   <h2 data-i="h_list">写真一覧（並び替え・回転）</h2>
+  <label class="chk"><input type="checkbox" id="detailChk"><span data-i="detailChkLabel">各写真に日付・支払先・金額を入力する（任意）</span></label>
   <div class="thumbs" id="thumbList"></div>
   <div class="row">
     <button type="button" class="secondary" id="clearBtn" data-i="clearBtn">すべてクリア</button>
@@ -111,9 +128,20 @@ html[lang=en] .en-only{display:block}
   <div class="previewGrid" id="previewGrid"></div>
   <div class="row">
     <button type="button" class="primary" id="makePdfBtn" data-i="makePdfBtn">PDFを作成してダウンロード</button>
+    <button type="button" class="secondary" id="printListBtn" data-i="printListBtn">明細一覧を印刷（日付・支払先・金額）</button>
   </div>
   <div class="summary" id="summary"></div>
 </section>
+
+<div class="printSheetWrap" id="printSheetWrap">
+  <h2 id="printSheetTitle"></h2>
+  <p id="printSheetMeta"></p>
+  <table id="printSheetTable">
+    <thead><tr><th data-i="printColNo">No.</th><th data-i="printColDate">日付</th><th data-i="printColPayee">支払先</th><th data-i="printColAmount">金額</th></tr></thead>
+    <tbody id="printSheetBody"></tbody>
+    <tfoot><tr><td colspan="3" data-i="printTotalLabel">合計</td><td id="printSheetTotal"></td></tr></tfoot>
+  </table>
+</div>
 
 <section class="card about">
   <div class="ja-only">
@@ -133,7 +161,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. iPhoneの写真（HEIC形式）が読み込めません。</h3>
     <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
     <h3>Q. キャプションに好きな文字を入れられますか？</h3>
-    <p>A. 現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。対応表が必要な場合は、番号と写真の対応をメモとして別途残すことをおすすめします。</p>
+    <p>A. 現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。</p>
     <h3>Q. 何枚まで対応していますか？</h3>
     <p>A. 枚数に上限は設けていませんが、写真が多くなるほど処理に時間がかかり、生成されるPDFのファイルサイズも大きくなります。数十枚を超える場合は、複数回に分けて作成することをおすすめします。</p>
   </div>
@@ -154,7 +182,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. My iPhone photos (HEIC) won't load.</h3>
     <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
     <h3>Q. Can I add custom caption text?</h3>
-    <p>A. Only auto-numbering (1, 2, 3…) is supported. Since the PDF is generated without embedding a Japanese font, free-text Japanese captions can't be rendered correctly. Keep a separate note mapping numbers to receipts if you need one.</p>
+    <p>A. Only auto-numbering (1, 2, 3…) is supported inside the PDF, since it's generated without embedding a Japanese font, so free-text Japanese captions can't be rendered there. If you want to record a date, payee, or amount, turn on "Enter date / payee / amount for each photo" in the photo list, then use the "Print itemized list" button to print an A4 sheet with the same numbers as the PDF using your browser's own print feature (which renders Japanese text natively). Everything stays on this device.</p>
     <h3>Q. Is there a limit on how many photos?</h3>
     <p>A. No hard limit, but more photos means more processing time and a larger PDF file. For dozens of photos, consider splitting into a few runs.</p>
   </div>
@@ -192,7 +220,7 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、PDFの生成も含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}},
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。複数の写真を1枚のPDFに並べるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}},
     {"@type":"Question","name":"iPhoneの写真（HEIC形式）が読み込めません。","acceptedAnswer":{"@type":"Answer","text":"HEIC形式の読み込みはブラウザに依存します。読み込めない場合は、写真の設定を「互換性優先（JPEG）」にするか、JPEGとして書き出してからお試しください。"}},
-    {"@type":"Question","name":"キャプションに好きな文字を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"通し番号のみに対応しています。日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは表示できません。"}}
+    {"@type":"Question","name":"キャプションに好きな文字を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。"}}
   ]
 }
 </script>
@@ -366,7 +394,7 @@ var ORIENT_OPTS=[
 
 var lang="ja";
 var uid=1;
-var state={ orientation:"portrait", gridIdx:1, captionOn:true, files:[] };
+var state={ orientation:"portrait", gridIdx:1, captionOn:true, detailOn:false, files:[] };
 
 var T={
   ja:{
@@ -377,7 +405,13 @@ var T={
     h_source:"写真を追加", dropText:"ここに写真をドラッグ＆ドロップ、またはクリックして選択（複数可）",
     formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。うまく読み込めない場合はFAQをご覧ください。",
     h_list:"写真一覧（並び替え・回転）", clearBtn:"すべてクリア",
+    detailChkLabel:"各写真に日付・支払先・金額を入力する（任意）",
+    detailDateLabel:"日付", detailPayeePlaceholder:"支払先", detailAmountPlaceholder:"金額",
     h_preview:"プレビュー", makePdfBtn:"PDFを作成してダウンロード",
+    printListBtn:"明細一覧を印刷（日付・支払先・金額）",
+    printColNo:"No.", printColDate:"日付", printColPayee:"支払先", printColAmount:"金額", printTotalLabel:"合計",
+    printSheetTitle:"領収書 明細一覧",
+    printSheetMeta:function(d){return "作成日："+d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+"（PDFと同じ通し番号）"},
     feedback:"フィードバックはこちら", privacy:"写真の内容はサーバーに送信されません。PDFの生成もこの端末のブラウザだけで行われます。",
     loadError:"読み込めませんでした", filesAdded:function(n){return n+"件読み込みました"},
     noValid:"表示できる写真がありません。",
@@ -394,7 +428,13 @@ var T={
     h_source:"Add photos", dropText:"Drag and drop photos here, or click to choose (multiple allowed)",
     formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser — see the FAQ if it fails.",
     h_list:"Photo list (reorder / rotate)", clearBtn:"Clear all",
+    detailChkLabel:"Enter date / payee / amount for each photo (optional)",
+    detailDateLabel:"Date", detailPayeePlaceholder:"Payee", detailAmountPlaceholder:"Amount",
     h_preview:"Preview", makePdfBtn:"Create PDF &amp; download",
+    printListBtn:"Print itemized list (date / payee / amount)",
+    printColNo:"No.", printColDate:"Date", printColPayee:"Payee", printColAmount:"Amount", printTotalLabel:"Total",
+    printSheetTitle:"Receipt itemized list",
+    printSheetMeta:function(d){return "Generated: "+(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()+" (same numbers as the PDF)"},
     feedback:"Feedback", privacy:"Photos are never sent to a server. The PDF is built entirely in this browser.",
     loadError:"Could not load", filesAdded:function(n){return "Added "+n+" file(s)"},
     noValid:"No photos to show yet.",
@@ -431,7 +471,7 @@ async function loadImageEntry(file){
     }
   }
   var size = bmp ? getBitmapSize(bmp) : {w:0,h:0};
-  return { id:uid++, name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, error: err || (size.w===0?T[lang].loadError:null) };
+  return { id:uid++, name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, error: err || (size.w===0?T[lang].loadError:null), date:"", payee:"", amount:"" };
 }
 
 /* ---------- 回転を反映した実効サイズ ---------- */
@@ -517,18 +557,20 @@ function renderThumbs(){
   state.files.forEach(function(entry,i){
     var row=document.createElement("div");
     row.className="thumbrow";
+    var mainline=document.createElement("div");
+    mainline.className="mainline";
 
     var idx=document.createElement("span");
     idx.className="idx";
     if(entry.error){ idx.textContent="!"; }
     else { validCounter++; idx.textContent="No."+validCounter; }
-    row.appendChild(idx);
+    mainline.appendChild(idx);
 
     var url=makeThumbDataUrl(entry);
     if(url){
       var img=document.createElement("img");
       img.src=url; img.alt="";
-      row.appendChild(img);
+      mainline.appendChild(img);
     }
 
     var nameWrap=document.createElement("div");
@@ -538,7 +580,7 @@ function renderThumbs(){
     } else {
       nameWrap.textContent=entry.name;
     }
-    row.appendChild(nameWrap);
+    mainline.appendChild(nameWrap);
 
     var btns=document.createElement("div");
     btns.className="btns";
@@ -578,7 +620,34 @@ function renderThumbs(){
     });
     btns.appendChild(rmBtn);
 
-    row.appendChild(btns);
+    mainline.appendChild(btns);
+    row.appendChild(mainline);
+
+    if(state.detailOn && !entry.error){
+      var det=document.createElement("div");
+      det.className="detailRow";
+
+      var dDate=document.createElement("input");
+      dDate.type="date"; dDate.className="dDate"; dDate.value=entry.date||"";
+      dDate.setAttribute("aria-label",T[lang].detailDateLabel);
+      dDate.addEventListener("input",function(){ entry.date=dDate.value; });
+      det.appendChild(dDate);
+
+      var dPayee=document.createElement("input");
+      dPayee.type="text"; dPayee.className="dPayee"; dPayee.value=entry.payee||"";
+      dPayee.placeholder=T[lang].detailPayeePlaceholder;
+      dPayee.addEventListener("input",function(){ entry.payee=dPayee.value; });
+      det.appendChild(dPayee);
+
+      var dAmount=document.createElement("input");
+      dAmount.type="number"; dAmount.className="dAmount"; dAmount.value=entry.amount||"";
+      dAmount.placeholder=T[lang].detailAmountPlaceholder; dAmount.min="0"; dAmount.step="1"; dAmount.inputMode="numeric";
+      dAmount.addEventListener("input",function(){ entry.amount=dAmount.value; });
+      det.appendChild(dAmount);
+
+      row.appendChild(det);
+    }
+
     wrap.appendChild(row);
   });
 }
@@ -692,6 +761,43 @@ async function makeAndDownloadPdf(){
   }
 }
 
+/* ---------- 明細一覧の印刷（ブラウザの印刷機能を使用） ---------- */
+function formatAmount(n){
+  try{ return n.toLocaleString(lang==="ja"?"ja-JP":"en-US"); }
+  catch(e){ return String(n); }
+}
+function buildPrintSheet(){
+  var valid=validFiles();
+  $("printSheetTitle").textContent=T[lang].printSheetTitle;
+  $("printSheetMeta").textContent=T[lang].printSheetMeta(new Date());
+  var body=$("printSheetBody");
+  body.innerHTML="";
+  var total=0, hasAmount=false;
+  valid.forEach(function(entry,i){
+    var tr=document.createElement("tr");
+    var raw=String(entry.amount||"").trim();
+    var amtNum=parseFloat(raw.replace(/,/g,""));
+    var amtText="";
+    if(raw!=="" && !isNaN(amtNum)){ total+=amtNum; hasAmount=true; amtText=formatAmount(amtNum); }
+    var tdNo=document.createElement("td"); tdNo.textContent=String(i+1);
+    var tdDate=document.createElement("td"); tdDate.textContent=entry.date||"";
+    var tdPayee=document.createElement("td"); tdPayee.textContent=entry.payee||"";
+    var tdAmt=document.createElement("td"); tdAmt.textContent=amtText;
+    tr.appendChild(tdNo); tr.appendChild(tdDate); tr.appendChild(tdPayee); tr.appendChild(tdAmt);
+    body.appendChild(tr);
+  });
+  $("printSheetTotal").textContent = hasAmount ? formatAmount(total) : "";
+}
+function printItemizedList(){
+  if(validFiles().length===0) return;
+  buildPrintSheet();
+  document.documentElement.classList.add("printing-summary");
+  window.print();
+}
+window.addEventListener("afterprint",function(){
+  document.documentElement.classList.remove("printing-summary");
+});
+
 /* ---------- 設定ボタン群の生成 ---------- */
 function buildOptButtons(container, items, isActive, onPick){
   container.innerHTML="";
@@ -754,6 +860,11 @@ $("captionChk").addEventListener("change",function(){
   state.captionOn=$("captionChk").checked;
   renderAll();
 });
+$("detailChk").addEventListener("change",function(){
+  state.detailOn=$("detailChk").checked;
+  renderAll();
+});
+$("printListBtn").addEventListener("click",function(){ printItemizedList(); });
 $("clearBtn").addEventListener("click",function(){
   state.files=[];
   $("loadStatus").textContent="";
