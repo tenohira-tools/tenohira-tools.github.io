@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>和暦・西暦 混在日付の一括統一（文章・CSV対応）| てのひらツール</title>
+<meta name="description" content="「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した日付表記を、文章やCSVの中からまとめて検出して指定の形式に統一。平成31年5月1日のような元号の境目を越えた存在しない日付は、変換せずに知らせます。すべてブラウザ内で処理し、送信されません。Find and unify mixed Japanese-era and Western date formats in text or CSV files, entirely in your browser — dates that fall outside a real era boundary are flagged, never silently guessed.">
+<link rel="canonical" href="https://tenohira-tools.github.io/wareki-toitsu/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--err:#8a5a00;--err-bg:#fdf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--err:#f0c46a;--err-bg:#3a2f16}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.35rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+h3.small{font-size:1rem;margin:0 0 8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.row:first-child{margin-top:0}
+label{font-size:.92rem}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:42px}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.modeTabs{display:flex;gap:8px;margin-bottom:14px}
+.modeTabs button{font:inherit;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 16px;cursor:pointer;min-height:40px}
+.modeTabs button[aria-pressed="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+textarea{width:100%;font:15px/1.6 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical}
+#ta{min-height:160px}
+#taOut{min-height:160px;margin-top:8px}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+#fileInfo{font-size:.92rem;color:var(--muted);margin-top:10px}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.checkline{display:flex;align-items:center;gap:8px;margin-top:10px}
+.checkline input{width:auto;min-height:auto}
+.scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.changed{color:var(--diff);font-weight:600}
+td.hasErr{color:var(--err);font-weight:600}
+.toast{margin-top:8px;padding:6px 12px;background:var(--accent-bg);color:var(--accent);border-radius:8px;font-size:.88rem;display:none}
+.resultList{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.resultList li{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.92rem}
+.resultList li.errItem{border-color:var(--err);background:var(--err-bg);color:var(--err)}
+.resultList .arrow{color:var(--muted);margin:0 6px}
+.countBadge{color:var(--muted);font-size:.9rem;margin-left:6px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">和暦・西暦 混在日付の一括統一</h1>
+    <p class="sub" data-i="sub">「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した日付を、文章やCSVの中からまとめて見つけて指定の形式にそろえます。存在しない日付（元号の境目を越えたものなど）は変換せずに知らせます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="fmtHeading">変換後の形式</h2>
+  <div class="row">
+    <select id="fmtSelect" aria-label="output format">
+      <option value="iso">西暦（2024-01-02）</option>
+      <option value="wkanji">西暦（2024年1月2日）</option>
+      <option value="wera">和暦（令和6年1月2日）</option>
+      <option value="wabbr">和暦 略記（R6.1.2）</option>
+    </select>
+  </div>
+</section>
+
+<section class="card">
+  <div class="modeTabs" role="group" aria-label="mode">
+    <button type="button" data-mode="text" aria-pressed="true" data-i="modeText">文章</button>
+    <button type="button" data-mode="csv" aria-pressed="false" data-i="modeCsv">CSVファイル</button>
+  </div>
+
+  <div id="textPanel">
+    <textarea id="ta" data-i-ph="taPlaceholder" placeholder="ここに文章を貼り付けてください。例：契約日は令和6年1月2日、支払期限は2024/2/1、備考としてH31.4.1に前契約あり。"></textarea>
+    <div class="row">
+      <button type="button" class="primary" id="convBtn" data-i="convBtn">変換する</button>
+      <button type="button" class="secondary" id="sampleBtn" data-i="sampleBtn">サンプル文章を試す</button>
+    </div>
+    <p class="hint" data-i="taHint">検出できた日付だけをその形式に書き換えます。日付以外の文字はそのままです。</p>
+
+    <div id="textResult" style="display:none">
+      <h3 class="small" style="margin-top:16px" data-i="taOutHeading">変換結果</h3>
+      <textarea id="taOut" readonly></textarea>
+      <div class="row">
+        <button type="button" class="secondary" id="copyBtn" data-i="copyBtn">結果をコピー</button>
+        <button type="button" class="secondary" id="downloadTxtBtn" data-i="downloadTxtBtn">テキストとしてダウンロード</button>
+      </div>
+      <p class="toast" id="txtToast"></p>
+
+      <h3 class="small" style="margin-top:16px"><span data-i="detectedHeading">検出した日付</span><span class="countBadge" id="detectCount"></span></h3>
+      <ul class="resultList" id="resultList"></ul>
+      <p class="hint" id="noneFound" style="display:none" data-i="noneFound">日付らしい表記は見つかりませんでした。</p>
+    </div>
+  </div>
+
+  <div id="csvPanel" style="display:none">
+    <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+      <p data-i="dropzoneText"><strong>ここにCSVファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+      <p class="hint" data-i="dropzoneHint">CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。</p>
+    </div>
+    <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/*" style="display:none">
+    <p id="fileInfo" aria-live="polite"></p>
+
+    <div id="encCard" style="display:none">
+      <div class="row">
+        <label for="encSelect" data-i="encSelectLabel">文字コードを指定（自動判定がおかしい場合に変更）</label>
+        <select id="encSelect">
+          <option value="utf-8">UTF-8</option>
+          <option value="shift_jis">Shift_JIS（CP932）</option>
+          <option value="euc-jp">EUC-JP</option>
+          <option value="iso-2022-jp">ISO-2022-JP（JIS）</option>
+        </select>
+      </div>
+      <div class="note" id="warnBox"></div>
+      <div class="checkline">
+        <input type="checkbox" id="headerCheck" checked>
+        <label for="headerCheck" data-i="headerLabel">1行目を見出し（ヘッダー）として扱う（変換対象から外す）</label>
+      </div>
+    </div>
+
+    <div id="csvPreviewWrap" style="display:none">
+      <h3 class="small" style="margin-top:16px"><span data-i="previewHeading">プレビュー</span></h3>
+      <p class="hint" data-i="previewNote2">赤字は変換されたセル、オレンジ字は日付らしいが存在しないため変換していないセルです。</p>
+      <div id="previewBox"></div>
+
+      <h3 class="small" style="margin-top:16px"><span data-i="detectedHeading">検出した日付</span><span class="countBadge" id="csvDetectCount"></span></h3>
+      <ul class="resultList" id="csvResultList"></ul>
+      <p class="hint" id="csvNoneFound" style="display:none" data-i="noneFound">日付らしい表記は見つかりませんでした。</p>
+
+      <div class="checkline" style="margin-top:14px">
+        <input type="checkbox" id="bomCheck" checked>
+        <label for="bomCheck" data-i="bomLabel">BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）</label>
+      </div>
+      <p style="margin-top:12px"><button type="button" class="primary" id="downloadCsvBtn" data-i="downloadCsvBtn">変換してCSVをダウンロード</button></p>
+    </div>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上で「変換後の形式」を選びます（西暦の数字表記／西暦の漢字表記／和暦漢字／和暦の略記）。</li>
+      <li>「文章」モードでは、文章を貼り付けて「変換する」を押すと、見つかった日付だけをその場で指定の形式に書き換えます。「CSVファイル」モードでは、CSVをドラッグ＆ドロップすると全セルを対象に同じ処理をしてプレビューし、ダウンロードできます。</li>
+      <li>対応する表記：「令和6年1月2日」のような和暦の漢字表記（元年も可）、「R6.1.2」「H31/4/1」のような元号の略記（M/T/S/H/R）、「2024/1/2」「2024-01-02」のような西暦のスラッシュ・ハイフン区切り、「2024年1月2日」のような西暦の漢字表記。</li>
+      <li>平成31年5月1日のように、元号の境目を越えて実在しない日付は変換せず、その場に残したうえで「検出した日付」に理由つきで表示します。</li>
+    </ol>
+    <h3>Q. なぜ「令和1年3月1日」のような日付は変換されないのですか？</h3>
+    <p>A. 令和は2019年5月1日に始まった元号なので、それより前の日付には使えません（2019年3月1日は平成31年にあたります）。同様に「平成31年5月1日」も、平成が2019年4月30日までしかないため実在しません。このツールは元号の開始日・終了日をもとに存在しない組み合わせを検出し、正しく直せない場合は黙って変換せず、そのまま残してお知らせします。</p>
+    <h3>Q. 「2024/13/40」のような日付はどうなりますか？</h3>
+    <p>A. 実在しないカレンダー上の日付（13月や、その月に無い日にちなど）も同様に変換せず、「検出した日付」に理由（存在しない日付）を添えて表示します。うるう年の2月29日は、実際にうるう年である年だけ正しく変換されます。</p>
+    <h3>Q. すべての日付表記を見つけられますか？</h3>
+    <p>A. いいえ。誤検出を避けるため、西暦のスラッシュ・ハイフン区切り（2024/1/2など）は西暦が1900〜2099の範囲にあるものだけを対象にしています。伝票番号や商品コードのような日付に似た数字の並びを誤って変換しないための制限です。元号の略記（R150.1.1のように年数が極端に大きいものなど）も対象外です。変換前にプレビューまたは検出リストで、意図しない箇所が変換されていないか確認してください。</p>
+    <h3>Q. 文章やファイルはサーバーに送信されますか？</h3>
+    <p>A. いいえ。貼り付けた文章やアップロードしたファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. CSVモードで、見出し行やIDの列も変換されてしまいませんか？</h3>
+    <p>A. 見出し（1行目）は「1行目を見出しとして扱う」を付けたままにすると変換対象から外れます。データの列については、セルの中に日付らしい表記が見つかった場合だけ書き換えます。上記の誤検出対策はありますが、完全ではないため、ダウンロード前にプレビューで確認してください。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Choose an output format above (numeric Western date, kanji Western date, kanji Japanese-era date, or abbreviated Japanese-era date).</li>
+      <li>In "Text" mode, paste text and click "Convert" — only the dates it finds are rewritten, in place. In "CSV file" mode, drop a CSV file and the same detection runs on every cell, with a preview and download.</li>
+      <li>Formats it recognizes: kanji-era dates like 令和6年1月2日 (including 元年 for year 1), abbreviated era dates like R6.1.2 or H31/4/1 (M/T/S/H/R), slash/hyphen Western dates like 2024/1/2 or 2024-01-02, and kanji Western dates like 2024年1月2日.</li>
+      <li>A date that doesn't actually exist — for example one that crosses an era boundary — is left unchanged and listed, with a reason, under "Dates found".</li>
+    </ol>
+    <h3>Q. Why isn't "令和1年3月1日" (Reiwa 1, March 1) converted?</h3>
+    <p>A. The Reiwa era began on 2019-05-01, so no date before that can be "Reiwa" — 2019-03-01 actually falls in Heisei 31. Likewise "Heisei 31, May 1" doesn't exist either, since Heisei ended on 2019-04-30. This tool checks each era's real start and end dates and never guesses when a combination doesn't exist — it leaves it untouched and flags it instead.</p>
+    <h3>Q. What about a date like "2024/13/40"?</h3>
+    <p>A. A date that isn't real on the calendar (month 13, a day that doesn't exist in that month) is likewise left unchanged and flagged as invalid. February 29 only converts correctly in an actual leap year.</p>
+    <h3>Q. Does it catch every date format?</h3>
+    <p>A. No — to avoid false positives, slash/hyphen Western dates (like 2024/1/2) are only matched when the year is between 1900 and 2099, so things like invoice or product codes aren't mistaken for dates. Abbreviated era dates with an implausibly large year number (like R150.1.1) are skipped too. Always check the preview or the detected list before relying on the result.</p>
+    <h3>Q. Is my text or file uploaded anywhere?</h3>
+    <p>A. No. Everything is processed inside your browser on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. In CSV mode, could it touch header rows or ID columns by mistake?</h3>
+    <p>A. Keep "Treat the first row as a header" checked to exclude row 1. For data cells, it only rewrites a cell when it finds something that looks like a real date, with the same false-positive guards described above — but it isn't perfect, so review the preview before downloading.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../wareki/">和暦・西暦・年齢 変換と早見表</a> — 単発の日付を1件ずつ変換したいときや、年齢・干支・入学卒業年を調べたいときはこちら。</li>
+      <li><a href="../csv-fix/">CSV・テキストの文字化け直し</a> — Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換。</li>
+      <li><a href="../csv-seiri/">CSVの列ごと書式統一ツール</a> — 全角半角・カナ・郵便番号・ハイフンの書式を列ごとにそろえる。</li>
+      <li><a href="../hyoki-yure/">表記ゆれ・全角半角チェッカー</a> — 「サーバ／サーバー」などの表記ゆれを検出して統一。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../wareki/">Japanese Era (Wareki) ⇄ Western Year &amp; Age Chart</a> — for converting a single date, or computing age, zodiac and school years.</li>
+      <li><a href="../csv-fix/">CSV / Text Mojibake Fixer</a> — Fix mojibake: convert Shift_JIS/EUC-JP files to UTF-8.</li>
+      <li><a href="../csv-seiri/">CSV Column Formatter</a> — Normalize full/half-width characters, katakana, postal codes and hyphens column by column.</li>
+      <li><a href="../hyoki-yure/">Notation &amp; Full/Half-width Checker</a> — Detect and unify inconsistent Japanese word forms.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">貼り付けた文章やアップロードしたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"なぜ「令和1年3月1日」のような日付は変換されないのですか？","acceptedAnswer":{"@type":"Answer","text":"令和は2019年5月1日に始まった元号のため、それより前の日付には使えません（2019年3月1日は平成31年です）。元号の開始日・終了日をもとに存在しない組み合わせを検出し、正しく直せない場合は変換せずそのまま残してお知らせします。"}},
+    {"@type":"Question","name":"「2024/13/40」のような日付はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"実在しないカレンダー上の日付も変換せず、検出した日付の一覧に理由を添えて表示します。うるう年の2月29日は実際にうるう年である年だけ正しく変換されます。"}},
+    {"@type":"Question","name":"すべての日付表記を見つけられますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。誤検出を避けるため、西暦のスラッシュ・ハイフン区切りは1900〜2099年の範囲のみを対象にし、元号の略記も年数が極端に大きいものは対象外です。変換前にプレビューで確認してください。"}},
+    {"@type":"Question","name":"文章やファイルはサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。すべてブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ============ date engine (unit-tested separately with Node.js before embedding) ============ */
+var ERAS=[
+  {ja:"明治",en:"Meiji",abbr:"M",y:1868,m:1,d:25},
+  {ja:"大正",en:"Taisho",abbr:"T",y:1912,m:7,d:30},
+  {ja:"昭和",en:"Showa",abbr:"S",y:1926,m:12,d:25},
+  {ja:"平成",en:"Heisei",abbr:"H",y:1989,m:1,d:8},
+  {ja:"令和",en:"Reiwa",abbr:"R",y:2019,m:5,d:1}
+];
+var ERA_BY_KANJI={},ERA_BY_ABBR={};
+ERAS.forEach(function(e,i){ERA_BY_KANJI[e.ja]=i;ERA_BY_ABBR[e.abbr]=i;});
+
+function key(y,m,d){return y*10000+m*100+d}
+function isLeap(y){return (y%4===0&&y%100!==0)||y%400===0}
+function daysInMonth(y,m){var d=[31,isLeap(y)?29:28,31,30,31,30,31,31,30,31,30,31];return d[m-1]}
+function validYMD(y,m,d){return m>=1&&m<=12&&d>=1&&d<=daysInMonth(y,m)}
+function eraIndexAt(y,m,d){var k=key(y,m,d),r=null;for(var i=0;i<ERAS.length;i++){if(key(ERAS[i].y,ERAS[i].m,ERAS[i].d)<=k)r=i}return r}
+function eraBounds(i){
+  var startK=key(ERAS[i].y,ERAS[i].m,ERAS[i].d);
+  var endK=(i+1<ERAS.length)?key(ERAS[i+1].y,ERAS[i+1].m,ERAS[i+1].d)-1:Infinity;
+  return {startK:startK,endK:endK};
+}
+function toHalfNum(s){return String(s).replace(/[０-９]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0xFEE0)})}
+function pad2(n){return (n<10?"0":"")+n}
+function parseNum(raw){ if(raw==="元")return 1; return parseInt(toHalfNum(raw),10) }
+
+function eraYearLabel(i,n,lang){
+  if(lang==="en") return ERAS[i].en+" "+n+(n===1?" (gannen)":"");
+  return ERAS[i].ja+(n===1?"元":n)+"年";
+}
+function fmtDate(y,m,d,fmt,lang){
+  if(fmt==="iso") return y+"-"+pad2(m)+"-"+pad2(d);
+  if(fmt==="wkanji") return lang==="en" ? (y+"/"+m+"/"+d) : (y+"年"+m+"月"+d+"日");
+  var idx=eraIndexAt(y,m,d);
+  if(idx===null) return y+"-"+pad2(m)+"-"+pad2(d);
+  var n=y-ERAS[idx].y+1;
+  if(fmt==="wera"){
+    if(lang==="en") return eraYearLabel(idx,n,lang)+" "+m+"/"+d;
+    return eraYearLabel(idx,n,lang)+m+"月"+d+"日";
+  }
+  if(fmt==="wabbr") return ERAS[idx].abbr+(n===1?"元":n)+"."+m+"."+d;
+  return y+"-"+pad2(m)+"-"+pad2(d);
+}
+
+var DIGIT="[0-9０-９]";
+var ERA_NUM="(?:元|"+DIGIT+"{1,2})";
+var NUM2=DIGIT+"{1,2}";
+var NUM4=DIGIT+"{4}";
+var RE=new RegExp(
+  "(明治|大正|昭和|平成|令和)("+ERA_NUM+")年\\s*("+NUM2+")月\\s*("+NUM2+")日"
+  +"|(?<![A-Za-z0-9])([MTSHRmtshr])("+ERA_NUM+")[.\\/\\-]("+NUM2+")[.\\/\\-]("+NUM2+")(?![0-9])"
+  +"|(?<![0-9])("+NUM4+")[.\\/\\-]("+NUM2+")[.\\/\\-]("+NUM2+")(?![0-9])"
+  +"|("+NUM4+")年\\s*("+NUM2+")月\\s*("+NUM2+")日"
+,"g");
+
+function scan(text){
+  var tokens=[],m;
+  RE.lastIndex=0;
+  while((m=RE.exec(text))){
+    var start=m.index,raw=m[0];
+    var tok={start:start,end:start+raw.length,raw:raw};
+    if(m[1]!==undefined){
+      resolveEraToken(tok,ERA_BY_KANJI[m[1]],parseNum(m[2]),parseNum(m[3]),parseNum(m[4]));
+    } else if(m[5]!==undefined){
+      var eIdx=ERA_BY_ABBR[m[5].toUpperCase()];
+      var n=parseNum(m[6]);
+      if(n>99){ continue; }
+      resolveEraToken(tok,eIdx,n,parseNum(m[7]),parseNum(m[8]));
+    } else if(m[9]!==undefined){
+      var y3=parseNum(m[9]);
+      if(y3<1900||y3>2099){ continue; }
+      resolvePlainToken(tok,y3,parseNum(m[10]),parseNum(m[11]));
+    } else if(m[12]!==undefined){
+      resolvePlainToken(tok,parseNum(m[12]),parseNum(m[13]),parseNum(m[14]));
+    }
+    tokens.push(tok);
+    if(RE.lastIndex===start) RE.lastIndex++;
+  }
+  return tokens;
+}
+function resolvePlainToken(tok,y,m,d){
+  if(!validYMD(y,m,d)){tok.error="cal";tok.y=y;tok.m=m;tok.d=d;return}
+  tok.valid=true;tok.y=y;tok.m=m;tok.d=d;
+}
+function resolveEraToken(tok,eIdx,n,m,d){
+  tok.eraIdx=eIdx;tok.eraN=n;
+  var absY=ERAS[eIdx].y+n-1;
+  if(!validYMD(absY,m,d)){tok.error="cal";tok.y=absY;tok.m=m;tok.d=d;return}
+  var b=eraBounds(eIdx),k=key(absY,m,d);
+  if(k<b.startK||k>b.endK){
+    tok.error="era";tok.y=absY;tok.m=m;tok.d=d;
+    tok.actualEraIdx=eraIndexAt(absY,m,d);
+    return;
+  }
+  tok.valid=true;tok.y=absY;tok.m=m;tok.d=d;
+}
+function convertText(text,fmt,lang){
+  var tokens=scan(text),out="",last=0,changes=[],errors=[];
+  for(var i=0;i<tokens.length;i++){
+    var t=tokens[i];
+    out+=text.slice(last,t.start);
+    if(t.valid){
+      var rep=fmtDate(t.y,t.m,t.d,fmt,lang);
+      out+=rep;
+      if(rep!==t.raw) changes.push({raw:t.raw,rep:rep,tok:t});
+      else changes.push({raw:t.raw,rep:rep,tok:t,same:true});
+    } else {
+      out+=t.raw;
+      errors.push(t);
+    }
+    last=t.end;
+  }
+  out+=text.slice(last);
+  return {text:out,changes:changes,errors:errors};
+}
+function errorReason(tok,lang){
+  if(tok.error==="cal"){
+    return lang==="en" ? "Not a real calendar date." : "実在しない日付です。";
+  }
+  if(tok.error==="era"){
+    var eraName=lang==="en"?ERAS[tok.eraIdx].en:ERAS[tok.eraIdx].ja;
+    if(tok.actualEraIdx!==null && tok.actualEraIdx!==undefined){
+      var n2=tok.y-ERAS[tok.actualEraIdx].y+1;
+      var actualStr=eraYearLabel(tok.actualEraIdx,n2,lang)+(lang==="en"?(" "+tok.m+"/"+tok.d):(tok.m+"月"+tok.d+"日"));
+      return lang==="en"
+        ? "This date is outside the "+eraName+" era. "+tok.y+"/"+tok.m+"/"+tok.d+" is actually "+actualStr+"."
+        : "この日付は"+eraName+"の期間の外です。西暦"+tok.y+"年"+tok.m+"月"+tok.d+"日は"+actualStr+"にあたります。";
+    }
+    return lang==="en" ? "This date is outside the "+eraName+" era (before 1868)." : "この日付は"+eraName+"の期間の外です（1868年より前）。";
+  }
+  return "";
+}
+
+/* ============ shared CSV helpers (same pattern as csv-seiri) ============ */
+function tryDecode(bytes,label){ try{return new TextDecoder(label,{fatal:true}).decode(bytes)}catch(e){return null} }
+function hasBOM(bytes){return bytes.length>=3&&bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF}
+function detectEncoding(bytes){
+  var order=["utf-8","shift_jis","euc-jp","iso-2022-jp"];
+  for(var i=0;i<order.length;i++){var t=tryDecode(bytes,order[i]);if(t!==null)return{enc:order[i],ok:true}}
+  return {enc:"utf-8",ok:false};
+}
+function parseCSV(text){
+  var rows=[],row=[],cur="",inQ=false,i=0,n=text.length;
+  while(i<n){
+    var c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text.charAt(i+1)==='"'){cur+='"';i+=2;continue} inQ=false;i++;continue }
+      cur+=c;i++;continue;
+    }
+    if(c==='"'){inQ=true;i++;continue}
+    if(c===','){row.push(cur);cur="";i++;continue}
+    if(c==='\r'){ if(text.charAt(i+1)==='\n')i++; row.push(cur);cur="";rows.push(row);row=[];i++;continue }
+    if(c==='\n'){ row.push(cur);cur="";rows.push(row);row=[];i++;continue }
+    cur+=c;i++;
+  }
+  if(cur!==""||row.length){row.push(cur);rows.push(row)}
+  return rows;
+}
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* ============ i18n ============ */
+var ENC_LABEL={"utf-8":{ja:"UTF-8",en:"UTF-8"},"shift_jis":{ja:"Shift_JIS（CP932）",en:"Shift_JIS (CP932)"},"euc-jp":{ja:"EUC-JP",en:"EUC-JP"},"iso-2022-jp":{ja:"ISO-2022-JP（JIS）",en:"ISO-2022-JP (JIS)"}};
+var T={
+ ja:{title:"和暦・西暦 混在日付の一括統一",
+  sub:"「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した日付を、文章やCSVの中からまとめて見つけて指定の形式にそろえます。存在しない日付（元号の境目を越えたものなど）は変換せずに知らせます。",
+  fmtHeading:"変換後の形式",
+  modeText:"文章",modeCsv:"CSVファイル",
+  taPlaceholder:"ここに文章を貼り付けてください。例：契約日は令和6年1月2日、支払期限は2024/2/1、備考としてH31.4.1に前契約あり。",
+  convBtn:"変換する",sampleBtn:"サンプル文章を試す",
+  taHint:"検出できた日付だけをその形式に書き換えます。日付以外の文字はそのままです。",
+  taOutHeading:"変換結果",copyBtn:"結果をコピー",downloadTxtBtn:"テキストとしてダウンロード",copied:"コピーしました。",updated:"更新しました。",
+  detectedHeading:"検出した日付",noneFound:"日付らしい表記は見つかりませんでした。",
+  changedTo:"に変換",keptAs:"そのまま（変換先も同じ表記）",
+  dropzoneText:"ここにCSVファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。",
+  fileLabel:"ファイル",
+  encSelectLabel:"文字コードを指定（自動判定がおかしい場合に変更）",
+  headerLabel:"1行目を見出し（ヘッダー）として扱う（変換対象から外す）",
+  warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。上の文字コードを別の候補に変更してみてください。",
+  warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。手動で文字コードを選び直してください。",
+  previewHeading:"プレビュー",previewNote:"先頭の一部のみ表示しています（ダウンロードするファイルは全体を変換します）。",
+  previewNote2:"赤字は変換されたセル、オレンジ字は日付らしいが存在しないため変換していないセルです。",
+  noData:"プレビューできる内容がありません。",
+  bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
+  downloadCsvBtn:"変換してCSVをダウンロード",
+  rowCol:"行",colCol:"列",
+  feedback:"フィードバックはこちら",privacy:"貼り付けた文章やアップロードしたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Unify Mixed Japanese-Era / Western Dates",
+  sub:"Find dates mixed in formats like 令和6年1月2日, R6.1.2, H31/4/1 or 2024/1/2 across text or a CSV file, and unify them into one format. A date that doesn't really exist (e.g. crossing an era boundary) is flagged instead of guessed.",
+  fmtHeading:"Output format",
+  modeText:"Text",modeCsv:"CSV file",
+  taPlaceholder:"Paste text here. Example: contract date 令和6年1月2日, due 2024/2/1, note: prior contract H31.4.1.",
+  convBtn:"Convert",sampleBtn:"Try a sample",
+  taHint:"Only the dates it finds are rewritten — everything else stays as-is.",
+  taOutHeading:"Result",copyBtn:"Copy result",downloadTxtBtn:"Download as text",copied:"Copied.",updated:"Updated.",
+  detectedHeading:"Dates found",noneFound:"No date-like text was found.",
+  changedTo:" → ",keptAs:"(unchanged — same in output format)",
+  dropzoneText:"Drag and drop a CSV file here, or click to choose one",
+  dropzoneHint:"Works with CSV and TSV files. Everything happens on this device.",
+  fileLabel:"File",
+  encSelectLabel:"Choose encoding manually (if auto-detect looks wrong)",
+  headerLabel:"Treat the first row as a header (excluded from conversion)",
+  warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding above.",
+  warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose the correct encoding manually.",
+  previewHeading:"Preview",previewNote:"Showing only the first part of the file (the downloaded file will contain the whole thing).",
+  previewNote2:"Cells in red were converted. Cells in orange looked like a date but don't really exist, so they were left unchanged.",
+  noData:"Nothing to preview yet.",
+  bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
+  downloadCsvBtn:"Convert and download CSV",
+  rowCol:"row",colCol:"col",
+  feedback:"Feedback",privacy:"Nothing you paste or upload is sent to a server — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var SAMPLE="契約日は令和6年1月2日、支払期限は2024/2/1です。備考：旧契約はH31.4.1に開始（前の元号）。誤記の例として令和1年3月1日ともありますが、これは存在しない日付です。";
+
+/* ============ text mode ============ */
+function flash(id,msg){
+  var el=$(id);el.textContent=msg;el.style.display="block";
+  clearTimeout(el._t);el._t=setTimeout(function(){el.style.display="none"},2200);
+}
+function renderTextResult(){
+  var text=$("ta").value;
+  var fmt=$("fmtSelect").value;
+  var r=convertText(text,fmt,lang);
+  $("textResult").style.display="";
+  $("taOut").value=r.text;
+  var list=$("resultList");
+  list.innerHTML="";
+  var any=r.changes.length+r.errors.length;
+  $("detectCount").textContent=any?("（"+any+(lang==="ja"?"件":"")+"）"):"";
+  r.changes.forEach(function(c){
+    var li=document.createElement("li");
+    li.textContent=c.raw+(c.same?" "+T[lang].keptAs:(T[lang].changedTo+" "+c.rep));
+    list.appendChild(li);
+  });
+  r.errors.forEach(function(t){
+    var li=document.createElement("li");
+    li.className="errItem";
+    li.textContent=t.raw+"： "+errorReason(t,lang);
+    list.appendChild(li);
+  });
+  $("noneFound").style.display=any?"none":"block";
+}
+
+$("convBtn").addEventListener("click",renderTextResult);
+$("sampleBtn").addEventListener("click",function(){ $("ta").value=SAMPLE; renderTextResult(); });
+$("fmtSelect").addEventListener("change",function(){
+  if($("textResult").style.display!=="none" && $("ta").value) renderTextResult();
+  if(state.rows.length) renderCsvPreview();
+});
+$("copyBtn").addEventListener("click",function(){
+  var text=$("taOut").value;
+  function done(){flash("txtToast",T[lang].copied)}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(function(){
+      var ta=$("taOut");ta.focus();ta.select();try{document.execCommand("copy")}catch(e){}done();
+    });
+  } else {
+    var ta=$("taOut");ta.focus();ta.select();try{document.execCommand("copy")}catch(e){}done();
+  }
+});
+$("downloadTxtBtn").addEventListener("click",function(){
+  var blob=new Blob([$("taOut").value],{type:"text/plain;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download="wareki-toitsu.txt";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+/* ============ mode tabs ============ */
+var modeBtns=document.querySelectorAll(".modeTabs button");
+for(var mi=0;mi<modeBtns.length;mi++){
+  modeBtns[mi].addEventListener("click",function(){
+    var m=this.getAttribute("data-mode");
+    for(var j=0;j<modeBtns.length;j++)modeBtns[j].setAttribute("aria-pressed",modeBtns[j].getAttribute("data-mode")===m?"true":"false");
+    $("textPanel").style.display=(m==="text")?"":"none";
+    $("csvPanel").style.display=(m==="csv")?"":"none";
+  });
+}
+
+/* ============ CSV mode ============ */
+var state={bytes:null,name:"",text:"",rows:[],cols:0,hasHeader:true};
+
+function dataRows(){ return state.hasHeader ? state.rows.slice(1) : state.rows.slice(); }
+function escTrunc(s){ s=String(s); var t=s.length>60?s.slice(0,60)+"…":s; return esc(t); }
+
+function convertCell(v){
+  var fmt=$("fmtSelect").value;
+  return convertText(v,fmt,lang);
+}
+
+function renderCsvPreview(){
+  var box=$("previewBox");
+  if(!state.rows.length){ box.innerHTML="<p class='hint'>"+esc(T[lang].noData)+"</p>"; return; }
+  var maxRows=15,maxCols=14;
+  var colCount=Math.min(maxCols,state.cols);
+  var startRow=state.hasHeader?1:0;
+  var shown=state.rows.slice(startRow,startRow+maxRows);
+  var h="<div class='scroll'><table><thead><tr>";
+  for(var c=0;c<colCount;c++){
+    var label=(state.hasHeader && state.rows[0] && state.rows[0][c]!==undefined && state.rows[0][c]!=="") ? state.rows[0][c] : ((lang==="ja"?"列 ":"Col ")+(c+1));
+    h+="<th>"+esc(label)+"</th>";
+  }
+  h+="</tr></thead><tbody>";
+  for(var r=0;r<shown.length;r++){
+    h+="<tr>";
+    for(var c2=0;c2<colCount;c2++){
+      var orig=shown[r][c2];
+      if(orig===undefined){ h+="<td></td>"; continue; }
+      var res=convertCell(orig);
+      var hasErr=res.errors.length>0;
+      var changedVal=res.changes.some(function(ch){return !ch.same});
+      var cls=hasErr?" class='hasErr'":(changedVal?" class='changed'":"");
+      h+="<td"+cls+">"+escTrunc(res.text)+"</td>";
+    }
+    h+="</tr>";
+  }
+  h+="</tbody></table></div>";
+  if(state.rows.length-startRow>maxRows||state.cols>maxCols) h+="<p class='hint'>"+esc(T[lang].previewNote)+"</p>";
+  box.innerHTML=h;
+
+  /* detected list (full data, not just preview window) */
+  var list=$("csvResultList");
+  list.innerHTML="";
+  var total=0,rows=dataRows();
+  for(var rr=0;rr<rows.length;rr++){
+    for(var cc=0;cc<state.cols;cc++){
+      var v=rows[rr][cc];
+      if(v===undefined||v==="") continue;
+      var res2=convertCell(v);
+      res2.changes.forEach(function(ch){
+        if(ch.same) return;
+        total++;
+        if(total<=200){
+          var li=document.createElement("li");
+          li.textContent=(lang==="ja"?(rr+1)+"行目 ":"row "+(rr+1)+" ")+(lang==="ja"?(cc+1)+"列目："+ch.raw:"col "+(cc+1)+": "+ch.raw)+T[lang].changedTo+" "+ch.rep;
+          list.appendChild(li);
+        }
+      });
+      res2.errors.forEach(function(t){
+        total++;
+        if(total<=200){
+          var li2=document.createElement("li");
+          li2.className="errItem";
+          li2.textContent=(lang==="ja"?(rr+1)+"行目 "+(cc+1)+"列目：":"row "+(rr+1)+" col "+(cc+1)+": ")+t.raw+"： "+errorReason(t,lang);
+          list.appendChild(li2);
+        }
+      });
+    }
+  }
+  $("csvDetectCount").textContent=total?("（"+total+(lang==="ja"?"件":"")+"）"):"";
+  $("csvNoneFound").style.display=total?"none":"block";
+}
+
+function loadRows(){
+  state.rows=parseCSV(state.text);
+  state.cols=0;
+  for(var i=0;i<state.rows.length;i++) state.cols=Math.max(state.cols,state.rows[i].length);
+  var has=state.rows.length>0;
+  $("csvPreviewWrap").style.display=has?"":"none";
+  if(has) renderCsvPreview();
+}
+function applyEncoding(enc,forcedFallback){
+  var bytes=state.bytes;
+  var t=tryDecode(bytes,enc),warn="";
+  if(t===null){ t=new TextDecoder(enc,{fatal:false}).decode(bytes); warn=T[lang].warnReplace; }
+  else if(forcedFallback){ warn=T[lang].warnUnknown; }
+  state.text=t;
+  $("warnBox").textContent=warn;
+  loadRows();
+}
+function handleFile(file){
+  state.name=file.name;
+  file.arrayBuffer().then(function(buf){
+    state.bytes=new Uint8Array(buf);
+    var d=detectEncoding(state.bytes);
+    $("encSelect").value=d.enc;
+    $("encCard").style.display="";
+    var bom=hasBOM(state.bytes);
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(bom?", BOM":"")+")";
+    applyEncoding(d.enc,!d.ok);
+  }).catch(function(){ $("fileInfo").textContent=T[lang].warnUnknown; });
+}
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f)handleFile(f); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var f=e.target.files&&e.target.files[0]; if(f)handleFile(f); });
+$("encSelect").addEventListener("change",function(){ if(state.bytes) applyEncoding(this.value,false); });
+$("headerCheck").addEventListener("change",function(){ state.hasHeader=this.checked; loadRows(); });
+
+$("downloadCsvBtn").addEventListener("click",function(){
+  if(!state.rows.length) return;
+  var out=[];
+  if(state.hasHeader && state.rows.length){ out.push(state.rows[0].slice()); }
+  var rows=dataRows();
+  for(var r=0;r<rows.length;r++){
+    var row=rows[r].slice();
+    for(var c=0;c<row.length;c++){
+      if(row[c]===undefined) continue;
+      row[c]=convertCell(row[c]).text;
+    }
+    out.push(row);
+  }
+  var csvText=serializeCSV(out);
+  var addBom=$("bomCheck").checked;
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes;
+  if(addBom){ bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3); }
+  else bytes=encoded;
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var m=/\.[^.]+$/.exec(state.name);
+  var ext=m?m[0]:".csv";
+  var base=state.name.replace(/\.[^.]+$/,"")||"file";
+  var outName=base+"_toitsu"+ext;
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download=outName;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+/* ============ lang switch ============ */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var phs=document.querySelectorAll("[data-i-ph]");
+  for(var j=0;j<phs.length;j++){var pk=phs[j].getAttribute("data-i-ph");if(T[lang][pk]!==undefined)phs[j].setAttribute("placeholder",T[lang][pk])}
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  if(state.bytes){
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
+  }
+  if($("textResult").style.display!=="none" && $("ta").value) renderTextResult();
+  if(state.rows.length) renderCsvPreview();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0;li<langBtns.length;li++)langBtns[li].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

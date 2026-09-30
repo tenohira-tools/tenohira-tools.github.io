@@ -210,6 +210,27 @@
       },
       "total": 3,
       "note": "前回(09-29 09:00Z)から全ページ変化なし。計測タグ・表記の不備も見当たらなかったため、STRATEGY.mdの09-29追記に従い新規ツールcsv-seiri（CSVの列ごと書式統一ツール）を公開。csv-seiriは本記録時点では公開直後のため未計測（次回から収録）。"
+    },
+    {
+      "date": "2026-09-30T00:00:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 4,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki/": 0
+      },
+      "total": 4,
+      "note": "前回(09-29 20:17Z)からトップページのみ+1（サイト全体累計3→4）。個別ツールは全て0件のまま。health.md（0問題）・計測タグ・表記も確認し不備なし。STRATEGY.mdの09-29追記（閲覧0のあいだは新規ツール公開を優先）に従い、backlog 1番目「和暦・西暦が混在した日付の一括統一」を選び、wareki-toitsuを公開。"
     }
   ],
   "weekly": [
