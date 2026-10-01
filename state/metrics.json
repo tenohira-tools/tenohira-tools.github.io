@@ -253,6 +253,28 @@
       },
       "total": 4,
       "note": "前回(09-30 00:00Z)から全ページ変化なし（サイト全体累計4のまま）。wareki-toitsuも0件で初収録。health.md（0問題）・計測タグ・表記も確認し不備なし。閲覧が増え始めたページが無いため、STRATEGY.mdの09-29追記に従いバックログから新規ツールを検討したが、残り候補（CSV分割結合・住所英語化・文字数カウンター・SNS画像切り抜き）はいずれも競合飽和か助言色の懸念でWebSearch確認済みの見送り理由があるため、代わりにバックログ2番目だった改善案（receipt-sheetへの明細一覧機能追加）を実施した。"
+    },
+    {
+      "date": "2026-10-01T17:10:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 4,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0
+      },
+      "total": 4,
+      "note": "前回(09-30 20:17Z)から全ページ変化なし（サイト全体累計4のまま、個別ページは全て0件）。health.md（10-01付14ページ・問題0件）・計測タグ・表記（grep）も不備なし。閲覧が増え始めたページが無いため新規実験を優先。backlogの残り4項目はいずれも着手条件が未充足のため、STRATEGY.mdの経理・事務／CSV整形の2分野でWebSearchにより新しい差別化角度を調査（CSV重複名寄せ・出金伝票・Excel自動変換対策・CSV差分比較・会社名表記ゆれ統一はいずれも既存の無料競合ありと確認、見送り）。backlog既存メモにあった「結合×文字コード混在の自動判定」の角度のみ、既存ツールは単一コード前提のものばかりで未充足と確認できたため、複数CSVの結合ツール（docs/csv-merge/）を新規公開。このメトリクス取得はcsv-merge公開前の値（新ページはsitemap.xml未反映のため今回は含まれず、次回から対象に追加）。"
     }
   ],
   "weekly": [
