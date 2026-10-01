@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>複数CSVの結合ツール（文字コードの違いを自動判定）| てのひらツール</title>
+<meta name="description" content="文字コードがバラバラな複数のCSVファイル（Shift_JIS・EUC-JP・UTF-8混在）を、ファイルごとに自動判定してから1つに結合。見出し名で列をそろえ、ファイルによって列構成が多少違っても足りない列は空欄で結合できます。ブラウザ内だけで処理し、ファイルは送信されません。Merge multiple CSV files that use different character encodings — each file's encoding is auto-detected, columns are aligned by header name, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/csv-merge/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:900px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.checkline{display:flex;align-items:center;gap:8px;margin-top:10px}
+.checkline input{width:auto;min-height:auto}
+#fileListBox{display:grid;gap:10px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--warn);font-size:.85rem;flex-basis:100%}
+.fileCard select{flex:0 0 auto}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.summaryBox{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.colChip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.84rem;background:var(--bg)}
+.colChip.partial{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
+.scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.blank{color:var(--muted)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">複数CSVの結合ツール</h1>
+    <p class="sub" data-i="sub">文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから1つに結合します。見出し名で列をそろえ、列構成が多少違っても足りない列は空欄にして結合します。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここに複数のCSVファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1つずつでも追加できます。文字コードはファイルごとに自動判定します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/*" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card" id="optionsCard" style="display:none">
+  <h2 data-i="optionsHeading">結合の設定</h2>
+  <div class="checkline">
+    <input type="checkbox" id="headerCheck" checked>
+    <label for="headerCheck" data-i="headerLabel">各ファイルの1行目を見出し（ヘッダー）として扱い、見出し名で列をそろえる</label>
+  </div>
+  <p class="hint" data-i="headerHint">オフにすると見出しは使わず、列の並び順だけで結合します（1行目もデータとして扱われます）。</p>
+  <div class="checkline">
+    <input type="checkbox" id="sourceCheck">
+    <label for="sourceCheck" data-i="sourceLabel">先頭に「元ファイル名」の列を追加する</label>
+  </div>
+</section>
+
+<section class="card" id="summaryCard" style="display:none">
+  <h2 data-i="summaryHeading">そろえた列</h2>
+  <p class="hint" data-i="summaryHint">色のついた列は、一部のファイルにしかありません（無いファイルの行は空欄になります）。</p>
+  <div class="summaryBox" id="summaryBox"></div>
+</section>
+
+<section class="card" id="previewCard" style="display:none">
+  <h2 data-i="previewHeading">結合結果のプレビュー</h2>
+  <p class="hint" id="previewCount"></p>
+  <div id="previewBox"></div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="outputHeading">ダウンロード設定</h2>
+  <div class="checkline">
+    <input type="checkbox" id="bomCheck" checked>
+    <label for="bomCheck" data-i="bomLabel">BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）</label>
+  </div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">結合してCSVをダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠に結合したいCSVファイルを複数ドラッグ＆ドロップするか、クリックしてまとめて選びます（1つずつの追加も可）。ファイルごとに文字コードが自動判定されます。</li>
+      <li>各ファイルの1行目を見出し行として扱うか（既定でON）、先頭に元ファイル名の列を付けるかを選びます。</li>
+      <li>「そろえた列」で、どの列が全ファイルにあるか・一部のファイルだけかを確認します。</li>
+      <li>プレビューで結合結果を確認し、「結合してCSVをダウンロード」を押します。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで結合されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. ファイルごとに文字コードが違っても大丈夫ですか？</h3>
+    <p>A. はい。CSV・テキストの文字化け直しツールと同じ判定ロジックで、ファイルごとにUTF-8／Shift_JIS（CP932）／EUC-JP／ISO-2022-JPを個別に自動判定してから結合します。判定がおかしい場合はファイルごとの一覧で手動の文字コードに変更できます。</p>
+    <h3>Q. ファイルによって列の並び順や数が違っても結合できますか？</h3>
+    <p>A. 「見出し名で列をそろえる」がONのときは、見出し名（前後の空白は無視）が一致する列を同じ列として扱い、全ファイルの見出し名を集めた列構成に結合します。あるファイルに無い見出しの列は、そのファイルの行では空欄になります。見出し名が完全に一致しない限り別の列として扱われるため、「氏名」と「名前」のような表記違いは自動では統合されません（必要であれば先に表記をそろえてください）。</p>
+    <h3>Q. 「見出し名で列をそろえる」をOFFにするとどうなりますか？</h3>
+    <p>A. 見出しの判定は行わず、1行目を含めたすべての行を、列の並び順のまま上から順につなげます。列数が異なるファイルが混ざっている場合、足りない列は空欄で埋めます。全ファイルの列構成が完全に同じ順番だと分かっている場合に使う設定です。</p>
+    <h3>Q. 同じ見出し名の列が1つのファイルの中に2つあるとどうなりますか？</h3>
+    <p>A. 同じ見出し名は1つの列にまとめられ、先に出てきた側の値が使われます（後ろの同名列の値は捨てられます）。見出し名が重複しているファイルを結合するときはご注意ください。</p>
+    <h3>Q. 大きなファイルや多数のファイルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、合計で数十MB程度までを想定しています。非常に大きい場合は表示が遅くなることがあります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop several CSV files into the box above, or click it to choose multiple files (you can also add them one at a time). Each file's character encoding is auto-detected individually.</li>
+      <li>Choose whether to treat each file's first row as a header (on by default), and whether to prepend a "source file" column.</li>
+      <li>Check the "Aligned columns" section to see which columns exist in every file and which only appear in some.</li>
+      <li>Review the merged preview, then click "Merge and download CSV".</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is merged inside your browser, on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Can files use different character encodings?</h3>
+    <p>A. Yes. Using the same detection logic as the CSV/Text Mojibake Fixer tool, each file's encoding (UTF-8, Shift_JIS/CP932, EUC-JP, ISO-2022-JP) is detected independently before merging. You can override the detected encoding per file in the file list if it looks wrong.</p>
+    <h3>Q. Can I merge files whose columns are in a different order or count?</h3>
+    <p>A. When "align columns by header name" is on, columns whose header text matches (ignoring leading/trailing spaces) are treated as the same column, and the merged result uses the union of all header names seen across every file. A file missing a given column just gets a blank cell for it in its rows. Since matching requires an exact header match, differently-worded headers (e.g. two words meaning the same thing) are not merged automatically — normalize the wording first if needed.</p>
+    <h3>Q. What happens if I turn off "align columns by header name"?</h3>
+    <p>A. No header matching is done — every row, including the first row of each file, is appended in column order as-is. If files have different column counts, short rows are padded with blank cells. Use this only when you know every file has exactly the same column order.</p>
+    <h3>Q. What if one file has the same header name twice?</h3>
+    <p>A. Duplicate header names are collapsed into a single merged column, keeping the value from whichever one comes first in that row and discarding the other.</p>
+    <h3>Q. Can it handle large or many files?</h3>
+    <p>A. Everything runs in browser memory, so it's built for a combined size of up to tens of megabytes. Very large inputs may make the page slower.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../csv-fix/">CSV・テキストの文字化け直し</a> — Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換。ExcelのBOM追加・削除にも対応。</li>
+      <li><a href="../csv-seiri/">CSVの列ごと書式統一ツール</a> — CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロード。</li>
+      <li><a href="../wareki-toitsu/">和暦・西暦 混在日付の一括統一</a> — 令和6年1月2日／R6.1.2／2024/1/2など混在した日付を文章・CSVからまとめて検出し形式を統一。</li>
+      <li><a href="../hyoki-yure/">表記ゆれ・全角半角チェッカー</a> — 「サーバ／サーバー」などの表記ゆれ、全角英数字・半角カタカナ・全角スペースの混在を検出してワンクリックで統一。</li>
+      <li><a href="../config-convert/">JSON・YAML・TOML 相互変換エディタ</a> — 3つの枠のどれかを編集すると、残り2つの形式にその場で変換。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../csv-fix/">CSV / Text Mojibake Fixer</a> — Fix mojibake: convert Shift_JIS/EUC-JP files to UTF-8, add or remove a BOM.</li>
+      <li><a href="../csv-seiri/">CSV Column Formatter</a> — Normalize full/half-width characters, katakana, postal codes and hyphen styles column by column in a CSV.</li>
+      <li><a href="../wareki-toitsu/">Unify Mixed Japanese-Era / Western Dates</a> — Find and unify mixed date formats like 令和6年1月2日, R6.1.2 or 2024/1/2 across text or a CSV.</li>
+      <li><a href="../hyoki-yure/">Notation &amp; Full/Half-width Checker</a> — Detect and unify inconsistent Japanese word forms and full/half-width characters.</li>
+      <li><a href="../config-convert/">JSON / YAML / TOML Converter</a> — Edit JSON, YAML or TOML and the other two formats update instantly.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで結合されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"ファイルごとに文字コードが違っても大丈夫ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルごとにUTF-8・Shift_JIS（CP932）・EUC-JP・ISO-2022-JPを個別に自動判定してから結合します。判定がおかしい場合は手動で変更できます。"}},
+    {"@type":"Question","name":"ファイルによって列の並び順や数が違っても結合できますか？","acceptedAnswer":{"@type":"Answer","text":"見出し名で列をそろえるモードでは、見出し名が一致する列を同じ列として扱い、無い列は空欄にして結合します。見出し名が完全一致しない場合は別の列として扱われます。"}},
+    {"@type":"Question","name":"大きなファイルや多数のファイルは扱えますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザのメモリ上で処理するため、合計で数十MB程度までを想定しています。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+var ENC_LABEL={
+  "utf-8":{ja:"UTF-8",en:"UTF-8"},
+  "shift_jis":{ja:"Shift_JIS（CP932）",en:"Shift_JIS (CP932)"},
+  "euc-jp":{ja:"EUC-JP",en:"EUC-JP"},
+  "iso-2022-jp":{ja:"ISO-2022-JP（JIS）",en:"ISO-2022-JP (JIS)"}
+};
+
+var T={
+ ja:{title:"複数CSVの結合ツール",
+  sub:"文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから1つに結合します。見出し名で列をそろえ、列構成が多少違っても足りない列は空欄にして結合します。ファイルはどこにも送信されません。",
+  dropzoneText:"ここに複数のCSVファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1つずつでも追加できます。文字コードはファイルごとに自動判定します。ファイルは選択した端末の中だけで処理されます。",
+  fileListHeading:"追加したファイル",
+  optionsHeading:"結合の設定",
+  headerLabel:"各ファイルの1行目を見出し（ヘッダー）として扱い、見出し名で列をそろえる",
+  headerHint:"オフにすると見出しは使わず、列の並び順だけで結合します（1行目もデータとして扱われます）。",
+  sourceLabel:"先頭に「元ファイル名」の列を追加する",
+  sourceColName:"元ファイル名",
+  summaryHeading:"そろえた列",
+  summaryHint:"色のついた列は、一部のファイルにしかありません（無いファイルの行は空欄になります）。",
+  partialSuffix:"件中",
+  previewHeading:"結合結果のプレビュー",
+  previewNote:"先頭の一部のみ表示しています（ダウンロードするファイルは全体を結合します）。",
+  noData:"まだファイルが追加されていません。",
+  outputHeading:"ダウンロード設定",
+  bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
+  downloadBtn:"結合してCSVをダウンロード",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  rowsSuffix:"行",colsSuffix:"列",
+  warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。右の文字コードを別の候補に変更してみてください。",
+  warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。右で手動選択してください。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Multi-CSV Merge Tool",
+  sub:"Merge several CSV files that may each use a different character encoding — each file is auto-detected individually before merging. Columns are aligned by header name, with missing columns left blank. Nothing is uploaded.",
+  dropzoneText:"Drag and drop several CSV files here, or click to choose multiple files",
+  dropzoneHint:"You can also add files one at a time. Encoding is auto-detected per file. Everything happens on this device.",
+  fileListHeading:"Added files",
+  optionsHeading:"Merge options",
+  headerLabel:"Treat each file's first row as a header, and align columns by header name",
+  headerHint:"When off, headers are ignored and rows are merged purely by column order (the first row of each file is treated as data too).",
+  sourceLabel:"Add a “source file” column at the front",
+  sourceColName:"source file",
+  summaryHeading:"Aligned columns",
+  summaryHint:"Highlighted columns only exist in some of the files (missing ones are left blank).",
+  partialSuffix:"of",
+  previewHeading:"Merged preview",
+  previewNote:"Showing only the first part (the downloaded file will contain everything).",
+  noData:"No files added yet.",
+  outputHeading:"Download options",
+  bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
+  downloadBtn:"Merge and download CSV",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  rowsSuffix:" rows",colsSuffix:" cols",
+  warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding on the right.",
+  warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose manually on the right.",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+/* ---- encoding (shared pattern with csv-fix / csv-seiri) ---- */
+function tryDecode(bytes,label){
+  try{ return new TextDecoder(label,{fatal:true}).decode(bytes); }
+  catch(e){ return null; }
+}
+function hasBOM(bytes){ return bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF; }
+function detectEncoding(bytes){
+  var order=["utf-8","shift_jis","euc-jp","iso-2022-jp"];
+  for(var i=0;i<order.length;i++){
+    var t=tryDecode(bytes,order[i]);
+    if(t!==null) return {enc:order[i], ok:true};
+  }
+  return {enc:"utf-8", ok:false};
+}
+
+/* ---- CSV parse/serialize (handles quoted fields, including embedded newlines/commas) ---- */
+function parseCSV(text){
+  var rows=[],row=[],cur="",inQ=false,i=0,n=text.length;
+  while(i<n){
+    var c=text[i];
+    if(inQ){
+      if(c==='"'){
+        if(text.charAt(i+1)==='"'){cur+='"';i+=2;continue;}
+        inQ=false;i++;continue;
+      }
+      cur+=c;i++;continue;
+    }
+    if(c==='"'){inQ=true;i++;continue;}
+    if(c===','){row.push(cur);cur="";i++;continue;}
+    if(c==='\r'){ if(text.charAt(i+1)==='\n') i++; row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    if(c==='\n'){ row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    cur+=c;i++;
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function csvField(v){
+  v=String(v);
+  if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function serializeCSV(rows){
+  return rows.map(function(r){ return r.map(csvField).join(","); }).join("\r\n");
+}
+
+/* ---- merge logic ---- */
+function headerKey(h){ return String(h).replace(/^[\s　]+|[\s　]+$/g,""); }
+
+function mergeByHeader(files, opts){
+  opts=opts||{};
+  var headers=[], headerIndex={};
+  files.forEach(function(f){
+    var h=f.rows[0]||[];
+    h.forEach(function(raw){
+      var key=headerKey(raw);
+      if(!(key in headerIndex)){ headerIndex[key]=headers.length; headers.push(key); }
+    });
+  });
+  var sourceCounts=headers.map(function(){return 0;});
+  files.forEach(function(f){
+    var h=f.rows[0]||[];
+    var seen={};
+    h.forEach(function(raw){
+      var key=headerKey(raw);
+      if(!seen[key]){ seen[key]=true; sourceCounts[headerIndex[key]]++; }
+    });
+  });
+  var outHeader=headers.slice();
+  if(opts.addSource) outHeader=[opts.sourceLabel].concat(outHeader);
+  var outRows=[outHeader];
+  files.forEach(function(f){
+    var h=f.rows[0]||[];
+    var colPos=h.map(function(raw){ return headerIndex[headerKey(raw)]; });
+    for(var r=1;r<f.rows.length;r++){
+      var row=f.rows[r];
+      var out=new Array(headers.length).fill("");
+      for(var c=0;c<row.length;c++){
+        var pos=colPos[c];
+        if(pos===undefined) continue;
+        if(out[pos]==="") out[pos]=row[c]!==undefined?row[c]:"";
+      }
+      if(opts.addSource) out=[f.name].concat(out);
+      outRows.push(out);
+    }
+  });
+  return {rows:outRows, headers:headers, sourceCounts:sourceCounts, fileCount:files.length};
+}
+
+function mergePositional(files, opts){
+  opts=opts||{};
+  var maxCols=0;
+  files.forEach(function(f){ f.rows.forEach(function(r){ maxCols=Math.max(maxCols,r.length); }); });
+  var outRows=[];
+  files.forEach(function(f){
+    f.rows.forEach(function(r){
+      var row=r.slice();
+      while(row.length<maxCols) row.push("");
+      if(opts.addSource) row=[f.name].concat(row);
+      outRows.push(row);
+    });
+  });
+  return {rows:outRows, maxCols:maxCols, fileCount:files.length};
+}
+
+/* ---- state ---- */
+var state={files:[], hasHeader:true, addSource:false, nextId:1};
+
+function escTrunc(s){ s=String(s); var t = s.length>60 ? s.slice(0,60)+"…" : s; return esc(t); }
+
+function reparseFile(f){
+  var t=tryDecode(f.bytes,f.enc);
+  if(t===null){ t=new TextDecoder(f.enc,{fatal:false}).decode(f.bytes); f.warn=T[lang].warnReplace; }
+  else if(f.forcedFallback){ f.warn=T[lang].warnUnknown; }
+  else { f.warn=""; }
+  f.text=t;
+  f.rows=parseCSV(t);
+}
+
+function addFile(file){
+  /* Reserve the list slot synchronously, in call order, so that files keep the
+     order the user added them in even though arrayBuffer() resolves async and
+     is not guaranteed to finish in that same order. */
+  var f={id:state.nextId++, name:file.name, bytes:null, enc:"utf-8", forcedFallback:false, warn:"", rows:[], text:"", loading:true};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){
+    f.bytes=new Uint8Array(buf);
+    var d=detectEncoding(f.bytes);
+    f.enc=d.enc; f.forcedFallback=!d.ok;
+    reparseFile(f);
+    f.loading=false;
+    render();
+  }).catch(function(){
+    f.loading=false; f.bytes=new Uint8Array(0); f.rows=[];
+    render();
+  });
+}
+
+function removeFile(id){
+  state.files=state.files.filter(function(f){return f.id!==id;});
+  render();
+}
+
+function dataRowCount(f){ return state.hasHeader ? Math.max(0,f.rows.length-1) : f.rows.length; }
+function colCount(f){ var m=0; for(var i=0;i<f.rows.length;i++) m=Math.max(m,f.rows[i].length); return m; }
+
+function renderFileList(){
+  var box=$("fileListBox");
+  var h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){
+      h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>";
+    } else {
+      h+="<span class='fMeta'>"+f.bytes.length+" bytes ・ "+dataRowCount(f)+T[lang].rowsSuffix+" ・ "+colCount(f)+T[lang].colsSuffix+"</span>";
+    }
+    h+="<select class='encSelect' data-id='"+f.id+"'>";
+    ["utf-8","shift_jis","euc-jp","iso-2022-jp"].forEach(function(enc){
+      h+="<option value='"+enc+"'"+(f.enc===enc?" selected":"")+">"+esc(ENC_LABEL[enc][lang])+"</option>";
+    });
+    h+="</select>";
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    if(f.warn) h+="<span class='fWarn'>"+esc(f.warn)+"</span>";
+    h+="</div>";
+  });
+  box.innerHTML=h;
+  var sels=box.querySelectorAll(".encSelect");
+  for(var i=0;i<sels.length;i++){
+    sels[i].addEventListener("change",function(){
+      var id=parseInt(this.getAttribute("data-id"),10);
+      var f=state.files.filter(function(x){return x.id===id;})[0];
+      if(f){ f.enc=this.value; f.forcedFallback=false; reparseFile(f); render(); }
+    });
+  }
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){
+    rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); });
+  }
+}
+
+function computeMerge(){
+  var ready=state.files.filter(function(f){return !f.loading;});
+  if(!ready.length) return null;
+  var opts={addSource:state.addSource, sourceLabel:T[lang].sourceColName};
+  if(state.hasHeader) return {mode:"header", result:mergeByHeader(ready, opts)};
+  return {mode:"positional", result:mergePositional(ready, opts)};
+}
+
+function renderSummary(merge){
+  var box=$("summaryBox");
+  if(merge.mode!=="header"){ $("summaryCard").style.display="none"; return; }
+  $("summaryCard").style.display="";
+  var r=merge.result, n=r.fileCount, h="";
+  for(var i=0;i<r.headers.length;i++){
+    var partial=r.sourceCounts[i]<n;
+    h+="<span class='colChip"+(partial?" partial":"")+"'>"+esc(r.headers[i]||"(—)")+(partial?" ("+r.sourceCounts[i]+"/"+n+")":"")+"</span>";
+  }
+  box.innerHTML=h;
+}
+
+function renderPreview(merge){
+  var box=$("previewBox");
+  var rows=merge.result.rows;
+  var dataStart=1; // row 0 is always header/first merged row in our rows array when hasHeader; for positional mode rows[0] is just the first data row (no synthetic header)
+  var header, body, hasHeaderRow=(merge.mode==="header");
+  if(hasHeaderRow){ header=rows[0]; body=rows.slice(1); }
+  else { header=null; body=rows; }
+  var total=body.length;
+  $("previewCount").textContent = total + T[lang].rowsSuffix + (hasHeaderRow?" / "+ (merge.result.headers.length + (state.addSource?1:0)) + T[lang].colsSuffix : "");
+  var maxRows=15, maxCols=14;
+  var colCount2 = hasHeaderRow ? header.length : merge.result.maxCols + (state.addSource?1:0);
+  var shownCols=Math.min(maxCols,colCount2);
+  var shownBody=body.slice(0,maxRows);
+  var h="<div class='scroll'><table>";
+  if(hasHeaderRow){
+    h+="<thead><tr>";
+    for(var c=0;c<shownCols;c++) h+="<th>"+escTrunc(header[c]!==undefined&&header[c]!==""?header[c]:"—")+"</th>";
+    h+="</tr></thead>";
+  }
+  h+="<tbody>";
+  for(var r=0;r<shownBody.length;r++){
+    h+="<tr>";
+    for(var c2=0;c2<shownCols;c2++){
+      var v=shownBody[r][c2];
+      if(v===undefined||v===""){ h+="<td class='blank'></td>"; continue; }
+      h+="<td>"+escTrunc(v)+"</td>";
+    }
+    h+="</tr>";
+  }
+  h+="</tbody></table></div>";
+  if(total>maxRows||colCount2>maxCols) h+="<p class='hint'>"+esc(T[lang].previewNote)+"</p>";
+  box.innerHTML=h;
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  $("optionsCard").style.display=has?"":"none";
+  if(!has){
+    $("previewCard").style.display="none";
+    $("outCard").style.display="none";
+    $("summaryCard").style.display="none";
+    $("downloadBtn").disabled=true;
+    renderFileList();
+    return;
+  }
+  renderFileList();
+  var merge=computeMerge();
+  if(!merge){
+    /* all added files are still being read from disk */
+    $("previewCard").style.display="none";
+    $("outCard").style.display="none";
+    $("summaryCard").style.display="none";
+    $("downloadBtn").disabled=true;
+    return;
+  }
+  $("previewCard").style.display="";
+  $("outCard").style.display="";
+  renderSummary(merge);
+  renderPreview(merge);
+  $("downloadBtn").disabled=false;
+}
+
+/* ---- UI wiring ---- */
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){
+  var fs=e.dataTransfer && e.dataTransfer.files;
+  if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]);
+});
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){
+  var fs=e.target.files;
+  if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]);
+  e.target.value="";
+});
+$("headerCheck").addEventListener("change",function(){ state.hasHeader=this.checked; render(); });
+$("sourceCheck").addEventListener("change",function(){ state.addSource=this.checked; render(); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var merge=computeMerge();
+  if(!merge) return;
+  var csvText=serializeCSV(merge.result.rows);
+  var addBom=$("bomCheck").checked;
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes;
+  if(addBom){
+    bytes=new Uint8Array(encoded.length+3);
+    bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF;
+    bytes.set(encoded,3);
+  } else bytes=encoded;
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download="merged.csv";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
