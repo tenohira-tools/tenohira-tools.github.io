@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>複数Excel(.xlsx)ファイルの結合ツール（CSV出力）| てのひらツール</title>
+<meta name="description" content="複数のExcel（.xlsx/.xlsm）ファイルを、1枚ずつCSVに書き出す手間をかけずにそのまま読み込んで1つのCSVに結合。見出し名で列をそろえ、日付・日時・時刻のセルはシリアル値ではなく表示どおりの形式に変換します。ファイルに複数シートがあっても1ファイルずつ使うシートを選べます。ブラウザ内だけで処理し、ファイルは送信されません。Merge multiple Excel (.xlsx) files directly into one CSV — no need to export each to CSV first. Dates are converted from Excel's internal serial numbers automatically, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-merge/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:900px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.checkline{display:flex;align-items:center;gap:8px;margin-top:10px}
+.checkline input{width:auto;min-height:auto}
+#fileListBox{display:grid;gap:10px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard select{flex:0 0 auto;max-width:220px}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.summaryBox{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.colChip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.84rem;background:var(--bg)}
+.colChip.partial{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
+.scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.blank{color:var(--muted)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">複数Excelファイルの結合ツール</h1>
+    <p class="sub" data-i="sub">複数の.xlsxファイルを、1枚ずつCSVに書き出す手間なくそのまま読み込み、1つのCSVに結合します。見出し名で列をそろえ、日付・時刻のセルは表示どおりの形式に変換します。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここに複数のExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1つずつでも追加できます。複数シートがあるファイルは、後から使うシートを選べます。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card" id="optionsCard" style="display:none">
+  <h2 data-i="optionsHeading">結合の設定</h2>
+  <div class="checkline">
+    <input type="checkbox" id="headerCheck" checked>
+    <label for="headerCheck" data-i="headerLabel">各シートの1行目を見出し（ヘッダー）として扱い、見出し名で列をそろえる</label>
+  </div>
+  <p class="hint" data-i="headerHint">オフにすると見出しは使わず、列の並び順だけで結合します（1行目もデータとして扱われます）。</p>
+  <div class="checkline">
+    <input type="checkbox" id="sourceCheck">
+    <label for="sourceCheck" data-i="sourceLabel">先頭に「元ファイル名」の列を追加する</label>
+  </div>
+</section>
+
+<section class="card" id="summaryCard" style="display:none">
+  <h2 data-i="summaryHeading">そろえた列</h2>
+  <p class="hint" data-i="summaryHint">色のついた列は、一部のファイルにしかありません（無いファイルの行は空欄になります）。</p>
+  <div class="summaryBox" id="summaryBox"></div>
+</section>
+
+<section class="card" id="previewCard" style="display:none">
+  <h2 data-i="previewHeading">結合結果のプレビュー</h2>
+  <p class="hint" id="previewCount"></p>
+  <div id="previewBox"></div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="outputHeading">ダウンロード設定</h2>
+  <div class="checkline">
+    <input type="checkbox" id="bomCheck" checked>
+    <label for="bomCheck" data-i="bomLabel">BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）</label>
+  </div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">結合してCSVをダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠に結合したいExcel（.xlsx/.xlsm）ファイルを複数ドラッグ＆ドロップするか、クリックしてまとめて選びます（1つずつの追加も可）。</li>
+      <li>複数シートがあるファイルは、ファイルごとの一覧でどのシートを使うか選びます（既定は先頭のシート）。</li>
+      <li>各ファイルの1行目を見出し行として扱うか（既定でON）、先頭に元ファイル名の列を付けるかを選びます。</li>
+      <li>「そろえた列」で、どの列が全ファイルにあるか・一部のファイルだけかを確認し、プレビューで結合結果を確認してから「結合してCSVをダウンロード」を押します。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・結合されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示し、結合からは除外します。</p>
+    <h3>Q. 1つのファイルに複数のシートがある場合は？</h3>
+    <p>A. ファイルごとの一覧に「シート」の選択欄が出るので、使いたいシートを1つ選べます（既定は先頭のシート）。同じファイルの別のシートも結合に使いたいときは、同じファイルをもう一度ドラッグ＆ドロップして追加し、2つ目の方でシートだけ切り替えてください。</p>
+    <h3>Q. 日付や時刻が入ったセルはどうなりますか？</h3>
+    <p>A. Excelは日付を内部的に「シリアル値」という数値で保存していますが、このツールはセルの表示形式（日付・日時・時刻）を見て「2026/04/01」のような見たままに近い文字列に変換してからCSVに書き出します。非常に特殊な独自の表示形式の一部は判定できないことがあり、その場合は数値のまま出力されます。</p>
+    <h3>Q. 数式が入ったセルはどうなりますか？</h3>
+    <p>A. 直近にExcel等で保存されたときの計算結果（セルに保存されている値）をそのまま使い、再計算はしません。Excelで一度も開いて保存していない（他のプログラムが数式だけを書き込んだ直後の）ファイルでは、計算結果が空欄になることがあります。</p>
+    <h3>Q. マクロやグラフ、セルの色・罫線などの書式は引き継がれますか？</h3>
+    <p>A. いいえ。このツールはセルの値（文字列・数値・日付）だけを読み取ってCSVに変換するため、マクロ・グラフ・画像・セルの色や罫線、列幅などの見た目の情報は失われます。</p>
+    <h3>Q. ファイルによって列の並び順や数が違っても結合できますか？</h3>
+    <p>A. 「見出し名で列をそろえる」がONのときは、見出し名（前後の空白は無視）が一致する列を同じ列として扱い、全ファイルの見出し名を集めた列構成に結合します。あるファイルに無い見出しの列は、そのファイルの行では空欄になります。OFFにすると見出しは使わず、列の並び順のまま上から順につなげます。</p>
+    <h3>Q. 大きなファイルや多数のファイルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、合計で数万行程度までを想定しています。非常に大きい場合は読み込み・表示が遅くなることがあります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop several Excel (.xlsx/.xlsm) files into the box above, or click it to choose multiple files (you can also add them one at a time).</li>
+      <li>For files with more than one sheet, pick which sheet to use from that file's row in the list (defaults to the first sheet).</li>
+      <li>Choose whether to treat each sheet's first row as a header (on by default), and whether to prepend a "source file" column.</li>
+      <li>Check "Aligned columns", review the merged preview, then click "Merge and download CSV".</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and merged inside your browser, on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported — if a file fails to load, an error is shown next to it and it's excluded from the merge.</p>
+    <h3>Q. What if a file has multiple sheets?</h3>
+    <p>A. Each file's row in the list gets a sheet picker (defaulting to the first sheet) so you can choose which one to use. To merge two different sheets from the same file, add that file a second time and pick a different sheet for the second entry.</p>
+    <h3>Q. How are date and time cells handled?</h3>
+    <p>A. Excel stores dates internally as serial numbers. This tool looks at each cell's display format (date, date-time, or time) and converts it to a readable string like "2026/04/01" before writing the CSV. A few unusual custom formats may not be recognized, in which case the raw serial number is shown instead.</p>
+    <h3>Q. What about cells containing formulas?</h3>
+    <p>A. The last calculated value saved in the file is used as-is; nothing is recalculated. A file that was never opened and saved in Excel (e.g. generated by another program moments ago) may have blank cached values for its formulas.</p>
+    <h3>Q. Are macros, charts, or cell formatting preserved?</h3>
+    <p>A. No. Only cell values (text, numbers, dates) are read and converted to CSV — macros, charts, images, cell colors, borders and column widths are all dropped.</p>
+    <h3>Q. Can I merge files whose columns are in a different order or count?</h3>
+    <p>A. When "align columns by header name" is on, columns whose header text matches (ignoring leading/trailing spaces) are treated as the same column, using the union of all header names seen. A sheet missing a given column gets a blank cell for it. Turning this off appends every row, including the first, in column order as-is.</p>
+    <h3>Q. Can it handle large or many files?</h3>
+    <p>A. Everything runs in browser memory, so it's built for combined totals up to tens of thousands of rows. Very large inputs may make loading and rendering slower.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../csv-merge/">複数CSVの結合ツール</a> — 文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから1つに結合。</li>
+      <li><a href="../csv-fix/">CSV・テキストの文字化け直し</a> — Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換。ExcelのBOM追加・削除にも対応。</li>
+      <li><a href="../csv-seiri/">CSVの列ごと書式統一ツール</a> — CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロード。</li>
+      <li><a href="../csv-group-split/">CSVを列の値ごとに自動分割</a> — 選んだ列の値ごとにグループ分けして複数ファイルに分け、ZIPでまとめてダウンロード。</li>
+      <li><a href="../csv-master-replace/">CSVのコード→名称 一括変換ツール</a> — データCSVのコード列を、対応表（マスタ）CSVと突き合わせて店舗名・氏名などの列を一括追加。</li>
+      <li><a href="../wareki-toitsu/">和暦・西暦 混在日付の一括統一</a> — 令和6年1月2日／R6.1.2／2024/1/2など混在した日付を文章・CSVからまとめて検出し形式を統一。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../csv-merge/">Multi-CSV Merge Tool</a> — Merge several CSV files that may each use a different character encoding.</li>
+      <li><a href="../csv-fix/">CSV / Text Mojibake Fixer</a> — Fix mojibake: convert Shift_JIS/EUC-JP files to UTF-8, add or remove a BOM.</li>
+      <li><a href="../csv-seiri/">CSV Column Formatter</a> — Normalize full/half-width characters, katakana, postal codes and hyphen styles column by column in a CSV.</li>
+      <li><a href="../csv-group-split/">CSV Group Splitter</a> — Split one CSV into files grouped by a column's value, downloaded as a single ZIP.</li>
+      <li><a href="../csv-master-replace/">CSV Code → Name Lookup Converter</a> — Join a data CSV's code column against a lookup-table CSV to add name columns in bulk.</li>
+      <li><a href="../wareki-toitsu/">Unify Mixed Japanese-Era / Western Dates</a> — Find and unify mixed date formats across text or a CSV.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・結合されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"対応しているファイル形式は？","acceptedAnswer":{"@type":"Answer","text":"Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式やパスワード保護されたファイルは読み込めません。"}},
+    {"@type":"Question","name":"1つのファイルに複数のシートがある場合は？","acceptedAnswer":{"@type":"Answer","text":"ファイルごとにシートを1つ選べます（既定は先頭のシート）。別のシートも使いたい場合は同じファイルをもう一度追加してください。"}},
+    {"@type":"Question","name":"日付や時刻が入ったセルはどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"セルの表示形式を見て、シリアル値ではなく「2026/04/01」のような見たままに近い文字列に変換します。"}},
+    {"@type":"Question","name":"数式が入ったセルはどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"直近に保存されたときの計算結果をそのまま使い、再計算はしません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX parsing core (no external libraries — ZIP + XML handled by hand,
+   using only standard browser APIs: DecompressionStream/TextDecoder).
+   ===================================================================== */
+
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipToMap(bytes){
+  var entries=zipCentralDirectory(bytes), map={};
+  for(var i=0;i<entries.length;i++){ var en=entries[i]; if(en.name.charAt(en.name.length-1)!=="/") map[en.name]=en; }
+  var out={};
+  for(var name in map){ out[name]=new TextDecoder("utf-8").decode(await zipReadEntry(bytes,map[name])); }
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function parseSharedStrings(xml){
+  if(!xml) return [];
+  return findTags(xml,"si").map(function(si){
+    return findTags(si.inner||"","t").map(function(t){return decodeXmlEntities(t.inner||"")}).join("");
+  });
+}
+var BUILTIN_DATE_KIND={14:"date",15:"date",16:"date",17:"date",22:"datetime",18:"time",19:"time",20:"time",21:"time",45:"time",46:"time",47:"time"};
+function customFormatKind(code){
+  var stripped=code.replace(/"[^"]*"/g,"").replace(/\[[^\]]*\]/g,"");
+  if(/General/i.test(stripped)) return null;
+  var noAmPm=stripped.replace(/AM\/PM|A\/P/gi,"");
+  var hasDate=/[ymdYMD]/.test(noAmPm), hasTime=/[hHsS]/.test(stripped);
+  if(hasDate && hasTime) return "datetime";
+  if(hasDate) return "date";
+  if(hasTime) return "time";
+  return null;
+}
+function parseStyles(xml){
+  if(!xml) return {xfKind:[]};
+  var customFmt={};
+  findTags(xml,"numFmts").forEach(function(block){
+    findTags(block.inner||"","numFmt").forEach(function(nf){ customFmt[nf.attrs.numFmtId]=nf.attrs.formatCode; });
+  });
+  var xfKind=[], cellXfsBlocks=findTags(xml,"cellXfs");
+  if(cellXfsBlocks.length){
+    findTags(cellXfsBlocks[0].inner||"","xf").forEach(function(xf){
+      var id=xf.attrs.numFmtId, kind=null;
+      if(id!==undefined){
+        var idNum=parseInt(id,10);
+        if(BUILTIN_DATE_KIND[idNum]) kind=BUILTIN_DATE_KIND[idNum];
+        else if(customFmt[id]) kind=customFormatKind(customFmt[id]);
+      }
+      xfKind.push(kind);
+    });
+  }
+  return {xfKind:xfKind};
+}
+function pad2(n){return (n<10?"0":"")+n}
+function excelSerialToParts(serial){
+  var ms=Math.round((serial-25569)*86400*1000), d=new Date(ms);
+  return {y:d.getUTCFullYear(),mo:d.getUTCMonth()+1,da:d.getUTCDate(),h:d.getUTCHours(),mi:d.getUTCMinutes(),s:d.getUTCSeconds()};
+}
+function formatDateValue(serial,kind){
+  var num=parseFloat(serial);
+  if(isNaN(num)) return serial;
+  if(kind==="time"){
+    var total=Math.round(num*86400), h=Math.floor(total/3600), mi=Math.floor((total%3600)/60), s=total%60;
+    return pad2(h)+":"+pad2(mi)+":"+pad2(s);
+  }
+  var p=excelSerialToParts(num), datePart=p.y+"/"+pad2(p.mo)+"/"+pad2(p.da);
+  if(kind==="datetime"){ return datePart+" "+pad2(p.h)+":"+pad2(p.mi)+(p.s?":"+pad2(p.s):""); }
+  return datePart;
+}
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+function cellValue(c,sharedStrings,xfKind){
+  var t=c.attrs.t, sIdx=c.attrs.s!==undefined?parseInt(c.attrs.s,10):-1;
+  var kind=(sIdx>=0 && xfKind[sIdx])?xfKind[sIdx]:null;
+  if(t==="inlineStr"){
+    var isTags=findTags(c.inner||"","is");
+    if(isTags.length) return findTags(isTags[0].inner||"","t").map(function(t2){return decodeXmlEntities(t2.inner||"")}).join("");
+    return "";
+  }
+  var vTags=findTags(c.inner||"","v");
+  var raw=vTags.length?(vTags[0].inner||""):null;
+  if(raw===null) return "";
+  raw=decodeXmlEntities(raw);
+  if(t==="s"){ var idx=parseInt(raw,10); return sharedStrings[idx]!==undefined?sharedStrings[idx]:""; }
+  if(t==="str") return raw;
+  if(t==="b") return raw==="1"?"TRUE":"FALSE";
+  if(t==="e") return raw;
+  if(kind) return formatDateValue(raw,kind);
+  return raw;
+}
+function parseSheetXml(xml,sharedStrings,xfKind){
+  var rows=[];
+  findTags(xml,"sheetData").forEach(function(sd){
+    findTags(sd.inner||"","row").forEach(function(row){
+      var cells=findTags(row.inner||"","c"), arr=[];
+      cells.forEach(function(c){
+        var ref=c.attrs.r||"", ci=ref?colLetterToIndex(ref):arr.length;
+        while(arr.length<ci) arr.push("");
+        arr[ci]=cellValue(c,sharedStrings,xfKind);
+      });
+      rows.push(arr);
+    });
+  });
+  var maxCols=0; rows.forEach(function(r){maxCols=Math.max(maxCols,r.length)});
+  rows.forEach(function(r){ while(r.length<maxCols) r.push(""); });
+  return rows;
+}
+async function parseXlsx(bytes){
+  var files=await unzipToMap(bytes);
+  var workbookXml=files["xl/workbook.xml"], relsXml=files["xl/_rels/workbook.xml.rels"];
+  if(!workbookXml || !relsXml) throw new Error("NOT_XLSX");
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  var sharedStrings=parseSharedStrings(files["xl/sharedStrings.xml"]);
+  var styles=parseStyles(files["xl/styles.xml"]);
+  return {sheets:sheetList.map(function(s){
+    var xml=files[s.path];
+    return {name:s.name, rows: xml?parseSheetXml(xml,sharedStrings,styles.xfKind):[]};
+  })};
+}
+
+/* =====================================================================
+   CSV serialize + header/positional merge (same approach as csv-merge)
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+function headerKey(h){ return String(h).replace(/^[\s　]+|[\s　]+$/g,""); }
+
+function mergeByHeader(files,opts){
+  opts=opts||{};
+  var headers=[], headerIndex={};
+  files.forEach(function(f){
+    (f.rows[0]||[]).forEach(function(raw){
+      var key=headerKey(raw);
+      if(!(key in headerIndex)){ headerIndex[key]=headers.length; headers.push(key); }
+    });
+  });
+  var sourceCounts=headers.map(function(){return 0});
+  files.forEach(function(f){
+    var seen={};
+    (f.rows[0]||[]).forEach(function(raw){
+      var key=headerKey(raw);
+      if(!seen[key]){ seen[key]=true; sourceCounts[headerIndex[key]]++; }
+    });
+  });
+  var outHeader=headers.slice();
+  if(opts.addSource) outHeader=[opts.sourceLabel].concat(outHeader);
+  var outRows=[outHeader];
+  files.forEach(function(f){
+    var h=f.rows[0]||[];
+    var colPos=h.map(function(raw){return headerIndex[headerKey(raw)]});
+    for(var r=1;r<f.rows.length;r++){
+      var row=f.rows[r], out=new Array(headers.length).fill("");
+      for(var c=0;c<row.length;c++){
+        var pos=colPos[c]; if(pos===undefined) continue;
+        if(out[pos]==="") out[pos]=row[c]!==undefined?row[c]:"";
+      }
+      if(opts.addSource) out=[f.sourceLabel].concat(out);
+      outRows.push(out);
+    }
+  });
+  return {rows:outRows, headers:headers, sourceCounts:sourceCounts, fileCount:files.length};
+}
+function mergePositional(files,opts){
+  opts=opts||{};
+  var maxCols=0;
+  files.forEach(function(f){ f.rows.forEach(function(r){maxCols=Math.max(maxCols,r.length)}); });
+  var outRows=[];
+  files.forEach(function(f){
+    f.rows.forEach(function(r){
+      var row=r.slice(); while(row.length<maxCols) row.push("");
+      if(opts.addSource) row=[f.sourceLabel].concat(row);
+      outRows.push(row);
+    });
+  });
+  return {rows:outRows, maxCols:maxCols, fileCount:files.length};
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"複数Excelファイルの結合ツール",
+  sub:"複数の.xlsxファイルを、1枚ずつCSVに書き出す手間なくそのまま読み込み、1つのCSVに結合します。見出し名で列をそろえ、日付・時刻のセルは表示どおりの形式に変換します。ファイルはどこにも送信されません。",
+  dropzoneText:"ここに複数のExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1つずつでも追加できます。複数シートがあるファイルは、後から使うシートを選べます。ファイルは選択した端末の中だけで処理されます。",
+  fileListHeading:"追加したファイル",
+  optionsHeading:"結合の設定",
+  headerLabel:"各シートの1行目を見出し（ヘッダー）として扱い、見出し名で列をそろえる",
+  headerHint:"オフにすると見出しは使わず、列の並び順だけで結合します（1行目もデータとして扱われます）。",
+  sourceLabel:"先頭に「元ファイル名」の列を追加する",
+  sourceColName:"元ファイル名",
+  summaryHeading:"そろえた列",
+  summaryHint:"色のついた列は、一部のファイルにしかありません（無いファイルの行は空欄になります）。",
+  previewHeading:"結合結果のプレビュー",
+  previewNote:"先頭の一部のみ表示しています（ダウンロードするファイルは全体を結合します）。",
+  outputHeading:"ダウンロード設定",
+  bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
+  downloadBtn:"結合してCSVをダウンロード",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  rowsSuffix:"行",colsSuffix:"列",
+  sheetLabel:"シート：",
+  errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  errEmpty:"シートにデータがありません",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Multi-Excel Merge Tool",
+  sub:"Merge several .xlsx files directly into one CSV, without exporting each one to CSV first. Columns are aligned by header name, and date/time cells are converted to readable text. Nothing is uploaded.",
+  dropzoneText:"Drag and drop several Excel (.xlsx) files here, or click to choose multiple files",
+  dropzoneHint:"You can also add files one at a time. Files with multiple sheets let you pick which one to use. Everything happens on this device.",
+  fileListHeading:"Added files",
+  optionsHeading:"Merge options",
+  headerLabel:"Treat each sheet's first row as a header, and align columns by header name",
+  headerHint:"When off, headers are ignored and rows are merged purely by column order (the first row is treated as data too).",
+  sourceLabel:"Add a “source file” column at the front",
+  sourceColName:"source file",
+  summaryHeading:"Aligned columns",
+  summaryHint:"Highlighted columns only exist in some of the files (missing ones are left blank).",
+  previewHeading:"Merged preview",
+  previewNote:"Showing only the first part (the downloaded file will contain everything).",
+  outputHeading:"Download options",
+  bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
+  downloadBtn:"Merge and download CSV",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  rowsSuffix:" rows",colsSuffix:" cols",
+  sheetLabel:"Sheet:",
+  errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  errEmpty:"This sheet has no data",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], hasHeader:true, addSource:false, nextId:1};
+
+function escTrunc(s){ s=String(s); var t=s.length>60?s.slice(0,60)+"…":s; return esc(t); }
+
+function fileSourceLabel(f){
+  if(!f.sheets || f.sheets.length<2) return f.name;
+  return f.name+" ["+f.sheets[f.sheetIndex].name+"]";
+}
+function applySheet(f){
+  f.rows = f.sheets[f.sheetIndex] ? f.sheets[f.sheetIndex].rows : [];
+  f.sourceLabel = fileSourceLabel(f);
+}
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", sheets:[], sheetIndex:0, rows:[], sourceLabel:file.name};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){
+    return parseXlsx(new Uint8Array(buf));
+  }).then(function(result){
+    f.sheets=result.sheets;
+    if(!f.sheets.length){ f.error=T[lang].errBad; }
+    else { applySheet(f); if(!f.rows.length) f.error=T[lang].errEmpty; }
+    f.loading=false;
+    render();
+  }).catch(function(){
+    f.loading=false; f.error=T[lang].errBad; f.rows=[];
+    render();
+  });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function dataRowCount(f){ return state.hasHeader?Math.max(0,f.rows.length-1):f.rows.length; }
+function colCount(f){ var m=0; for(var i=0;i<f.rows.length;i++) m=Math.max(m,f.rows[i].length); return m; }
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){
+      h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>";
+    } else if(f.error){
+      h+="<span class='fWarn'>"+esc(f.error)+"</span>";
+    } else {
+      h+="<span class='fMeta'>"+dataRowCount(f)+T[lang].rowsSuffix+" ・ "+colCount(f)+T[lang].colsSuffix+"</span>";
+      if(f.sheets.length>1){
+        h+="<label>"+esc(T[lang].sheetLabel)+" <select class='sheetSelect' data-id='"+f.id+"'>";
+        f.sheets.forEach(function(sh,i){ h+="<option value='"+i+"'"+(i===f.sheetIndex?" selected":"")+">"+esc(sh.name)+"</option>"; });
+        h+="</select></label>";
+      }
+    }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+  });
+  box.innerHTML=h;
+  var sels=box.querySelectorAll(".sheetSelect");
+  for(var i=0;i<sels.length;i++){
+    sels[i].addEventListener("change",function(){
+      var id=parseInt(this.getAttribute("data-id"),10);
+      var f=state.files.filter(function(x){return x.id===id})[0];
+      if(f){ f.sheetIndex=parseInt(this.value,10); applySheet(f); f.error=f.rows.length?"":T[lang].errEmpty; render(); }
+    });
+  }
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function computeMerge(){
+  var ready=state.files.filter(function(f){return !f.loading && !f.error});
+  if(!ready.length) return null;
+  var opts={addSource:state.addSource, sourceLabel:T[lang].sourceColName};
+  if(state.hasHeader) return {mode:"header", result:mergeByHeader(ready,opts)};
+  return {mode:"positional", result:mergePositional(ready,opts)};
+}
+
+function renderSummary(merge){
+  var box=$("summaryBox");
+  if(merge.mode!=="header"){ $("summaryCard").style.display="none"; return; }
+  $("summaryCard").style.display="";
+  var r=merge.result, n=r.fileCount, h="";
+  for(var i=0;i<r.headers.length;i++){
+    var partial=r.sourceCounts[i]<n;
+    h+="<span class='colChip"+(partial?" partial":"")+"'>"+esc(r.headers[i]||"(—)")+(partial?" ("+r.sourceCounts[i]+"/"+n+")":"")+"</span>";
+  }
+  box.innerHTML=h;
+}
+function renderPreview(merge){
+  var box=$("previewBox"), rows=merge.result.rows;
+  var header, body, hasHeaderRow=(merge.mode==="header");
+  if(hasHeaderRow){ header=rows[0]; body=rows.slice(1); } else { header=null; body=rows; }
+  var total=body.length;
+  $("previewCount").textContent = total+T[lang].rowsSuffix+(hasHeaderRow?" / "+(merge.result.headers.length+(state.addSource?1:0))+T[lang].colsSuffix:"");
+  var maxRows=15, maxCols=14;
+  var colCount2 = hasHeaderRow ? header.length : merge.result.maxCols+(state.addSource?1:0);
+  var shownCols=Math.min(maxCols,colCount2), shownBody=body.slice(0,maxRows);
+  var h="<div class='scroll'><table>";
+  if(hasHeaderRow){
+    h+="<thead><tr>";
+    for(var c=0;c<shownCols;c++) h+="<th>"+escTrunc(header[c]!==undefined&&header[c]!==""?header[c]:"—")+"</th>";
+    h+="</tr></thead>";
+  }
+  h+="<tbody>";
+  for(var r=0;r<shownBody.length;r++){
+    h+="<tr>";
+    for(var c2=0;c2<shownCols;c2++){
+      var v=shownBody[r][c2];
+      if(v===undefined||v===""){ h+="<td class='blank'></td>"; continue; }
+      h+="<td>"+escTrunc(v)+"</td>";
+    }
+    h+="</tr>";
+  }
+  h+="</tbody></table></div>";
+  if(total>maxRows||colCount2>maxCols) h+="<p class='hint'>"+esc(T[lang].previewNote)+"</p>";
+  box.innerHTML=h;
+}
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  $("optionsCard").style.display=has?"":"none";
+  if(!has){
+    $("previewCard").style.display="none"; $("outCard").style.display="none"; $("summaryCard").style.display="none";
+    $("downloadBtn").disabled=true; renderFileList(); return;
+  }
+  renderFileList();
+  var merge=computeMerge();
+  if(!merge){
+    $("previewCard").style.display="none"; $("outCard").style.display="none"; $("summaryCard").style.display="none";
+    $("downloadBtn").disabled=true; return;
+  }
+  $("previewCard").style.display=""; $("outCard").style.display="";
+  renderSummary(merge); renderPreview(merge);
+  $("downloadBtn").disabled=false;
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+$("headerCheck").addEventListener("change",function(){ state.hasHeader=this.checked; render(); });
+$("sourceCheck").addEventListener("change",function(){ state.addSource=this.checked; render(); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var merge=computeMerge(); if(!merge) return;
+  var csvText=serializeCSV(merge.result.rows);
+  var addBom=$("bomCheck").checked;
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes;
+  if(addBom){ bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3); }
+  else bytes=encoded;
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="merged.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  state.files.forEach(function(f){ f.sourceLabel=fileSourceLabel(f); });
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

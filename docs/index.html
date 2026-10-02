@@ -48,6 +48,7 @@ footer a{color:var(--accent)}
 <li><a href="csv-merge/">複数CSVの結合ツール</a><p>文字コードがバラバラな複数のCSV（Shift_JIS・EUC-JP・UTF-8混在）をファイルごとに自動判定してから結合。見出し名で列をそろえ、列構成が違っても足りない列は空欄に。 / Merge multiple CSV files that use different character encodings — each file is auto-detected, with columns aligned by header name.</p></li>
 <li><a href="csv-group-split/">CSVを列の値ごとに自動分割</a><p>1つのCSVを、選んだ列（都道府県・店舗・担当者など）の値ごとにグループ分けして複数ファイルに分け、ZIPでまとめてダウンロード。行数での機械的な分割ではなく値によるグループ分割。 / Split one CSV into files grouped by a column's value (e.g. by store or prefecture), downloaded as a single ZIP.</p></li>
 <li><a href="csv-master-replace/">CSVのコード→名称 一括変換ツール</a><p>データCSVのコード列を、コード・名称の対応表（マスタ）CSVと突き合わせて店舗名・氏名などの列を一括追加。一致しなかった行は空欄のまま一覧表示。 / Join a data CSV's code column against a lookup-table CSV to add name columns in bulk — unmatched rows are listed, never guessed.</p></li>
+<li><a href="xlsx-merge/">複数Excelファイルの結合ツール</a><p>複数の.xlsxファイルを、1枚ずつCSVに書き出す手間なくそのまま読み込み1つのCSVに結合。日付・時刻のセルはシリアル値ではなく見たままの形式に変換。 / Merge multiple Excel (.xlsx) files directly into one CSV — no need to export each to CSV first, with dates converted from Excel's serial numbers automatically.</p></li>
 </ul>
 <h2 class="group">暦・時間 <small>Calendar &amp; time</small></h2>
 <ul class="tools">
