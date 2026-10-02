@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSVのコード→名称 一括変換ツール（対応表・マスタ結合）| てのひらツール</title>
+<meta name="description" content="データのCSVと、コードと名称などの対応表（マスタ）CSVの2つを読み込むだけで、データ側のコード列を対応表で突き合わせて名称などの列を一括で追加できます。店舗コード→店舗名、担当者コード→氏名のような変換に。表計算のVLOOKUPのような突き合わせをブラウザだけで行い、一致しなかった行は空欄のまま一覧表示するので見落としません。ファイルはサーバーに送信されません。Join a data CSV with a lookup-table CSV by key column, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/csv-master-replace/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--ok:#2f6f4f;--ok-bg:#e8f2ec}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--ok:#7cc39c;--ok-bg:#1f3328}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:620px){.twocol{grid-template-columns:1fr}}
+.dropzone{border:2px dashed var(--line);border-radius:10px;padding:22px 14px;text-align:center;cursor:pointer;color:var(--muted)}
+.dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+.dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px;max-width:100%}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.checkline{display:flex;align-items:flex-start;gap:8px;margin-top:10px}
+.checkline input{width:auto;min-height:auto;margin-top:3px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:120px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--warn);font-size:.85rem;flex-basis:100%}
+.fileCard select.encSelect{flex:0 0 auto}
+.fieldRow{margin-top:12px}
+.fieldRow label{display:block;margin-bottom:4px;font-weight:600;font-size:.9rem}
+.valueColsBox{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:4px}
+.valueColsBox label{display:flex;align-items:center;gap:6px;font-weight:400;font-size:.92rem}
+.valueColsBox input{width:auto;min-height:auto}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:120px}
+.stat .num{font-size:1.4rem;font-weight:700}
+.stat.ok .num{color:var(--ok)}
+.stat.warn .num{color:var(--warn)}
+.chipBox{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.84rem;background:var(--bg)}
+.scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.blank{color:var(--muted)}
+td.added,th.added{background:var(--accent-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">CSVのコード→名称 一括変換ツール</h1>
+    <p class="sub" data-i="sub">データCSVと、コード・名称などの対応表（マスタ）CSVを読み込むと、データ側のコード列を対応表で突き合わせて、名称などの列を一括で追加します。一致しなかった行は空欄のまま一覧表示されるので、見落としや誤った推測が起きません。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div class="twocol">
+    <div>
+      <h2 data-i="dataHeading">① 変換したいCSV（データ）</h2>
+      <div class="dropzone" id="dataDropzone" tabindex="0" role="button" aria-label="データCSVを選択">
+        <p data-i="dataDropzoneText"><strong>ここにCSVをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+      </div>
+      <input type="file" id="dataFileInput" accept=".csv,.tsv,.txt,text/*" style="display:none">
+      <div id="dataFileCard" style="display:none"></div>
+      <div class="checkline">
+        <input type="checkbox" id="dataHeaderCheck" checked>
+        <label for="dataHeaderCheck" data-i="dataHeaderLabel">1行目を見出し（ヘッダー）として扱う</label>
+      </div>
+    </div>
+    <div>
+      <h2 data-i="masterHeading">② 対応表（マスタ）CSV</h2>
+      <div class="dropzone" id="masterDropzone" tabindex="0" role="button" aria-label="対応表CSVを選択">
+        <p data-i="masterDropzoneText"><strong>ここにCSVをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+      </div>
+      <input type="file" id="masterFileInput" accept=".csv,.tsv,.txt,text/*" style="display:none">
+      <div id="masterFileCard" style="display:none"></div>
+      <div class="checkline">
+        <input type="checkbox" id="masterHeaderCheck" checked>
+        <label for="masterHeaderCheck" data-i="masterHeaderLabel">1行目を見出し（ヘッダー）として扱う</label>
+      </div>
+    </div>
+  </div>
+  <p class="hint" data-i="bothHint">2つとも選択した端末の中だけで処理されます。文字コードはファイルごとに自動判定します。</p>
+</section>
+
+<section class="card" id="mapCard" style="display:none">
+  <h2 data-i="mapHeading">③ 突き合わせの設定</h2>
+  <div class="fieldRow">
+    <label for="dataKeySelect" data-i="dataKeyLabel">データCSVの、キー（コード）となる列</label>
+    <select id="dataKeySelect"></select>
+  </div>
+  <div class="fieldRow">
+    <label for="masterKeySelect" data-i="masterKeyLabel">対応表CSVの、キー（コード）となる列</label>
+    <select id="masterKeySelect"></select>
+  </div>
+  <div class="fieldRow">
+    <label data-i="valueColsLabel">対応表から追加する列（複数選択可）</label>
+    <div class="valueColsBox" id="valueColsBox"></div>
+  </div>
+  <div class="checkline">
+    <input type="checkbox" id="looseCheck" checked>
+    <label for="looseCheck" data-i="looseLabel">照合時に全角／半角の違いと前後の空白を無視する（おすすめ）</label>
+  </div>
+  <p class="hint" data-i="looseHint">キーの表記が完全に一致していなくても、見た目が同じなら一致させます。それでも一致しない行は、推測せず空欄のままにします。</p>
+</section>
+
+<section class="card" id="resultCard" style="display:none">
+  <h2 data-i="resultHeading">④ 突き合わせ結果</h2>
+  <div class="statGrid">
+    <div class="stat ok"><div class="num" id="statMatched">0</div><div data-i="statMatchedLabel">一致した行</div></div>
+    <div class="stat warn"><div class="num" id="statUnmatched">0</div><div data-i="statUnmatchedLabel">一致しなかった行</div></div>
+    <div class="stat" id="statDupBox" style="display:none"><div class="num" id="statDup">0</div><div data-i="statDupLabel">対応表の重複キー（先頭行を使用）</div></div>
+  </div>
+  <div id="unmatchedBox" style="display:none">
+    <p class="hint" id="unmatchedNote"></p>
+    <div class="chipBox" id="unmatchedChips"></div>
+  </div>
+</section>
+
+<section class="card" id="previewCard" style="display:none">
+  <h2 data-i="previewHeading">⑤ 変換結果のプレビュー</h2>
+  <p class="hint" id="previewCount"></p>
+  <p class="hint" data-i="previewAddedNote">色のついた列が、対応表から新しく追加された列です。</p>
+  <div id="previewBox"></div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="outputHeading">ダウンロード設定</h2>
+  <div class="checkline">
+    <input type="checkbox" id="bomCheck" checked>
+    <label for="bomCheck" data-i="bomLabel">BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）</label>
+  </div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">変換してCSVをダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>①に変換したいデータのCSV、②にコードと名称などの対応表（マスタ）CSVを、それぞれドラッグ＆ドロップまたはクリックして選びます。</li>
+      <li>③で、データ側・対応表側それぞれの「キー（コード）となる列」を選び、対応表から追加したい列（名称など、複数可）にチェックを入れます。</li>
+      <li>④で一致・不一致の件数を確認します。一致しなかったキーがある場合は一覧に表示されるので、入力ミスや対応表の漏れに気づけます。</li>
+      <li>⑤でプレビューを確認し、「変換してCSVをダウンロード」を押します。</li>
+    </ol>
+    <h3>Q. どんな場面で使えますか？</h3>
+    <p>A. 例えば、売上データの「店舗コード」列に対し、店舗コード→店舗名の対応表を使って「店舗名」列を追加する、担当者コード→氏名、部門コード→部門名のような変換に使えます。表計算ソフトのVLOOKUP関数で行うような突き合わせを、Excelを開かずブラウザだけで行えます。</p>
+    <h3>Q. 一致しなかった行はどうなりますか？</h3>
+    <p>A. 推測で埋めることはせず、追加した列を空欄のままにします。一致しなかったキーの値（最大50種類）を一覧表示するので、データ側の入力ミスや、対応表に登録が無いコードを見つけられます。</p>
+    <h3>Q. キーの表記が多少違っても一致させられますか？</h3>
+    <p>A. 「照合時に全角／半角の違いと前後の空白を無視する」をONにすると、「Ａ０１」と「A01」、「A01 」と「A01」のような表記の違いがあっても同じキーとして扱います。それでも一致しない場合は、本当にキーが異なるか、対応表に無いことが多いです。ダウンロードされる値そのもの（元の表記）は変換されません。この照合はキーの比較だけに使われます。</p>
+    <h3>Q. 対応表の中でキーが重複しているとどうなりますか？</h3>
+    <p>A. 同じキーが対応表に複数回出てきた場合は、先に出てきた行の値を使い、何件重複していたかを件数で表示します。対応表は一つのキーにつき一行になっているものを想定しています。</p>
+    <h3>Q. アップロードしても安全ですか？</h3>
+    <p>A. はい。2つのファイルともサーバーに送信されず、すべてこのブラウザの中で処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 大きなファイルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、データ・対応表合わせて数十MB程度までを想定しています。対応表はキーの一覧として数千〜数万行程度までが目安です。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drop or choose the data CSV you want to convert in ①, and the lookup-table (master) CSV with codes and names in ②.</li>
+      <li>In ③, pick the key (code) column on each side, and check the master columns (e.g. names) you want to add.</li>
+      <li>In ④, check how many rows matched and how many didn't. Unmatched keys are listed so you can spot typos or missing master entries.</li>
+      <li>Review the preview in ⑤, then click "Convert and download CSV".</li>
+    </ol>
+    <h3>Q. What is this useful for?</h3>
+    <p>A. For example, adding a "store name" column to sales data that only has a "store code", using a code→name lookup table — the same kind of join a VLOOKUP formula does, done entirely in the browser without opening Excel.</p>
+    <h3>Q. What happens to rows that don't match?</h3>
+    <p>A. Nothing is guessed — the added columns are left blank. Up to 50 distinct unmatched key values are listed so you can catch typos in the data or missing entries in the lookup table.</p>
+    <h3>Q. Can it match keys that are formatted slightly differently?</h3>
+    <p>A. With "ignore full/half-width and surrounding spaces when matching" on, keys like "Ａ０１" and "A01", or "A01 " and "A01", are treated as the same key. This only affects the comparison — the downloaded value keeps its original formatting.</p>
+    <h3>Q. What if the lookup table has duplicate keys?</h3>
+    <p>A. The first matching row is used, and the number of duplicate keys skipped is shown. The tool assumes the lookup table has one row per key.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Neither file is uploaded to a server — everything happens inside this browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Can it handle large files?</h3>
+    <p>A. Everything runs in browser memory, so it's built for a combined size of up to tens of megabytes, with a lookup table of up to roughly tens of thousands of rows.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../csv-merge/">複数CSVの結合ツール</a> — 文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから1つに結合。</li>
+      <li><a href="../csv-group-split/">CSVを列の値ごとに自動分割</a> — 選んだ列の値が同じ行をまとめて別ファイルに分けてZIPでダウンロード。</li>
+      <li><a href="../csv-seiri/">CSVの列ごと書式統一ツール</a> — 全角半角・カナ・郵便番号・ハイフンの書式を列ごとにそろえる。</li>
+      <li><a href="../csv-fix/">CSV・テキストの文字化け直し</a> — Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換。</li>
+      <li><a href="../wareki-toitsu/">和暦・西暦 混在日付の一括統一</a> — 混在した日付表記をまとめて検出し形式を統一。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../csv-merge/">Multi-CSV Merge Tool</a> — Merge several CSVs with different character encodings, auto-detected per file.</li>
+      <li><a href="../csv-group-split/">CSV Group Split</a> — Split a CSV into one file per group of matching column values, downloaded as a ZIP.</li>
+      <li><a href="../csv-seiri/">CSV Column Formatter</a> — Normalize full/half-width characters, katakana, postal codes and hyphens per column.</li>
+      <li><a href="../csv-fix/">CSV / Text Mojibake Fixer</a> — Fix mojibake by converting Shift_JIS/EUC-JP files to UTF-8.</li>
+      <li><a href="../wareki-toitsu/">Unify Mixed Japanese-Era / Western Dates</a> — Find and unify mixed date formats.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"どんな場面で使えますか？","acceptedAnswer":{"@type":"Answer","text":"店舗コード→店舗名、担当者コード→氏名のように、コードを含むデータCSVと、コード・名称の対応表CSVを突き合わせて名称などの列を追加できます。表計算のVLOOKUPのような処理をブラウザだけで行えます。"}},
+    {"@type":"Question","name":"一致しなかった行はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"推測で埋めず、追加した列を空欄のままにします。一致しなかったキーの値（最大50種類）を一覧表示します。"}},
+    {"@type":"Question","name":"キーの表記が多少違っても一致させられますか？","acceptedAnswer":{"@type":"Answer","text":"全角半角の違いや前後の空白を無視して照合するオプションがあります。ダウンロードされる値そのものは変換されません。"}},
+    {"@type":"Question","name":"アップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。2つのファイルともサーバーに送信されず、ブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+var ENC_LABEL={
+  "utf-8":{ja:"UTF-8",en:"UTF-8"},
+  "shift_jis":{ja:"Shift_JIS（CP932）",en:"Shift_JIS (CP932)"},
+  "euc-jp":{ja:"EUC-JP",en:"EUC-JP"},
+  "iso-2022-jp":{ja:"ISO-2022-JP（JIS）",en:"ISO-2022-JP (JIS)"}
+};
+
+var T={
+ ja:{title:"CSVのコード→名称 一括変換ツール",
+  sub:"データCSVと、コード・名称などの対応表（マスタ）CSVを読み込むと、データ側のコード列を対応表で突き合わせて、名称などの列を一括で追加します。一致しなかった行は空欄のまま一覧表示されるので、見落としや誤った推測が起きません。ファイルはどこにも送信されません。",
+  dataHeading:"① 変換したいCSV（データ）",
+  dataDropzoneText:"ここにCSVをドラッグ＆ドロップ、またはクリックして選択",
+  masterHeading:"② 対応表（マスタ）CSV",
+  masterDropzoneText:"ここにCSVをドラッグ＆ドロップ、またはクリックして選択",
+  dataHeaderLabel:"1行目を見出し（ヘッダー）として扱う",
+  masterHeaderLabel:"1行目を見出し（ヘッダー）として扱う",
+  bothHint:"2つとも選択した端末の中だけで処理されます。文字コードはファイルごとに自動判定します。",
+  mapHeading:"③ 突き合わせの設定",
+  dataKeyLabel:"データCSVの、キー（コード）となる列",
+  masterKeyLabel:"対応表CSVの、キー（コード）となる列",
+  valueColsLabel:"対応表から追加する列（複数選択可）",
+  looseLabel:"照合時に全角／半角の違いと前後の空白を無視する（おすすめ）",
+  looseHint:"キーの表記が完全に一致していなくても、見た目が同じなら一致させます。それでも一致しない行は、推測せず空欄のままにします。",
+  resultHeading:"④ 突き合わせ結果",
+  statMatchedLabel:"一致した行",statUnmatchedLabel:"一致しなかった行",statDupLabel:"対応表の重複キー（先頭行を使用）",
+  unmatchedNotePrefix:"一致しなかったキー（",unmatchedNoteMid:"種類中 最大",unmatchedNoteSuffix:"件を表示）：",
+  previewHeading:"⑤ 変換結果のプレビュー",
+  previewNote:"先頭の一部のみ表示しています（ダウンロードするファイルは全体を変換します）。",
+  previewAddedNote:"色のついた列が、対応表から新しく追加された列です。",
+  outputHeading:"ダウンロード設定",
+  bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
+  downloadBtn:"変換してCSVをダウンロード",
+  loadingLabel:"読み込み中…",
+  rowsSuffix:"行",colsSuffix:"列",
+  colFallback:"列",
+  warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。右の文字コードを別の候補に変更してみてください。",
+  warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。右で手動選択してください。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"CSV Code → Name Lookup Converter",
+  sub:"Load a data CSV and a lookup-table (master) CSV of codes and names — the tool joins the data's code column against the lookup table and adds name columns in bulk. Unmatched rows are listed, never guessed. Nothing is uploaded.",
+  dataHeading:"① CSV to convert (data)",
+  dataDropzoneText:"Drag and drop a CSV here, or click to choose one",
+  masterHeading:"② Lookup-table (master) CSV",
+  masterDropzoneText:"Drag and drop a CSV here, or click to choose one",
+  dataHeaderLabel:"Treat the first row as a header",
+  masterHeaderLabel:"Treat the first row as a header",
+  bothHint:"Both files are processed only on this device. Encoding is auto-detected per file.",
+  mapHeading:"③ Join settings",
+  dataKeyLabel:"Key (code) column in the data CSV",
+  masterKeyLabel:"Key (code) column in the lookup-table CSV",
+  valueColsLabel:"Columns to add from the lookup table (multiple allowed)",
+  looseLabel:"Ignore full/half-width differences and surrounding spaces when matching (recommended)",
+  looseHint:"Keys that look the same but aren't written identically will still match. Rows that still don't match are left blank rather than guessed.",
+  resultHeading:"④ Join result",
+  statMatchedLabel:"Matched rows",statUnmatchedLabel:"Unmatched rows",statDupLabel:"Duplicate keys in lookup table (first row used)",
+  unmatchedNotePrefix:"Unmatched keys (showing up to ",unmatchedNoteMid:" of ",unmatchedNoteSuffix:" distinct values):",
+  previewHeading:"⑤ Converted preview",
+  previewNote:"Showing only the first part (the downloaded file will contain everything).",
+  previewAddedNote:"Highlighted columns were newly added from the lookup table.",
+  outputHeading:"Download options",
+  bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
+  downloadBtn:"Convert and download CSV",
+  loadingLabel:"Loading…",
+  rowsSuffix:" rows",colsSuffix:" cols",
+  colFallback:"Column",
+  warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding on the right.",
+  warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose manually on the right.",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+/* ---- encoding (shared pattern with csv-fix / csv-merge / csv-seiri) ---- */
+function tryDecode(bytes,label){
+  try{ return new TextDecoder(label,{fatal:true}).decode(bytes); }
+  catch(e){ return null; }
+}
+function detectEncoding(bytes){
+  var order=["utf-8","shift_jis","euc-jp","iso-2022-jp"];
+  for(var i=0;i<order.length;i++){
+    var t=tryDecode(bytes,order[i]);
+    if(t!==null) return {enc:order[i], ok:true};
+  }
+  return {enc:"utf-8", ok:false};
+}
+
+/* ---- CSV parse/serialize ---- */
+function parseCSV(text){
+  var rows=[],row=[],cur="",inQ=false,i=0,n=text.length;
+  while(i<n){
+    var c=text[i];
+    if(inQ){
+      if(c==='"'){
+        if(text.charAt(i+1)==='"'){cur+='"';i+=2;continue;}
+        inQ=false;i++;continue;
+      }
+      cur+=c;i++;continue;
+    }
+    if(c==='"'){inQ=true;i++;continue;}
+    if(c===','){row.push(cur);cur="";i++;continue;}
+    if(c==='\r'){ if(text.charAt(i+1)==='\n') i++; row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    if(c==='\n'){ row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    cur+=c;i++;
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function csvField(v){
+  v=String(v);
+  if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function serializeCSV(rows){
+  return rows.map(function(r){ return r.map(csvField).join(","); }).join("\r\n");
+}
+
+/* ---- key normalization / master join logic ---- */
+function toHalfAlnum(text){
+  return text.replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0xFEE0)});
+}
+function normalizeKey(v, loose){
+  v = String(v==null?"":v).replace(/^[\s　]+|[\s　]+$/g,"");
+  if(loose) v = toHalfAlnum(v);
+  return v;
+}
+function buildMasterIndex(masterDataRows, keyCol, loose){
+  var index = Object.create(null);
+  var dupKeys = 0;
+  masterDataRows.forEach(function(row, i){
+    var raw = row[keyCol];
+    if(raw===undefined || raw==="") return;
+    var k = normalizeKey(raw, loose);
+    if(k in index){ dupKeys++; return; }
+    index[k] = i;
+  });
+  return {index:index, dupKeys:dupKeys};
+}
+function uniqueHeaderName(name, existing){
+  var n = name, i = 1;
+  while(existing.indexOf(n) !== -1){ i++; n = name + "("+i+")"; }
+  return n;
+}
+function applyMaster(opts){
+  var mi = buildMasterIndex(opts.masterRows, opts.masterKeyCol, opts.loose);
+  var addedNames = opts.valueCols.map(function(c){
+    return uniqueHeaderName(opts.masterHeader[c]!==undefined&&opts.masterHeader[c]!==""?opts.masterHeader[c]:(T[lang].colFallback+(c+1)), opts.dataHeader);
+  });
+  var outHeader = opts.dataHeader.concat(addedNames);
+  var matched=0, unmatched=0;
+  var unmatchedKeysSeen = Object.create(null);
+  var unmatchedKeysList = [];
+  var outRows = opts.dataRows.map(function(row){
+    var rawKey = row[opts.dataKeyCol];
+    var k = normalizeKey(rawKey, opts.loose);
+    var mRowIdx = (k!=="") ? mi.index[k] : undefined;
+    var extra;
+    if(mRowIdx!==undefined){
+      matched++;
+      var mRow = opts.masterRows[mRowIdx];
+      extra = opts.valueCols.map(function(c){ return mRow[c]!==undefined?mRow[c]:""; });
+    } else {
+      unmatched++;
+      extra = opts.valueCols.map(function(){ return ""; });
+      if(rawKey!==undefined && rawKey!=="" && !(k in unmatchedKeysSeen)){
+        unmatchedKeysSeen[k]=true;
+        if(unmatchedKeysList.length<50) unmatchedKeysList.push(rawKey);
+      }
+    }
+    return row.concat(extra);
+  });
+  return {
+    header: outHeader, rows: outRows, matched: matched, unmatched: unmatched,
+    dupKeys: mi.dupKeys, unmatchedKeysList: unmatchedKeysList,
+    unmatchedUniqueCount: Object.keys(unmatchedKeysSeen).length,
+    addedCount: addedNames.length
+  };
+}
+
+/* ---- state ---- */
+var state={
+  data:null, master:null,
+  dataHasHeader:true, masterHasHeader:true,
+  dataKeyCol:0, masterKeyCol:0,
+  valueCols:{}, /* master col index -> true */
+  loose:true
+};
+
+function escTrunc(s){ s=String(s); var t = s.length>60 ? s.slice(0,60)+"…" : s; return esc(t); }
+
+function makeFileSlot(file){
+  return {name:file.name, bytes:null, enc:"utf-8", forcedFallback:false, warn:"", rows:[], text:"", loading:true};
+}
+function reparseSlot(f){
+  var t=tryDecode(f.bytes,f.enc);
+  if(t===null){ t=new TextDecoder(f.enc,{fatal:false}).decode(f.bytes); f.warn=T[lang].warnReplace; }
+  else if(f.forcedFallback){ f.warn=T[lang].warnUnknown; }
+  else { f.warn=""; }
+  f.text=t; f.rows=parseCSV(t);
+}
+function colCountOf(f){ var m=0; for(var i=0;i<f.rows.length;i++) m=Math.max(m,f.rows[i].length); return m; }
+
+function loadSlot(file, which){
+  var f=makeFileSlot(file);
+  state[which]=f;
+  if(which==="data") state.dataKeyCol=0; else state.masterKeyCol=0;
+  state.valueCols={};
+  render();
+  file.arrayBuffer().then(function(buf){
+    f.bytes=new Uint8Array(buf);
+    var d=detectEncoding(f.bytes);
+    f.enc=d.enc; f.forcedFallback=!d.ok;
+    reparseSlot(f);
+    f.loading=false;
+    render();
+  }).catch(function(){
+    f.loading=false; f.bytes=new Uint8Array(0); f.rows=[];
+    render();
+  });
+}
+
+function renderFileCard(which){
+  var f=state[which];
+  var box=$(which==="data"?"dataFileCard":"masterFileCard");
+  if(!f){ box.style.display="none"; box.innerHTML=""; return; }
+  box.style.display="";
+  var h="<div class='fileCard'>";
+  h+="<span class='fName'>"+esc(f.name)+"</span>";
+  if(f.loading){
+    h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>";
+  } else {
+    h+="<span class='fMeta'>"+f.bytes.length+" bytes ・ "+f.rows.length+T[lang].rowsSuffix+" ・ "+colCountOf(f)+T[lang].colsSuffix+"</span>";
+  }
+  h+="<select class='encSelect' data-which='"+which+"'>";
+  ["utf-8","shift_jis","euc-jp","iso-2022-jp"].forEach(function(enc){
+    h+="<option value='"+enc+"'"+(f.enc===enc?" selected":"")+">"+esc(ENC_LABEL[enc][lang])+"</option>";
+  });
+  h+="</select>";
+  if(f.warn) h+="<span class='fWarn'>"+esc(f.warn)+"</span>";
+  h+="</div>";
+  box.innerHTML=h;
+  var sel=box.querySelector(".encSelect");
+  if(sel) sel.addEventListener("change",function(){
+    f.enc=this.value; f.forcedFallback=false; reparseSlot(f); render();
+  });
+}
+
+function headerArr(f, hasHeader){
+  if(!f) return [];
+  if(hasHeader && f.rows[0]) return f.rows[0];
+  var n=colCountOf(f), out=[];
+  for(var i=0;i<n;i++) out.push(T[lang].colFallback+(i+1));
+  return out;
+}
+function bodyRows(f, hasHeader){
+  if(!f) return [];
+  return hasHeader ? f.rows.slice(1) : f.rows.slice();
+}
+function colLabel(headers, i){
+  var v=headers[i];
+  return (v!==undefined && v!=="") ? v : (T[lang].colFallback+(i+1));
+}
+
+function renderSelects(){
+  var ready = state.data && !state.data.loading && state.master && !state.master.loading;
+  $("mapCard").style.display = ready ? "" : "none";
+  if(!ready) return;
+  var dh=headerArr(state.data, state.dataHasHeader);
+  var mh=headerArr(state.master, state.masterHasHeader);
+
+  if(state.dataKeyCol>=dh.length) state.dataKeyCol=0;
+  if(state.masterKeyCol>=mh.length) state.masterKeyCol=0;
+
+  var dsel=$("dataKeySelect"), msel=$("masterKeySelect");
+  var dHtml="", mHtml="";
+  for(var i=0;i<dh.length;i++) dHtml+="<option value='"+i+"'"+(i===state.dataKeyCol?" selected":"")+">"+esc(colLabel(dh,i))+"</option>";
+  for(var j=0;j<mh.length;j++) mHtml+="<option value='"+j+"'"+(j===state.masterKeyCol?" selected":"")+">"+esc(colLabel(mh,j))+"</option>";
+  dsel.innerHTML=dHtml; msel.innerHTML=mHtml;
+
+  var vBox=$("valueColsBox"), vHtml="";
+  for(var k=0;k<mh.length;k++){
+    if(k===state.masterKeyCol) continue;
+    var checked = state.valueCols[k] ? " checked" : "";
+    vHtml+="<label><input type='checkbox' class='valCol' data-col='"+k+"'"+checked+">"+esc(colLabel(mh,k))+"</label>";
+  }
+  vBox.innerHTML=vHtml;
+  var checks=vBox.querySelectorAll(".valCol");
+  for(var c=0;c<checks.length;c++){
+    checks[c].addEventListener("change",function(){
+      var col=parseInt(this.getAttribute("data-col"),10);
+      if(this.checked) state.valueCols[col]=true; else delete state.valueCols[col];
+      render();
+    });
+  }
+}
+
+function computeResult(){
+  var ready = state.data && !state.data.loading && state.master && !state.master.loading;
+  if(!ready) return null;
+  var dh=headerArr(state.data, state.dataHasHeader);
+  var mh=headerArr(state.master, state.masterHasHeader);
+  var valueCols=Object.keys(state.valueCols).map(Number).filter(function(c){return c!==state.masterKeyCol && c<mh.length;}).sort(function(a,b){return a-b;});
+  if(!valueCols.length) return {empty:true};
+  var res = applyMaster({
+    dataHeader: dh, dataRows: bodyRows(state.data, state.dataHasHeader), dataKeyCol: state.dataKeyCol,
+    masterHeader: mh, masterRows: bodyRows(state.master, state.masterHasHeader), masterKeyCol: state.masterKeyCol,
+    valueCols: valueCols, loose: state.loose
+  });
+  res.hasHeaderOut = state.dataHasHeader;
+  return res;
+}
+
+function renderResult(res){
+  var show = res && !res.empty;
+  $("resultCard").style.display = show ? "" : "none";
+  $("previewCard").style.display = show ? "" : "none";
+  $("outCard").style.display = show ? "" : "none";
+  $("downloadBtn").disabled = !show;
+  if(!show) return;
+  $("statMatched").textContent=res.matched;
+  $("statUnmatched").textContent=res.unmatched;
+  var dupBox=$("statDupBox");
+  if(res.dupKeys>0){ dupBox.style.display=""; $("statDup").textContent=res.dupKeys; } else { dupBox.style.display="none"; }
+
+  var uBox=$("unmatchedBox");
+  if(res.unmatchedUniqueCount>0){
+    uBox.style.display="";
+    var shown=res.unmatchedKeysList.length;
+    $("unmatchedNote").textContent = T[lang].unmatchedNotePrefix + shown + T[lang].unmatchedNoteMid + res.unmatchedUniqueCount + T[lang].unmatchedNoteSuffix;
+    var chipsHtml="";
+    res.unmatchedKeysList.forEach(function(k){ chipsHtml+="<span class='chip'>"+escTrunc(k)+"</span>"; });
+    $("unmatchedChips").innerHTML=chipsHtml;
+  } else {
+    uBox.style.display="none";
+  }
+
+  renderPreview(res);
+}
+
+function renderPreview(res){
+  var box=$("previewBox");
+  var header=res.header, body=res.rows;
+  var origCols = header.length - res.addedCount;
+  $("previewCount").textContent = body.length + T[lang].rowsSuffix + " / " + header.length + T[lang].colsSuffix;
+  var maxRows=15, maxCols=16;
+  var shownCols=Math.min(maxCols, header.length);
+  var shownBody=body.slice(0,maxRows);
+  var h="<div class='scroll'><table>";
+  if(res.hasHeaderOut){
+    h+="<thead><tr>";
+    for(var c=0;c<shownCols;c++) h+="<th"+(c>=origCols?" class='added'":"")+">"+escTrunc(header[c])+"</th>";
+    h+="</tr></thead>";
+  }
+  h+="<tbody>";
+  for(var r=0;r<shownBody.length;r++){
+    h+="<tr>";
+    for(var c2=0;c2<shownCols;c2++){
+      var v=shownBody[r][c2];
+      var cls = c2>=origCols ? "added" : "";
+      if(v===undefined||v===""){ h+="<td class='blank "+cls+"'></td>"; continue; }
+      h+="<td class='"+cls+"'>"+escTrunc(v)+"</td>";
+    }
+    h+="</tr>";
+  }
+  h+="</tbody></table></div>";
+  if(body.length>maxRows||header.length>maxCols) h+="<p class='hint'>"+esc(T[lang].previewNote)+"</p>";
+  box.innerHTML=h;
+}
+
+function render(){
+  renderFileCard("data");
+  renderFileCard("master");
+  renderSelects();
+  var res = computeResult();
+  renderResult(res);
+}
+
+/* ---- UI wiring ---- */
+function wireDropzone(zoneId, inputId, which){
+  var dz=$(zoneId), input=$(inputId);
+  ["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+  ["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+  dz.addEventListener("drop",function(e){
+    var fs=e.dataTransfer && e.dataTransfer.files;
+    if(fs && fs[0]) loadSlot(fs[0], which);
+  });
+  dz.addEventListener("click",function(){input.click()});
+  dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();input.click()} });
+  input.addEventListener("change",function(e){
+    var fs=e.target.files;
+    if(fs && fs[0]) loadSlot(fs[0], which);
+    e.target.value="";
+  });
+}
+wireDropzone("dataDropzone","dataFileInput","data");
+wireDropzone("masterDropzone","masterFileInput","master");
+
+$("dataHeaderCheck").addEventListener("change",function(){ state.dataHasHeader=this.checked; render(); });
+$("masterHeaderCheck").addEventListener("change",function(){ state.masterHasHeader=this.checked; render(); });
+$("dataKeySelect").addEventListener("change",function(){ state.dataKeyCol=parseInt(this.value,10); render(); });
+$("masterKeySelect").addEventListener("change",function(){ state.masterKeyCol=parseInt(this.value,10); state.valueCols={}; render(); });
+$("looseCheck").addEventListener("change",function(){ state.loose=this.checked; render(); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var res=computeResult();
+  if(!res || res.empty) return;
+  var rows = res.hasHeaderOut ? [res.header].concat(res.rows) : res.rows;
+  var csvText=serializeCSV(rows);
+  var addBom=$("bomCheck").checked;
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes;
+  if(addBom){
+    bytes=new Uint8Array(encoded.length+3);
+    bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF;
+    bytes.set(encoded,3);
+  } else bytes=encoded;
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download="converted.csv";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

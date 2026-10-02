@@ -298,6 +298,30 @@
       },
       "total": 4,
       "note": "前回(10-01 17:10Z)から全ページ変化なし（サイト全体累計4のまま、個別ページは全て0件）。csv-merge分も含め14ページ全て取得できたが増加ページ無し。health.md（10-01付14ページ・問題0件）・GoatCounterタグ・表記（grep）いずれも不備なし。閲覧が増え始めたページが無いため、STRATEGY.mdの方針どおり新規実験を優先。backlog残り4項目のうち1番目「CSVの分割」を再調査（サブエージェント＋WebSearch）し、行数/件数分割は飽和だが「選んだ列の値ごとにグループ化して複数ファイルに分ける」分割は無料ブラウザ完結ツールに見当たらなかったため、その角度でcsv-group-splitを新規公開（このメトリクス取得はcsv-group-split公開前の値のため含まれていない。次回のsitemap.xml反映後に対象へ追加）。"
+    },
+    {
+      "date": "2026-10-02T17:30:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 5,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0
+      },
+      "total": 5,
+      "note": "前回(10-01 20:30Z)からサイト全体+1（トップページのみ4→5）。csv-group-splitを含む15ページ個別は全て引き続き0件。health.md（10-02付16ページ・問題0件）、GoatCounterタグ・表記（grep）いずれも不備なし。閲覧が増え始めたページが無いため新規実験を優先。backlog残り3項目（住所英語変換・文字数カウンター・SNS画像切り抜き）はいずれも既存調査済みで未着手のまま、新しい差別化角度をWebSearchで探索（13クエリ、6案検討）。詳細はideas/backlog.mdの見送り欄とexperiments.jsonのcsv-master-replaceのwhyに記録。唯一見つかった空白地帯（2つのCSVをキー列で突き合わせて名称等を一括追加する『マスタ変換』）でcsv-master-replaceを新規公開（このメトリクス取得は公開前の値のため含まれていない。次回のsitemap.xml反映後に対象へ追加）。"
     }
   ],
   "weekly": [
