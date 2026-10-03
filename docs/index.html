@@ -50,6 +50,7 @@ footer a{color:var(--accent)}
 <li><a href="csv-master-replace/">CSVのコード→名称 一括変換ツール</a><p>データCSVのコード列を、コード・名称の対応表（マスタ）CSVと突き合わせて店舗名・氏名などの列を一括追加。一致しなかった行は空欄のまま一覧表示。 / Join a data CSV's code column against a lookup-table CSV to add name columns in bulk — unmatched rows are listed, never guessed.</p></li>
 <li><a href="xlsx-merge/">複数Excelファイルの結合ツール</a><p>複数の.xlsxファイルを、1枚ずつCSVに書き出す手間なくそのまま読み込み1つのCSVに結合。日付・時刻のセルはシリアル値ではなく見たままの形式に変換。 / Merge multiple Excel (.xlsx) files directly into one CSV — no need to export each to CSV first, with dates converted from Excel's serial numbers automatically.</p></li>
 <li><a href="xlsx-suushiki/">Excel数式の一覧化・棚卸しツール</a><p>引き継いだExcelファイルの数式セルを、ファイルを開かずシート・セルごとに一覧化。エラー値が残ったセル、他シート参照、外部ファイル参照の可能性を自動で検出しCSV出力。フィルで複製された共有数式も基準セルから復元して表示。 / List every formula cell in an Excel workbook without opening it — flags cached errors, cross-sheet references and possible external-workbook links.</p></li>
+<li><a href="xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a><p>シートコピーで繰り返し出る「名前'○○'は既に存在します」の原因になりやすい、非表示・エラー(#REF!)の名前定義を一覧から見分けて削除。新しいファイルとして書き出すため元ファイルは変更しない。 / Find and remove the hidden/broken defined names that cause Excel's "A name already exists" dialog when copying sheets — builds a cleaned copy, original untouched.</p></li>
 </ul>
 <h2 class="group">暦・時間 <small>Calendar &amp; time</small></h2>
 <ul class="tools">

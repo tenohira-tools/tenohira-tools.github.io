@@ -399,6 +399,33 @@
       },
       "total": 6,
       "note": "週次レビューでの取得（TOTAL.jsonも6）。前回(17:30Z)から変化なし。xlsx-suushikiを初めて収録（0件）。"
+    },
+    {
+      "date": "2026-10-03T21:30:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 6,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0,
+        "/xlsx-merge/": 0,
+        "/xlsx-suushiki/": 0
+      },
+      "total": 6,
+      "note": "xlsx-namae公開前の取得（前回2026-10-03 19:00Z比で全ページ変化なし）。計測タグ・表記の不備も無し。閲覧が増え始めたページが無いため、週次レビューで最優先にした「Excelファイルのトラブル解決」分野の1番目（xlsx-namae）を新規公開。"
     }
   ],
   "weekly": [

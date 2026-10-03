@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excelで「名前'○○'は既に存在します」対策：名前定義の点検・削除ツール | てのひらツール</title>
+<meta name="description" content="シートコピーで「名前'○○'は既に存在します」エラーになるExcel(.xlsx/.xlsm)の原因を調査。ファイル内のすべての名前定義（defined names）を一覧表示し、非表示・エラー(#REF!)・外部ファイル参照・組み込み名を自動で見分けます。不要な名前を選んで削除した新しいファイルをその場で書き出し。ブラウザ内だけで処理し、ファイルは送信されません。List and clean up every defined name in an Excel (.xlsx) workbook — find the hidden/broken names that cause 'Name already exists' errors when copying sheets, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-namae/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select,input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:110px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.err .n{color:var(--diff)}
+.quickRow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+button.quick{font:inherit;font-size:.85rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+button.quick:hover{border-color:var(--accent);color:var(--accent)}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:360px;word-break:break-all}
+td.center{text-align:center}
+tr.flagged{background:var(--diff-bg)}
+td input[type=checkbox]{width:auto;min-height:auto}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.mark{color:var(--diff);font-weight:700}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">「名前は既に存在します」対策：名前定義の点検・削除ツール</h1>
+    <p class="sub" data-i="sub">Excel(.xlsx/.xlsm)に登録された名前定義（defined names）を全件一覧表示し、非表示・エラー(#REF!)・外部ファイル参照・組み込み名を自動で見分けます。シートのコピー時に「名前'○○'は既に存在します」のダイアログが繰り返し出る原因になりやすい名前を選んで削除し、新しいファイルとして書き出せます。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">名前定義の集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">「組み込み」は印刷範囲・フィルター範囲などExcelが自動管理する名前です。削除は可能ですが、該当する機能の設定が失われます。</p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="listHeading">名前の一覧</h2>
+  <div class="quickRow">
+    <button type="button" class="quick" id="selErr" data-i="selErr">エラー(#REF!)を選択</button>
+    <button type="button" class="quick" id="selHidden" data-i="selHidden">非表示の名前を選択</button>
+    <button type="button" class="quick" id="selNone" data-i="selNone">選択を解除</button>
+  </div>
+  <div id="listBox"></div>
+  <div class="warnBox" id="warnBox" style="display:none" data-i="warnText">選んだ名前は、グラフ・条件付き書式・入力規則・他の数式からまだ参照されている場合があります。削除後にExcelで開き、#NAME?エラーが出ないか確認してください。元のファイルは変更されず、新しいファイルとして書き出されます。</div>
+  <p style="margin-top:12px"><button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">選んだ名前を削除したファイルを書き出す</button></p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>名前の一覧で、各名前の対象（ブック全体／シート名）・数式・非表示／エラー／外部参照／組み込みの印を確認します。</li>
+      <li>削除したい名前にチェックを入れます（「エラーを選択」「非表示を選択」で一括選択も可能）。</li>
+      <li>「選んだ名前を削除したファイルを書き出す」でダウンロードします。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 「名前'○○'は既に存在します」というダイアログが何度も出るのはなぜですか？</h3>
+    <p>A. よくある原因は、コピー元のシートに紐づいた非表示の名前定義（特に参照先が壊れて#REF!になっているもの）が、コピー先のブックに既にある名前と衝突することです。Microsoft公式のFAQでも対処法としてVBAでの名前の表示・削除が案内されていますが、このツールはVBAを使わず、該当しそうな名前（非表示・エラー）を一覧から選んで削除したファイルをその場で作れます。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。.xlsmファイルのマクロ部分はそのまま保持されますが、マクロが削除した名前を参照している場合はマクロ側の修正が必要です。</p>
+    <h3>Q. 「組み込み」と表示される名前は何ですか？削除しても大丈夫ですか？</h3>
+    <p>A. 名前が「_xlnm.」で始まるものは、印刷範囲（Print_Area）・印刷タイトル（Print_Titles）・オートフィルターの範囲（_FilterDatabase）など、Excelが機能のために自動で管理する名前です。削除自体はできますが、該当する設定（例：印刷範囲の指定）がリセットされます。多くの場合、他の名前との衝突の原因にはなりにくいため、まずはそれ以外の名前から確認することをおすすめします。</p>
+    <h3>Q. 「非表示」「エラー」「外部参照の可能性」はどうやって判定していますか？</h3>
+    <p>A. 「非表示」は名前定義に保存されているhidden属性、「エラー」は参照先の文字列に#REF!が含まれているか、「外部参照の可能性」は「[1]」のような他のブックを指す書き方が含まれているかを、文字列として機械的に判定しています。断定ではないため、重要なファイルでは削除後にExcelの「名前の管理」で最終確認してください。</p>
+    <h3>Q. 名前を削除すると、その名前を使っている数式はどうなりますか？</h3>
+    <p>A. このツールは選んだ名前定義そのものを削除するだけで、ファイル内の他の数式・グラフ・条件付き書式・入力規則は書き換えません。もしそれらが削除した名前をまだ参照していた場合、Excelで開くと#NAME?エラーになります。非表示でエラー(#REF!)になっている名前は通常どこからも正しく参照されていないため比較的安全ですが、重要なファイルは削除後に必ずExcelで開いて確認してください。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_名前整理済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. シートの構成やセルの値、書式は変わりますか？</h3>
+    <p>A. 変わりません。シート・セルの値・数式・書式・グラフ・画像など、名前定義以外のすべての部分はそのままコピーされます。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>Check each defined name's scope (workbook or sheet), formula, and whether it's hidden, broken (#REF!), a possible external reference, or an Excel built-in.</li>
+      <li>Tick the names you want to remove (the quick-select buttons select all errored or all hidden names at once).</li>
+      <li>Click "Build a file with the selected names removed" to download the cleaned copy — your original file is untouched.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Why does Excel keep showing "A name already exists" when I copy a sheet?</h3>
+    <p>A. The usual cause is a hidden defined name on the sheet being copied — often one whose reference is already broken (#REF!) — colliding with a name already present in the destination workbook. Microsoft's own guidance suggests fixing this with a VBA macro that reveals and deletes the name; this tool does the same job without VBA, letting you pick the hidden/broken names from a list and build a cleaned copy.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported. For .xlsm, the macro code itself is preserved untouched, but if a macro references a name you removed, the macro will need its own fix.</p>
+    <h3>Q. What does "built-in" mean, and is it safe to delete those?</h3>
+    <p>A. A name starting with "_xlnm." is one Excel manages automatically for a feature — Print_Area, Print_Titles, the AutoFilter range (_FilterDatabase), and similar. You can delete it, but the matching feature (e.g. the print area) is reset. These rarely cause name collisions, so it's usually best to review the other names first.</p>
+    <h3>Q. How are "hidden", "error", and "possible external reference" detected?</h3>
+    <p>A. "Hidden" reads the name's stored hidden attribute. "Error" checks whether the reference text contains #REF!. "Possible external reference" looks for a pattern like "[1]" that points at another workbook. These are text-pattern checks, not certainties — double-check in Excel's Name Manager after removing anything from an important file.</p>
+    <h3>Q. What happens to formulas that use a name I delete?</h3>
+    <p>A. This tool only removes the selected name definitions — it does not rewrite any other formula, chart, conditional format, or data validation rule in the file. If one of those still references a name you removed, Excel will show a #NAME? error when it's opened. Hidden names whose reference is already broken (#REF!) are usually not referenced correctly from anywhere, so they're relatively safe to remove, but always re-open an important file in Excel afterward to check.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_cleaned" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Does this change the sheets, cell values, or formatting?</h3>
+    <p>A. No. Everything except the defined names — sheets, cell values, formulas, formatting, charts, images — is carried over unchanged.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">Excel数式の一覧化・棚卸しツール</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-merge/">複数Excel(.xlsx)ファイルの結合ツール</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../csv-master-replace/">CSVのコード→名称 一括変換ツール</a> — データCSVのコード列を対応表CSVと突き合わせて名称列を一括追加。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">Excel Formula Lister</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-merge/">Multi-Excel Merge Tool</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../csv-master-replace/">CSV Code → Name Lookup Converter</a> — Join a data CSV against a lookup-table CSV by key column.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"「名前'○○'は既に存在します」というダイアログが何度も出るのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"コピー元のシートに紐づいた非表示の名前定義（参照先が#REF!になっているものが多い）が、コピー先のブックの名前と衝突することが主な原因です。非表示・エラーの名前を選んで削除すると解消することがあります。"}},
+    {"@type":"Question","name":"組み込みの名前は削除しても大丈夫ですか？","acceptedAnswer":{"@type":"Answer","text":"「_xlnm.」で始まる名前は印刷範囲やフィルター範囲などの機能用です。削除できますが該当機能の設定が失われるため、まず他の名前から確認することをおすすめします。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。変更後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}},
+    {"@type":"Question","name":"名前を削除すると、それを使っている数式はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"名前定義そのものだけを削除するため、まだ参照している数式やグラフがあると#NAME?エラーになる場合があります。削除後はExcelで開いて確認してください。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki (no external libraries; only standard
+   browser APIs: DecompressionStream/TextDecoder/TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+/* STORE-method (uncompressed) ZIP writer — same binary layout already
+   shipped and zipfile/unzip-verified in csv-group-split, generalized to
+   repackage an entire xlsx's original parts untouched except the one
+   entry we deliberately replace (xl/workbook.xml). */
+function buildStoreZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  files.forEach(function(f){
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var size=f.bytes.length;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,0,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,size,true); dv.setUint32(22,size,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,f.bytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,0,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,size,true); cdv.setUint32(24,size,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + f.bytes.length;
+  });
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetNamesInOrder(workbookXml){
+  var sheetsBlocks=findTags(workbookXml,"sheets");
+  if(!sheetsBlocks.length) return [];
+  return findTags(sheetsBlocks[0].inner||"","sheet").map(function(s){ return s.attrs.name||""; });
+}
+var BUILTIN_PREFIX="_xlnm.";
+function stripStringLiterals(s){
+  var out="",i=0,n=s.length;
+  while(i<n){
+    var c=s[i];
+    if(c==='"'){ out+='"'; i++; while(i<n && s[i]!=='"'){i++} if(i<n){out+='"';i++} continue }
+    out+=c; i++;
+  }
+  return out;
+}
+function parseDefinedNames(workbookXml){
+  var blocks=findTags(workbookXml,"definedNames");
+  if(!blocks.length) return {hasBlock:false, entries:[]};
+  var block=blocks[0];
+  var inner=block.inner||"";
+  var tags=findTags(inner,"definedName");
+  var entries=tags.map(function(t,idx){
+    var name=t.attrs.name||"";
+    var localSheetId=(t.attrs.localSheetId!==undefined)?parseInt(t.attrs.localSheetId,10):null;
+    var hiddenAttr=t.attrs.hidden;
+    var hidden = hiddenAttr==="1" || hiddenAttr==="true";
+    var formulaRaw = t.inner||"";
+    var formula = decodeXmlEntities(formulaRaw);
+    var stripped = stripStringLiterals(formula);
+    var isBuiltin = name.indexOf(BUILTIN_PREFIX)===0;
+    var hasRefError = /#REF!/.test(stripped);
+    var isExternal = /\[[0-9]+\]/.test(stripped) || /\[[^\]]*\.xls[xm]?\]/i.test(stripped);
+    return {
+      index:idx, name:name, localSheetId:localSheetId, hidden:hidden,
+      formula:formula, builtin:isBuiltin, refError:hasRefError, external:isExternal,
+      rawStart:t.start, rawEnd:t.end
+    };
+  });
+  return {hasBlock:true, blockOuterStart:block.start, blockOuterEnd:block.end, blockInnerText:inner, entries:entries};
+}
+function scopeLabel(entry,sheetNames){
+  if(entry.localSheetId===null) return null;
+  return sheetNames[entry.localSheetId]!==undefined ? sheetNames[entry.localSheetId] : null;
+}
+function removeDefinedNameEntries(workbookXml, parsed, removeIndexSet){
+  if(!parsed.hasBlock) return workbookXml;
+  var keep = parsed.entries.filter(function(e){ return !removeIndexSet.has(e.index); });
+  if(keep.length===0){
+    return workbookXml.slice(0,parsed.blockOuterStart)+workbookXml.slice(parsed.blockOuterEnd);
+  }
+  var inner=parsed.blockInnerText;
+  var toRemove = parsed.entries.filter(function(e){ return removeIndexSet.has(e.index); })
+    .sort(function(a,b){ return b.rawStart-a.rawStart; });
+  toRemove.forEach(function(e){ inner = inner.slice(0,e.rawStart)+inner.slice(e.rawEnd); });
+  var newBlock = "<definedNames>"+inner+"</definedNames>";
+  return workbookXml.slice(0,parsed.blockOuterStart)+newBlock+workbookXml.slice(parsed.blockOuterEnd);
+}
+
+async function parseXlsxNames(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var wbEntry=entries.find(function(e){return e.name==="xl/workbook.xml"});
+  if(!wbEntry) throw new Error("NOT_XLSX");
+  var workbookXml=new TextDecoder("utf-8").decode(wbEntry.bytes);
+  var sheetNames=parseSheetNamesInOrder(workbookXml);
+  var parsed=parseDefinedNames(workbookXml);
+  return {entries:entries, workbookXml:workbookXml, sheetNames:sheetNames, parsed:parsed};
+}
+function buildCleanedXlsx(parseResult, removeIndexSet){
+  var newWorkbookXml=removeDefinedNameEntries(parseResult.workbookXml, parseResult.parsed, removeIndexSet);
+  var newWbBytes=new TextEncoder().encode(newWorkbookXml);
+  var outFiles=parseResult.entries.map(function(e){
+    if(e.name==="xl/workbook.xml") return {name:e.name, bytes:newWbBytes};
+    return {name:e.name, bytes:e.bytes};
+  });
+  return buildStoreZip(outFiles);
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"「名前は既に存在します」対策：名前定義の点検・削除ツール",
+  sub:"Excel(.xlsx/.xlsm)に登録された名前定義（defined names）を全件一覧表示し、非表示・エラー(#REF!)・外部ファイル参照・組み込み名を自動で見分けます。シートのコピー時に「名前'○○'は既に存在します」のダイアログが繰り返し出る原因になりやすい名前を選んで削除し、新しいファイルとして書き出せます。元のファイルは変更しません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"名前定義の集計",
+  statsHint:"「組み込み」は印刷範囲・フィルター範囲などExcelが自動管理する名前です。削除は可能ですが、該当する機能の設定が失われます。",
+  statTotal:"名前の数",statHidden:"非表示",statErr:"エラー(#REF!)",statExt:"外部参照の可能性",statBuiltin:"組み込み",
+  listHeading:"名前の一覧",
+  selErr:"エラー(#REF!)を選択",selHidden:"非表示の名前を選択",selNone:"選択を解除",
+  warnText:"選んだ名前は、グラフ・条件付き書式・入力規則・他の数式からまだ参照されている場合があります。削除後にExcelで開き、#NAME?エラーが出ないか確認してください。元のファイルは変更されず、新しいファイルとして書き出されます。",
+  buildBtn:"選んだ名前を削除したファイルを書き出す",
+  buildBtnBusy:"書き出し中…",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  colSel:"",colName:"名前",colScope:"対象",colFormula:"参照先",colFlags:"",
+  scopeWorkbook:"ブック全体",
+  badgeHidden:"非表示",badgeErr:"エラー",badgeExt:"外部参照?",badgeBuiltin:"組み込み",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護の可能性があります）",
+  errNone:"名前定義が見つかりませんでした（このファイルには名前定義がありません）",
+  buildDone:"ダウンロードしました：",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Fix \"Name already exists\": defined-name inspector &amp; cleaner",
+  sub:"Lists every defined name in an Excel (.xlsx/.xlsm) workbook and flags hidden, broken (#REF!), possibly-external, and Excel built-in names — the usual causes of repeated \"A name already exists\" dialogs when copying sheets. Remove the ones you choose and download a cleaned file; your original is untouched.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Everything happens on this device.",
+  statsHeading:"Defined-name summary",
+  statsHint:"\"Built-in\" names are ones Excel manages automatically, such as print areas and filter ranges. You can delete them, but the matching feature's setting is reset.",
+  statTotal:"Names",statHidden:"Hidden",statErr:"Errors (#REF!)",statExt:"Possible external refs",statBuiltin:"Built-in",
+  listHeading:"Defined names",
+  selErr:"Select errors (#REF!)",selHidden:"Select hidden names",selNone:"Clear selection",
+  warnText:"Selected names may still be referenced by charts, conditional formatting, data validation, or other formulas. After removing them, re-open the file in Excel and check for #NAME? errors. Your original file is untouched — the result downloads as a new file.",
+  buildBtn:"Build a file with the selected names removed",
+  buildBtnBusy:"Building…",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  colSel:"",colName:"Name",colScope:"Scope",colFormula:"Refers to",colFlags:"",
+  scopeWorkbook:"Workbook",
+  badgeHidden:"hidden",badgeErr:"error",badgeExt:"ext ref?",badgeBuiltin:"built-in",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, or it's password-protected)",
+  errNone:"No defined names found in this file",
+  buildDone:"Downloaded: ",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={file:null, fileName:"", loading:false, error:"", parseResult:null, selected:{}, building:false, buildMsg:""};
+
+function resetFile(){ state={file:null, fileName:"", loading:false, error:"", parseResult:null, selected:{}, building:false, buildMsg:""}; render(); }
+
+function addFile(file){
+  state={file:file, fileName:file.name, loading:true, error:"", parseResult:null, selected:{}, building:false, buildMsg:""};
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxNames(new Uint8Array(buf)); })
+    .then(function(result){
+      state.loading=false; state.parseResult=result; render();
+    }).catch(function(){
+      state.loading=false; state.error=T[lang].errBad; render();
+    });
+}
+
+function entryRows(){
+  if(!state.parseResult) return [];
+  var sheetNames=state.parseResult.sheetNames;
+  return state.parseResult.parsed.entries.map(function(e){
+    var scope=scopeLabel(e,sheetNames);
+    return {e:e, scopeText: scope===null ? T[lang].scopeWorkbook : scope};
+  });
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.parseResult){ h+="<span class='fMeta'>"+state.parseResult.parsed.entries.length+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function renderStats(rows){
+  var total=rows.length, hidden=0, err=0, ext=0, builtin=0;
+  rows.forEach(function(r){ if(r.e.hidden)hidden++; if(r.e.refError)err++; if(r.e.external)ext++; if(r.e.builtin)builtin++; });
+  var items=[
+    [total,T[lang].statTotal,""],
+    [hidden,T[lang].statHidden,""],
+    [err,T[lang].statErr,"err"],
+    [ext,T[lang].statExt,""],
+    [builtin,T[lang].statBuiltin,""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function escTrunc(s,max){ s=String(s); max=max||220; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function renderList(rows){
+  if(!rows.length){
+    $("listBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>";
+    $("buildBtn").disabled=true;
+    return;
+  }
+  var h="<div class='scroll'><table><thead><tr><th></th><th>"+esc(T[lang].colName)+"</th><th>"+esc(T[lang].colScope)+"</th><th>"+esc(T[lang].colFormula)+"</th><th></th></tr></thead><tbody>";
+  rows.forEach(function(r){
+    var e=r.e;
+    var flagged=e.hidden||e.refError;
+    h+="<tr class='"+(flagged?"flagged":"")+"' data-idx='"+e.index+"'>";
+    h+="<td><input type='checkbox' class='rowSel' data-idx='"+e.index+"' "+(state.selected[e.index]?"checked":"")+"></td>";
+    h+="<td>"+escTrunc(e.name,60)+"</td>";
+    h+="<td>"+escTrunc(r.scopeText,40)+"</td>";
+    h+="<td class='formula "+(e.refError?"mark":"")+"'>"+escTrunc(e.formula,200)+"</td>";
+    var badges="";
+    if(e.hidden) badges+="<span class='badge warn'>"+esc(T[lang].badgeHidden)+"</span>";
+    if(e.refError) badges+="<span class='badge diff'>"+esc(T[lang].badgeErr)+"</span>";
+    if(e.external) badges+="<span class='badge'>"+esc(T[lang].badgeExt)+"</span>";
+    if(e.builtin) badges+="<span class='badge'>"+esc(T[lang].badgeBuiltin)+"</span>";
+    h+="<td>"+badges+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody></table></div>";
+  $("listBox").innerHTML=h;
+  var boxes=$("listBox").querySelectorAll(".rowSel");
+  for(var i=0;i<boxes.length;i++){
+    boxes[i].addEventListener("change",function(){
+      var idx=parseInt(this.getAttribute("data-idx"),10);
+      if(this.checked) state.selected[idx]=true; else delete state.selected[idx];
+      updateBuildState();
+    });
+  }
+  updateBuildState();
+}
+
+function selectedCount(){ return Object.keys(state.selected).length; }
+function updateBuildState(){
+  var n=selectedCount();
+  $("buildBtn").disabled = n===0 || state.building;
+  $("warnBox").style.display = n>0 ? "" : "none";
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.parseResult){
+    $("statsCard").style.display="none"; $("listCard").style.display="none";
+    return;
+  }
+  var rows=entryRows();
+  $("statsCard").style.display=""; $("listCard").style.display="";
+  renderStats(rows);
+  renderList(rows);
+}
+
+function suggestOutName(name){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(name);
+  if(!m) return name+"_名前整理済み.xlsx";
+  return m[1]+"_名前整理済み."+m[2].toLowerCase();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("selErr").addEventListener("click",function(){
+  entryRows().forEach(function(r){ if(r.e.refError) state.selected[r.e.index]=true; });
+  renderList(entryRows());
+});
+$("selHidden").addEventListener("click",function(){
+  entryRows().forEach(function(r){ if(r.e.hidden) state.selected[r.e.index]=true; });
+  renderList(entryRows());
+});
+$("selNone").addEventListener("click",function(){ state.selected={}; renderList(entryRows()); });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.parseResult || selectedCount()===0) return;
+  state.building=true; state.buildMsg=""; $("buildBtn").textContent=T[lang].buildBtnBusy; updateBuildState();
+  var removeSet=new Set(Object.keys(state.selected).map(function(k){return parseInt(k,10)}));
+  setTimeout(function(){
+    try{
+      var outBytes=buildCleanedXlsx(state.parseResult, removeSet);
+      var outName=suggestOutName(state.fileName);
+      var blob=new Blob([outBytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a"); a.href=url; a.download=outName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url)},2000);
+      state.buildMsg=T[lang].buildDone+outName;
+    }catch(err){
+      state.buildMsg=T[lang].errBad;
+    }
+    state.building=false; $("buildBtn").textContent=T[lang].buildBtn; updateBuildState();
+    $("buildMsg").textContent=state.buildMsg;
+  },0);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  $("buildBtn").textContent=state.building?T[lang].buildBtnBusy:T[lang].buildBtn;
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
