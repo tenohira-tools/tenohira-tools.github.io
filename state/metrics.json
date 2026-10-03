@@ -347,6 +347,31 @@
       },
       "total": 5,
       "note": "前回(10-02 17:30Z、csv-master-replace公開直前)からサイト全体で変化なし（5のまま、トップページのみ）。csv-master-replaceを含む16ページ個別は全て引き続き0件。health.md（10-02付16ページ・問題0件）、GoatCounterタグ・表記（grep）いずれも不備なし、追跡なし等の不正確な表現も無し。改善対象になる閲覧増加ページが無いため、新しいツールの公開を優先。backlog残り3項目は着手条件未充足のままのため、WebSearchで新角度を探索（住所分割・姓名分割・固定長テキスト変換・PDF結合・CSV列結合・氏名フリガナ生成の6案）。前者5つは飽和／本業(銀行)抵触の懸念／規模超過のいずれかで見送り、『複数のExcel(.xlsx)ファイルをCSVに書き出さずそのまま読み込んで結合する』角度でxlsx-mergeを新規公開（このメトリクス取得は公開前の値のため未収録。次回反映）。"
+    },
+    {
+      "date": "2026-10-03T17:30:06Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 6,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0
+      },
+      "total": 6,
+      "note": "xlsx-suushiki公開前の取得（前回2026-10-02 17:30Z比で全ページ変化なし、トップページのみ+1）。xlsx-suushikiは本記録時点では未公開のため未収録。閲覧が増え始めたページは無いため、新規ツールの公開を優先。"
     }
   ],
   "weekly": [
