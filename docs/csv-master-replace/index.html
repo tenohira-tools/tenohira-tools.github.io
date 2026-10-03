@@ -464,7 +464,7 @@ function loadSlot(file, which){
   var f=makeFileSlot(file);
   state[which]=f;
   if(which==="data") state.dataKeyCol=0; else state.masterKeyCol=0;
-  state.valueCols={};
+  state.valueCols={}; state.valueColsTouched=false;
   render();
   file.arrayBuffer().then(function(buf){
     f.bytes=new Uint8Array(buf);
@@ -538,6 +538,10 @@ function renderSelects(){
   dsel.innerHTML=dHtml; msel.innerHTML=mHtml;
 
   var vBox=$("valueColsBox"), vHtml="";
+  /* 初期状態では、キー以外の最初の列（多くは名称列）を選んでおく。ユーザーが操作した後は変えない */
+  if(!state.valueColsTouched && !Object.keys(state.valueCols).length){
+    for(var f=0;f<mh.length;f++){ if(f!==state.masterKeyCol){ state.valueCols[f]=true; break; } }
+  }
   for(var k=0;k<mh.length;k++){
     if(k===state.masterKeyCol) continue;
     var checked = state.valueCols[k] ? " checked" : "";
@@ -548,6 +552,7 @@ function renderSelects(){
   for(var c=0;c<checks.length;c++){
     checks[c].addEventListener("change",function(){
       var col=parseInt(this.getAttribute("data-col"),10);
+      state.valueColsTouched=true;
       if(this.checked) state.valueCols[col]=true; else delete state.valueCols[col];
       render();
     });
@@ -658,7 +663,7 @@ wireDropzone("masterDropzone","masterFileInput","master");
 $("dataHeaderCheck").addEventListener("change",function(){ state.dataHasHeader=this.checked; render(); });
 $("masterHeaderCheck").addEventListener("change",function(){ state.masterHasHeader=this.checked; render(); });
 $("dataKeySelect").addEventListener("change",function(){ state.dataKeyCol=parseInt(this.value,10); render(); });
-$("masterKeySelect").addEventListener("change",function(){ state.masterKeyCol=parseInt(this.value,10); state.valueCols={}; render(); });
+$("masterKeySelect").addEventListener("change",function(){ state.masterKeyCol=parseInt(this.value,10); state.valueCols={}; state.valueColsTouched=false; render(); });
 $("looseCheck").addEventListener("change",function(){ state.loose=this.checked; render(); });
 
 $("downloadBtn").addEventListener("click",function(){

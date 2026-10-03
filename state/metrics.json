@@ -372,6 +372,33 @@
       },
       "total": 6,
       "note": "xlsx-suushiki公開前の取得（前回2026-10-02 17:30Z比で全ページ変化なし、トップページのみ+1）。xlsx-suushikiは本記録時点では未公開のため未収録。閲覧が増え始めたページは無いため、新規ツールの公開を優先。"
+    },
+    {
+      "date": "2026-10-03T19:00:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 6,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0,
+        "/xlsx-merge/": 0,
+        "/xlsx-suushiki/": 0
+      },
+      "total": 6,
+      "note": "週次レビューでの取得（TOTAL.jsonも6）。前回(17:30Z)から変化なし。xlsx-suushikiを初めて収録（0件）。"
     }
   ],
   "weekly": [
@@ -405,6 +432,55 @@
         "/wareki/": 0
       },
       "note": "先週は未公開のため0。今週の増加はトップページの2件のみ（クローラー等の可能性あり）。ツール個別ページは全て0件。Bing系の検索でsite:検索しても1件も出ず、まだ検索エンジンに載っていない。また、IndexNow通知が不具合で一度も送られていなかった（週次レビューで修正）。"
+    },
+    {
+      "week": "2026-09-27〜2026-10-03（公開2週目）",
+      "reviewed": "2026-10-03",
+      "total_this_week": 4,
+      "total_last_week": 2,
+      "pages_this_week": {
+        "/": 4,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0,
+        "/xlsx-merge/": 0,
+        "/xlsx-suushiki/": 0
+      },
+      "pages_last_week": {
+        "/": 2,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0,
+        "/xlsx-merge/": 0,
+        "/xlsx-suushiki/": 0
+      },
+      "note": "増加はトップページの+4のみ（累計2→6）。ツール個別18ページは公開以来すべて0件。WebSearchのsite:検索でもトップページだけが検索結果に出て、個別ツールは未掲載。IndexNow送信はHTTP 200で正常（Actionsログで確認）。全19ページにGoatCounterタグあり。原因は需要より『個別ページがまだ検索エンジンに載っていない』ことが続いていると判断。"
     }
   ]
 }
