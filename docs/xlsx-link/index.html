@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excelの「外部ソースへのリンク」発生源を探すツール（数式・名前定義・グラフを一覧化）| てのひらツール</title>
+<meta name="description" content="Excelで「データ」タブの「リンクの編集」に出てくる外部ソースへのリンクや、開くときの「このブックには、他のソースへのリンクが含まれています」の警告。参照先ファイルを一覧にし、それがブックのどこ（数式・名前定義・データの入力規則・条件付き書式・グラフ）で使われているかをシート・セル単位で列挙します。ファイルを開かず、ブラウザ内だけで処理し、どこにも送信されません。List every external-workbook link inside an Excel (.xlsx) file and exactly where each one is used — formulas, defined names, data validation, conditional formatting and charts — without opening the file.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-link/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select,input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileListBox{display:grid;gap:10px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.warn .n{color:var(--warn)}
+.refList{display:grid;gap:10px;margin-top:4px}
+.refCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.refCard .rTitle{font-weight:700}
+.refCard .rPath{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.85rem;word-break:break-all;margin:4px 0}
+.refCard .rSheets,.refCard .rUnresolved{color:var(--muted);font-size:.85rem}
+.refCard .rUnresolved{color:var(--warn)}
+.filterRow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;margin-bottom:10px}
+.filterRow label{display:flex;align-items:center;gap:6px}
+.filterRow input[type=checkbox]{width:auto;min-height:auto}
+.filterRow input[type=text]{min-width:200px}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:360px;word-break:break-all}
+td.center{text-align:center}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.derived{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.cat{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">Excelの「外部ソースへのリンク」発生源を探す</h1>
+    <p class="sub" data-i="sub">「データ」タブの「リンクの編集」に出てくる外部ソースへのリンク（他のExcelファイルへの参照）を一覧にし、ブックのどこ（数式・名前定義・データの入力規則・条件付き書式・グラフ）で使われているかをシート・セル単位で列挙します。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数可）</p>
+    <p class="hint" data-i="dropzoneHint">外部参照の有無にかかわらず読み込めます。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">外部参照の集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">「発生箇所」は数式・名前定義・データの入力規則・条件付き書式・グラフの合計です。文字列パターンによる機械判定のため、断定ではありません。</p>
+</section>
+
+<section class="card" id="refCard" style="display:none">
+  <h2 data-i="refHeading">参照先ファイル一覧</h2>
+  <p class="hint" data-i="refHint">ブックが記憶している外部参照の番号（数式中の「[1]」などに対応）ごとに、参照先のファイルパスと、そのファイルの何というシートが使われていたかを表示します。</p>
+  <div class="refList" id="refListBox"></div>
+</section>
+
+<section class="card" id="filterCard" style="display:none">
+  <h2 data-i="filterHeading">絞り込み</h2>
+  <div class="filterRow">
+    <label id="fileFilterLabel" style="display:none"><span data-i="filterFile">ファイル：</span><select id="fileFilter"></select></label>
+    <label><span data-i="filterCategory">種別：</span><select id="categoryFilter">
+      <option value="" data-i="allOption">すべて</option>
+      <option value="formula" data-i="catFormula">数式</option>
+      <option value="name" data-i="catName">名前定義</option>
+      <option value="dv" data-i="catDv">データの入力規則</option>
+      <option value="cf" data-i="catCf">条件付き書式</option>
+      <option value="chart" data-i="catChart">グラフ</option>
+    </select></label>
+    <label><input type="text" id="searchBox" data-i-ph="searchPh"></label>
+  </div>
+</section>
+
+<section class="card" id="resultCard" style="display:none">
+  <h2 data-i="resultHeading">発生箇所の一覧</h2>
+  <p class="hint" id="resultCount"></p>
+  <div id="resultBox"></div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">この一覧をCSVでダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>「参照先ファイル一覧」で、ブックが外部のどのファイルを参照しているか（パスとシート名）を確認します。</li>
+      <li>「発生箇所の一覧」で、その参照が数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを確認します。</li>
+      <li>必要な一覧を「CSVでダウンロード」で保存します（絞り込んだ内容がそのまま書き出されます）。</li>
+    </ol>
+    <h3>Q. 「データ」タブの「リンクの編集」を押してもリンクの場所が分からないのはなぜですか？</h3>
+    <p>A. Excelの「リンクの編集」ダイアログは参照先ファイルの一覧は出ますが、そのリンクがブック内のどこ（どのシートのどのセルか、名前定義か、入力規則か）で使われているかまでは表示しません。このツールはその「使われている場所」を探すためのものです。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。</p>
+    <h3>Q. 「参照先ファイル一覧」のパスが表示されない・不明と出るのはなぜですか？</h3>
+    <p>A. 外部参照の接続情報（どのファイルを指しているか）は、作成時にブックへ保存されますが、ファイルを長期間開かない、または「リンクの編集」で「リンクの解除」をした後にリンク自体だけ残った場合など、保存先の情報が欠けていることがあります。その場合は「不明」と表示し、推測はしません。参照番号（[1]など）と、使われている場所の一覧は欠けていなければ表示されます。</p>
+    <h3>Q. 参照先として出てくるパスは、今もそこにファイルがあることを意味しますか？</h3>
+    <p>A. いいえ。ブックに保存された時点のパスを表示するだけで、実際にそのファイルが今も同じ場所にあるかはこのツールでは確認しません（ネットワーク通信は一切行いません）。</p>
+    <h3>Q. 「数式」「名前定義」「データの入力規則」「条件付き書式」「グラフ」はどうやって判定していますか？</h3>
+    <p>A. それぞれの内容（数式の文字列）を機械的に走査し、「[1]」のような外部ワークブックの参照番号を表す書き方が含まれているかで判定しています。文字列の形だけを見た簡易判定のため、Excelの表（テーブル）機能の列参照「テーブル名[列名]」などとは区別していますが、誤って検出したり、逆に見逃したりすることがあります。</p>
+    <h3>Q. グラフの発生箇所だけ、シート名やセル位置が出ないのはなぜですか？</h3>
+    <p>A. グラフの元データはグラフ自体のファイル（chart1.xmlなど）に保存されており、どのシートに貼り付けられているグラフかをたどる処理は今回のツールでは行っていないため、グラフのファイル名までの表示になります。どの数値軸・系列で使われているかは「数式」欄の文字列で確認してください。</p>
+    <h3>Q. 大きなファイルや多数のファイルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、発生箇所の合計が数万件程度までを想定しています。一覧の表示は先頭の一定件数のみに制限されることがありますが、ダウンロードするCSVには絞り込み後の全件が含まれます。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Excel (.xlsx/.xlsm) files into the box above, or click it to choose one or more.</li>
+      <li>Check "External reference targets" to see which outside files the workbook links to (path and sheet names).</li>
+      <li>Check "Where each link is used" to see whether each reference appears in a formula, a defined name, data validation, conditional formatting, or a chart.</li>
+      <li>Click "Download as CSV" to save the list — exactly what the filters currently show.</li>
+    </ol>
+    <h3>Q. Excel's Data → Edit Links shows the target file, but not where the link is used in the workbook. Why?</h3>
+    <p>A. Excel's Edit Links dialog lists target files but not which sheet, cell, defined name, or validation rule actually uses each link. This tool exists to find exactly that.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and analyzed inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported.</p>
+    <h3>Q. Why does the target path show as "unknown" for some references?</h3>
+    <p>A. The connection info (which file a reference points to) is normally stored in the workbook, but it can go missing — for example after "Break Link" was used on a link while leaving the reference itself in a formula. In that case the path shows as unknown rather than guessed; the reference number (like "[1]") and where it's used are still shown as long as those parts remain.</p>
+    <h3>Q. Does the shown path mean the file is still there?</h3>
+    <p>A. No. It only shows the path as it was saved in the workbook at some point; this tool never makes a network request to check whether the file still exists there.</p>
+    <h3>Q. How are "formula", "defined name", "data validation", "conditional formatting" and "chart" detected?</h3>
+    <p>A. Each one's text is scanned for the "[1]"-style external-workbook reference number. This is a simple text-pattern check — it's written to avoid confusing it with Excel Table column references like "TableName[ColumnName]", but it can still over- or under-detect in unusual cases.</p>
+    <h3>Q. Why don't chart entries show a sheet name or cell?</h3>
+    <p>A. A chart's series data lives inside the chart's own file (e.g. chart1.xml); this tool doesn't trace which sheet each chart is embedded in, so charts are listed by their chart file name only. Check the formula text itself for which series or axis is affected.</p>
+    <h3>Q. Can it handle large or many files?</h3>
+    <p>A. Everything runs in browser memory, built for up to roughly tens of thousands of occurrences in total. The on-screen list may be capped for performance, but the downloaded CSV always contains every row matching the current filters.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">Excel数式の一覧化・棚卸しツール</a> — 数式が入った全セルを一覧化。エラー値・他シート参照・外部参照の可能性も検出。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-merge/">複数Excel(.xlsx)ファイルの結合ツール</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">Excel Formula Lister</a> — List every formula cell in a workbook; flags cached errors, cross-sheet refs and possible external links.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-merge/">Multi-Excel Merge Tool</a> — Merge several .xlsx files directly into one CSV.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「データ」タブの「リンクの編集」を押してもリンクの場所が分からないのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"Excelの「リンクの編集」ダイアログは参照先ファイルの一覧は出ますが、ブック内のどこで使われているかまでは表示しません。このツールはその使われている場所を探します。"}},
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"参照先ファイルのパスが「不明」と出るのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"外部参照の接続情報が何らかの理由でブックから欠けている場合があり、その場合は推測せず不明と表示します。"}},
+    {"@type":"Question","name":"数式・名前定義・データの入力規則・条件付き書式・グラフはどうやって判定していますか？","acceptedAnswer":{"@type":"Answer","text":"それぞれの文字列を機械的に走査し、外部ワークブックの参照番号を表す書き方が含まれているかで判定する簡易判定です。断定はできません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX parsing core (no external libraries — ZIP + XML handled by hand,
+   using only standard browser APIs: DecompressionStream/TextDecoder).
+   Shared approach with xlsx-merge / xlsx-suushiki / xlsx-namae.
+   ===================================================================== */
+
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipToMap(bytes){
+  var entries=zipCentralDirectory(bytes), map={};
+  for(var i=0;i<entries.length;i++){ var en=entries[i]; if(en.name.charAt(en.name.length-1)!=="/") map[en.name]=en; }
+  var out={};
+  for(var name in map){ out[name]=new TextDecoder("utf-8").decode(await zipReadEntry(bytes,map[name])); }
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+function colIndexToLetter(idx){
+  var s="", n=idx+1;
+  while(n>0){ var rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+function refToRowCol(ref){
+  var m=/^\$?([A-Z]+)\$?([0-9]+)$/.exec(ref);
+  if(!m) return null;
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+var SHEET_QUOTED=/^'([^']*)'!/;
+var SHEET_BARE=/^[\p{L}\p{N}_.][\p{L}\p{N}_.]*!/u;
+var CELLREF=/^(\$?)([A-Z]{1,3})(\$?)([0-9]{1,7})/;
+function matchRefAt(formula,i){
+  var rest=formula.slice(i);
+  var mQ=SHEET_QUOTED.exec(rest);
+  var mB=!mQ?SHEET_BARE.exec(rest):null;
+  var prefixText="", prefixLen=0;
+  if(mQ){ prefixText=mQ[0]; prefixLen=mQ[0].length; }
+  else if(mB){ prefixText=mB[0]; prefixLen=mB[0].length; }
+  var cellPart=rest.slice(prefixLen);
+  var mc=CELLREF.exec(cellPart);
+  if(!mc) return null;
+  if(prefixLen===0){
+    var prev=i>0?formula[i-1]:"";
+    if(/[A-Za-z0-9_.]/.test(prev)) return null;
+  }
+  var after=cellPart.slice(mc[0].length,mc[0].length+1);
+  if(after==="(" ) return null;
+  if(/[A-Za-z0-9_]/.test(after)) return null;
+  return {
+    end:i+prefixLen+mc[0].length, prefixText:prefixText,
+    colAbs:mc[1]==="$", colLetters:mc[2], rowAbs:mc[3]==="$", rowDigits:mc[4]
+  };
+}
+function shiftOneRef(m,colDelta,rowDelta){
+  var newColStr=m.colLetters, newRowNum=parseInt(m.rowDigits,10);
+  if(!m.colAbs){ newColStr=colIndexToLetter(Math.max(0,colLetterToIndex(m.colLetters)+colDelta)); }
+  if(!m.rowAbs){ newRowNum=Math.max(1,newRowNum+rowDelta); }
+  return m.prefixText+(m.colAbs?"$":"")+newColStr+(m.rowAbs?"$":"")+newRowNum;
+}
+function shiftFormulaRefs(formula,colDelta,rowDelta){
+  if(colDelta===0 && rowDelta===0) return formula;
+  var out="", i=0, n=formula.length;
+  while(i<n){
+    var ch=formula[i];
+    if(ch==='"'){
+      var j=i+1;
+      while(j<n){
+        if(formula[j]==='"'){ if(formula[j+1]==='"'){ j+=2; continue; } j++; break; }
+        j++;
+      }
+      out+=formula.slice(i,j); i=j; continue;
+    }
+    var m=matchRefAt(formula,i);
+    if(m){ out+=shiftOneRef(m,colDelta,rowDelta); i=m.end; continue; }
+    out+=ch; i++;
+  }
+  return out;
+}
+function stripStringLiterals(s){
+  var out="", i=0, n=s.length;
+  while(i<n){
+    if(s[i]==='"'){
+      out+=" "; i++;
+      while(i<n){
+        if(s[i]==='"'){ if(s[i+1]==='"'){ out+="  "; i+=2; continue; } out+=" "; i++; break; }
+        out+=" "; i++;
+      }
+      continue;
+    }
+    out+=s[i]; i++;
+  }
+  return out;
+}
+function findRefIndices(text){
+  var stripped=stripStringLiterals(text), idxs=[], seen={}, re=/\[(\d+)\]/g, m;
+  while((m=re.exec(stripped))){ var n=m[1]; if(!seen[n]){seen[n]=true; idxs.push(parseInt(n,10));} }
+  return idxs;
+}
+
+/* =====================================================================
+   External reference target resolution:
+   workbook.xml <externalReferences> (order = bracket index) -> rels ->
+   externalLinkN.xml <externalBook> -> its own rels -> real target path/URL.
+   ===================================================================== */
+function decodeExternalTarget(raw){
+  if(!raw) return {text:raw,kind:"unknown"};
+  if(/^https?:\/\//i.test(raw)){
+    try{ return {text:decodeURIComponent(raw),kind:"url"}; }catch(e){ return {text:raw,kind:"url"}; }
+  }
+  if(/^file:\/\/\//i.test(raw)){
+    var p=raw.slice(8);
+    try{ p=decodeURIComponent(p); }catch(e){}
+    p=p.replace(/\//g,"\\");
+    if(!/^[A-Za-z]:/.test(p)) p="\\"+p;
+    return {text:p,kind:"file"};
+  }
+  try{ return {text:decodeURIComponent(raw),kind:"relative"}; }catch(e){ return {text:raw,kind:"relative"}; }
+}
+function parseExternalRefs(workbookXml,workbookRelsXml,files){
+  var relTarget={};
+  findTags(workbookRelsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  var extRefsBlock=findTags(workbookXml,"externalReferences");
+  var list=[];
+  if(extRefsBlock.length){
+    var refs=findTags(extRefsBlock[0].inner||"","externalReference");
+    refs.forEach(function(ref,i){
+      var index=i+1, rid=ref.attrs["r:id"]||ref.attrs.rid;
+      var target=relTarget[rid];
+      var item={index:index, linkFile:null, sheetNames:[], resolvedTarget:null, resolvedKind:"unknown"};
+      if(target){
+        var linkPath="xl/"+target.replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+        item.linkFile=linkPath;
+        var linkXml=files[linkPath];
+        if(linkXml){
+          var books=findTags(linkXml,"externalBook");
+          if(books.length){
+            var book=books[0];
+            item.sheetNames=findTags(book.inner||"","sheetName").map(function(sn){return sn.attrs.val});
+            var bookRid=book.attrs["r:id"]||book.attrs.rid;
+            var relsPath=linkPath.replace(/^(.*)\/([^/]+)$/,"$1/_rels/$2.rels");
+            var linkRelsXml=files[relsPath];
+            if(linkRelsXml && bookRid){
+              var map2={};
+              findTags(linkRelsXml,"Relationship").forEach(function(r){ map2[r.attrs.Id]=r.attrs.Target; });
+              var rawTarget=map2[bookRid];
+              if(rawTarget){
+                var decoded=decodeExternalTarget(rawTarget);
+                item.resolvedTarget=decoded.text; item.resolvedKind=decoded.kind;
+              }
+            }
+          }
+        }
+      }
+      list.push(item);
+    });
+  }
+  return list;
+}
+
+/* ---- usage extraction: where each [n] reference is actually used ---- */
+function extractDefinedNameUsages(workbookXml){
+  var out=[];
+  findTags(workbookXml,"definedNames").forEach(function(block){
+    findTags(block.inner||"","definedName").forEach(function(dn){
+      var text=dn.inner!==null?decodeXmlEntities(dn.inner):"";
+      var idxs=findRefIndices(text);
+      if(idxs.length){ out.push({category:"name",sheet:"",location:dn.attrs.name||"",formula:text,indices:idxs,derived:false}); }
+    });
+  });
+  return out;
+}
+function extractSheetFormulaUsages(sheetXml,sheetName){
+  var out=[], sharedMaster={};
+  findTags(sheetXml,"sheetData").forEach(function(sd){
+    findTags(sd.inner||"","row").forEach(function(row){
+      findTags(row.inner||"","c").forEach(function(c){
+        var fTags=findTags(c.inner||"","f");
+        if(!fTags.length) return;
+        var f=fTags[0], ref=c.attrs.r||"", ftype=f.attrs.t||"normal", si=f.attrs.si;
+        var formulaText=f.inner!==null?decodeXmlEntities(f.inner):null;
+        if(ftype==="shared" && formulaText!==null && si!==undefined){ sharedMaster[si]={ref:ref,formula:formulaText}; }
+        var resolved=formulaText, derived=false;
+        if(resolved===null && ftype==="shared" && si!==undefined && sharedMaster[si]){
+          var master=sharedMaster[si], mp=refToRowCol(master.ref), cp=refToRowCol(ref);
+          if(mp && cp){ resolved=shiftFormulaRefs(master.formula,cp.col-mp.col,cp.row-mp.row); derived=true; }
+        }
+        if(resolved===null) return;
+        var idxs=findRefIndices(resolved);
+        if(idxs.length){ out.push({category:"formula",sheet:sheetName,location:ref,formula:resolved,indices:idxs,derived:derived}); }
+      });
+    });
+  });
+  return out;
+}
+function extractDataValidationUsages(sheetXml,sheetName){
+  var out=[];
+  findTags(sheetXml,"dataValidations").forEach(function(block){
+    findTags(block.inner||"","dataValidation").forEach(function(dv){
+      ["formula1","formula2"].forEach(function(tag){
+        findTags(dv.inner||"",tag).forEach(function(ft){
+          var text=ft.inner!==null?decodeXmlEntities(ft.inner):"";
+          var idxs=findRefIndices(text);
+          if(idxs.length){ out.push({category:"dv",sheet:sheetName,location:dv.attrs.sqref||"",formula:text,indices:idxs,derived:false}); }
+        });
+      });
+    });
+  });
+  return out;
+}
+function extractConditionalFormattingUsages(sheetXml,sheetName){
+  var out=[];
+  findTags(sheetXml,"conditionalFormatting").forEach(function(block){
+    findTags(block.inner||"","cfRule").forEach(function(rule){
+      findTags(rule.inner||"","formula").forEach(function(ft){
+        var text=ft.inner!==null?decodeXmlEntities(ft.inner):"";
+        var idxs=findRefIndices(text);
+        if(idxs.length){ out.push({category:"cf",sheet:sheetName,location:block.attrs.sqref||"",formula:text,indices:idxs,derived:false}); }
+      });
+    });
+  });
+  return out;
+}
+function extractChartUsages(files){
+  var out=[];
+  Object.keys(files).forEach(function(path){
+    if(!/^xl\/charts\/chart\d+\.xml$/i.test(path)) return;
+    var xml=files[path];
+    findTags(xml,"c:f").forEach(function(ft){
+      var text=ft.inner!==null?decodeXmlEntities(ft.inner):"";
+      var idxs=findRefIndices(text);
+      if(idxs.length){ out.push({category:"chart",sheet:path.replace(/^xl\/charts\//,""),location:"",formula:text,indices:idxs,derived:false}); }
+    });
+  });
+  return out;
+}
+async function parseXlsxExternalLinks(bytes){
+  var files=await unzipToMap(bytes);
+  var workbookXml=files["xl/workbook.xml"], relsXml=files["xl/_rels/workbook.xml.rels"];
+  if(!workbookXml || !relsXml) throw new Error("NOT_XLSX");
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  var refs=parseExternalRefs(workbookXml,relsXml,files);
+  var usages=extractDefinedNameUsages(workbookXml);
+  sheetList.forEach(function(s){
+    var xml=files[s.path];
+    if(!xml) return;
+    usages=usages.concat(extractSheetFormulaUsages(xml,s.name));
+    usages=usages.concat(extractDataValidationUsages(xml,s.name));
+    usages=usages.concat(extractConditionalFormattingUsages(xml,s.name));
+  });
+  usages=usages.concat(extractChartUsages(files));
+  return {refs:refs, usages:usages};
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"Excelの「外部ソースへのリンク」発生源を探す",
+  sub:"「データ」タブの「リンクの編集」に出てくる外部ソースへのリンク（他のExcelファイルへの参照）を一覧にし、ブックのどこ（数式・名前定義・データの入力規則・条件付き書式・グラフ）で使われているかをシート・セル単位で列挙します。ファイルはどこにも送信されません。",
+  dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
+  dropzoneHint:"外部参照の有無にかかわらず読み込めます。ファイルは選択した端末の中だけで処理されます。",
+  fileListHeading:"追加したファイル",
+  statsHeading:"外部参照の集計",
+  statsHint:"「発生箇所」は数式・名前定義・データの入力規則・条件付き書式・グラフの合計です。文字列パターンによる機械判定のため、断定ではありません。",
+  statRefs:"参照先ファイル数",statUsages:"発生箇所",statUnresolved:"パス不明の参照先",
+  refHeading:"参照先ファイル一覧",
+  refHint:"ブックが記憶している外部参照の番号（数式中の「[1]」などに対応）ごとに、参照先のファイルパスと、そのファイルの何というシートが使われていたかを表示します。",
+  refIndexLabel:"参照番号 [#]",refSheetsLabel:"参照していたシート：",refUnresolvedLabel:"参照先のパス情報が見つかりませんでした（番号と使われている場所のみ分かります）",
+  refNone:"外部参照は見つかりませんでした。",
+  filterHeading:"絞り込み",
+  filterFile:"ファイル：",filterCategory:"種別：",
+  allOption:"すべて",catFormula:"数式",catName:"名前定義",catDv:"データの入力規則",catCf:"条件付き書式",catChart:"グラフ",
+  searchPh:"数式・場所を検索",
+  resultHeading:"発生箇所の一覧",
+  downloadBtn:"この一覧をCSVでダウンロード",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  colFile:"ファイル",colCategory:"種別",colSheet:"シート・場所",colLocation:"セル・名前・範囲",colFormula:"内容",colTargets:"参照先",
+  errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  errNone:"外部参照が使われている場所は見つかりませんでした",
+  moreNote:"件まで表示しています（ダウンロードには絞り込み後の全件が含まれます）。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Find where Excel's external-workbook links are used",
+  sub:"Lists every external-workbook link (the kind shown in Data → Edit Links) found in a workbook, and shows exactly where each one is used — in a formula, a defined name, data validation, conditional formatting, or a chart. Nothing is uploaded.",
+  dropzoneText:"Drag and drop Excel (.xlsx) file(s) here, or click to choose (multiple allowed)",
+  dropzoneHint:"Works whether or not the file has external links. Everything happens on this device.",
+  fileListHeading:"Added files",
+  statsHeading:"External reference summary",
+  statsHint:"\"Occurrences\" is the total across formulas, defined names, data validation, conditional formatting and charts. This is a text-pattern check, not a certainty.",
+  statRefs:"External targets",statUsages:"Occurrences",statUnresolved:"Targets with no resolvable path",
+  refHeading:"External reference targets",
+  refHint:"For each reference number the workbook remembers (matching the \"[1]\" etc. seen inside formulas), shows the target file's path and which of its sheets were referenced.",
+  refIndexLabel:"Reference # [#]",refSheetsLabel:"Referenced sheets:",refUnresolvedLabel:"No resolvable path found for this target (the number and where it's used are still shown)",
+  refNone:"No external references were found.",
+  filterHeading:"Filters",
+  filterFile:"File:",filterCategory:"Category:",
+  allOption:"All",catFormula:"Formula",catName:"Defined name",catDv:"Data validation",catCf:"Conditional formatting",catChart:"Chart",
+  searchPh:"Search formula / location",
+  resultHeading:"Occurrences",
+  downloadBtn:"Download this list as CSV",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  colFile:"File",colCategory:"Category",colSheet:"Sheet / location",colLocation:"Cell / name / range",colFormula:"Content",colTargets:"Target(s)",
+  errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  errNone:"No occurrences of an external-workbook link were found",
+  moreNote:" rows shown (the download includes every filtered row).",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var CAT_KEY={formula:"catFormula",name:"catName",dv:"catDv",cf:"catCf",chart:"catChart"};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1, fileFilter:"", categoryFilter:"", search:""};
+var MAX_RENDER=1000;
+
+function escTrunc(s,max){ s=String(s); max=max||160; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", refs:[], usages:[]};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxExternalLinks(new Uint8Array(buf)); })
+    .then(function(result){
+      f.refs=result.refs; f.usages=result.usages; f.loading=false; render();
+    }).catch(function(){
+      f.loading=false; f.error=T[lang].errBad; f.refs=[]; f.usages=[]; render();
+    });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function allUsages(){
+  var out=[];
+  state.files.forEach(function(f){
+    if(f.loading||f.error) return;
+    f.usages.forEach(function(u){ out.push({file:f.name,fileId:f.id,category:u.category,sheet:u.sheet,location:u.location,
+      formula:u.formula,indices:u.indices,derived:u.derived}); });
+  });
+  return out;
+}
+function targetLabel(fileId,index){
+  var f=state.files.filter(function(x){return x.id===fileId})[0];
+  if(!f) return "["+index+"]";
+  var ref=f.refs.filter(function(r){return r.index===index})[0];
+  if(!ref) return "["+index+"] ?";
+  return "["+index+"] "+(ref.resolvedTarget||(lang==="ja"?"不明":"unknown"));
+}
+function filteredUsages(){
+  var rows=allUsages(), s=state;
+  var needle=s.search.trim().toLowerCase();
+  return rows.filter(function(r){
+    if(s.fileFilter && String(r.fileId)!==s.fileFilter) return false;
+    if(s.categoryFilter && r.category!==s.categoryFilter) return false;
+    if(needle){
+      var hay=(r.sheet+" "+r.location+" "+r.formula).toLowerCase();
+      if(hay.indexOf(needle)===-1) return false;
+    }
+    return true;
+  });
+}
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+    else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+    else { h+="<span class='fMeta'>"+f.refs.length+" / "+f.usages.length+"</span>"; }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+  });
+  box.innerHTML=h;
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function renderStats(usages){
+  var refCount=0, unresolved=0;
+  state.files.forEach(function(f){ if(f.loading||f.error) return; refCount+=f.refs.length;
+    f.refs.forEach(function(r){ if(!r.resolvedTarget) unresolved++; }); });
+  var items=[
+    [refCount,T[lang].statRefs,""],
+    [usages.length,T[lang].statUsages,""],
+    [unresolved,T[lang].statUnresolved,unresolved?"warn":""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function renderRefList(){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  var h="", any=false;
+  state.files.forEach(function(f){
+    if(f.loading||f.error||!f.refs.length) return;
+    any=true;
+    f.refs.forEach(function(r){
+      h+="<div class='refCard'>";
+      h+="<div class='rTitle'>"+(multiFile?esc(f.name)+" — ":"")+esc(T[lang].refIndexLabel.replace("#",String(r.index)))+"</div>";
+      if(r.resolvedTarget){ h+="<div class='rPath'>"+esc(r.resolvedTarget)+"</div>"; }
+      else{ h+="<div class='rUnresolved'>"+esc(T[lang].refUnresolvedLabel)+"</div>"; }
+      if(r.sheetNames.length){ h+="<div class='rSheets'>"+esc(T[lang].refSheetsLabel)+" "+r.sheetNames.map(esc).join(", ")+"</div>"; }
+      h+="</div>";
+    });
+  });
+  if(!any){ h="<p class='hint'>"+esc(T[lang].refNone)+"</p>"; }
+  $("refListBox").innerHTML=h;
+}
+
+function renderFilterOptions(){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  $("fileFilterLabel").style.display=multiFile?"":"none";
+  if(multiFile){
+    var curFile=$("fileFilter").value;
+    var h="<option value=''>"+esc(T[lang].allOption)+"</option>";
+    state.files.forEach(function(f){ if(!f.loading&&!f.error) h+="<option value='"+f.id+"'>"+esc(f.name)+"</option>"; });
+    $("fileFilter").innerHTML=h;
+    $("fileFilter").value=curFile&&state.files.some(function(f){return String(f.id)===curFile})?curFile:"";
+    state.fileFilter=$("fileFilter").value;
+  } else { state.fileFilter=""; }
+}
+
+function renderResult(rows){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  $("resultCount").textContent=rows.length;
+  if(!rows.length){ $("resultBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>"; $("downloadBtn").disabled=true; return; }
+  var shown=rows.slice(0,MAX_RENDER);
+  var h="<div class='scroll'><table><thead><tr>";
+  if(multiFile) h+="<th>"+esc(T[lang].colFile)+"</th>";
+  h+="<th>"+esc(T[lang].colCategory)+"</th><th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colLocation)+"</th>"+
+     "<th>"+esc(T[lang].colFormula)+"</th><th>"+esc(T[lang].colTargets)+"</th></tr></thead><tbody>";
+  shown.forEach(function(r){
+    h+="<tr>";
+    if(multiFile) h+="<td>"+escTrunc(r.file,40)+"</td>";
+    h+="<td><span class='badge cat'>"+esc(T[lang][CAT_KEY[r.category]])+"</span>"+(r.derived?"<span class='badge derived'>推定</span>":"")+"</td>";
+    h+="<td>"+escTrunc(r.sheet,30)+"</td><td>"+escTrunc(r.location,40)+"</td>";
+    h+="<td class='formula'>"+escTrunc(r.formula,200)+"</td>";
+    h+="<td>"+r.indices.map(function(idx){return "<div>"+escTrunc(targetLabel(r.fileId,idx),80)+"</div>"}).join("")+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody></table></div>";
+  if(rows.length>MAX_RENDER) h+="<p class='hint'>"+MAX_RENDER+T[lang].moreNote+"</p>";
+  $("resultBox").innerHTML=h;
+  $("downloadBtn").disabled=false;
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+  if(!has){
+    $("statsCard").style.display="none"; $("refCard").style.display="none"; $("filterCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  var ready=state.files.some(function(f){return !f.loading&&!f.error});
+  if(!ready){
+    $("statsCard").style.display="none"; $("refCard").style.display="none"; $("filterCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  renderFilterOptions();
+  $("statsCard").style.display=""; $("refCard").style.display=""; $("filterCard").style.display=""; $("resultCard").style.display="";
+  var usages=allUsages();
+  renderStats(usages);
+  renderRefList();
+  renderResult(filteredUsages());
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+$("fileFilter").addEventListener("change",function(){ state.fileFilter=this.value; renderResult(filteredUsages()); });
+$("categoryFilter").addEventListener("change",function(){ state.categoryFilter=this.value; renderResult(filteredUsages()); });
+$("searchBox").addEventListener("input",function(){ state.search=this.value; renderResult(filteredUsages()); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var rows=filteredUsages();
+  if(!rows.length) return;
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  var header=[];
+  if(multiFile) header.push(T[lang].colFile);
+  header=header.concat([T[lang].colCategory,T[lang].colSheet,T[lang].colLocation,T[lang].colFormula,T[lang].colTargets]);
+  var out=[header];
+  rows.forEach(function(r){
+    var row=[];
+    if(multiFile) row.push(r.file);
+    row=row.concat([T[lang][CAT_KEY[r.category]],r.sheet,r.location,r.formula,
+      r.indices.map(function(idx){return targetLabel(r.fileId,idx)}).join(" / ")]);
+    out.push(row);
+  });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="external-links.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var phs=document.querySelectorAll("[data-i-ph]");
+  for(var p=0;p<phs.length;p++){var k2=phs[p].getAttribute("data-i-ph");if(T[lang][k2]!==undefined)phs[p].setAttribute("placeholder",T[lang][k2])}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

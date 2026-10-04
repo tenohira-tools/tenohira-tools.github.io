@@ -426,6 +426,34 @@
       },
       "total": 6,
       "note": "xlsx-namae公開前の取得（前回2026-10-03 19:00Z比で全ページ変化なし）。計測タグ・表記の不備も無し。閲覧が増え始めたページが無いため、週次レビューで最優先にした「Excelファイルのトラブル解決」分野の1番目（xlsx-namae）を新規公開。"
+    },
+    {
+      "date": "2026-10-04T17:11:51Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 7,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0,
+        "/xlsx-merge/": 0,
+        "/xlsx-namae/": 0,
+        "/xlsx-suushiki/": 0
+      },
+      "total": 7,
+      "note": "xlsx-link公開前の取得（前回2026-10-03 21:30Z比でトップページのみ+1、個別19ページは全て引き続き0件）。健康診断（health.md）・GoatCounterタグ・表記（grep）いずれも不備なし。改善対象になる閲覧増加ページが無いため、新しいツールの公開を優先しxlsx-linkを新規公開。"
     }
   ],
   "weekly": [
