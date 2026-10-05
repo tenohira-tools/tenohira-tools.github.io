@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>「エクセルが重い」原因を診断：ファイル内訳チェッカー | てのひらツール</title>
+<meta name="description" content="「エクセルが重い」「ファイルサイズが大きい」と感じたExcel(.xlsx/.xlsm)ファイルの原因を、ファイルを開かずに診断。シート別・画像・スタイル・共有文字列・ピボットキャッシュなどパーツごとの容量を内訳表示し、原因になりやすい箇所を順に挙げます（断定はしません）。ブラウザ内だけで処理し、ファイルは送信されません。Diagnose why an Excel file feels heavy — breaks down file size by sheet, images, styles, shared strings and pivot caches, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-omoi/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:110px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.num{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:nowrap}
+td.detail{color:var(--muted);font-size:.82rem}
+.barWrap{position:relative}
+.barWrap .bar{position:absolute;left:0;top:0;bottom:0;background:var(--accent-bg);z-index:0;border-radius:3px}
+.barWrap .barLabel{position:relative;z-index:1}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.causeList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.causeList li{border:1px solid var(--warn);background:var(--warn-bg);color:var(--fg);border-radius:10px;padding:10px 14px;font-size:.92rem}
+.causeList li .rank{color:var(--warn);font-weight:700;margin-right:4px}
+.causeList.none li{border-color:var(--line);background:var(--bg);color:var(--muted)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-size:.88rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">「エクセルが重い」原因を診断：ファイル内訳チェッカー</h1>
+    <p class="sub" data-i="sub">Excel(.xlsx/.xlsm)ファイルの容量を、シート・画像・スタイル・共有文字列・ピボットキャッシュなどのパーツ別に内訳表示し、容量を押し上げている可能性が高い原因を順に挙げます。ファイルを開かず、ブラウザの中だけで診断します。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="overviewCard" style="display:none">
+  <h2 data-i="overviewHeading">全体の内訳</h2>
+  <div class="statGrid" id="overviewGrid"></div>
+  <p class="hint" data-i="overviewHint">「ZIP内サイズ」は.xlsxファイル自体の容量（メール添付などで実感する重さ）に直結する数値です。</p>
+</section>
+
+<section class="card" id="causesCard" style="display:none">
+  <h2 data-i="causesHeading">容量を押し上げている可能性が高い原因</h2>
+  <ul class="causeList" id="causeList"></ul>
+  <p class="hint" data-i="causesHint">数値から機械的に推測した「可能性」であり、断定ではありません。重要なファイルは最終的にExcelの「パフォーマンスをチェック」（Microsoft 365）などでも確認してください。</p>
+</section>
+
+<section class="card" id="tableCard" style="display:none">
+  <h2 data-i="tableHeading">パーツ別の容量一覧</h2>
+  <div class="scroll"><table id="breakdownTable"></table></div>
+  <p style="margin-top:12px"><button type="button" class="secondary" id="csvBtn" data-i="csvBtn">内訳をCSVでダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>「全体の内訳」でファイル容量に占める大まかな構成と、スタイルや名前定義などの数を確認します。</li>
+      <li>「容量を押し上げている可能性が高い原因」を確認します（スコアが高い順）。</li>
+      <li>「パーツ別の容量一覧」で、シートごと・画像・スタイルなどの実際のサイズを細かく確認できます。必要ならCSVでダウンロードできます。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。ファイルの内容を書き換えたり保存したりすることもありません。</p>
+    <h3>Q. 「エクセルが重い」原因はどうやって調べていますか？</h3>
+    <p>A. .xlsxファイルの実体はZIP形式で、内部にシート・画像・スタイル・共有文字列などの部品が別々のファイルとして入っています。このツールはZIPの目次（セントラルディレクトリ）から各部品の実際のサイズを読み取って内訳を作り、さらにシートの使用範囲（Ctrl+Endで飛ぶ場所）・セルの書式（スタイル）の組み合わせ数・テキスト（共有文字列）の種類数・ピボットテーブルのキャッシュの有無などを調べて、容量や動作の重さに関わりやすい箇所を順に挙げます。</p>
+    <h3>Q. 「使用範囲が実際のデータよりかなり大きい」とはどういう意味ですか？</h3>
+    <p>A. Excelでは、セルに値や数式・書式を一度でも設定すると、そのセルの情報がファイル内に保存され続けます。行や列を選択してまとめて色を塗ったり、コピー＆ペーストの範囲が広すぎたりすると、実際にデータが入っているのはごく一部でも、Ctrl+Endで飛ぶ場所（使用範囲）だけがどんどん遠くに広がっていきます。このツールは、使用範囲の広さに対して実際に値・数式・書式を持つセルの数が極端に少ないシートを検出して知らせます。該当するシートは、Ctrl+Endで飛んだ場所から下・右の余分な行や列を選択して削除すると、ファイルが軽くなることがあります。</p>
+    <h3>Q. セルスタイル（書式の組み合わせ）の数が多いと何が問題ですか？</h3>
+    <p>A. フォント・色・枠線・数値の表示形式などの組み合わせ1つごとに「セルスタイル」が1つ登録され、ファイル内に保存されます。コピー＆ペーストを繰り返すたびに似たような組み合わせが新しく増えてしまうことがあり、数が極端に多い（数千〜）と、ファイルを開く・保存する動作が遅くなる原因になりやすいと言われています。断定はしませんが、目安として知っておくと役立ちます。</p>
+    <h3>Q. ピボットテーブルのキャッシュとは何ですか？</h3>
+    <p>A. ピボットテーブルは、元になる表のデータをそのままコピーした「キャッシュ」を内部に持っています。元の表とキャッシュの二重でデータを持つため、ピボットテーブルの数が多い・元データが大きいファイルほど容量が大きくなりやすくなります。Excel側で「ピボットテーブルの保存元データをファイルに保存しない（キャッシュを使わない）」設定にすると容量を減らせる場合があります。</p>
+    <h3>Q. 対応しているファイル形式は？ファイルサイズの上限はありますか？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。ファイルはブラウザのメモリ上で処理するため、非常に大きいファイル（数百MB以上）では、診断自体に時間がかかったりブラウザが重くなったりすることがあります。</p>
+    <h3>Q. 結果通りに直せば必ずファイルが軽くなりますか？</h3>
+    <p>A. このツールは原因の「可能性」を挙げるだけで、ファイルを書き換えることはしません。実際に軽くするには、該当するシートの余分な行・列の削除、使っていない画像やピボットテーブルの整理などをExcel側で行う必要があります。原因が1つに絞れないファイルもあります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>Check the overall breakdown: the rough share of each part, plus counts like cell styles and defined names.</li>
+      <li>Review the ranked list of likely causes (highest score first).</li>
+      <li>Use the detailed per-part table (sheets, images, styles, …) for the exact sizes, and download it as CSV if needed.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter). The file's contents are never modified or saved anywhere.</p>
+    <h3>Q. How does this figure out why a file feels heavy?</h3>
+    <p>A. An .xlsx file is really a ZIP archive containing separate parts for sheets, images, styles, shared strings, and more. This tool reads the ZIP's central directory to get each part's real size, then also checks each sheet's used range (where Ctrl+End jumps to), the number of distinct cell-style combinations, the number of distinct shared strings, and whether pivot-table caches are present — and ranks the factors most likely to be adding to the size or sluggishness.</p>
+    <h3>Q. What does "used range is much larger than the actual data" mean?</h3>
+    <p>A. Once a cell has ever held a value, formula, or formatting, Excel keeps that cell's record in the file. Selecting whole rows or columns to apply a fill color, or pasting into a far larger range than intended, pushes the "used range" (where Ctrl+End jumps) outward even though the actual data stays small. This tool flags sheets where the used range is far larger than the number of cells that actually hold a value, formula or style — deleting the extra rows/columns past where Ctrl+End should land can shrink the file.</p>
+    <h3>Q. Why would many cell styles be a problem?</h3>
+    <p>A. Every distinct combination of font, color, border and number format is stored once as a "cell style" in the file. Repeated copy-pasting can keep adding near-duplicate combinations, and a very large count (thousands+) is commonly associated with slower opening and saving — not a certainty, but a useful signal.</p>
+    <h3>Q. What is a pivot-table cache?</h3>
+    <p>A. A PivotTable keeps an internal copy ("cache") of the source data it summarizes, so the data effectively exists twice in the file. Many pivot tables, or a large source range, can noticeably inflate file size. Excel's option to not save the source data with the file (rebuild from source on open) can reduce this.</p>
+    <h3>Q. Which formats and sizes are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported. Everything runs in your browser's memory, so very large files (several hundred MB) may take a while or make the browser sluggish during diagnosis.</p>
+    <h3>Q. If I act on the results, is the file guaranteed to get smaller?</h3>
+    <p>A. This tool only reports likely causes — it never modifies your file. Actually shrinking it requires fixing the flagged sheets' extra rows/columns, cleaning up unused images or pivot tables, etc. in Excel itself. Some files don't have one single cause.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">Excel数式の一覧化・棚卸しツール</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-namae/">名前定義の点検・削除ツール</a> — 「名前'○○'は既に存在します」の原因になりやすい名前定義を一覧から見分けて削除。</li>
+      <li><a href="../xlsx-link/">外部ソースへのリンク発生源を探すツール</a> — 外部参照の参照先ファイルと、ブック内の使用箇所を一覧化。</li>
+      <li><a href="../xlsx-ketsugo/">結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除し、空欄を自動的に埋めてCSV出力。</li>
+      <li><a href="../xlsx-merge/">複数Excel(.xlsx)ファイルの結合ツール</a> — 複数の.xlsxファイルをそのまま1つのCSVに結合。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">Excel Formula Lister</a> — List every formula cell without opening the file; flags errors and external references.</li>
+      <li><a href="../xlsx-namae/">Defined-name inspector &amp; cleaner</a> — Find and remove the names behind Excel's "A name already exists" dialog.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external link and exactly where it's used.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill blanks left by unmerging, then export as CSV.</li>
+      <li><a href="../xlsx-merge/">Multi-Excel Merge Tool</a> — Merge several .xlsx files directly into one CSV.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"「エクセルが重い」原因はどうやって調べていますか？","acceptedAnswer":{"@type":"Answer","text":".xlsxの実体はZIP形式で、シート・画像・スタイル・共有文字列などが別々の部品として入っています。ZIPの目次から各部品の実サイズを読み取り、使用範囲やセルスタイル数、ピボットキャッシュの有無なども調べて、原因になりやすい箇所を順に挙げます。"}},
+    {"@type":"Question","name":"「使用範囲が実際のデータよりかなり大きい」とはどういう意味ですか？","acceptedAnswer":{"@type":"Answer","text":"行・列をまとめて選んで書式を適用するなどで、実際のデータはわずかでもCtrl+Endで飛ぶ場所（使用範囲）だけが広がることがあります。このツールはその食い違いが大きいシートを検出します。"}},
+    {"@type":"Question","name":"セルスタイルの数が多いと何が問題ですか？","acceptedAnswer":{"@type":"Answer","text":"書式の組み合わせごとに1つのセルスタイルが登録され保存されます。数が極端に多いと開く・保存する動作が遅くなる原因になりやすいとされています。"}},
+    {"@type":"Question","name":"ピボットテーブルのキャッシュとは何ですか？","acceptedAnswer":{"@type":"Answer","text":"ピボットテーブルが参照する元データのコピーを内部に保持する仕組みで、元データと二重に容量を使うため、ファイルが大きくなる一因になります。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link (no external libraries;
+   only standard browser APIs: DecompressionStream/TextDecoder).
+   Unlike those tools, this one reads the ZIP central directory for
+   PART SIZES without decompressing anything, and only decompresses the
+   small handful of XML parts it actually needs to inspect (workbook,
+   rels, styles, sharedStrings, each worksheet) — images, pivot caches
+   and embeddings are sized but never decompressed.
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function readEntryText(bytes,entries,name){
+  var en=entries.find(function(e){return e.name===name});
+  if(!en) return null;
+  var data=await zipReadEntry(bytes,en);
+  return new TextDecoder("utf-8").decode(data);
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml||"","Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function colLettersToNum(letters){
+  var n=0;
+  for(var i=0;i<letters.length;i++){ n=n*26+(letters.charCodeAt(i)-64); }
+  return n;
+}
+function parseDimension(ref){
+  if(!ref) return {rows:0,cols:0};
+  var parts=ref.split(":");
+  var startRef=parts[0], endRef=parts[parts.length-1];
+  var sm=/^([A-Z]+)([0-9]+)$/.exec(startRef), em=/^([A-Z]+)([0-9]+)$/.exec(endRef);
+  if(!em) return {rows:0,cols:0};
+  var endCol=colLettersToNum(em[1]), endRow=parseInt(em[2],10);
+  var startCol=sm?colLettersToNum(sm[1]):endCol, startRow=sm?parseInt(sm[2],10):endRow;
+  return {rows:Math.max(1,endRow-startRow+1), cols:Math.max(1,endCol-startCol+1)};
+}
+
+/* =====================================================================
+   Diagnosis
+   ===================================================================== */
+async function diagnoseXlsx(bytes){
+  var entries=zipCentralDirectory(bytes);
+  if(!entries.some(function(e){return e.name==="xl/workbook.xml"})) throw new Error("NOT_XLSX");
+  var workbookXml=await readEntryText(bytes,entries,"xl/workbook.xml");
+  var relsXml=await readEntryText(bytes,entries,"xl/_rels/workbook.xml.rels");
+  var sheetList=parseSheetList(workbookXml,relsXml||"");
+  var definedNameCount=(workbookXml.match(/<definedName[\s>]/g)||[]).length;
+
+  var stylesXml=await readEntryText(bytes,entries,"xl/styles.xml");
+  var xfCount=0;
+  if(stylesXml){
+    var cellXfsBlocks=findTags(stylesXml,"cellXfs");
+    if(cellXfsBlocks.length) xfCount=findTags(cellXfsBlocks[0].inner||"","xf").length;
+  }
+
+  var uniqueStringCount=0;
+  var ssEntry=entries.find(function(e){return e.name==="xl/sharedStrings.xml"});
+  if(ssEntry){
+    var ssXml=await readEntryText(bytes,entries,"xl/sharedStrings.xml");
+    var um=/<sst\b[^>]*\buniqueCount="(\d+)"/.exec(ssXml||"");
+    uniqueStringCount = um ? parseInt(um[1],10) : (ssXml.match(/<si[\s>]/g)||[]).length;
+  }
+
+  var sheetStats=[];
+  for(var i=0;i<sheetList.length;i++){
+    var sh=sheetList[i];
+    var entry=entries.find(function(e){return e.name===sh.path});
+    if(!entry){ sheetStats.push({name:sh.name,path:sh.path,found:false,compSize:0,uncompSize:0,rows:0,cols:0,cellCount:0}); continue; }
+    var xml=await readEntryText(bytes,entries,sh.path);
+    var dimM=/<dimension\s+ref="([^"]+)"/.exec(xml||"");
+    var dim=parseDimension(dimM?dimM[1]:null);
+    var cellCount=(xml.match(/<c[\s>]/g)||[]).length;
+    sheetStats.push({name:sh.name,path:sh.path,found:true,compSize:entry.compSize,uncompSize:entry.uncompSize,rows:dim.rows,cols:dim.cols,cellCount:cellCount});
+  }
+
+  var usedPaths={};
+  sheetList.forEach(function(s){ usedPaths[s.path]=true; });
+  var cats={
+    images:{count:0,compSize:0,uncompSize:0}, drawings:{count:0,compSize:0,uncompSize:0},
+    pivotCache:{count:0,compSize:0,uncompSize:0}, embeddings:{count:0,compSize:0,uncompSize:0},
+    externalLinks:{count:0,compSize:0,uncompSize:0}, sharedStrings:{count:0,compSize:0,uncompSize:0},
+    styles:{count:0,compSize:0,uncompSize:0}, calcChain:{count:0,compSize:0,uncompSize:0},
+    other:{count:0,compSize:0,uncompSize:0}
+  };
+  var totalComp=0, totalUncomp=0;
+  entries.forEach(function(e){
+    if(/\/$/.test(e.name)) return;
+    totalComp+=e.compSize; totalUncomp+=e.uncompSize;
+    if(usedPaths[e.name]) return;
+    var key;
+    if(/^xl\/media\//.test(e.name)) key="images";
+    else if(/^xl\/drawings\//.test(e.name)||/^xl\/charts\//.test(e.name)) key="drawings";
+    else if(/^xl\/pivotCache\//.test(e.name)) key="pivotCache";
+    else if(/^xl\/embeddings\//.test(e.name)) key="embeddings";
+    else if(/^xl\/externalLinks\//.test(e.name)) key="externalLinks";
+    else if(e.name==="xl/sharedStrings.xml") key="sharedStrings";
+    else if(e.name==="xl/styles.xml") key="styles";
+    else if(e.name==="xl/calcChain.xml") key="calcChain";
+    else key="other";
+    cats[key].count++; cats[key].compSize+=e.compSize; cats[key].uncompSize+=e.uncompSize;
+  });
+
+  return {sheetStats:sheetStats, cats:cats, totalComp:totalComp, totalUncomp:totalUncomp,
+    definedNameCount:definedNameCount, xfCount:xfCount, uniqueStringCount:uniqueStringCount};
+}
+
+function buildCauses(d,lang){
+  var causes=[], total=Math.max(1,d.totalUncomp);
+  var img=d.cats.images, pct;
+  if(img.count>0){
+    pct=img.uncompSize/total;
+    if(pct>=0.15) causes.push({score:pct, key:"images", n:img.count, pct:Math.round(pct*100)});
+  }
+  var piv=d.cats.pivotCache;
+  if(piv.count>0){
+    pct=piv.uncompSize/total;
+    causes.push({score:Math.max(pct,0.5), key:"pivot", pct:Math.round(pct*100)});
+  }
+  var drw=d.cats.drawings;
+  if(drw.count>0){
+    pct=drw.uncompSize/total;
+    if(pct>=0.08) causes.push({score:pct, key:"drawings", pct:Math.round(pct*100)});
+  }
+  var emb=d.cats.embeddings;
+  if(emb.count>0){
+    pct=emb.uncompSize/total;
+    causes.push({score:Math.max(pct,0.45), key:"embeddings", n:emb.count, pct:Math.round(pct*100)});
+  }
+  var ext=d.cats.externalLinks;
+  if(ext.count>0){
+    pct=ext.uncompSize/total;
+    causes.push({score:Math.max(pct,0.35), key:"externalLinks", pct:Math.round(pct*100)});
+  }
+  if(d.xfCount>=1000){
+    causes.push({score:Math.min(d.xfCount/20000,0.9), key:"styles", n:d.xfCount});
+  }
+  if(d.uniqueStringCount>=30000){
+    causes.push({score:Math.min(d.uniqueStringCount/200000,0.8), key:"strings", n:d.uniqueStringCount});
+  }
+  var worst=null;
+  d.sheetStats.forEach(function(s){
+    if(!s.found) return;
+    var area=s.rows*s.cols;
+    if(area>=20000 && s.cellCount*4<area){
+      var sc=Math.min(area/1000000,0.95);
+      if(!worst || sc>worst.score) worst={score:sc, key:"usedRange", sheetName:s.name, rows:s.rows, cols:s.cols, cellCount:s.cellCount};
+    }
+  });
+  if(worst) causes.push(worst);
+  causes.sort(function(a,b){return b.score-a.score});
+  return causes.slice(0,4);
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"「エクセルが重い」原因を診断：ファイル内訳チェッカー",
+  sub:"Excel(.xlsx/.xlsm)ファイルの容量を、シート・画像・スタイル・共有文字列・ピボットキャッシュなどのパーツ別に内訳表示し、容量を押し上げている可能性が高い原因を順に挙げます。ファイルを開かず、ブラウザの中だけで診断します。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。ファイルは選択した端末の中だけで処理されます。",
+  overviewHeading:"全体の内訳", overviewHint:"「ZIP内サイズ」は.xlsxファイル自体の容量（メール添付などで実感する重さ）に直結する数値です。",
+  statFileSize:"ファイル容量（ZIP内合計）", statSheets:"シート数", statDefinedNames:"名前定義", statStyles:"セルスタイルの数",
+  statStrings:"共有文字列（テキスト）の種類", statImages:"画像の数",
+  causesHeading:"容量を押し上げている可能性が高い原因",
+  causesHint:"数値から機械的に推測した「可能性」であり、断定ではありません。重要なファイルは最終的にExcelの「パフォーマンスをチェック」（Microsoft 365）などでも確認してください。",
+  causeNone:"今回のファイルでは、容量を大きく占める特定の原因は見当たりませんでした。シート数自体が多い、または全体に薄く分散しているなどが考えられます。",
+  causeImages:"画像が全体の展開後サイズの約{pct}%（{n}枚）を占めています。解像度の高い画像を多数貼り付けている場合、画像を圧縮するかサイズを縮小すると小さくなる可能性があります。",
+  causePivot:"ピボットテーブルのキャッシュ（元データの複製）が含まれています（約{pct}%）。ピボットテーブルを使っている場合、元データと二重に容量を使っている可能性があります。Excelの「ピボットテーブルオプション」で元データをファイルに保存しない設定にすると減らせることがあります。",
+  causeDrawings:"図形・グラフなどの描画データが全体の約{pct}%を占めています。使っていない図形やグラフが残っている場合、削除すると小さくなる可能性があります。",
+  causeEmbeddings:"埋め込みオブジェクト（他のファイルの埋め込み、{n}個）が含まれています。Word・PDF・別のExcelファイルなどをそのまま貼り付けている場合、容量が大きくなりやすい原因です。",
+  causeExternalLinks:"他のExcelファイルへの外部参照（外部ソースへのリンク）のキャッシュが含まれています。参照先の値がまとめて保存されているため、参照先のデータが大きいと容量が増えます。発生源の詳細はxlsx-linkツールで調べられます。",
+  causeStyles:"セルの書式（スタイルの組み合わせ）が{n}種類あります。数が極端に多いと、ファイルを開く・保存する動作が遅くなる原因になりやすいとされています（断定はしません）。コピー＆ペーストのたびに似た組み合わせが増えていくことがよくあります。",
+  causeStrings:"テキスト（共有文字列）が{n}種類あります。文字列データの量自体が容量の一因である可能性があります。",
+  causeUsedRange:"シート『{sheetName}』の使用範囲（Ctrl+Endで飛ぶ場所）が{rows}行×{cols}列ありますが、値や数式・書式を持つセルは{cellCount}個ほどで、範囲の広さに対してデータがかなり少ないです。行・列をまとめて選んで書式を適用した場合によくある原因で、Ctrl+Endで飛んだ場所から下・右の余分な行や列を削除すると軽くなることがあります。",
+  tableHeading:"パーツ別の容量一覧", csvBtn:"内訳をCSVでダウンロード",
+  colPart:"パーツ",colKind:"種別",colSize:"ZIP内サイズ",colPct:"割合",colDetail:"詳細",
+  kindSheet:"シート",kindCat:{images:"画像",drawings:"描画・グラフ",pivotCache:"ピボットキャッシュ",embeddings:"埋め込みオブジェクト",externalLinks:"外部参照キャッシュ",sharedStrings:"共有文字列",styles:"スタイル",calcChain:"数式計算キャッシュ",other:"その他"},
+  detailSheet:"{rows}行×{cols}列／セル{cellCount}個",detailCount:"{n}個のファイル",detailNone:"なし（0件）",
+  removeBtn:"削除",loadingLabel:"読み込み中…",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護の可能性があります）",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Why is this Excel file heavy? Part-by-part size diagnosis",
+  sub:"Breaks down an Excel (.xlsx/.xlsm) file's size by sheet, images, styles, shared strings, pivot caches and more, then ranks the factors most likely adding to it. Diagnosed entirely in your browser, without opening the file.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Everything happens on this device.",
+  overviewHeading:"Overall breakdown", overviewHint:"\"ZIP-internal size\" tracks directly to the .xlsx file's own size — the weight you feel attaching it to an email.",
+  statFileSize:"File size (total in ZIP)", statSheets:"Sheets", statDefinedNames:"Defined names", statStyles:"Cell styles",
+  statStrings:"Distinct shared strings", statImages:"Images",
+  causesHeading:"Factors likely adding to the size",
+  causesHint:"These are mechanically inferred possibilities, not certainties. For an important file, also check with Excel's own \"Check Performance\" (Microsoft 365) if available.",
+  causeNone:"No single factor stood out as dominating this file's size. It may simply have many sheets, or the size may be spread evenly across parts.",
+  causeImages:"Images make up about {pct}% of the uncompressed content ({n} files). If you've pasted many high-resolution images, compressing or downscaling them may shrink the file.",
+  causePivot:"This file contains PivotTable caches (a copy of the source data), about {pct}% of the content. The source data effectively exists twice; Excel's PivotTable Options can be set to not save source data with the file.",
+  causeDrawings:"Shapes/charts (drawing data) make up about {pct}% of the content. Removing unused shapes or charts may shrink the file.",
+  causeEmbeddings:"This file contains embedded objects ({n}) — other files (Word, PDF, another workbook, …) pasted in as-is. These tend to add a lot of size.",
+  causeExternalLinks:"This file contains cached values from links to other Excel workbooks. The linked workbook's values are stored here too; the larger that source data, the larger this cache. Use the xlsx-link tool for details on where these links are used.",
+  causeStyles:"This file has {n} distinct cell-style combinations. A very large count is commonly associated with slower opening/saving (not a certainty) — repeated copy-pasting tends to keep adding near-duplicate combinations.",
+  causeStrings:"This file has {n} distinct shared strings (text values). A large amount of text content can itself be a meaningful share of the size.",
+  causeUsedRange:"Sheet \"{sheetName}\"'s used range (where Ctrl+End jumps) spans {rows} rows × {cols} columns, but only about {cellCount} cells actually hold a value, formula or style — much less than the range implies. This usually happens from selecting whole rows/columns to apply formatting; deleting the extra rows/columns past where Ctrl+End should land can shrink the file.",
+  tableHeading:"Size by part", csvBtn:"Download this breakdown as CSV",
+  colPart:"Part",colKind:"Kind",colSize:"Size in ZIP",colPct:"Share",colDetail:"Detail",
+  kindSheet:"Sheet",kindCat:{images:"Images",drawings:"Drawings/charts",pivotCache:"Pivot caches",embeddings:"Embedded objects",externalLinks:"External-link caches",sharedStrings:"Shared strings",styles:"Styles",calcChain:"Calc chain",other:"Other"},
+  detailSheet:"{rows} rows × {cols} cols / {cellCount} cells",detailCount:"{n} file(s)",detailNone:"none (0)",
+  removeBtn:"Remove",loadingLabel:"Loading…",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, or it's password-protected)",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  if(n<1024*1024*1024) return (n/1024/1024).toFixed(2)+" MB";
+  return (n/1024/1024/1024).toFixed(2)+" GB";
+}
+function fmtTemplate(tpl,params){
+  return tpl.replace(/\{(\w+)\}/g,function(_,k){return params[k]!==undefined?params[k]:""});
+}
+
+var state={fileName:"",loading:false,error:"",diag:null,rows:[]};
+
+function resetFile(){ state={fileName:"",loading:false,error:"",diag:null,rows:[]}; render(); }
+
+function addFile(file){
+  state={fileName:file.name,loading:true,error:"",diag:null,rows:[]};
+  render();
+  file.arrayBuffer().then(function(buf){ return diagnoseXlsx(new Uint8Array(buf)); })
+    .then(function(d){ state.loading=false; state.diag=d; state.rows=buildRows(d); render(); })
+    .catch(function(){ state.loading=false; state.error=T[lang].errBad; render(); });
+}
+
+function buildRows(d){
+  var rows=[];
+  d.sheetStats.forEach(function(s){
+    rows.push({kind:"sheet", label:s.name, compSize:s.compSize, uncompSize:s.uncompSize,
+      detail: s.found ? fmtTemplate(T[lang].detailSheet,{rows:s.rows,cols:s.cols,cellCount:s.cellCount}) : ""});
+  });
+  Object.keys(d.cats).forEach(function(key){
+    var c=d.cats[key];
+    if(c.count===0) return;
+    rows.push({kind:"cat", catKey:key, label:T[lang].kindCat[key], compSize:c.compSize, uncompSize:c.uncompSize,
+      detail: fmtTemplate(T[lang].detailCount,{n:c.count})});
+  });
+  rows.sort(function(a,b){ return b.compSize-a.compSize; });
+  return rows;
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.diag){ h+="<span class='fMeta'>"+fmtBytes(state.diag.totalComp)+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function renderOverview(d){
+  var items=[
+    [fmtBytes(d.totalComp), T[lang].statFileSize],
+    [d.sheetStats.length, T[lang].statSheets],
+    [d.definedNameCount, T[lang].statDefinedNames],
+    [d.xfCount, T[lang].statStyles],
+    [d.uniqueStringCount, T[lang].statStrings],
+    [d.cats.images.count, T[lang].statImages]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox'><div class='n'>"+esc(it[0])+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("overviewGrid").innerHTML=h;
+}
+
+function renderCauses(d){
+  var causes=buildCauses(d,lang);
+  var box=$("causeList");
+  if(!causes.length){
+    box.className="causeList none";
+    box.innerHTML="<li>"+esc(T[lang].causeNone)+"</li>";
+    return;
+  }
+  box.className="causeList";
+  var tplKey={images:"causeImages",pivot:"causePivot",drawings:"causeDrawings",embeddings:"causeEmbeddings",
+    externalLinks:"causeExternalLinks",styles:"causeStyles",strings:"causeStrings",usedRange:"causeUsedRange"};
+  var h="";
+  causes.forEach(function(c,i){
+    var tpl=T[lang][tplKey[c.key]];
+    h+="<li><span class='rank'>"+(i+1)+".</span>"+esc(fmtTemplate(tpl,c))+"</li>";
+  });
+  box.innerHTML=h;
+}
+
+function renderTable(rows,totalComp){
+  var h="<thead><tr><th>"+esc(T[lang].colPart)+"</th><th>"+esc(T[lang].colKind)+"</th><th>"+esc(T[lang].colSize)+"</th><th>"+esc(T[lang].colPct)+"</th><th>"+esc(T[lang].colDetail)+"</th></tr></thead><tbody>";
+  var maxSize=rows.length?rows[0].compSize:1;
+  rows.forEach(function(r){
+    var pct = totalComp>0 ? (r.compSize/totalComp*100) : 0;
+    var barPct = maxSize>0 ? (r.compSize/maxSize*100) : 0;
+    h+="<tr>";
+    h+="<td>"+esc(r.label)+"</td>";
+    h+="<td>"+esc(r.kind==="sheet"?T[lang].kindSheet:r.label)+"</td>";
+    h+="<td class='num'><span class='barWrap'><span class='bar' style='width:"+barPct.toFixed(1)+"%'></span><span class='barLabel'>"+esc(fmtBytes(r.compSize))+"</span></span></td>";
+    h+="<td class='num'>"+pct.toFixed(1)+"%</td>";
+    h+="<td class='detail'>"+esc(r.detail)+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody>";
+  $("breakdownTable").innerHTML=h;
+}
+
+function render(){
+  renderFileCard();
+  if(!state.fileName || state.loading || state.error || !state.diag){
+    $("overviewCard").style.display="none"; $("causesCard").style.display="none"; $("tableCard").style.display="none";
+    return;
+  }
+  var d=state.diag;
+  $("overviewCard").style.display=""; $("causesCard").style.display=""; $("tableCard").style.display="";
+  renderOverview(d);
+  renderCauses(d);
+  renderTable(state.rows,d.totalComp);
+}
+
+function toCsv(rows,totalComp){
+  var head=["part","kind","size_bytes","percent","detail"];
+  var lines=[head.join(",")];
+  function q(s){ s=String(s); return '"'+s.replace(/"/g,'""')+'"'; }
+  rows.forEach(function(r){
+    var pct = totalComp>0 ? (r.compSize/totalComp*100).toFixed(1) : "0.0";
+    lines.push([q(r.label), q(r.kind==="sheet"?T.ja.kindSheet:r.label), r.compSize, pct, q(r.detail)].join(","));
+  });
+  return lines.join("\r\n");
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("csvBtn").addEventListener("click",function(){
+  if(!state.diag) return;
+  var csv="﻿"+toCsv(state.rows,state.diag.totalComp);
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=(state.fileName||"xlsx")+"_内訳.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  if(state.diag) state.rows=buildRows(state.diag);
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
