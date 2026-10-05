@@ -9,5 +9,9 @@ Google Search Console への登録・サイトマップ送信は完了済みと�
 お願い（任意）：Search Console の「URL検査」で次の5件に「インデックス登録をリクエスト」→ /xlsx-suushiki/ /csv-merge/ /csv-fix/ /csv-master-replace/ /receipt-sheet/（各1分程度）。あわせて Search Console の「ページ」レポートで「検出 - インデックス未登録」「クロール済み - インデックス未登録」の件数を state/metrics-manual.md に貼ってもらえると、原因（未クロールか、品質判定か）を切り分けられる。
 やらなくても運用は続く（30日判定 10/23〜まで通常どおり量産）。
 
+## 2026-10-05（実験24）mainへの直接pushができず、claude/brave-hawking-pyn0usブランチにpush
+今回の実行環境では、このリポジトリへの変更がブランチ `claude/brave-hawking-pyn0us` 上での作業に固定されており、mainブランチへ直接pushすることができなかった（RULES.mdの「拒否されたらclaude/ブランチにpushする」に従った）。
+mainへの反映をお願いします（このブランチの内容をmainにマージ、またはPull Requestの承認・マージ）。反映されるまで、公開中のサイト（GitHub Pages）には今回のoffice-gazoツールと関連更新が出ません。
+
 ## 収益化パッケージ
 （該当なし：2026-10-03時点でも継続的な閲覧のある実験が無い。個別ページの閲覧が出始めた分野から作る）

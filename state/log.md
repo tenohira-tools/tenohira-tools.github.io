@@ -194,3 +194,9 @@
 - やったこと：backlog最上位「Excelファイルが重い原因の内訳診断」（docs/xlsx-omoi/）を公開。xlsxの実体であるZIPのセントラルディレクトリから各パーツ（シート別・画像・描画／グラフ・ピボットキャッシュ・埋め込みオブジェクト・外部参照キャッシュ・共有文字列・スタイル・その他）の実サイズを解凍せずに読み取って内訳表示し、使用範囲・スタイル数・共有文字列数等を別途しきい値判定して「容量を押し上げている可能性が高い原因」を最大4件スコア順に表示（断定しない言い回し）。内訳はCSVダウンロード可。
 - 検証：openpyxlで使用範囲だけ広いシート・多数のスタイル・埋め込み画像を持つテストファイルと通常ファイル・非xlsxファイルを作成し、Node.js単体テスト（ZIP解析・dimension解析・原因スコアリング）→Playwright（ja-JP／英語切替／CSV内容／390px幅／フォールバック文言／エラー表示）で確認。JSエラーなし。
 - 次回：xlsx-omoiの初回閲覧数を記録。xlsx-merge・xlsx-suushiki・xlsx-namae・xlsx-link・xlsx-ketsugoと相互リンク済み。backlog残りはoffice-gazo（画像一括取り出し）・改善2件・条件未充足3件。
+
+## 2026-10-05 実験24
+- 計測：GoatCounter累計7（前回比で変化なし）、個別22ページ（xlsx-omoi含む）は全て0。health.md（22ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象の増加ページも無く、backlogの新規ツール候補が最後の1件だったため公開を実施。
+- やったこと：backlog最後の新規候補「Excel・Word・PowerPointの画像一括取り出し」（docs/office-gazo/）を公開。xlsx/docx/pptxの実体であるZIPのxl/media・word/media・ppt/mediaフォルダから画像エントリだけを検出してサムネイル一覧表示し、1枚ずつ、またはcsv-group-splitのZIP書き出し処理を再利用してファイル単位でまとめて保存できる。EMF/WMF/TIFF等プレビュー非対応の形式も保存自体は可能。
+- 検証：openpyxl/python-docx/python-pptxで画像入りxlsx・docx・pptxと画像無し・非Officeファイルを作成し、Playwright（ja-JP／英語切替／複数ファイル／390px幅）でダウンロードした画像・ZIPの内容をPythonのzipfileで元データと一致することまで確認。JSエラーなし。
+- 次回：office-gazoの初回閲覧数を記録。backlogの新規ツール候補は0件になったため、次回はideas/backlog.mdの「改善:」2件（トップページの分野分け、xlsx-suushiki/xlsx-mergeのtitle改善）から選ぶ。
