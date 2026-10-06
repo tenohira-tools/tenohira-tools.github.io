@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-10-06 改善：xlsx-suushiki・xlsx-mergeのtitle/description/h1の言い回し
+- 数値：GoatCounter取得（サイト全体累計8、前回10-06 17:11Zから変化なし）。個別22ページは全て引き続き0件。health.md（10-06付23ページ・問題0件）、GoatCounterタグ・表記（grep）いずれも不備なし。改善対象になる閲覧増加ページも無いため、backlog項目5（前回見送った言い回し修正）を実施。
+- やったこと：xlsx-suushikiのtitle・meta description・h1・多言語辞書（ja/en）の先頭を「引き継いだExcelの数式を一覧に」に、xlsx-mergeを「Excelファイルを複数まとめて1つに」に変更（backlogの提案どおり）。両ツールへリンクする他13ページの関連ツール欄アンカーテキストとdocs/index.htmlのツール名表記も新しい名前に統一し、旧名称が残っていないことをgrepで確認。
+- 検証：ローカルのPython http.serverで配信し、Playwright（Chromiumヘッドレス、ja-JPロケール／英語切替）で両ページのtitle・h1・サブ文言、および13ページの関連ツールリンクのテキストを確認。JSエラーなし（ネットワーク遮断によるGoatCounter等の読み込み失敗は既知の想定内）。push前に実名・個人アカウント名のgrepチェックで個人情報が無いことを確認。
+- 次回：backlog残りは条件未充足3件（住所英語変換・文字数カウンター・SNS画像切り抜き）のみのため、次回は新規ツールの角度探しよりhealth.mdの点検と閲覧増加ページの有無を優先し、無ければ新角度の調査（確認検索2〜3件まで）に入る。
+
 ## 2026-10-06 改善：トップページの分野分割＋1行説明の言い回し
 - 数値：GoatCounter取得（サイト全体累計8、前回10-05 17:05Zから+1、トップページのみ）。個別22ページは全て引き続き0件。health.md（10-06付23ページ・問題0件）、GoatCounterタグ・表記（grep）いずれも不備なし。改善対象になる閲覧増加ページはトップのみ。
 - やったこと：backlog最上位だったoffice-gazo（Excel/Word/PowerPointの画像一括抽出）をWebSearchで着手前に再確認したところ、「画像・キャプション抽出くん」（tanoshimiworks.com、GitHub: ttomohisa/htmlapps-office-image-extractor）という、ブラウザ完結・サーバー送信なしで同種の機能（キャプションからのファイル名生成・JPG/PNG/PDF変換・ZIP一括保存）を既に無料公開しているツールを発見し、想定差別化点がほぼ飽和と判断してideas/backlog.mdの見送り欄に移した。代わりにbacklog次点の改善「トップページ（docs/index.html）の分野分割」を実施。唯一インデックスされている（閲覧が付き始めている）トップページの内部リンクを強くする狙いで、「CSV・テキスト・データ整形」グループを「CSV・Excelのファイル処理」（csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・xlsx系6ツール）と「テキスト整形」（wareki-toitsu・hyoki-yure・config-convert・regex-ja）に分割し、該当15ツール全ての1行説明の先頭を「〜なときに」という困りごとの言い回しに書き直した（アンカーのツール名自体は次点のbacklog項目5で対応予定のため変更せず）。

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>複数Excel(.xlsx)ファイルの結合ツール（CSV出力）| てのひらツール</title>
-<meta name="description" content="複数のExcel（.xlsx/.xlsm）ファイルを、1枚ずつCSVに書き出す手間をかけずにそのまま読み込んで1つのCSVに結合。見出し名で列をそろえ、日付・日時・時刻のセルはシリアル値ではなく表示どおりの形式に変換します。ファイルに複数シートがあっても1ファイルずつ使うシートを選べます。ブラウザ内だけで処理し、ファイルは送信されません。Merge multiple Excel (.xlsx) files directly into one CSV — no need to export each to CSV first. Dates are converted from Excel's internal serial numbers automatically, entirely in your browser.">
+<title>Excelファイルを複数まとめて1つに：CSV結合ツール | てのひらツール</title>
+<meta name="description" content="複数のExcelファイルを1枚ずつCSVに書き出す手間なくそのまま1つにまとめたいときに。複数のExcel（.xlsx/.xlsm）ファイルをそのまま読み込んで1つのCSVに結合。見出し名で列をそろえ、日付・日時・時刻のセルはシリアル値ではなく表示どおりの形式に変換します。ファイルに複数シートがあっても1ファイルずつ使うシートを選べます。ブラウザ内だけで処理し、ファイルは送信されません。Merge multiple Excel (.xlsx) files directly into one — no need to export each to CSV first. Dates are converted from Excel's internal serial numbers automatically, entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/xlsx-merge/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b}
@@ -65,8 +65,8 @@ html[lang=en] .en-only{display:block}
 <p class="top"><a href="../">← てのひらツール</a></p>
 <header>
   <div>
-    <h1 data-i="title">複数Excelファイルの結合ツール</h1>
-    <p class="sub" data-i="sub">複数の.xlsxファイルを、1枚ずつCSVに書き出す手間なくそのまま読み込み、1つのCSVに結合します。見出し名で列をそろえ、日付・時刻のセルは表示どおりの形式に変換します。ファイルはどこにも送信されません。</p>
+    <h1 data-i="title">Excelファイルを複数まとめて1つに</h1>
+    <p class="sub" data-i="sub">1枚ずつCSVに書き出す手間をかけたくないときに。複数の.xlsxファイルをそのまま読み込み、1つのCSVに結合します。見出し名で列をそろえ、日付・時刻のセルは表示どおりの形式に変換します。ファイルはどこにも送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -184,7 +184,7 @@ html[lang=en] .en-only{display:block}
       <li><a href="../csv-group-split/">CSVを列の値ごとに自動分割</a> — 選んだ列の値ごとにグループ分けして複数ファイルに分け、ZIPでまとめてダウンロード。</li>
       <li><a href="../csv-master-replace/">CSVのコード→名称 一括変換ツール</a> — データCSVのコード列を、対応表（マスタ）CSVと突き合わせて店舗名・氏名などの列を一括追加。</li>
       <li><a href="../wareki-toitsu/">和暦・西暦 混在日付の一括統一</a> — 令和6年1月2日／R6.1.2／2024/1/2など混在した日付を文章・CSVからまとめて検出し形式を統一。</li>
-      <li><a href="../xlsx-suushiki/">Excel数式の一覧化・棚卸しツール</a> — 数式が入ったセルをシート横断で一覧化し、エラー・他シート参照・外部参照の可能性を自動検出。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入ったセルをシート横断で一覧化し、エラー・他シート参照・外部参照の可能性を自動検出。</li>
       <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
       <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
       <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
@@ -200,7 +200,7 @@ html[lang=en] .en-only{display:block}
       <li><a href="../csv-group-split/">CSV Group Splitter</a> — Split one CSV into files grouped by a column's value, downloaded as a single ZIP.</li>
       <li><a href="../csv-master-replace/">CSV Code → Name Lookup Converter</a> — Join a data CSV's code column against a lookup-table CSV to add name columns in bulk.</li>
       <li><a href="../wareki-toitsu/">Unify Mixed Japanese-Era / Western Dates</a> — Find and unify mixed date formats across text or a CSV.</li>
-      <li><a href="../xlsx-suushiki/">Excel Formula Lister</a> — List every formula cell across a workbook's sheets, flagging errors, cross-sheet refs and possible external links.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell across a workbook's sheets, flagging errors, cross-sheet refs and possible external links.</li>
       <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
       <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
       <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used — formulas, names, validation, formatting and charts.</li>
@@ -516,8 +516,8 @@ function mergePositional(files,opts){
    UI
    ===================================================================== */
 var T={
- ja:{title:"複数Excelファイルの結合ツール",
-  sub:"複数の.xlsxファイルを、1枚ずつCSVに書き出す手間なくそのまま読み込み、1つのCSVに結合します。見出し名で列をそろえ、日付・時刻のセルは表示どおりの形式に変換します。ファイルはどこにも送信されません。",
+ ja:{title:"Excelファイルを複数まとめて1つに",
+  sub:"1枚ずつCSVに書き出す手間をかけたくないときに。複数の.xlsxファイルをそのまま読み込み、1つのCSVに結合します。見出し名で列をそろえ、日付・時刻のセルは表示どおりの形式に変換します。ファイルはどこにも送信されません。",
   dropzoneText:"ここに複数のExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
   dropzoneHint:"1つずつでも追加できます。複数シートがあるファイルは、後から使うシートを選べます。ファイルは選択した端末の中だけで処理されます。",
   fileListHeading:"追加したファイル",
@@ -540,8 +540,8 @@ var T={
   errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
   errEmpty:"シートにデータがありません",
   feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
- en:{title:"Multi-Excel Merge Tool",
-  sub:"Merge several .xlsx files directly into one CSV, without exporting each one to CSV first. Columns are aligned by header name, and date/time cells are converted to readable text. Nothing is uploaded.",
+ en:{title:"Merge multiple Excel files into one",
+  sub:"Don't want to export each one to CSV first? Merge several .xlsx files directly into one CSV. Columns are aligned by header name, and date/time cells are converted to readable text. Nothing is uploaded.",
   dropzoneText:"Drag and drop several Excel (.xlsx) files here, or click to choose multiple files",
   dropzoneHint:"You can also add files one at a time. Files with multiple sheets let you pick which one to use. Everything happens on this device.",
   fileListHeading:"Added files",
