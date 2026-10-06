@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://tenohira-tools.github.io/</loc><lastmod>2026-10-06</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/config-convert/</loc><lastmod>2026-10-02</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/csv-fix/</loc><lastmod>2026-10-02</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/csv-group-split/</loc><lastmod>2026-10-03</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/csv-master-replace/</loc><lastmod>2026-10-03</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/config-convert/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/csv-fix/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/csv-group-split/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/csv-master-replace/</loc><lastmod>2026-10-06</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/csv-merge/</loc><lastmod>2026-10-02</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/csv-seiri/</loc><lastmod>2026-10-02</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/hyoki-yure/</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/csv-seiri/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/hyoki-yure/</loc><lastmod>2026-10-06</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/kotsuhi-seisan/</loc><lastmod>2026-09-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/receipt-sheet/</loc><lastmod>2026-09-30</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/regex-ja/</loc><lastmod>2026-09-28</lastmod></url>
@@ -15,12 +15,12 @@
   <url><loc>https://tenohira-tools.github.io/shorui-scan/</loc><lastmod>2026-09-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/timezone-planner/</loc><lastmod>2026-09-27</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/tozan-checklist/</loc><lastmod>2026-09-27</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/wareki-toitsu/</loc><lastmod>2026-10-03</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/wareki-toitsu/</loc><lastmod>2026-10-06</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/wareki/</loc><lastmod>2026-10-01</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-ketsugo/</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-link/</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-merge/</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-namae/</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-omoi/</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-suushiki/</loc><lastmod>2026-10-05</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-ketsugo/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-link/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-merge/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-namae/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-omoi/</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-suushiki/</loc><lastmod>2026-10-06</lastmod></url>
 </urlset>
