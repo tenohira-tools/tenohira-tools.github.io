@@ -575,6 +575,36 @@
       },
       "total": 7,
       "note": "xlsx-omoi公開前の取得。前回2026-10-04 20:12Z比で全ページ変化なし（トップ7のまま、個別21ページは全て0）。health.md（10-05付22ページ・問題0件）・計測タグ（全ページにあり）・表記（grep「追跡なし」）いずれも不備なし。改善対象になる閲覧増加ページが無いため、backlog最上位のxlsx-omoi（Excelが重い原因の内訳診断）を新規公開。"
+    },
+    {
+      "date": "2026-10-07T00:00:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 8,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0,
+        "/xlsx-ketsugo/": 0,
+        "/xlsx-link/": 0,
+        "/xlsx-merge/": 0,
+        "/xlsx-namae/": 0,
+        "/xlsx-omoi/": 0,
+        "/xlsx-suushiki/": 0
+      },
+      "note": "前回10-06 20:18Z比で変化なし（サイト全体累計8、全22ページ個別は引き続き0件）。健全性チェック・計測タグ・表記いずれも不備なし。新規公開のxlsx-jouken（条件付き書式の棚卸し削除ツール）はsitemap未反映のためこの回の計測対象に含まれず、次回から計測対象に加わる。"
     }
   ],
   "weekly": [

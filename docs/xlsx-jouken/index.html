@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>条件付き書式が増えすぎて重い・消せない：棚卸し削除ツール | てのひらツール</title>
+<meta name="description" content="コピペのたびに条件付き書式のルールが勝手に増える、「ルールの管理」を開いても範囲が重なって何が効いているか分からない、ファイルが重い——というときに。Excel(.xlsx/.xlsm)の条件付き書式ルールを全シート横断で一覧表示し、範囲が重複しているルール・行全体や列全体を対象にした重くなりやすいルール・書式の参照先が壊れているルールを自動で見分けます。不要なルールを選んで削除した新しいファイルをその場で書き出し。ブラウザ内だけで処理し、ファイルは送信されません。List every conditional formatting rule across all sheets of an Excel (.xlsx) file, flag overlapping ranges, whole-row/column rules and broken style references, and remove the ones you choose — entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-jouken/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:110px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.err .n{color:var(--diff)}
+.quickRow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+button.quick{font:inherit;font-size:.85rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+button.quick:hover{border-color:var(--accent);color:var(--accent)}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:280px;word-break:break-all}
+td.center{text-align:center;white-space:nowrap}
+tr.flagged{background:var(--diff-bg)}
+td input[type=checkbox]{width:auto;min-height:auto}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px;margin-right:10px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:11px 18px;cursor:pointer;min-height:44px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</h1>
+    <p class="sub" data-i="sub">コピペのたびにルールが勝手に増える、「ルールの管理」を開いても範囲が重なって何が効いているか分からない——というExcel(.xlsx/.xlsm)ファイルの条件付き書式を、全シート横断で一覧表示します。範囲が重複しているルール、行全体・列全体を対象にした重くなりやすいルール、書式の参照先が壊れているルールを自動で見分け、選んだルールを削除した新しいファイルをその場で書き出せます。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。すべてのシートの条件付き書式ルールをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">条件付き書式ルールの集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">「範囲が重複」は、同じシート内の別々のルール設定（別の範囲指定）同士がセル範囲で重なっている場合です。優先順位次第で片方が常に隠れたり、思った通りに表示されなかったりする原因になりやすいです。</p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="listHeading">ルールの一覧</h2>
+  <div class="quickRow">
+    <button type="button" class="quick" id="selOverlap" data-i="selOverlap">範囲が重複するルールを選択</button>
+    <button type="button" class="quick" id="selWhole" data-i="selWhole">行全体・列全体を選択</button>
+    <button type="button" class="quick" id="selBroken" data-i="selBroken">書式参照なしを選択</button>
+    <button type="button" class="quick" id="selNone" data-i="selNone">選択を解除</button>
+  </div>
+  <div id="listBox"></div>
+  <div class="warnBox" id="warnBox" style="display:none" data-i="warnText">選んだルールは書式（色・太字など）の設定だけが削除されます。セルの値・数式は変わりません。削除後はExcelで開いて見た目を確認してください。元のファイルは変更されず、新しいファイルとして書き出されます。</div>
+  <p style="margin-top:12px">
+    <button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">選んだルールを削除したファイルを書き出す</button>
+    <button type="button" class="secondary" id="csvBtn" data-i="csvBtn">一覧をCSVで書き出す</button>
+  </p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>ルールの一覧で、各ルールの対象シート・範囲・種類・条件・優先度と、「範囲が重複」「行全体・列全体」「書式参照なし」「StopIfTrueあり」の旗を確認します。</li>
+      <li>削除したいルールにチェックを入れます（クイック選択ボタンで一括選択も可能）。</li>
+      <li>「選んだルールを削除したファイルを書き出す」でダウンロードします。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. コピペのたびに条件付き書式が勝手に増えるのはなぜですか？</h3>
+    <p>A. Excelはセルをコピーすると、そのセルに設定されていた条件付き書式も一緒にコピーします。参照をずらしながら何度も貼り付けを繰り返すと、本来1つで足りるはずのルールが少しずつ範囲の違う別ルールとして増殖し、「ルールの管理」ダイアログが数十〜数百行になることがあります。組み込みの管理画面は一覧性が低く、どの範囲が重なっているかも分かりにくいため、このツールでは全シートのルールをまとめて一覧化し、範囲が重なっているものを自動で見分けられるようにしています。</p>
+    <h3>Q. 「範囲が重複」「行全体・列全体」「書式参照なし」「StopIfTrueあり」はそれぞれ何を意味しますか？</h3>
+    <p>A. 「範囲が重複」は、同じシート内の別のルール設定同士が対象セル範囲で重なっている状態です。優先度の低い方が常に隠れていたり、意図しない見た目になっていたりする原因になります。「行全体・列全体」は対象範囲が「A:A」「1:1」のように行・列まるごと指定されているルールで、実際にデータがある範囲を大きく超えて評価され続けるため、ファイルが重くなる・再計算が遅くなる原因になりやすいです。「書式参照なし」は、ルールが参照している書式定義（dxf）がファイル内に見当たらない状態で、削除し忘れた古いルールの残骸である可能性があります。「StopIfTrueあり」は、そのルールの条件が成立した場合に同じ範囲の後続ルールの評価を打ち切る設定で、他のルールが効いていないように見える原因になることがあります。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。また、Excel 2010以降で追加された一部の拡張書式（新しい種類のアイコンセットなど、ファイル内の拡張領域(extLst)にのみ保存されるもの）は、現在のバージョンでは一覧に含まれません。</p>
+    <h3>Q. ルールを削除すると、セルの値や数式は変わりますか？</h3>
+    <p>A. 変わりません。削除されるのは条件付き書式のルール（表示上の色・太字などの切り替え設定）だけです。セルの値・数式・通常の書式（罫線やフォントなど）はそのまま残ります。</p>
+    <h3>Q. 「種類」「条件」はどうやって判定していますか？</h3>
+    <p>A. ルールに保存されているtype属性・operator属性・formula要素などを読み取って、日本語の短い説明に変換しています。カラースケール・データバー・アイコンセットは内部の詳細な設定までは表示せず、種類のみを表示します。断定的な判定ではないため、重要なファイルでは削除後にExcelの「ルールの管理」で最終確認してください。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_条件書式整理済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. シートの構成やセルの値、他の書式は変わりますか？</h3>
+    <p>A. 変わりません。シート・セルの値・数式・通常の書式・グラフ・画像など、条件付き書式のルール以外のすべての部分はそのままコピーされます。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>Check each rule's sheet, range, type, condition, priority, and the "overlapping range", "whole row/column", "missing style reference" and "stops further rules" flags.</li>
+      <li>Tick the rules you want to remove (the quick-select buttons select several at once).</li>
+      <li>Click "Build a file with the selected rules removed" to download the cleaned copy — your original file is untouched.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Why do conditional formatting rules keep multiplying when I copy and paste?</h3>
+    <p>A. Excel copies a cell's conditional formatting along with its value. Paste the same style around the sheet enough times, with the reference shifting slightly each time, and one rule that should have covered the whole range turns into dozens of near-duplicate rules with slightly different ranges — Excel's own "Manage Rules" dialog can grow to hundreds of rows. That built-in dialog is hard to scan and doesn't show you which ranges overlap, so this tool lists every rule across every sheet at once and flags the overlapping ones automatically.</p>
+    <h3>Q. What do "overlapping range", "whole row/column", "missing style reference" and "stops further rules" mean?</h3>
+    <p>A. "Overlapping range" means two separate rule definitions on the same sheet cover intersecting cells — the lower-priority one may always be hidden or the result may look wrong. "Whole row/column" flags a rule whose range is an entire row or column (like A:A or 1:1), which gets evaluated far beyond where your data actually is and is a common cause of slowdowns and file bloat. "Missing style reference" means the rule points at a style definition (dxf) that no longer exists in the file — often a leftover from a rule that was half-deleted. "Stops further rules" means that when this rule's condition is true, Excel stops evaluating later rules on the same range, which can make other rules look like they're "not working".</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported. Some newer rule variants that Excel 2010+ stores only in the file's extension area (extLst) — such as certain icon-set options — are not currently listed.</p>
+    <h3>Q. Does removing a rule change cell values or formulas?</h3>
+    <p>A. No. Only the conditional formatting rule (the conditional color/bold/etc. switch) is removed. Cell values, formulas and regular formatting (borders, fonts) are untouched.</p>
+    <h3>Q. How is the "type" / "condition" determined?</h3>
+    <p>A. It reads the rule's stored type, operator and formula and converts them into a short description. Color scales, data bars and icon sets are shown by type only, without their detailed settings. These are text-pattern conversions, not certainties — double-check in Excel's "Manage Rules" after removing anything from an important file.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_cleaned" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Does this change the sheets, cell values, or other formatting?</h3>
+    <p>A. No. Everything except the conditional formatting rules — sheets, cell values, formulas, regular formatting, charts, images — is carried over unchanged.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used — formulas, names, validation, formatting and charts.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"コピペのたびに条件付き書式が勝手に増えるのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"セルをコピーすると条件付き書式も一緒にコピーされ、参照がずれながら繰り返し貼り付けると少しずつ範囲の違う別ルールとして増殖します。このツールは全シートのルールを一覧化し、範囲が重なっているものを自動で見分けます。"}},
+    {"@type":"Question","name":"「範囲が重複」「行全体・列全体」はどういう意味ですか？","acceptedAnswer":{"@type":"Answer","text":"「範囲が重複」は別々のルール設定が同じセル範囲で重なっている状態で、優先度の低い方が隠れる原因になります。「行全体・列全体」は対象範囲がA:Aや1:1のように行・列まるごと指定されたルールで、ファイルが重くなる原因になりやすいです。"}},
+    {"@type":"Question","name":"ルールを削除すると、セルの値や数式は変わりますか？","acceptedAnswer":{"@type":"Answer","text":"変わりません。削除されるのは条件付き書式のルールだけで、セルの値・数式・通常の書式はそのまま残ります。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。変更後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi
+   (no external libraries; only standard browser APIs:
+   DecompressionStream/TextDecoder/TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+function buildStoreZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  files.forEach(function(f){
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var size=f.bytes.length;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,0,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,size,true); dv.setUint32(22,size,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,f.bytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,0,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,size,true); cdv.setUint32(24,size,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + f.bytes.length;
+  });
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+/* Same findTags as xlsx-namae, plus the raw open-tag text (openText) so a
+   partially-edited element (some children removed, not all) can be
+   rebuilt from openText + newInner + its literal close tag. */
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+
+/* =====================================================================
+   Conditional-formatting parsing: every <conditionalFormatting sqref=…>
+   block (per sheet) and the <cfRule> elements inside it.
+   ===================================================================== */
+var MAXROW=1048576, MAXCOL=16384; /* Excel 2007+ sheet limits */
+function parseDxfCount(stylesXml){
+  if(!stylesXml) return 0;
+  var blocks=findTags(stylesXml,"dxfs");
+  if(!blocks.length) return 0;
+  return findTags(blocks[0].inner||"","dxf").length;
+}
+function parseCellRefLoose(ref){
+  var m=/^\$?([A-Z]+)\$?([0-9]+)$/.exec(ref||""); if(!m) return null;
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+function parseSqref(sqref){
+  return (sqref||"").split(/\s+/).filter(Boolean).map(function(tok){
+    var mCol=/^\$?([A-Z]+):\$?([A-Z]+)$/.exec(tok);
+    if(mCol){ var c1=colLetterToIndex(mCol[1]), c2=colLetterToIndex(mCol[2]); if(c1>c2){var t=c1;c1=c2;c2=t;} return {c1:c1,r1:0,c2:c2,r2:MAXROW-1,wholeColRow:true}; }
+    var mRow=/^\$?([0-9]+):\$?([0-9]+)$/.exec(tok);
+    if(mRow){ var r1=parseInt(mRow[1],10)-1,r2=parseInt(mRow[2],10)-1; if(r1>r2){var t2=r1;r1=r2;r2=t2;} return {c1:0,r1:r1,c2:MAXCOL-1,r2:r2,wholeColRow:true}; }
+    var parts=tok.split(":");
+    var a=parseCellRefLoose(parts[0]), b=parts[1]?parseCellRefLoose(parts[1]):a;
+    if(!a||!b) return null;
+    return {c1:Math.min(a.col,b.col), r1:Math.min(a.row,b.row), c2:Math.max(a.col,b.col), r2:Math.max(a.row,b.row), wholeColRow:false};
+  }).filter(Boolean);
+}
+function rectsOverlap(a,b){ return a.r1<=b.r2 && a.r2>=b.r1 && a.c1<=b.c2 && a.c2>=b.c1; }
+function tokensOverlap(ta,tb){
+  for(var i=0;i<ta.length;i++) for(var j=0;j<tb.length;j++) if(rectsOverlap(ta[i],tb[j])) return true;
+  return false;
+}
+function parseCfBlocks(sheetXml){
+  var blocks=findTags(sheetXml,"conditionalFormatting");
+  var parsed=blocks.map(function(b,bi){
+    var inner=b.inner||"";
+    var rules=findTags(inner,"cfRule").map(function(r,ri){
+      var formulas=findTags(r.inner||"","formula").map(function(f){return decodeXmlEntities(f.inner||"")});
+      return {
+        blockIdx:bi, ruleIdx:ri,
+        type:r.attrs.type||"", operator:r.attrs.operator||"",
+        priority:r.attrs.priority!==undefined?parseInt(r.attrs.priority,10):null,
+        stopIfTrue:(r.attrs.stopIfTrue==="1"||r.attrs.stopIfTrue==="true"),
+        dxfId:r.attrs.dxfId!==undefined?parseInt(r.attrs.dxfId,10):null,
+        text:r.attrs.text!==undefined?r.attrs.text:null,
+        timePeriod:r.attrs.timePeriod||null,
+        rank:r.attrs.rank!==undefined?parseInt(r.attrs.rank,10):null,
+        percent:r.attrs.percent==="1", bottom:r.attrs.bottom==="1",
+        aboveAverage:r.attrs.aboveAverage, stdDev:r.attrs.stdDev||null,
+        formulas:formulas,
+        rawStart:r.start, rawEnd:r.end
+      };
+    });
+    return {blockIdx:bi, sqref:b.attrs.sqref||"", rawStart:b.start, rawEnd:b.end,
+      openText:b.openText, innerText:inner, rules:rules, overlap:false, wholeColRow:false};
+  });
+  var tokensByBlock=parsed.map(function(b){return parseSqref(b.sqref)});
+  for(var i=0;i<parsed.length;i++){
+    parsed[i].wholeColRow=tokensByBlock[i].some(function(t){return t.wholeColRow});
+    for(var j=i+1;j<parsed.length;j++){
+      if(tokensOverlap(tokensByBlock[i],tokensByBlock[j])){ parsed[i].overlap=true; parsed[j].overlap=true; }
+    }
+  }
+  return parsed;
+}
+async function parseXlsxCF(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  var stylesEntry=byName["xl/styles.xml"];
+  var dxfCount=parseDxfCount(stylesEntry?dec.decode(stylesEntry.bytes):"");
+  var sheets=sheetList.map(function(s,sheetIdx){
+    var entry=byName[s.path];
+    var xml=entry?dec.decode(entry.bytes):"";
+    return {sheetIdx:sheetIdx, name:s.name, path:s.path, xml:xml, blocks:parseCfBlocks(xml)};
+  });
+  return {entries:entries, sheets:sheets, dxfCount:dxfCount};
+}
+function buildCleanedXlsx(parseResult, removeSet){
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var patchedByPath={};
+  parseResult.sheets.forEach(function(sh){
+    var hasAny=sh.blocks.some(function(b){ return b.rules.some(function(r){ return removeSet.has(sh.sheetIdx+":"+b.blockIdx+":"+r.ruleIdx); }); });
+    if(!hasAny) return;
+    var newXml=sh.xml;
+    var blocksSorted=sh.blocks.slice().sort(function(a,b){return b.rawStart-a.rawStart});
+    blocksSorted.forEach(function(blk){
+      var removedAny=blk.rules.some(function(r){ return removeSet.has(sh.sheetIdx+":"+blk.blockIdx+":"+r.ruleIdx); });
+      if(!removedAny) return;
+      var keepCount=blk.rules.filter(function(r){ return !removeSet.has(sh.sheetIdx+":"+blk.blockIdx+":"+r.ruleIdx); }).length;
+      if(keepCount===0){
+        newXml=newXml.slice(0,blk.rawStart)+newXml.slice(blk.rawEnd);
+        return;
+      }
+      var toRemove=blk.rules.filter(function(r){ return removeSet.has(sh.sheetIdx+":"+blk.blockIdx+":"+r.ruleIdx); })
+        .sort(function(a,b){return b.rawStart-a.rawStart});
+      var newInner=blk.innerText;
+      toRemove.forEach(function(r){ newInner=newInner.slice(0,r.rawStart)+newInner.slice(r.rawEnd); });
+      var newBlockText=blk.openText+newInner+"</conditionalFormatting>";
+      newXml=newXml.slice(0,blk.rawStart)+newBlockText+newXml.slice(blk.rawEnd);
+    });
+    patchedByPath[sh.path]=enc.encode(newXml);
+  });
+  var outFiles=parseResult.entries.map(function(e){
+    if(patchedByPath[e.name]) return {name:e.name, bytes:patchedByPath[e.name]};
+    return {name:e.name, bytes:e.bytes};
+  });
+  return buildStoreZip(outFiles);
+}
+
+/* =====================================================================
+   Human-readable rule summaries (ja/en)
+   ===================================================================== */
+var OPSYM={equal:"=",notEqual:"≠",greaterThan:">",greaterThanOrEqual:"≥",lessThan:"<",lessThanOrEqual:"≤"};
+var TIME_LABEL={
+ ja:{today:"今日",yesterday:"昨日",tomorrow:"明日",last7Days:"過去7日間",thisWeek:"今週",lastWeek:"先週",nextWeek:"来週",thisMonth:"今月",lastMonth:"先月",nextMonth:"来月"},
+ en:{today:"today",yesterday:"yesterday",tomorrow:"tomorrow",last7Days:"last 7 days",thisWeek:"this week",lastWeek:"last week",nextWeek:"next week",thisMonth:"this month",lastMonth:"last month",nextMonth:"next month"}
+};
+function ruleConditionText(r,lang){
+  var f0=r.formulas[0]!==undefined?r.formulas[0]:"", f1=r.formulas[1]!==undefined?r.formulas[1]:"";
+  switch(r.type){
+    case "cellIs":
+      var sym=OPSYM[r.operator]||r.operator||"";
+      if(r.operator==="between"||r.operator==="notBetween"){
+        var rangeTxt=f0+(lang==="ja"?" 〜 ":" ~ ")+f1;
+        return (lang==="ja"?"値が ":"value ")+rangeTxt+(r.operator==="notBetween"?(lang==="ja"?" の範囲外":" (outside)"):"");
+      }
+      return (lang==="ja"?"値 ":"value ")+sym+" "+f0;
+    case "expression": return (lang==="ja"?"数式: ":"formula: ")+f0;
+    case "duplicateValues": return lang==="ja"?"重複する値":"duplicate values";
+    case "uniqueValues": return lang==="ja"?"一意の値":"unique values";
+    case "top10":
+      var n=r.rank!==null?r.rank:"?";
+      if(lang==="ja") return (r.bottom?"下位 ":"上位 ")+n+(r.percent?"%":"件");
+      return (r.bottom?"bottom ":"top ")+n+(r.percent?"%":"");
+    case "aboveAverage":
+      var base=(r.aboveAverage==="0")?(lang==="ja"?"平均未満":"below average"):(lang==="ja"?"平均超":"above average");
+      return base+(r.stdDev?(lang==="ja"?"（標準偏差"+r.stdDev+"）":" (σ"+r.stdDev+")"):"");
+    case "containsText": return (lang==="ja"?"テキストを含む: ":"contains: ")+(r.text!==null?r.text:f0);
+    case "notContainsText": return (lang==="ja"?"テキストを含まない: ":"doesn't contain: ")+(r.text!==null?r.text:f0);
+    case "beginsWith": return (lang==="ja"?"先頭が一致: ":"begins with: ")+(r.text!==null?r.text:f0);
+    case "endsWith": return (lang==="ja"?"末尾が一致: ":"ends with: ")+(r.text!==null?r.text:f0);
+    case "containsBlanks": return lang==="ja"?"空白":"blank cells";
+    case "notContainsBlanks": return lang==="ja"?"空白でない":"non-blank cells";
+    case "containsErrors": return lang==="ja"?"エラー値":"error values";
+    case "notContainsErrors": return lang==="ja"?"エラー値でない":"non-error values";
+    case "timePeriod": return (lang==="ja"?"期間: ":"period: ")+(TIME_LABEL[lang][r.timePeriod]||r.timePeriod||"");
+    case "colorScale": return lang==="ja"?"カラースケール":"color scale";
+    case "dataBar": return lang==="ja"?"データバー":"data bar";
+    case "iconSet": return lang==="ja"?"アイコンセット":"icon set";
+    default: return r.type||"?";
+  }
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール",
+  sub:"コピペのたびにルールが勝手に増える、「ルールの管理」を開いても範囲が重なって何が効いているか分からない——というExcel(.xlsx/.xlsm)ファイルの条件付き書式を、全シート横断で一覧表示します。範囲が重複しているルール、行全体・列全体を対象にした重くなりやすいルール、書式の参照先が壊れているルールを自動で見分け、選んだルールを削除した新しいファイルをその場で書き出せます。元のファイルは変更しません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。すべてのシートの条件付き書式ルールをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"条件付き書式ルールの集計",
+  statsHint:"「範囲が重複」は、同じシート内の別々のルール設定（別の範囲指定）同士がセル範囲で重なっている場合です。優先順位次第で片方が常に隠れたり、思った通りに表示されなかったりする原因になりやすいです。",
+  statTotal:"ルール数",statSheets:"対象シート数",statOverlap:"範囲が重複",statWhole:"行全体・列全体",statBroken:"書式参照なし",
+  listHeading:"ルールの一覧",
+  selOverlap:"範囲が重複するルールを選択",selWhole:"行全体・列全体を選択",selBroken:"書式参照なしを選択",selNone:"選択を解除",
+  warnText:"選んだルールは書式（色・太字など）の設定だけが削除されます。セルの値・数式は変わりません。削除後はExcelで開いて見た目を確認してください。元のファイルは変更されず、新しいファイルとして書き出されます。",
+  buildBtn:"選んだルールを削除したファイルを書き出す",
+  buildBtnBusy:"書き出し中…",
+  csvBtn:"一覧をCSVで書き出す",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  colSel:"",colSheet:"シート",colRange:"範囲",colCondition:"条件",colPriority:"優先度",colFlags:"",
+  badgeOverlap:"範囲が重複",badgeWhole:"行/列全体",badgeBroken:"書式参照なし",badgeStop:"StopIfTrue",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護の可能性があります）",
+  errNone:"条件付き書式が見つかりませんでした（このファイルには条件付き書式が設定されていません）",
+  buildDone:"ダウンロードしました：",
+  csvHeaderSheet:"シート",csvHeaderRange:"範囲",csvHeaderType:"種類",csvHeaderCondition:"条件",csvHeaderPriority:"優先度",
+  csvHeaderStop:"StopIfTrue",csvHeaderOverlap:"範囲が重複",csvHeaderWhole:"行/列全体",csvHeaderBroken:"書式参照なし",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Clean up conditional formatting rules that keep piling up",
+  sub:"For Excel (.xlsx/.xlsm) files where conditional formatting rules keep multiplying from copy-paste, or where Excel's own \"Manage Rules\" dialog is too tangled to tell which overlapping range is actually winning. Lists every rule across every sheet, flags overlapping ranges, whole-row/column rules (a common cause of slowdowns) and rules whose style reference is broken, and lets you remove the ones you choose — downloading a cleaned copy. Your original file is untouched.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Every sheet's conditional formatting rules are extracted at once. Everything happens on this device.",
+  statsHeading:"Rule summary",
+  statsHint:"\"Overlapping range\" means two separate rule definitions on the same sheet cover intersecting cells — the lower-priority one may always be hidden or the result may look wrong.",
+  statTotal:"Rules",statSheets:"Sheets with rules",statOverlap:"Overlapping range",statWhole:"Whole row/column",statBroken:"Missing style ref",
+  listHeading:"Rules",
+  selOverlap:"Select overlapping ranges",selWhole:"Select whole row/column",selBroken:"Select missing style refs",selNone:"Clear selection",
+  warnText:"Removing a selected rule only removes its formatting switch (color, bold, etc.) — cell values and formulas are untouched. Re-open the file in Excel afterward to check the look. Your original file is untouched — the result downloads as a new file.",
+  buildBtn:"Build a file with the selected rules removed",
+  buildBtnBusy:"Building…",
+  csvBtn:"Export the list as CSV",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  colSel:"",colSheet:"Sheet",colRange:"Range",colCondition:"Condition",colPriority:"Priority",colFlags:"",
+  badgeOverlap:"overlap",badgeWhole:"whole row/col",badgeBroken:"missing style",badgeStop:"StopIfTrue",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, or it's password-protected)",
+  errNone:"No conditional formatting found in this file",
+  buildDone:"Downloaded: ",
+  csvHeaderSheet:"Sheet",csvHeaderRange:"Range",csvHeaderType:"Type",csvHeaderCondition:"Condition",csvHeaderPriority:"Priority",
+  csvHeaderStop:"StopIfTrue",csvHeaderOverlap:"Overlap",csvHeaderWhole:"Whole row/col",csvHeaderBroken:"Missing style",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"", loading:false, error:"", parseResult:null, selected:{}, building:false, buildMsg:""};
+
+function resetFile(){ state={fileName:"", loading:false, error:"", parseResult:null, selected:{}, building:false, buildMsg:""}; render(); }
+
+function addFile(file){
+  state={fileName:file.name, loading:true, error:"", parseResult:null, selected:{}, building:false, buildMsg:""};
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxCF(new Uint8Array(buf)); })
+    .then(function(result){ state.loading=false; state.parseResult=result; render(); })
+    .catch(function(){ state.loading=false; state.error=T[lang].errBad; render(); });
+}
+
+function flatRows(){
+  if(!state.parseResult) return [];
+  var out=[];
+  state.parseResult.sheets.forEach(function(sh){
+    sh.blocks.forEach(function(blk){
+      blk.rules.forEach(function(r){
+        var dxfMissing = r.dxfId!==null && (r.dxfId<0 || r.dxfId>=state.parseResult.dxfCount);
+        out.push({
+          key:sh.sheetIdx+":"+blk.blockIdx+":"+r.ruleIdx,
+          sheetName:sh.name, sqref:blk.sqref, rule:r,
+          overlap:blk.overlap, wholeColRow:blk.wholeColRow, dxfMissing:dxfMissing
+        });
+      });
+    });
+  });
+  return out;
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.parseResult){ h+="<span class='fMeta'>"+flatRows().length+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function renderStats(rows){
+  var sheetsSet={};
+  var overlap=0, whole=0, broken=0;
+  rows.forEach(function(r){
+    sheetsSet[r.sheetName]=true;
+    if(r.overlap) overlap++;
+    if(r.wholeColRow) whole++;
+    if(r.dxfMissing) broken++;
+  });
+  var items=[
+    [rows.length,T[lang].statTotal,""],
+    [Object.keys(sheetsSet).length,T[lang].statSheets,""],
+    [overlap,T[lang].statOverlap,overlap?"err":""],
+    [whole,T[lang].statWhole,""],
+    [broken,T[lang].statBroken,broken?"err":""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function escTrunc(s,max){ s=String(s); max=max||160; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function renderList(rows){
+  if(!rows.length){
+    $("listBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>";
+    $("buildBtn").disabled=true;
+    return;
+  }
+  var h="<div class='scroll'><table><thead><tr><th></th><th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colRange)+"</th><th>"+esc(T[lang].colCondition)+"</th><th>"+esc(T[lang].colPriority)+"</th><th></th></tr></thead><tbody>";
+  rows.forEach(function(r){
+    var flagged=r.overlap||r.dxfMissing;
+    h+="<tr class='"+(flagged?"flagged":"")+"' data-key='"+esc(r.key)+"'>";
+    h+="<td><input type='checkbox' class='rowSel' data-key='"+esc(r.key)+"' "+(state.selected[r.key]?"checked":"")+"></td>";
+    h+="<td>"+escTrunc(r.sheetName,30)+"</td>";
+    h+="<td class='mono'>"+escTrunc(r.sqref,60)+"</td>";
+    h+="<td class='mono'>"+escTrunc(ruleConditionText(r.rule,lang),120)+"</td>";
+    h+="<td class='center'>"+(r.rule.priority!==null?r.rule.priority:"")+"</td>";
+    var badges="";
+    if(r.overlap) badges+="<span class='badge diff'>"+esc(T[lang].badgeOverlap)+"</span>";
+    if(r.wholeColRow) badges+="<span class='badge warn'>"+esc(T[lang].badgeWhole)+"</span>";
+    if(r.dxfMissing) badges+="<span class='badge diff'>"+esc(T[lang].badgeBroken)+"</span>";
+    if(r.rule.stopIfTrue) badges+="<span class='badge'>"+esc(T[lang].badgeStop)+"</span>";
+    h+="<td>"+badges+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody></table></div>";
+  $("listBox").innerHTML=h;
+  var boxes=$("listBox").querySelectorAll(".rowSel");
+  for(var i=0;i<boxes.length;i++){
+    boxes[i].addEventListener("change",function(){
+      var key=this.getAttribute("data-key");
+      if(this.checked) state.selected[key]=true; else delete state.selected[key];
+      updateBuildState();
+    });
+  }
+  updateBuildState();
+}
+
+function selectedCount(){ return Object.keys(state.selected).length; }
+function updateBuildState(){
+  var n=selectedCount();
+  $("buildBtn").disabled = n===0 || state.building;
+  $("warnBox").style.display = n>0 ? "" : "none";
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.parseResult){
+    $("statsCard").style.display="none"; $("listCard").style.display="none";
+    return;
+  }
+  var rows=flatRows();
+  $("statsCard").style.display=""; $("listCard").style.display="";
+  renderStats(rows);
+  renderList(rows);
+  $("csvBtn").disabled=rows.length===0;
+}
+
+function suggestOutName(name){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(name);
+  if(!m) return name+"_条件書式整理済み.xlsx";
+  return m[1]+"_条件書式整理済み."+m[2].toLowerCase();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("selOverlap").addEventListener("click",function(){
+  flatRows().forEach(function(r){ if(r.overlap) state.selected[r.key]=true; });
+  renderList(flatRows());
+});
+$("selWhole").addEventListener("click",function(){
+  flatRows().forEach(function(r){ if(r.wholeColRow) state.selected[r.key]=true; });
+  renderList(flatRows());
+});
+$("selBroken").addEventListener("click",function(){
+  flatRows().forEach(function(r){ if(r.dxfMissing) state.selected[r.key]=true; });
+  renderList(flatRows());
+});
+$("selNone").addEventListener("click",function(){ state.selected={}; renderList(flatRows()); });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.parseResult || selectedCount()===0) return;
+  state.building=true; state.buildMsg=""; $("buildBtn").textContent=T[lang].buildBtnBusy; updateBuildState();
+  var removeSet=new Set(Object.keys(state.selected));
+  setTimeout(function(){
+    try{
+      var outBytes=buildCleanedXlsx(state.parseResult, removeSet);
+      var outName=suggestOutName(state.fileName);
+      var blob=new Blob([outBytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a"); a.href=url; a.download=outName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url)},2000);
+      state.buildMsg=T[lang].buildDone+outName;
+    }catch(err){
+      state.buildMsg=T[lang].errBad;
+    }
+    state.building=false; $("buildBtn").textContent=T[lang].buildBtn; updateBuildState();
+    $("buildMsg").textContent=state.buildMsg;
+  },0);
+});
+
+$("csvBtn").addEventListener("click",function(){
+  var rows=flatRows();
+  if(!rows.length) return;
+  var out=[[T[lang].csvHeaderSheet,T[lang].csvHeaderRange,T[lang].csvHeaderType,T[lang].csvHeaderCondition,T[lang].csvHeaderPriority,T[lang].csvHeaderStop,T[lang].csvHeaderOverlap,T[lang].csvHeaderWhole,T[lang].csvHeaderBroken]];
+  rows.forEach(function(r){
+    out.push([r.sheetName, r.sqref, r.rule.type, ruleConditionText(r.rule,lang), r.rule.priority!==null?r.rule.priority:"",
+      r.rule.stopIfTrue?"1":"0", r.overlap?"1":"0", r.wholeColRow?"1":"0", r.dxfMissing?"1":"0"]);
+  });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3);
+  bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var base=(state.fileName||"cf").replace(/\.[^.]+$/,"");
+  var a=document.createElement("a"); a.href=url; a.download=base+"_条件書式一覧.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  $("buildBtn").textContent=state.building?T[lang].buildBtnBusy:T[lang].buildBtn;
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -13,6 +13,8 @@
 
 ### 実施済みの記録
 
+（2026-10-07実施済み：条件付き書式の棚卸し削除ツール（xlsx-jouken）を公開。「条件付き書式 一覧 削除」「条件付き書式 勝手に増える コピペ 増殖」の2件をWebSearchで調査し、コピペのたびに範囲をずらしながらルールが増殖し「ルールの管理」ダイアログが肥大化する既知の問題に対し、組み込みダイアログでの手作業以外の無料ブラウザツールが見当たらなかったため着手。Excel（.xlsx/.xlsm）の条件付き書式ルールを全シート横断で一覧化し、範囲が重複しているルール・行全体や列全体を対象にした重くなりやすいルール・書式の参照先（dxfId）が壊れているルール・StopIfTrueありのルールを自動で見分け、選んだルールを削除した新しいファイルをその場で書き出す（元ファイルは変更しない）。一覧はCSV書き出しにも対応。xlsx-merge・xlsx-suushiki・xlsx-namae・xlsx-link・xlsx-ketsugo・xlsx-omoiの既存ZIP+XML読み込み処理を再利用し、新規実装はconditionalFormatting/cfRule要素の解析・範囲重複判定・部分削除時のXML再構築のみ。）
+
 （2026-10-06実施済み：改善：xlsx-suushiki・xlsx-mergeのtitle・meta description・h1・多言語辞書（ja/en）の先頭を困りごとの言い回しに変更（「引き継いだExcelの数式を一覧に」「Excelファイルを複数まとめて1つに」）。両ツールへリンクする他13ページの関連ツール欄・docs/index.htmlのツール名表記も新しい名前に統一。ローカルサーバー＋Playwright（ja-JPロケール／英語切替）で両ページと主要なリンク元ページの表示・JSエラー無しを確認。）
 
 （2026-10-06実施済み：改善：トップページ（docs/index.html）の「CSV・テキスト・データ整形」グループを「CSV・Excelのファイル処理」（csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・xlsx系6ツール）と「テキスト整形」（wareki-toitsu・hyoki-yure・config-convert・regex-ja）に分割し、15ツール全ての1行説明の先頭を「〜なときに」という困りごとの言い回しに書き直した。）
