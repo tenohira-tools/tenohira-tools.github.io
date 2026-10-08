@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>引き継いだExcelの数式を一覧に：棚卸し・エラーチェックツール | てのひらツール</title>
-<meta name="description" content="引き継いだExcel（.xlsx/.xlsm）ファイルの数式がどこに入っているか分からないときに。数式が入った全セルを、シート・セルごとにファイルを開かず一覧表示。エラー値（#REF!等）が残っているセル、他シートを参照しているセル、外部ファイル参照の可能性があるセルを自動で見分け、一覧をCSVでダウンロードできます。塗りつぶしコピーで作られた「共有数式」も、基準セルの数式から参照を復元して表示します。ブラウザ内だけで処理し、ファイルは送信されません。List every formula cell in an Excel file you inherited, without opening it — flags cached errors, cross-sheet references, and possible external-workbook links, entirely in your browser.">
-<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-suushiki/">
+<title>#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に：エラー値チェッカー | てのひらツール</title>
+<meta name="description" content="Excel（.xlsx/.xlsm）ファイルに#REF!・#N/A・#VALUE!・#DIV/0!などのエラー値が入ったセルがどこにあるか分からないときに。全シート・複数ファイルを横断して一覧表示し、エラーの種類ごとに件数を集計。それぞれの典型的な原因も表示し、一覧をCSVでダウンロードできます。ファイルを開かず、ブラウザ内だけで処理されます。List every cell with a cached error value (#REF!, #N/A, #VALUE!, #DIV/0! and more) across every sheet and file at once, with a per-type breakdown — entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-error/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
 @media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
@@ -36,25 +36,22 @@ select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offs
 .fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
 .fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
 .statGrid{display:flex;flex-wrap:wrap;gap:10px}
-.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:100px}
 .statBox .n{font-size:1.4rem;font-weight:700}
 .statBox .l{color:var(--muted);font-size:.82rem}
-.statBox.err .n{color:var(--diff)}
+.statBox.total .n{color:var(--diff)}
 .filterRow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;margin-bottom:10px}
 .filterRow label{display:flex;align-items:center;gap:6px}
-.filterRow input[type=checkbox]{width:auto;min-height:auto}
 .filterRow input[type=text]{min-width:200px}
 .scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
 table{width:100%;border-collapse:collapse;font-size:.86rem}
 th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
-td.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:360px;word-break:break-all}
-td.center{text-align:center}
-tr.isErr{background:var(--diff-bg)}
+td.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:320px;word-break:break-all}
+td.errType{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:700;color:var(--diff);white-space:nowrap}
+td.cause{color:var(--muted);max-width:260px}
 .badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .badge.derived{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
-.badge.arr{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
-.mark{color:var(--diff);font-weight:700}
 button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
 button.primary:disabled{opacity:.45;cursor:not-allowed}
 .about p,.about li{color:var(--fg);font-size:.95rem}
@@ -72,8 +69,8 @@ html[lang=en] .en-only{display:block}
 <p class="top"><a href="../">← てのひらツール</a></p>
 <header>
   <div>
-    <h1 data-i="title">引き継いだExcelの数式を一覧に</h1>
-    <p class="sub" data-i="sub">引き継いだファイルの数式がどこに入っているか分からないときに。数式が入ったセルを、ファイルを開かずシート・セルごとに一覧表示します。計算結果がエラーのまま残っているセル、他シートを参照しているセル、外部ファイルを参照している可能性があるセルを自動で見分けます。ファイルはどこにも送信されません。</p>
+    <h1 data-i="title">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</h1>
+    <p class="sub" data-i="sub">Excelファイルのどこにエラー値が残っているか分からないときに。全シート・複数ファイルを横断して、計算結果が#REF!・#N/A・#VALUE!などのエラー値になっているセルだけを一覧表示し、エラーの種類ごとに件数を集計します。それぞれの典型的な原因も表示します。ファイルはどこにも送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -84,7 +81,7 @@ html[lang=en] .en-only{display:block}
 <section class="card">
   <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
     <p data-i="dropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数可）</p>
-    <p class="hint" data-i="dropzoneHint">すべてのシートの数式セルをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。</p>
+    <p class="hint" data-i="dropzoneHint">すべてのシートのエラー値セルだけをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。</p>
   </div>
   <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
 </section>
@@ -95,9 +92,9 @@ html[lang=en] .en-only{display:block}
 </section>
 
 <section class="card" id="statsCard" style="display:none">
-  <h2 data-i="statsHeading">数式セルの集計</h2>
+  <h2 data-i="statsHeading">エラー値セルの集計</h2>
   <div class="statGrid" id="statGrid"></div>
-  <p class="hint" data-i="statsHint">「エラー」はExcelが最後に保存したときの計算結果。「他シート参照」「外部参照の可能性」は数式の文字列からの機械判定で、断定ではありません。</p>
+  <p class="hint" data-i="statsHint">Excelが最後に保存したときの計算結果（キャッシュ値）がエラー値そのものであるセルだけを数えています。再計算はしません。</p>
 </section>
 
 <section class="card" id="filterCard" style="display:none">
@@ -105,17 +102,13 @@ html[lang=en] .en-only{display:block}
   <div class="filterRow">
     <label id="fileFilterLabel" style="display:none"><span data-i="filterFile">ファイル：</span><select id="fileFilter"></select></label>
     <label><span data-i="filterSheet">シート：</span><select id="sheetFilter"></select></label>
+    <label><span data-i="filterType">エラー種類：</span><select id="typeFilter"></select></label>
     <label><input type="text" id="searchBox" data-i-ph="searchPh"></label>
-  </div>
-  <div class="filterRow">
-    <label><input type="checkbox" id="errOnly"><span data-i="errOnlyLabel">エラーのみ</span></label>
-    <label><input type="checkbox" id="crossOnly"><span data-i="crossOnlyLabel">他シート参照のみ</span></label>
-    <label><input type="checkbox" id="extOnly"><span data-i="extOnlyLabel">外部参照の可能性があるものだけ</span></label>
   </div>
 </section>
 
 <section class="card" id="resultCard" style="display:none">
-  <h2 data-i="resultHeading">数式セルの一覧</h2>
+  <h2 data-i="resultHeading">エラー値セルの一覧</h2>
   <p class="hint" id="resultCount"></p>
   <div id="resultBox"></div>
   <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">この一覧をCSVでダウンロード</button></p>
@@ -126,55 +119,55 @@ html[lang=en] .en-only{display:block}
     <h2>使い方とよくある質問</h2>
     <ol>
       <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル・複数シートも自動でまとめて読み込みます）。</li>
-      <li>集計欄で、数式セルの総数・エラー数・他シート参照数・外部参照の可能性がある数を確認します。</li>
-      <li>絞り込みで、特定のファイル・シートや「エラーのみ」などに絞って一覧を確認します。</li>
+      <li>集計欄で、エラー値セルの総数とエラー種類ごとの内訳を確認します。</li>
+      <li>絞り込みで、特定のファイル・シート・エラー種類に絞って一覧を確認します。</li>
       <li>必要な一覧を「CSVでダウンロード」で保存します（絞り込んだ内容がそのまま書き出されます）。</li>
     </ol>
+    <h3>Q. Ctrl+Hの「ブック全体」検索と何が違いますか？</h3>
+    <p>A. Ctrl+Hで「#REF!」などを検索すれば1件ずつは見つかりますが、1つのファイルしか調べられず、エラーの種類ごとの内訳も出ず、一覧をそのままCSVに保存することもできません。このツールは複数ファイル・複数シートをまとめて横断し、種類別の件数とシート・セル・数式の一覧を一度に出します。</p>
     <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
     <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
     <h3>Q. 対応しているファイル形式は？</h3>
     <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
-    <h3>Q. 「計算結果」はどこから出てきますか？再計算されますか？</h3>
-    <p>A. 再計算はしません。直近にExcel等で保存されたときに、数式の横に保存されていた計算結果（キャッシュされた値）をそのまま表示します。ファイルを開いて保存し直すと更新されます。保存されていない場合は空欄になります。</p>
-    <h3>Q. 「エラー」欄はどうやって判定していますか？</h3>
-    <p>A. セルに保存されている値が #REF!・#VALUE!・#DIV/0! のようなエラー値そのものである場合にチェックが付きます。数式の内容が間違っていそうでも、保存時のエラー値が残っていなければ検出できません。</p>
-    <h3>Q. 「共有数式」の扱いはどうなっていますか？</h3>
+    <h3>Q. エラーはどうやって判定していますか？再計算されますか？</h3>
+    <p>A. 再計算はしません。セルに保存されている値そのものが#REF!・#VALUE!・#DIV/0!などのエラー値である場合にだけ検出します。直近にExcel等で保存されたときのキャッシュ値を見ているため、ファイルを開いて保存し直すと結果が変わることがあります。数式の内容が間違っていそうでも、保存時のエラー値が残っていなければ検出できません。</p>
+    <h3>Q. 「原因」欄はどこまで信用できますか？</h3>
+    <p>A. エラーの種類ごとに一般的によくある原因を参考として表示しているだけで、実際の数式やデータを見て判定しているわけではありません。断定はできないため、最終的には数式バーで元の数式を確認してください。</p>
+    <h3>Q. 「共有数式」の数式が出ないことがあります</h3>
     <p>A. 同じ数式を下や右にコピー（フィルハンドルでの入力）すると、Excelは内部的に基準セルの数式だけを保存し、残りのセルには「基準セルの数式を使う」という印だけを付けます（共有数式）。このツールは基準セルの数式から、相対参照（$の付いていない部分）をセルの位置のずれ分だけ自動的にずらして復元して表示します。復元した数式には<span class="badge derived">推定</span>の印を付けます。名前付き範囲が絡む数式や非常に複雑な数式では、復元結果が実際と異なる場合があるため、重要な判断には元のExcelファイルで数式バーを直接確認してください。</p>
-    <h3>Q. 「他シート参照」「外部参照の可能性」はどうやって判定していますか？</h3>
-    <p>A. 数式の文字列を機械的に走査し、「シート名!」のような他シートを指す書き方や、「[1]」「[ファイル名.xlsx]」のような外部ワークブックによく使われる書き方が含まれているかで判定しています。文字列の形だけを見た簡易判定のため、誤って検出したり、逆に見逃したりすることがあります。外部参照が疑われるセルは、Excel側の「データ」タブの「リンクの編集」で確認することをおすすめします。</p>
-    <h3>Q. 配列数式やデータテーブルはどう表示されますか？</h3>
-    <p>A. 数式の種類ごとに印を付けて区別します。配列数式（CSE数式・動的配列数式）は結果が複数セルに広がる場合がありますが、このツールは数式が保存されているセル（通常は先頭セル）だけを一覧に出します。</p>
+    <h3>Q. 数式が無いのにエラーと判定されるセルがあります</h3>
+    <p>A. 通常はほぼ起きませんが、他のツールで書き出されたファイルなどでは、数式を持たないセルにエラー値だけが保存されている場合があります。その場合は一覧の数式欄が空になります。</p>
     <h3>Q. マクロやグラフ、セルの色・罫線などの書式は読み取れますか？</h3>
-    <p>A. いいえ。このツールは数式と計算結果の文字列だけを読み取ります。マクロ・グラフ・画像・セルの色や罫線は扱いません。</p>
+    <p>A. いいえ。このツールはエラー値を持つセルの位置・数式・計算結果の文字列だけを読み取ります。マクロ・グラフ・画像・セルの色や罫線は扱いません。</p>
     <h3>Q. 大きなファイルや多数のファイルは扱えますか？</h3>
-    <p>A. ブラウザのメモリ上で処理するため、数式セルの合計が数万件程度までを想定しています。非常に多い場合は読み込み・表示が遅くなることがあります。一覧の表示は先頭の一定件数のみに制限されることがありますが、ダウンロードするCSVには絞り込み後の全件が含まれます。</p>
+    <p>A. ブラウザのメモリ上で処理するため、エラー値セルの合計が数万件程度までを想定しています。一覧の表示は先頭の一定件数のみに制限されることがありますが、ダウンロードするCSVには絞り込み後の全件が含まれます。</p>
   </div>
   <div class="en-only">
     <h2>How to use &amp; FAQ</h2>
     <ol>
       <li>Drag and drop Excel (.xlsx/.xlsm) files into the box above, or click it to choose one or more (every sheet in every file is scanned automatically).</li>
-      <li>Check the summary panel for the total number of formula cells, cached errors, cross-sheet references, and possible external references.</li>
-      <li>Use the filters to narrow the list down to one file, one sheet, errors only, and so on.</li>
+      <li>Check the summary panel for the total number of error cells and the breakdown by error type.</li>
+      <li>Use the filters to narrow the list down to one file, one sheet, or one error type.</li>
       <li>Click "Download as CSV" to save the list — exactly what the filters currently show.</li>
     </ol>
+    <h3>Q. How is this different from Find &amp; Replace across the whole workbook?</h3>
+    <p>A. Ctrl+H can find "#REF!" one match at a time, but only in one file, with no breakdown by error type and no way to export the list as CSV. This tool scans multiple files and sheets at once and gives you a per-type count plus a full sheet/cell/formula list in one pass.</p>
     <h3>Q. Is it safe to use this on my files?</h3>
     <p>A. Yes. Files are never uploaded to a server — everything is read and analyzed inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
     <h3>Q. Which file formats are supported?</h3>
     <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported; a failed file shows an error next to it.</p>
-    <h3>Q. Where does the "result" value come from? Is it recalculated?</h3>
-    <p>A. Nothing is recalculated. It shows the cached value Excel last saved alongside the formula. Re-saving the file in Excel updates it; if no cached value was ever saved, the cell shows blank.</p>
-    <h3>Q. How is "error" detected?</h3>
-    <p>A. It's checked when the cell's stored value is itself an error value such as #REF!, #VALUE!, or #DIV/0!. A formula that looks wrong but whose cached result isn't an error value won't be flagged.</p>
-    <h3>Q. How are "shared formulas" handled?</h3>
-    <p>A. When a formula is copied down or across (e.g. with the fill handle), Excel internally stores the full formula only on one anchor cell and marks the rest as "use the anchor's formula". This tool reconstructs the formula for those other cells by shifting the anchor's relative references ($-free parts) by the row/column offset, and marks reconstructed formulas with a <span class="badge derived">derived</span> badge. Formulas involving named ranges or unusually complex expressions may be reconstructed incorrectly, so double-check anything important directly in Excel's formula bar.</p>
-    <h3>Q. How are "cross-sheet" and "possible external reference" detected?</h3>
-    <p>A. By scanning the formula text for patterns like "SheetName!" (cross-sheet) or "[1]" / "[filename.xlsx]" (common external-workbook reference syntax). This is a simple text-pattern check, so it can both over- and under-detect. For anything flagged as a possible external reference, check Excel's Data → Edit Links to be sure.</p>
-    <h3>Q. What about array formulas and data tables?</h3>
-    <p>A. Each formula's type is labeled. Array formulas (legacy CSE or dynamic arrays) may spill results across multiple cells, but only the cell where the formula itself is stored (usually the top-left one) is listed.</p>
+    <h3>Q. How is an error detected? Is anything recalculated?</h3>
+    <p>A. Nothing is recalculated. A cell is flagged only when its own stored value is itself an error value such as #REF!, #VALUE! or #DIV/0! — the cached result Excel last saved. Re-saving the file in Excel can change the result. A formula that looks wrong but whose cached result isn't an error value won't be flagged.</p>
+    <h3>Q. How reliable is the "likely cause" column?</h3>
+    <p>A. It shows a generic, commonly-cited cause for each error type, not an analysis of your actual formula or data. Treat it as a starting point and check the formula bar for anything important.</p>
+    <h3>Q. Why does the formula column sometimes stay blank for a "shared formula"?</h3>
+    <p>A. When a formula is copied down or across (e.g. with the fill handle), Excel internally stores the full formula only on one anchor cell and marks the rest as "use the anchor's formula". This tool reconstructs the formula for those other cells by shifting the anchor's relative references by the row/column offset, marking reconstructed formulas with a <span class="badge derived">derived</span> badge. Complex or name-range-based formulas may be reconstructed incorrectly.</p>
+    <h3>Q. I see an error cell with no formula at all</h3>
+    <p>A. Rare, but files written by other tools can sometimes store an error value in a cell with no formula attached — the formula column is left blank for those rows.</p>
     <h3>Q. Are macros, charts, or cell formatting read?</h3>
-    <p>A. No — only formula text and cached result text are read. Macros, charts, images, colors and borders are ignored.</p>
+    <p>A. No — only the position, formula text and cached result of error-valued cells are read. Macros, charts, images, colors and borders are ignored.</p>
     <h3>Q. Can it handle large or many files?</h3>
-    <p>A. Everything runs in browser memory, built for up to roughly tens of thousands of formula cells in total. The on-screen list may be capped to the first batch of rows for performance, but the downloaded CSV always contains every row matching the current filters.</p>
+    <p>A. Everything runs in browser memory, built for up to roughly tens of thousands of error cells in total. The on-screen list may be capped for performance, but the downloaded CSV always contains every row matching the current filters.</p>
   </div>
 </section>
 
@@ -182,10 +175,8 @@ html[lang=en] .en-only{display:block}
   <div class="ja-only">
     <h2>関連ツール</h2>
     <ul>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルを一覧化（エラーに限らず全件）。他シート参照・外部参照の可能性も検出。</li>
       <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
-      <li><a href="../csv-master-replace/">CSVのコード→名称 一括変換ツール</a> — データCSVのコード列を対応表CSVと突き合わせて名称列を一括追加。</li>
-      <li><a href="../csv-merge/">複数CSVの結合ツール</a> — 文字コードがバラバラな複数のCSVを自動判定してから1つに結合。</li>
-      <li><a href="../csv-group-split/">CSVを列の値ごとに自動分割</a> — 選んだ列の値ごとにグループ分けして複数ファイルに分け、ZIPでまとめてダウンロード。</li>
       <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
       <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
       <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
@@ -193,16 +184,13 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。</li>
       <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。反復計算ONで警告が出ないファイルも検出。</li>
       <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
-      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
     </ul>
   </div>
   <div class="en-only">
     <h2>Related tools</h2>
     <ul>
+      <li><a href="../xlsx-suushiki/">List every formula in an Excel file</a> — Lists every formula cell, not just errors, and flags cross-sheet / possible external references.</li>
       <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
-      <li><a href="../csv-master-replace/">CSV Code → Name Lookup Converter</a> — Join a data CSV against a lookup-table CSV by key column.</li>
-      <li><a href="../csv-merge/">Multi-CSV Merge Tool</a> — Merge several CSV files that may each use a different character encoding.</li>
-      <li><a href="../csv-group-split/">CSV Group Splitter</a> — Split one CSV into files grouped by a column's value, downloaded as a single ZIP.</li>
       <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
       <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used — formulas, names, validation, formatting and charts.</li>
       <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly.</li>
@@ -210,7 +198,6 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every conditional-formatting rule across all sheets, flag overlapping ranges, whole-row/column rules and broken style references, and remove the ones you choose.</li>
       <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once, even when iterative calculation hides Excel's own warning.</li>
       <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet, flag links to a local file or a deleted sheet, and remove the ones you choose.</li>
-      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell (#REF!, #N/A, #VALUE! and more) across every sheet and file, with counts by type and a likely cause, exportable as CSV.</li>
     </ul>
   </div>
 </section>
@@ -225,11 +212,10 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
+    {"@type":"Question","name":"Ctrl+Hの「ブック全体」検索と何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"Ctrl+Hは1ファイル・1件ずつしか確認できず、種類別の内訳やCSV出力はできません。このツールは複数ファイル・複数シートを横断して種類別の件数と一覧を一度に出します。"}},
     {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
-    {"@type":"Question","name":"計算結果は再計算されますか？","acceptedAnswer":{"@type":"Answer","text":"再計算はしません。直近に保存されたときのキャッシュされた値をそのまま表示します。"}},
-    {"@type":"Question","name":"エラーはどうやって判定していますか？","acceptedAnswer":{"@type":"Answer","text":"セルに保存されている値そのものが#REF!等のエラー値である場合に検出します。"}},
-    {"@type":"Question","name":"共有数式はどう扱われますか？","acceptedAnswer":{"@type":"Answer","text":"基準セルの数式から相対参照をセルの位置のずれ分だけ自動的にずらして復元し、推定の印を付けて表示します。"}},
-    {"@type":"Question","name":"他シート参照や外部参照はどうやって判定していますか？","acceptedAnswer":{"@type":"Answer","text":"数式の文字列のパターンを機械的に走査する簡易判定のため、断定はできません。"}}
+    {"@type":"Question","name":"エラーはどうやって判定していますか？再計算されますか？","acceptedAnswer":{"@type":"Answer","text":"再計算はしません。セルに保存されている値そのものがエラー値である場合にだけ検出します。"}},
+    {"@type":"Question","name":"「原因」欄はどこまで信用できますか？","acceptedAnswer":{"@type":"Answer","text":"エラーの種類ごとの一般的な原因を参考表示しているだけで、実際の数式を解析した判定ではありません。"}}
   ]
 }
 </script>
@@ -242,7 +228,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;
 /* =====================================================================
    XLSX parsing core (no external libraries — ZIP + XML handled by hand,
    using only standard browser APIs: DecompressionStream/TextDecoder).
-   Shared with xlsx-merge's approach.
+   Shared with xlsx-suushiki's approach.
    ===================================================================== */
 
 function readU32(dv,o){return dv.getUint32(o,true)}
@@ -354,59 +340,7 @@ function parseSheetList(workbookXml,relsXml){
     return {name:s.attrs.name, path:"xl/"+target};
   });
 }
-function parseSharedStrings(xml){
-  if(!xml) return [];
-  return findTags(xml,"si").map(function(si){
-    return findTags(si.inner||"","t").map(function(t){return decodeXmlEntities(t.inner||"")}).join("");
-  });
-}
-var BUILTIN_DATE_KIND={14:"date",15:"date",16:"date",17:"date",22:"datetime",18:"time",19:"time",20:"time",21:"time",45:"time",46:"time",47:"time"};
-function customFormatKind(code){
-  var stripped=code.replace(/"[^"]*"/g,"").replace(/\[[^\]]*\]/g,"");
-  if(/General/i.test(stripped)) return null;
-  var noAmPm=stripped.replace(/AM\/PM|A\/P/gi,"");
-  var hasDate=/[ymdYMD]/.test(noAmPm), hasTime=/[hHsS]/.test(stripped);
-  if(hasDate && hasTime) return "datetime";
-  if(hasDate) return "date";
-  if(hasTime) return "time";
-  return null;
-}
-function parseStyles(xml){
-  if(!xml) return {xfKind:[]};
-  var customFmt={};
-  findTags(xml,"numFmts").forEach(function(block){
-    findTags(block.inner||"","numFmt").forEach(function(nf){ customFmt[nf.attrs.numFmtId]=nf.attrs.formatCode; });
-  });
-  var xfKind=[], cellXfsBlocks=findTags(xml,"cellXfs");
-  if(cellXfsBlocks.length){
-    findTags(cellXfsBlocks[0].inner||"","xf").forEach(function(xf){
-      var id=xf.attrs.numFmtId, kind=null;
-      if(id!==undefined){
-        var idNum=parseInt(id,10);
-        if(BUILTIN_DATE_KIND[idNum]) kind=BUILTIN_DATE_KIND[idNum];
-        else if(customFmt[id]) kind=customFormatKind(customFmt[id]);
-      }
-      xfKind.push(kind);
-    });
-  }
-  return {xfKind:xfKind};
-}
-function pad2(n){return (n<10?"0":"")+n}
-function excelSerialToParts(serial){
-  var ms=Math.round((serial-25569)*86400*1000), d=new Date(ms);
-  return {y:d.getUTCFullYear(),mo:d.getUTCMonth()+1,da:d.getUTCDate(),h:d.getUTCHours(),mi:d.getUTCMinutes(),s:d.getUTCSeconds()};
-}
-function formatDateValue(serial,kind){
-  var num=parseFloat(serial);
-  if(isNaN(num)) return serial;
-  if(kind==="time"){
-    var total=Math.round(num*86400), h=Math.floor(total/3600), mi=Math.floor((total%3600)/60), s=total%60;
-    return pad2(h)+":"+pad2(mi)+":"+pad2(s);
-  }
-  var p=excelSerialToParts(num), datePart=p.y+"/"+pad2(p.mo)+"/"+pad2(p.da);
-  if(kind==="datetime"){ return datePart+" "+pad2(p.h)+":"+pad2(p.mi)+(p.s?":"+pad2(p.s):""); }
-  return datePart;
-}
+
 function colLetterToIndex(ref){
   var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
   var letters=m[1], idx=0;
@@ -423,29 +357,11 @@ function refToRowCol(ref){
   if(!m) return null;
   return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
 }
-function cellValue(c,sharedStrings,xfKind){
-  var t=c.attrs.t, sIdx=c.attrs.s!==undefined?parseInt(c.attrs.s,10):-1;
-  var kind=(sIdx>=0 && xfKind[sIdx])?xfKind[sIdx]:null;
-  if(t==="inlineStr"){
-    var isTags=findTags(c.inner||"","is");
-    if(isTags.length) return findTags(isTags[0].inner||"","t").map(function(t2){return decodeXmlEntities(t2.inner||"")}).join("");
-    return "";
-  }
-  var vTags=findTags(c.inner||"","v");
-  var raw=vTags.length?(vTags[0].inner||""):null;
-  if(raw===null) return "";
-  raw=decodeXmlEntities(raw);
-  if(t==="s"){ var idx=parseInt(raw,10); return sharedStrings[idx]!==undefined?sharedStrings[idx]:""; }
-  if(t==="str") return raw;
-  if(t==="b") return raw==="1"?"TRUE":"FALSE";
-  if(t==="e") return raw;
-  if(kind) return formatDateValue(raw,kind);
-  return raw;
-}
 
 /* =====================================================================
-   Formula extraction: cell refs, shared-formula reconstruction,
-   cross-sheet / external-reference heuristics.
+   Error-cell extraction: only cells whose own stored value (t="e") is
+   itself an error value. Shared-formula text is reconstructed for
+   display only, the same way xlsx-suushiki does it.
    ===================================================================== */
 
 var SHEET_QUOTED=/^'([^']*)'!/;
@@ -499,71 +415,85 @@ function shiftFormulaRefs(formula,colDelta,rowDelta){
   }
   return out;
 }
-function stripStringLiterals(s){
-  var out="", i=0, n=s.length;
-  while(i<n){
-    if(s[i]==='"'){
-      out+=" "; i++;
-      while(i<n){
-        if(s[i]==='"'){ if(s[i+1]==='"'){ out+="  "; i+=2; continue; } out+=" "; i++; break; }
-        out+=" "; i++;
-      }
-      continue;
-    }
-    out+=s[i]; i++;
-  }
-  return out;
+
+var ERROR_CAUSE_JA={
+  "#REF!":"参照していたセル・シート・名前が削除されたか、無効な参照になっていることが多い",
+  "#DIV/0!":"0または空白のセルで割り算をしていることが多い",
+  "#N/A":"VLOOKUP・MATCH等の検索関数で一致する値が見つからないことが多い",
+  "#VALUE!":"数値が必要な場所に文字列など別の型の値が入っていることが多い",
+  "#NAME?":"関数名や名前定義のスペルが違う、または存在しない名前を参照していることが多い",
+  "#NULL!":"範囲の指定に使う演算子（スペース等）が間違っていることが多い",
+  "#NUM!":"関数に対して無効な数値（負の数の平方根等）が渡されていることが多い",
+  "#SPILL!":"動的配列の結果がこぼれる先に他のデータがあって展開できないことが多い",
+  "#CALC!":"動的配列関数の計算自体が失敗していることが多い",
+  "#GETTING_DATA":"外部データの取得中で、通常は一時的な表示"
+};
+var ERROR_CAUSE_EN={
+  "#REF!":"Often a referenced cell, sheet or name was deleted, or the reference became invalid",
+  "#DIV/0!":"Often a division by zero or a blank cell",
+  "#N/A":"Often VLOOKUP/MATCH and similar lookup functions found no matching value",
+  "#VALUE!":"Often a text value where a number was expected",
+  "#NAME?":"Often a misspelled function/name, or a reference to a name that no longer exists",
+  "#NULL!":"Often an incorrect range-intersection operator (e.g. a missing comma)",
+  "#NUM!":"Often an invalid numeric argument (e.g. the square root of a negative number)",
+  "#SPILL!":"Often a dynamic array's spill range is blocked by other data",
+  "#CALC!":"Often the dynamic-array calculation itself failed",
+  "#GETTING_DATA":"Fetching external data — usually a temporary display"
+};
+function errorCause(val,lang){
+  var map=lang==="en"?ERROR_CAUSE_EN:ERROR_CAUSE_JA;
+  if(map[val]!==undefined) return map[val];
+  return lang==="en"?"Uncommon error value — check manually":"あまり見ないエラー値（手動確認推奨）";
 }
-function extractFormulasFromSheetXml(xml,sheetName,sharedStrings,xfKind){
-  var raw=[], sharedMaster={};
+
+function extractErrorsFromSheetXml(xml,sheetName){
+  var sharedMaster={}, cells=[];
   findTags(xml,"sheetData").forEach(function(sd){
     findTags(sd.inner||"","row").forEach(function(row){
       findTags(row.inner||"","c").forEach(function(c){
         var fTags=findTags(c.inner||"","f");
-        if(!fTags.length) return;
-        var f=fTags[0];
-        var ref=c.attrs.r||"";
-        var ftype=f.attrs.t||"normal";
-        var si=f.attrs.si;
-        var formulaText=f.inner!==null?decodeXmlEntities(f.inner):null;
-        if(ftype==="shared" && formulaText!==null && si!==undefined){
-          sharedMaster[si]={ref:ref,formula:formulaText};
+        if(fTags.length){
+          var f0=fTags[0];
+          if((f0.attrs.t||"normal")==="shared" && f0.inner!==null && f0.attrs.si!==undefined){
+            sharedMaster[f0.attrs.si]={ref:c.attrs.r||"", formula:decodeXmlEntities(f0.inner)};
+          }
         }
-        raw.push({ref:ref,ftype:ftype,si:si,formulaText:formulaText,cell:c});
+        cells.push(c);
       });
     });
   });
-  return raw.map(function(item){
-    var formulaText=item.formulaText, derived=false, resolvable=true;
-    if(formulaText===null && item.ftype==="shared" && item.si!==undefined && sharedMaster[item.si]){
-      var master=sharedMaster[item.si];
-      var mp=refToRowCol(master.ref), cp=refToRowCol(item.ref);
-      if(mp && cp){ formulaText=shiftFormulaRefs(master.formula,cp.col-mp.col,cp.row-mp.row); derived=true; }
+  var out=[];
+  cells.forEach(function(c){
+    if(c.attrs.t!=="e") return;
+    var ref=c.attrs.r||"";
+    var vTags=findTags(c.inner||"","v");
+    var errVal=vTags.length?decodeXmlEntities(vTags[0].inner||""):"";
+    var fTags=findTags(c.inner||"","f");
+    var formulaText=null, derived=false, hasFormula=fTags.length>0, ftype="normal";
+    if(fTags.length){
+      var f=fTags[0];
+      ftype=f.attrs.t||"normal";
+      formulaText=f.inner!==null?decodeXmlEntities(f.inner):null;
+      if(formulaText===null && ftype==="shared" && f.attrs.si!==undefined && sharedMaster[f.attrs.si]){
+        var master=sharedMaster[f.attrs.si];
+        var mp=refToRowCol(master.ref), cp=refToRowCol(ref);
+        if(mp && cp){ formulaText=shiftFormulaRefs(master.formula,cp.col-mp.col,cp.row-mp.row); derived=true; }
+      }
     }
-    if(formulaText===null){ formulaText=""; resolvable=false; }
-    var val=cellValue(item.cell,sharedStrings,xfKind);
-    var isError=item.cell.attrs.t==="e";
-    var stripped=stripStringLiterals(formulaText);
-    var crossSheet=/(?:'[^']*'|[\p{L}\p{N}_.]+)!/u.test(stripped);
-    var externalRef=/\[[0-9]+\]/.test(stripped) || /\[[^\]]*\.xls[xm]?\]/i.test(stripped);
-    return {
-      sheet:sheetName, ref:item.ref, ftype:item.ftype, derived:derived, resolvable:resolvable,
-      formula:formulaText, value:val, isError:isError, crossSheet:crossSheet, externalRef:externalRef
-    };
+    out.push({sheet:sheetName, ref:ref, errVal:errVal||"#?", formula:formulaText, derived:derived, hasFormula:hasFormula, ftype:ftype});
   });
+  return out;
 }
-async function parseXlsxFormulas(bytes){
+async function parseXlsxErrors(bytes){
   var files=await unzipToMap(bytes);
   var workbookXml=files["xl/workbook.xml"], relsXml=files["xl/_rels/workbook.xml.rels"];
   if(!workbookXml || !relsXml) throw new Error("NOT_XLSX");
   var sheetList=parseSheetList(workbookXml,relsXml);
-  var sharedStrings=parseSharedStrings(files["xl/sharedStrings.xml"]);
-  var styles=parseStyles(files["xl/styles.xml"]);
   var rows=[];
   sheetList.forEach(function(s){
     var xml=files[s.path];
     if(!xml) return;
-    rows=rows.concat(extractFormulasFromSheetXml(xml,s.name,sharedStrings,styles.xfKind));
+    rows=rows.concat(extractErrorsFromSheetXml(xml,s.name));
   });
   return {sheetNames:sheetList.map(function(s){return s.name}), rows:rows};
 }
@@ -578,55 +508,57 @@ function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).
    UI
    ===================================================================== */
 var T={
- ja:{title:"引き継いだExcelの数式を一覧に",
-  sub:"引き継いだファイルの数式がどこに入っているか分からないときに。数式が入ったセルを、ファイルを開かずシート・セルごとに一覧表示します。計算結果がエラーのまま残っているセル、他シートを参照しているセル、外部ファイルを参照している可能性があるセルを自動で見分けます。ファイルはどこにも送信されません。",
+ ja:{title:"#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に",
+  sub:"Excelファイルのどこにエラー値が残っているか分からないときに。全シート・複数ファイルを横断して、計算結果が#REF!・#N/A・#VALUE!などのエラー値になっているセルだけを一覧表示し、エラーの種類ごとに件数を集計します。それぞれの典型的な原因も表示します。ファイルはどこにも送信されません。",
   dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
-  dropzoneHint:"すべてのシートの数式セルをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。",
+  dropzoneHint:"すべてのシートのエラー値セルだけをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。",
   fileListHeading:"追加したファイル",
-  statsHeading:"数式セルの集計",
-  statsHint:"「エラー」はExcelが最後に保存したときの計算結果。「他シート参照」「外部参照の可能性」は数式の文字列からの機械判定で、断定ではありません。",
-  statTotal:"数式セル数",statErr:"エラー",statCross:"他シート参照",statExt:"外部参照の可能性",statDerived:"推定（共有数式）",
+  statsHeading:"エラー値セルの集計",
+  statsHint:"Excelが最後に保存したときの計算結果（キャッシュ値）がエラー値そのものであるセルだけを数えています。再計算はしません。",
+  statTotal:"エラー値セル数",
   filterHeading:"絞り込み",
-  filterFile:"ファイル：",filterSheet:"シート：",
-  searchPh:"数式・セルを検索",
-  errOnlyLabel:"エラーのみ",crossOnlyLabel:"他シート参照のみ",extOnlyLabel:"外部参照の可能性があるものだけ",
+  filterFile:"ファイル：",filterSheet:"シート：",filterType:"エラー種類：",
+  searchPh:"セル・数式を検索",
   allOption:"すべて",
-  resultHeading:"数式セルの一覧",
+  resultHeading:"エラー値セルの一覧",
   downloadBtn:"この一覧をCSVでダウンロード",
   removeBtn:"削除",
   loadingLabel:"読み込み中…",
-  colFile:"ファイル",colSheet:"シート",colCell:"セル",colFormula:"数式",colValue:"計算結果",colErr:"エラー",colCross:"他シート",colExt:"外部参照?",
+  colFile:"ファイル",colSheet:"シート",colCell:"セル",colType:"エラー種類",colCause:"主な原因（参考）",colFormula:"数式",
   errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
-  errNone:"数式セルが見つかりませんでした",
+  errNone:"エラー値のセルは見つかりませんでした",
+  noFormula:"（数式なし）",
+  derivedBadge:"推定",
   moreNote:"件まで表示しています（ダウンロードには絞り込み後の全件が含まれます）。",
   feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
- en:{title:"List formulas in an inherited Excel file",
-  sub:"Not sure where the formulas are in a workbook someone handed you? Lists every formula cell across a workbook's sheets without opening the file. Flags cells whose cached result is still an error, cells referencing other sheets, and cells that may reference an external workbook. Nothing is uploaded.",
+ en:{title:"Find every cell with a cached error value",
+  sub:"Not sure where #REF!, #N/A, #VALUE! and other error values are hiding in a workbook? Lists every cell across every sheet and file whose cached result is itself an error, with a per-type count and a generic likely cause for each type. Nothing is uploaded.",
   dropzoneText:"Drag and drop Excel (.xlsx) file(s) here, or click to choose (multiple allowed)",
-  dropzoneHint:"Every sheet's formula cells are extracted together. Everything happens on this device.",
+  dropzoneHint:"Only error-valued cells are extracted, across every sheet. Everything happens on this device.",
   fileListHeading:"Added files",
-  statsHeading:"Formula cell summary",
-  statsHint:"\"Error\" reflects Excel's last-saved result. \"Cross-sheet\" and \"possible external ref\" are text-pattern guesses, not certainties.",
-  statTotal:"Formula cells",statErr:"Errors",statCross:"Cross-sheet refs",statExt:"Possible external refs",statDerived:"Derived (shared formula)",
+  statsHeading:"Error cell summary",
+  statsHint:"Counts only cells whose own stored value is itself an error. Nothing is recalculated.",
+  statTotal:"Error cells",
   filterHeading:"Filters",
-  filterFile:"File:",filterSheet:"Sheet:",
-  searchPh:"Search formula / cell",
-  errOnlyLabel:"Errors only",crossOnlyLabel:"Cross-sheet only",extOnlyLabel:"Possible external refs only",
+  filterFile:"File:",filterSheet:"Sheet:",filterType:"Error type:",
+  searchPh:"Search cell / formula",
   allOption:"All",
-  resultHeading:"Formula cells",
+  resultHeading:"Error cells",
   downloadBtn:"Download this list as CSV",
   removeBtn:"Remove",
   loadingLabel:"Loading…",
-  colFile:"File",colSheet:"Sheet",colCell:"Cell",colFormula:"Formula",colValue:"Result",colErr:"Error",colCross:"Cross-sheet",colExt:"Ext ref?",
+  colFile:"File",colSheet:"Sheet",colCell:"Cell",colType:"Error type",colCause:"Likely cause (reference)",colFormula:"Formula",
   errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
-  errNone:"No formula cells found",
+  errNone:"No error-valued cells found",
+  noFormula:"(no formula)",
+  derivedBadge:"derived",
   moreNote:" rows shown (the download includes every filtered row).",
   feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
 };
 var lang="ja";
 try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
 
-var state={files:[], nextId:1, fileFilter:"", sheetFilter:"", search:"", errOnly:false, crossOnly:false, extOnly:false};
+var state={files:[], nextId:1, fileFilter:"", sheetFilter:"", typeFilter:"", search:""};
 var MAX_RENDER=1000;
 
 function escTrunc(s,max){ s=String(s); max=max||160; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
@@ -635,7 +567,7 @@ function addFile(file){
   var f={id:state.nextId++, name:file.name, loading:true, error:"", rows:[], sheetNames:[]};
   state.files.push(f);
   render();
-  file.arrayBuffer().then(function(buf){ return parseXlsxFormulas(new Uint8Array(buf)); })
+  file.arrayBuffer().then(function(buf){ return parseXlsxErrors(new Uint8Array(buf)); })
     .then(function(result){
       f.rows=result.rows; f.sheetNames=result.sheetNames; f.loading=false; render();
     }).catch(function(){
@@ -648,8 +580,8 @@ function allRows(){
   var out=[];
   state.files.forEach(function(f){
     if(f.loading||f.error) return;
-    f.rows.forEach(function(r){ out.push({file:f.name,fileId:f.id,sheet:r.sheet,ref:r.ref,ftype:r.ftype,derived:r.derived,
-      formula:r.formula,value:r.value,isError:r.isError,crossSheet:r.crossSheet,externalRef:r.externalRef}); });
+    f.rows.forEach(function(r){ out.push({file:f.name,fileId:f.id,sheet:r.sheet,ref:r.ref,errVal:r.errVal,
+      formula:r.formula,derived:r.derived,hasFormula:r.hasFormula,ftype:r.ftype}); });
   });
   return out;
 }
@@ -659,11 +591,9 @@ function filteredRows(){
   return rows.filter(function(r){
     if(s.fileFilter && String(r.fileId)!==s.fileFilter) return false;
     if(s.sheetFilter && r.sheet!==s.sheetFilter) return false;
-    if(s.errOnly && !r.isError) return false;
-    if(s.crossOnly && !r.crossSheet) return false;
-    if(s.extOnly && !r.externalRef) return false;
+    if(s.typeFilter && r.errVal!==s.typeFilter) return false;
     if(needle){
-      var hay=(r.ref+" "+r.formula).toLowerCase();
+      var hay=(r.ref+" "+(r.formula||"")).toLowerCase();
       if(hay.indexOf(needle)===-1) return false;
     }
     return true;
@@ -687,21 +617,17 @@ function renderFileList(){
 }
 
 function renderStats(rows){
-  var total=rows.length, err=0, cross=0, ext=0, derived=0;
-  rows.forEach(function(r){ if(r.isError)err++; if(r.crossSheet)cross++; if(r.externalRef)ext++; if(r.derived)derived++; });
-  var items=[
-    [total,T[lang].statTotal,""],
-    [err,T[lang].statErr,"err"],
-    [cross,T[lang].statCross,""],
-    [ext,T[lang].statExt,""],
-    [derived,T[lang].statDerived,""]
-  ];
+  var byType={}, order=[];
+  rows.forEach(function(r){ if(byType[r.errVal]===undefined){byType[r.errVal]=0; order.push(r.errVal);} byType[r.errVal]++; });
+  order.sort(function(a,b){return byType[b]-byType[a]});
+  var items=[[rows.length,T[lang].statTotal,"total"]];
+  order.forEach(function(k){ items.push([byType[k],k,""]); });
   var h="";
   items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
   $("statGrid").innerHTML=h;
 }
 
-function renderFilterOptions(rows){
+function renderFilterOptions(){
   var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
   $("fileFilterLabel").style.display=multiFile?"":"none";
   if(multiFile){
@@ -712,38 +638,49 @@ function renderFilterOptions(rows){
     $("fileFilter").value=curFile&&state.files.some(function(f){return String(f.id)===curFile})?curFile:"";
     state.fileFilter=$("fileFilter").value;
   } else { state.fileFilter=""; }
-  var sheetSet=[], seen={};
-  allRows().forEach(function(r){ if(!state.fileFilter||String(r.fileId)===state.fileFilter){ if(!seen[r.sheet]){seen[r.sheet]=true; sheetSet.push(r.sheet);} } });
+  var all=allRows();
+  var sheetSet=[], seenSheet={};
+  all.forEach(function(r){ if(!state.fileFilter||String(r.fileId)===state.fileFilter){ if(!seenSheet[r.sheet]){seenSheet[r.sheet]=true; sheetSet.push(r.sheet);} } });
   var curSheet=$("sheetFilter").value;
   var sh="<option value=''>"+esc(T[lang].allOption)+"</option>";
   sheetSet.forEach(function(s){ sh+="<option value='"+esc(s)+"'>"+esc(s)+"</option>"; });
   $("sheetFilter").innerHTML=sh;
   $("sheetFilter").value=sheetSet.indexOf(curSheet)!==-1?curSheet:"";
   state.sheetFilter=$("sheetFilter").value;
+
+  var typeSet=[], seenType={};
+  all.forEach(function(r){ if(!seenType[r.errVal]){seenType[r.errVal]=true; typeSet.push(r.errVal);} });
+  typeSet.sort();
+  var curType=$("typeFilter").value;
+  var th="<option value=''>"+esc(T[lang].allOption)+"</option>";
+  typeSet.forEach(function(t){ th+="<option value='"+esc(t)+"'>"+esc(t)+"</option>"; });
+  $("typeFilter").innerHTML=th;
+  $("typeFilter").value=typeSet.indexOf(curType)!==-1?curType:"";
+  state.typeFilter=$("typeFilter").value;
 }
 
 function renderResult(rows){
   var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
-  $("resultCount").textContent=rows.length+(multiFile?"":"");
+  $("resultCount").textContent=rows.length;
   if(!rows.length){ $("resultBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>"; $("downloadBtn").disabled=true; return; }
   var shown=rows.slice(0,MAX_RENDER);
   var h="<div class='scroll'><table><thead><tr>";
   if(multiFile) h+="<th>"+esc(T[lang].colFile)+"</th>";
-  h+="<th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colCell)+"</th><th>"+esc(T[lang].colFormula)+"</th><th>"+esc(T[lang].colValue)+"</th>"+
-     "<th>"+esc(T[lang].colErr)+"</th><th>"+esc(T[lang].colCross)+"</th><th>"+esc(T[lang].colExt)+"</th></tr></thead><tbody>";
+  h+="<th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colCell)+"</th><th>"+esc(T[lang].colType)+"</th>"+
+     "<th>"+esc(T[lang].colCause)+"</th><th>"+esc(T[lang].colFormula)+"</th></tr></thead><tbody>";
   shown.forEach(function(r){
-    h+="<tr class='"+(r.isError?"isErr":"")+"'>";
+    h+="<tr>";
     if(multiFile) h+="<td>"+escTrunc(r.file,40)+"</td>";
     h+="<td>"+escTrunc(r.sheet,30)+"</td><td>"+esc(r.ref)+"</td>";
-    var badges="";
-    if(r.ftype==="array") badges+="<span class='badge arr'>配列</span>";
-    if(r.ftype==="dataTable") badges+="<span class='badge arr'>データテーブル</span>";
-    if(r.derived) badges+="<span class='badge derived'>推定</span>";
-    h+="<td class='formula'>"+badges+"="+escTrunc(r.formula,220)+"</td>";
-    h+="<td class='"+(r.isError?"mark":"")+"'>"+escTrunc(r.value,60)+"</td>";
-    h+="<td class='center'>"+(r.isError?"●":"")+"</td>";
-    h+="<td class='center'>"+(r.crossSheet?"●":"")+"</td>";
-    h+="<td class='center'>"+(r.externalRef?"●":"")+"</td>";
+    h+="<td class='errType'>"+esc(r.errVal)+"</td>";
+    h+="<td class='cause'>"+esc(errorCause(r.errVal,lang))+"</td>";
+    if(r.formula!==null){
+      var badges="";
+      if(r.derived) badges+="<span class='badge derived'>"+esc(T[lang].derivedBadge)+"</span>";
+      h+="<td class='formula'>"+badges+"="+escTrunc(r.formula,220)+"</td>";
+    } else {
+      h+="<td class='formula hint'>"+esc(T[lang].noFormula)+"</td>";
+    }
     h+="</tr>";
   });
   h+="</tbody></table></div>";
@@ -782,10 +719,8 @@ $("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(
 
 $("fileFilter").addEventListener("change",function(){ state.fileFilter=this.value; renderFilterOptions(); renderResult(filteredRows()); });
 $("sheetFilter").addEventListener("change",function(){ state.sheetFilter=this.value; renderResult(filteredRows()); });
+$("typeFilter").addEventListener("change",function(){ state.typeFilter=this.value; renderResult(filteredRows()); });
 $("searchBox").addEventListener("input",function(){ state.search=this.value; renderResult(filteredRows()); });
-$("errOnly").addEventListener("change",function(){ state.errOnly=this.checked; renderResult(filteredRows()); });
-$("crossOnly").addEventListener("change",function(){ state.crossOnly=this.checked; renderResult(filteredRows()); });
-$("extOnly").addEventListener("change",function(){ state.extOnly=this.checked; renderResult(filteredRows()); });
 
 $("downloadBtn").addEventListener("click",function(){
   var rows=filteredRows();
@@ -793,12 +728,12 @@ $("downloadBtn").addEventListener("click",function(){
   var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
   var header=[];
   if(multiFile) header.push(T[lang].colFile);
-  header=header.concat([T[lang].colSheet,T[lang].colCell,T[lang].colFormula,T[lang].colValue,T[lang].colErr,T[lang].colCross,T[lang].colExt]);
+  header=header.concat([T[lang].colSheet,T[lang].colCell,T[lang].colType,T[lang].colCause,T[lang].colFormula]);
   var out=[header];
   rows.forEach(function(r){
     var row=[];
     if(multiFile) row.push(r.file);
-    row=row.concat([r.sheet,r.ref,"="+r.formula,r.value,r.isError?"1":"",r.crossSheet?"1":"",r.externalRef?"1":""]);
+    row=row.concat([r.sheet,r.ref,r.errVal,errorCause(r.errVal,lang),r.formula!==null?"="+r.formula:""]);
     out.push(row);
   });
   var csvText=serializeCSV(out);
@@ -806,7 +741,7 @@ $("downloadBtn").addEventListener("click",function(){
   var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
   var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
   var url=URL.createObjectURL(blob);
-  var a=document.createElement("a"); a.href=url; a.download="formulas.csv";
+  var a=document.createElement("a"); a.href=url; a.download="error-cells.csv";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url)},2000);
 });
