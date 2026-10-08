@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>エクセルのハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール | てのひらツール</title>
+<meta name="description" content="「指定されたファイルが見つかりません」「参照が正しくありません」とハイパーリンクをクリックするたびに出る、コピペで増えすぎて1つずつ解除できない——というときに。Excel(.xlsx/.xlsm)の全シートのハイパーリンク（セルに設定されたクリック可能なリンク）を一覧化し、ローカルファイルへのリンク（他のPCで開けない可能性）・存在しないシートやセル範囲を指す社内リンク・参照が壊れているものを自動で見分けて、選んだリンクだけを解除した新しいファイルを書き出します。ブラウザ内だけで処理し、ファイルは送信されません。List every clickable hyperlink across all sheets of an Excel (.xlsx) file, flag links to local files, broken in-sheet references and dangling relationships, and remove the ones you choose — entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-hyperlink/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:110px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.err .n{color:var(--diff)}
+.quickRow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+button.quick{font:inherit;font-size:.85rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+button.quick:hover{border-color:var(--accent);color:var(--accent)}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:280px;word-break:break-all}
+td.center{text-align:center;white-space:nowrap}
+tr.flagged{background:var(--diff-bg)}
+td input[type=checkbox]{width:auto;min-height:auto}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px;margin-right:10px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:11px 18px;cursor:pointer;min-height:44px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</h1>
+    <p class="sub" data-i="sub">クリックすると「指定されたファイルが見つかりません」「参照が正しくありません」と出る、コピペで増えすぎて1つずつ[ハイパーリンクの編集]で解除していくのが大変——というExcel(.xlsx/.xlsm)ファイルのハイパーリンク（セルに設定されたクリック可能なリンク）を、全シート横断で一覧表示します。ローカルファイルへのリンク（他のPCでは開けない可能性）、存在しないシート・セル範囲を指す社内リンク、参照そのものが壊れているリンクを自動で見分け、選んだリンクだけを解除した新しいファイルをその場で書き出せます。セルの文字や値は変わりません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。すべてのシートのハイパーリンクをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">ハイパーリンクの集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">「ローカルファイル」はURLでも社内リンクでもなく、パソコンの中のファイルパスを指しているリンクです。ファイルを他の人に送ったり別のPCで開いたりすると、そのパスが存在せず開けなくなります。</p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="listHeading">ハイパーリンクの一覧</h2>
+  <div class="quickRow">
+    <button type="button" class="quick" id="selLocal" data-i="selLocal">ローカルファイルへのリンクを選択</button>
+    <button type="button" class="quick" id="selBrokenInternal" data-i="selBrokenInternal">存在しないシート参照を選択</button>
+    <button type="button" class="quick" id="selMissingRel" data-i="selMissingRel">参照が壊れているものを選択</button>
+    <button type="button" class="quick" id="selNone" data-i="selNone">選択を解除</button>
+  </div>
+  <div id="listBox"></div>
+  <div class="warnBox" id="warnBox" style="display:none" data-i="warnText">選んだリンクは「クリックすると開く」設定だけが解除されます。セルの文字（表示されている文字列）や値・数式は変わらず、クリックできないただの文字として残ります。削除後はExcelで開いて確認してください。元のファイルは変更されず、新しいファイルとして書き出されます。</div>
+  <p style="margin-top:12px">
+    <button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">選んだリンクを解除したファイルを書き出す</button>
+    <button type="button" class="secondary" id="csvBtn" data-i="csvBtn">一覧をCSVで書き出す</button>
+  </p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>一覧で、各リンクの対象シート・セル・種類・リンク先と、「ローカルファイル」「存在しないシート参照」「参照が壊れている」の旗を確認します。</li>
+      <li>解除したいリンクにチェックを入れます（クイック選択ボタンで一括選択も可能）。</li>
+      <li>「選んだリンクを解除したファイルを書き出す」でダウンロードします。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. ここでいう「ハイパーリンク」とは何ですか？数式の外部参照とは違いますか？</h3>
+    <p>A. 違います。このツールが対象にしているのは、セルに直接設定されている「クリックすると開く」リンク（Webページ・メールアドレス・パソコン内のファイル・同じブック内の別シートやセル範囲へのジャンプ）です。Excelでは[挿入]→[リンク]や[Ctrl]+[K]で設定するものがこれにあたります。一方、「=[参照先.xlsx]Sheet1!A1」のような数式の中に書かれた他のファイルへの参照（外部ソースへのリンク）は仕組みが別物で、そちらは当サイトの<a href="../xlsx-link/">外部ソースへのリンク発生源を探すツール</a>で扱っています。両方設定されているファイルでは、両方のツールを使うと網羅的に点検できます。</p>
+    <h3>Q. 「ローカルファイル」「存在しないシート参照」「参照が壊れている」はそれぞれ何を意味しますか？</h3>
+    <p>A. 「ローカルファイル」は、リンク先がWebのURL（http/https）やメールアドレス（mailto）ではなく、パソコンの中のファイルパス（例："C:\Users\…\見積書.xlsx" や「..\共有\資料.pdf」）になっているリンクです。自分のパソコンでは開けても、ファイルだけを人に送ったり別のPCで開いたりすると、同じ場所に同じファイルが無いため開けません。「存在しないシート参照」は、ブック内の別シートやセル範囲へジャンプするリンクが、現在のブックに存在しないシート名や名前付き範囲を指している状態です。シートの名前を変えたり削除したりした後に残ったリンクで起こります。「参照が壊れている」は、リンクの実体を指す内部の参照情報そのものが見つからない状態で、クリックすると「指定されたファイルが見つかりません」のようなエラーになったり、何も起きなかったりします。</p>
+    <h3>Q. 大量のハイパーリンクが、コピペのたびに増えるのはなぜですか？</h3>
+    <p>A. セルをコピーすると、そのセルに設定されたハイパーリンクも一緒にコピーされます。同じセルを何度も別の場所に貼り付けたり、行・列を挿入して既存の行をコピーして増やしたりする使い方を繰り返すと、同じリンク先を指すハイパーリンクがシート中に大量に残ることがあります。Excel標準の[ハイパーリンクの編集]ダイアログは1つずつしか開けず、全部を一度に見る手段が無いため、このツールでは全シートを横断して一覧化しています。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。図形・画像に設定されたハイパーリンク（セルではなく図形オブジェクト側の設定）は、現在のバージョンでは一覧に含まれません。</p>
+    <h3>Q. リンクを解除すると、セルの文字や値は変わりますか？</h3>
+    <p>A. 変わりません。解除されるのは「クリックすると開く」という設定だけです。セルに表示されている文字列・値・数式・書式（下線や青字などの見た目）はそのまま残ります。見た目まで変えたい場合は、解除後にExcel側で文字色や下線を手動で直してください。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_リンク解除済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>Check each link's sheet, cell, type, target, and the "local file", "broken in-sheet reference" and "missing relationship" flags.</li>
+      <li>Tick the links you want to remove (the quick-select buttons select several at once).</li>
+      <li>Click "Build a file with the selected links removed" to download the cleaned copy — your original file is untouched.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. What counts as a "hyperlink" here — is it the same as an external formula reference?</h3>
+    <p>A. No. This tool handles clickable links attached directly to a cell (a web page, an email address, a file on your computer, or a jump to another sheet/range in the same workbook) — the kind you set with Insert &gt; Link or Ctrl+K. A formula that references another file, like <code>=[Source.xlsx]Sheet1!A1</code>, is a different mechanism; that's covered by our <a href="../xlsx-link/">external-workbook link finder</a>. A file with both kinds benefits from running both tools.</p>
+    <h3>Q. What do "local file", "broken in-sheet reference" and "missing relationship" mean?</h3>
+    <p>A. "Local file" means the link points to a path on a computer's own disk (e.g. <code>C:\Users\…\quote.xlsx</code>) rather than a web URL or email address — it may work on your machine but breaks the moment the file is shared or opened elsewhere. "Broken in-sheet reference" means a jump-to-another-sheet link points at a sheet name or named range that no longer exists in the current workbook, usually left behind after a sheet was renamed or deleted. "Missing relationship" means the link's own internal pointer to its target is gone, which typically shows an error (or does nothing) when clicked.</p>
+    <h3>Q. Why do hyperlinks keep piling up from copy-paste?</h3>
+    <p>A. Copying a cell copies its hyperlink along with it. Repeatedly pasting the same cell elsewhere, or inserting rows by copying existing ones, can leave many cells pointing at the same target scattered across a sheet. Excel's own "Edit Hyperlink" dialog only shows one at a time with no way to see them all at once, which is why this tool lists every sheet together.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported. Hyperlinks attached to shapes or images (rather than cells) are not currently listed.</p>
+    <h3>Q. Does removing a link change the cell's text or value?</h3>
+    <p>A. No. Only the "clickable" setting is removed. The cell's displayed text, value, formula and formatting (underline, blue text, etc.) are untouched — if you also want the look changed, fix the font color/underline in Excel afterward.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_links-removed" appended to the name). Your original file is never overwritten.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 数式の中に書かれた他ファイルへの参照を、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているか一覧化。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — コピペで増殖した条件付き書式ルールを全シート横断で一覧化し、重複・重くなりやすいルールを削除。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook formula link and exactly where it's used.</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every rule across every sheet and remove the overlapping/heavy ones.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it.</li>
+      <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"ここでいう「ハイパーリンク」とは何ですか？数式の外部参照とは違いますか？","acceptedAnswer":{"@type":"Answer","text":"違います。セルに直接設定された「クリックすると開く」リンクが対象で、数式中の他ファイル参照（外部ソースへのリンク）は別の仕組みです。後者は別のツール（外部ソースへのリンク発生源を探すツール）で扱っています。"}},
+    {"@type":"Question","name":"「ローカルファイル」「存在しないシート参照」「参照が壊れている」はどういう意味ですか？","acceptedAnswer":{"@type":"Answer","text":"「ローカルファイル」はリンク先がパソコンの中のファイルパスになっている状態、「存在しないシート参照」は別シートへのジャンプ先が現在のブックに無いシート名を指している状態、「参照が壊れている」はリンクの内部参照そのものが見つからない状態です。"}},
+    {"@type":"Question","name":"リンクを解除すると、セルの文字や値は変わりますか？","acceptedAnswer":{"@type":"Answer","text":"変わりません。解除されるのは「クリックすると開く」設定だけで、セルの文字・値・数式・書式はそのまま残ります。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。変更後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-junkan (no external libraries; only standard browser
+   APIs: DecompressionStream/TextDecoder/TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+function buildStoreZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  files.forEach(function(f){
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var size=f.bytes.length;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,0,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,size,true); dv.setUint32(22,size,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,f.bytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,0,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,size,true); cdv.setUint32(24,size,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + f.bytes.length;
+  });
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function sheetRelsPath(sheetPath){
+  var m=/^(.*)\/([^/]+)$/.exec(sheetPath);
+  if(!m) return null;
+  return m[1]+"/_rels/"+m[2]+".rels";
+}
+
+/* =====================================================================
+   defined names (used only to tell a named-range jump target from a
+   plain broken reference — same source data xlsx-namae already reads)
+   ===================================================================== */
+function parseDefinedNameSet(workbookXml){
+  var set={};
+  findTags(workbookXml,"definedName").forEach(function(d){
+    if(d.attrs.name) set[d.attrs.name.toLowerCase()]=true;
+  });
+  return set;
+}
+
+/* =====================================================================
+   Hyperlink parsing: every <hyperlink> inside a sheet's <hyperlinks>
+   block, resolved against that sheet's own _rels file for externals.
+   ===================================================================== */
+/* External (has r:id) targets are classified by scheme. Internal jumps can
+   appear two ways in real-world files: Excel itself writes a bare
+   `location` attribute with no r:id at all, while some other tools/libraries
+   (Google Sheets exports, openpyxl, etc.) instead write an External
+   relationship whose Target is "#Sheet!A1" — same meaning, different shape.
+   Both are treated as "internal" here so the broken-sheet-name check covers
+   either form. */
+function classifyExternalTarget(target){
+  if(/^mailto:/i.test(target)) return "email";
+  if(/^[a-z][a-z0-9+.\-]*:\/\//i.test(target)) return "web";
+  return "localFile";
+}
+function checkBrokenInternal(internalRef,sheetNameSet,definedNameSet){
+  var bang=internalRef.indexOf("!");
+  if(bang!==-1){
+    var sheetPart=internalRef.slice(0,bang).replace(/^'/,"").replace(/'$/,"").replace(/''/g,"'");
+    return !sheetNameSet[sheetPart.toLowerCase()];
+  }
+  return !definedNameSet[internalRef.toLowerCase()];
+}
+function parseHyperlinkBlocks(sheetXml,relTarget,sheetNameSet,definedNameSet){
+  var blocks=findTags(sheetXml,"hyperlinks");
+  var out=[];
+  blocks.forEach(function(b,bi){
+    var links=findTags(b.inner||"","hyperlink");
+    links.forEach(function(h,hi){
+      var rid=h.attrs["r:id"]||"";
+      var location=h.attrs.location||"";
+      var hasRid=!!rid;
+      var target = hasRid ? (relTarget[rid]!==undefined?relTarget[rid]:null) : null;
+      var missingRel = hasRid && relTarget[rid]===undefined;
+      var internalRef = location || ((target&&target.charAt(0)==="#") ? target.slice(1) : "");
+      var type, brokenInternal=false;
+      if(internalRef){
+        type="internal";
+        brokenInternal=checkBrokenInternal(internalRef,sheetNameSet,definedNameSet);
+      } else if(missingRel){
+        type="unknown";
+      } else if(hasRid){
+        type=classifyExternalTarget(target||"");
+      } else {
+        type="internal";
+      }
+      out.push({
+        blockIdx:bi, linkIdx:hi,
+        ref:h.attrs.ref||"", display:h.attrs.display!==undefined?h.attrs.display:null,
+        tooltip:h.attrs.tooltip!==undefined?h.attrs.tooltip:null,
+        rid:rid, location:location, hasRid:hasRid,
+        target: target===null ? "" : (target||""),
+        internalRef: internalRef,
+        type:type, missingRel:missingRel, brokenInternal:brokenInternal,
+        rawStart:h.start, rawEnd:h.end
+      });
+    });
+  });
+  return {blocks:blocks, links:out};
+}
+async function parseXlsxHyperlinks(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  var sheetNameSet={}; sheetList.forEach(function(s){ sheetNameSet[s.name.toLowerCase()]=true; });
+  var definedNameSet=parseDefinedNameSet(workbookXml);
+  var sheets=sheetList.map(function(s,sheetIdx){
+    var entry=byName[s.path];
+    var xml=entry?dec.decode(entry.bytes):"";
+    var relsPath=sheetRelsPath(s.path);
+    var relTarget={};
+    var sheetRelsEntry=relsPath?byName[relsPath]:null;
+    if(sheetRelsEntry){
+      findTags(dec.decode(sheetRelsEntry.bytes),"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+    }
+    var parsed=parseHyperlinkBlocks(xml,relTarget,sheetNameSet,definedNameSet);
+    return {sheetIdx:sheetIdx, name:s.name, path:s.path, relsPath:relsPath, xml:xml,
+      relsXml:sheetRelsEntry?dec.decode(sheetRelsEntry.bytes):null,
+      blocks:parsed.blocks, links:parsed.links};
+  });
+  return {entries:entries, sheets:sheets};
+}
+function buildCleanedXlsx(parseResult, removeSet){
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var patchedByPath={};
+  parseResult.sheets.forEach(function(sh){
+    var removedLinks = sh.links.filter(function(l){ return removeSet.has(sh.sheetIdx+":"+l.blockIdx+":"+l.linkIdx); });
+    if(!removedLinks.length) return;
+    var newXml=sh.xml;
+    var blocksSorted=sh.blocks.slice().sort(function(a,b){return b.start-a.start});
+    blocksSorted.forEach(function(blk,blockOrderIdx){
+      var bi=sh.blocks.indexOf(blk);
+      var linksInBlock = sh.links.filter(function(l){ return l.blockIdx===bi; });
+      var toRemove = linksInBlock.filter(function(l){ return removeSet.has(sh.sheetIdx+":"+l.blockIdx+":"+l.linkIdx); });
+      if(!toRemove.length) return;
+      var keepCount = linksInBlock.length - toRemove.length;
+      if(keepCount===0){
+        newXml = newXml.slice(0,blk.start)+newXml.slice(blk.end);
+        return;
+      }
+      var inner = blk.inner;
+      var sortedRemove = toRemove.slice().sort(function(a,b){return b.rawStart-a.rawStart});
+      sortedRemove.forEach(function(l){ inner = inner.slice(0,l.rawStart)+inner.slice(l.rawEnd); });
+      var newBlockText = blk.openText+inner+"</hyperlinks>";
+      newXml = newXml.slice(0,blk.start)+newBlockText+newXml.slice(blk.end);
+    });
+    patchedByPath[sh.path]=enc.encode(newXml);
+
+    if(sh.relsXml && sh.relsPath){
+      var removedRids = removedLinks.filter(function(l){return l.hasRid}).map(function(l){return l.rid});
+      if(removedRids.length){
+        var keptRids = {};
+        sh.links.forEach(function(l){
+          if(l.hasRid && !removeSet.has(sh.sheetIdx+":"+l.blockIdx+":"+l.linkIdx)) keptRids[l.rid]=true;
+        });
+        var relTags = findTags(sh.relsXml,"Relationship");
+        var toDropIds = {};
+        removedRids.forEach(function(rid){ if(!keptRids[rid]) toDropIds[rid]=true; });
+        if(Object.keys(toDropIds).length){
+          var newRelsXml = sh.relsXml;
+          var relsSorted = relTags.filter(function(r){ return toDropIds[r.attrs.Id]; }).sort(function(a,b){return b.start-a.start});
+          relsSorted.forEach(function(r){ newRelsXml = newRelsXml.slice(0,r.start)+newRelsXml.slice(r.end); });
+          patchedByPath[sh.relsPath]=enc.encode(newRelsXml);
+        }
+      }
+    }
+  });
+  var outFiles=parseResult.entries.map(function(e){
+    if(patchedByPath[e.name]) return {name:e.name, bytes:patchedByPath[e.name]};
+    return {name:e.name, bytes:e.bytes};
+  });
+  return buildStoreZip(outFiles);
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var TYPE_LABEL={ja:{web:"Web",email:"メール",localFile:"ローカルファイル",internal:"同じブック内",unknown:"不明（参照切れ）"},
+ en:{web:"Web",email:"Email",localFile:"Local file",internal:"In this workbook",unknown:"Unknown (broken ref)"}};
+
+var T={
+ ja:{title:"ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール",
+  sub:"クリックすると「指定されたファイルが見つかりません」「参照が正しくありません」と出る、コピペで増えすぎて1つずつ[ハイパーリンクの編集]で解除していくのが大変——というExcel(.xlsx/.xlsm)ファイルのハイパーリンク（セルに設定されたクリック可能なリンク）を、全シート横断で一覧表示します。ローカルファイルへのリンク（他のPCでは開けない可能性）、存在しないシート・セル範囲を指す社内リンク、参照そのものが壊れているリンクを自動で見分け、選んだリンクだけを解除した新しいファイルをその場で書き出せます。セルの文字や値は変わりません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。すべてのシートのハイパーリンクをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"ハイパーリンクの集計",
+  statsHint:"「ローカルファイル」はURLでも社内リンクでもなく、パソコンの中のファイルパスを指しているリンクです。ファイルを他の人に送ったり別のPCで開いたりすると、そのパスが存在せず開けなくなります。",
+  statTotal:"リンク数",statSheets:"対象シート数",statLocal:"ローカルファイル",statBrokenInternal:"存在しないシート参照",statMissingRel:"参照が壊れている",
+  listHeading:"ハイパーリンクの一覧",
+  selLocal:"ローカルファイルへのリンクを選択",selBrokenInternal:"存在しないシート参照を選択",selMissingRel:"参照が壊れているものを選択",selNone:"選択を解除",
+  warnText:"選んだリンクは「クリックすると開く」設定だけが解除されます。セルの文字（表示されている文字列）や値・数式は変わらず、クリックできないただの文字として残ります。削除後はExcelで開いて確認してください。元のファイルは変更されず、新しいファイルとして書き出されます。",
+  buildBtn:"選んだリンクを解除したファイルを書き出す",
+  buildBtnBusy:"書き出し中…",
+  csvBtn:"一覧をCSVで書き出す",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  colSel:"",colSheet:"シート",colRef:"セル",colType:"種類",colTarget:"リンク先",colFlags:"",
+  badgeLocal:"ローカルファイル",badgeBrokenInternal:"存在しないシート参照",badgeMissingRel:"参照が壊れている",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護の可能性があります）",
+  errNone:"ハイパーリンクが見つかりませんでした（このファイルのセルにはハイパーリンクが設定されていません）",
+  buildDone:"ダウンロードしました：",
+  csvHeaderSheet:"シート",csvHeaderRef:"セル",csvHeaderType:"種類",csvHeaderTarget:"リンク先",csvHeaderDisplay:"表示文字列",
+  csvHeaderLocal:"ローカルファイル",csvHeaderBrokenInternal:"存在しないシート参照",csvHeaderMissingRel:"参照が壊れている",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Hyperlinks that won't open, or too many to remove one by one",
+  sub:"For Excel (.xlsx/.xlsm) files where clicking a hyperlink shows \"the specified file could not be found\" or \"the reference is not valid\", or where copy-paste has scattered the same link across dozens of cells and Excel's own \"Edit Hyperlink\" dialog only handles one at a time. Lists every clickable hyperlink across every sheet, flags links to a local file path (may not open on another computer), in-sheet jump links to a sheet or range that no longer exists, and links whose own reference is broken — then lets you remove the ones you choose and download a cleaned copy. Cell text and values are untouched.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Every sheet's hyperlinks are extracted at once. Everything happens on this device.",
+  statsHeading:"Hyperlink summary",
+  statsHint:"\"Local file\" means the link points to a path on a computer's disk rather than a URL or an in-workbook location — it can stop working the moment the file is shared or opened elsewhere.",
+  statTotal:"Links",statSheets:"Sheets with links",statLocal:"Local file",statBrokenInternal:"Broken in-sheet ref",statMissingRel:"Missing relationship",
+  listHeading:"Hyperlinks",
+  selLocal:"Select local-file links",selBrokenInternal:"Select broken in-sheet refs",selMissingRel:"Select missing relationships",selNone:"Clear selection",
+  warnText:"Removing a selected link only removes its \"clickable\" setting — the cell's displayed text, value and formula are untouched; it just stops being clickable. Re-open the file in Excel afterward to check. Your original file is untouched — the result downloads as a new file.",
+  buildBtn:"Build a file with the selected links removed",
+  buildBtnBusy:"Building…",
+  csvBtn:"Export the list as CSV",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  colSel:"",colSheet:"Sheet",colRef:"Cell",colType:"Type",colTarget:"Target",colFlags:"",
+  badgeLocal:"local file",badgeBrokenInternal:"broken ref",badgeMissingRel:"missing rel",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, or it's password-protected)",
+  errNone:"No hyperlinks found (no cell in this file has a hyperlink attached)",
+  buildDone:"Downloaded: ",
+  csvHeaderSheet:"Sheet",csvHeaderRef:"Cell",csvHeaderType:"Type",csvHeaderTarget:"Target",csvHeaderDisplay:"Display text",
+  csvHeaderLocal:"Local file",csvHeaderBrokenInternal:"Broken in-sheet ref",csvHeaderMissingRel:"Missing relationship",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"", loading:false, error:"", parseResult:null, selected:{}, building:false, buildMsg:""};
+
+function resetFile(){ state={fileName:"", loading:false, error:"", parseResult:null, selected:{}, building:false, buildMsg:""}; render(); }
+
+function addFile(file){
+  state={fileName:file.name, loading:true, error:"", parseResult:null, selected:{}, building:false, buildMsg:""};
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxHyperlinks(new Uint8Array(buf)); })
+    .then(function(result){ state.loading=false; state.parseResult=result; render(); })
+    .catch(function(){ state.loading=false; state.error=T[lang].errBad; render(); });
+}
+
+function flatRows(){
+  if(!state.parseResult) return [];
+  var out=[];
+  state.parseResult.sheets.forEach(function(sh){
+    sh.links.forEach(function(l){
+      out.push({
+        key:sh.sheetIdx+":"+l.blockIdx+":"+l.linkIdx,
+        sheetName:sh.name, link:l
+      });
+    });
+  });
+  return out;
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.parseResult){ h+="<span class='fMeta'>"+flatRows().length+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function renderStats(rows){
+  var sheetsSet={};
+  var local=0, brokenInternal=0, missingRel=0;
+  rows.forEach(function(r){
+    sheetsSet[r.sheetName]=true;
+    if(r.link.type==="localFile") local++;
+    if(r.link.brokenInternal) brokenInternal++;
+    if(r.link.missingRel) missingRel++;
+  });
+  var items=[
+    [rows.length,T[lang].statTotal,""],
+    [Object.keys(sheetsSet).length,T[lang].statSheets,""],
+    [local,T[lang].statLocal,local?"err":""],
+    [brokenInternal,T[lang].statBrokenInternal,brokenInternal?"err":""],
+    [missingRel,T[lang].statMissingRel,missingRel?"err":""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function escTrunc(s,max){ s=String(s); max=max||160; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function renderList(rows){
+  if(!rows.length){
+    $("listBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>";
+    $("buildBtn").disabled=true;
+    return;
+  }
+  var h="<div class='scroll'><table><thead><tr><th></th><th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colRef)+"</th><th>"+esc(T[lang].colType)+"</th><th>"+esc(T[lang].colTarget)+"</th><th></th></tr></thead><tbody>";
+  rows.forEach(function(r){
+    var l=r.link;
+    var flagged=l.type==="localFile"||l.brokenInternal||l.missingRel;
+    h+="<tr class='"+(flagged?"flagged":"")+"' data-key='"+esc(r.key)+"'>";
+    h+="<td><input type='checkbox' class='rowSel' data-key='"+esc(r.key)+"' "+(state.selected[r.key]?"checked":"")+"></td>";
+    h+="<td>"+escTrunc(r.sheetName,30)+"</td>";
+    h+="<td class='mono'>"+escTrunc(l.ref,30)+"</td>";
+    h+="<td>"+esc(TYPE_LABEL[lang][l.type]||l.type)+"</td>";
+    h+="<td class='mono'>"+escTrunc(l.type==="internal"?(l.internalRef||l.location||""):(l.target||""),80)+"</td>";
+    var badges="";
+    if(l.type==="localFile") badges+="<span class='badge warn'>"+esc(T[lang].badgeLocal)+"</span>";
+    if(l.brokenInternal) badges+="<span class='badge diff'>"+esc(T[lang].badgeBrokenInternal)+"</span>";
+    if(l.missingRel) badges+="<span class='badge diff'>"+esc(T[lang].badgeMissingRel)+"</span>";
+    h+="<td>"+badges+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody></table></div>";
+  $("listBox").innerHTML=h;
+  var boxes=$("listBox").querySelectorAll(".rowSel");
+  for(var i=0;i<boxes.length;i++){
+    boxes[i].addEventListener("change",function(){
+      var key=this.getAttribute("data-key");
+      if(this.checked) state.selected[key]=true; else delete state.selected[key];
+      updateBuildState();
+    });
+  }
+  updateBuildState();
+}
+
+function selectedCount(){ return Object.keys(state.selected).length; }
+function updateBuildState(){
+  var n=selectedCount();
+  $("buildBtn").disabled = n===0 || state.building;
+  $("warnBox").style.display = n>0 ? "" : "none";
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.parseResult){
+    $("statsCard").style.display="none"; $("listCard").style.display="none";
+    return;
+  }
+  var rows=flatRows();
+  $("statsCard").style.display=""; $("listCard").style.display="";
+  renderStats(rows);
+  renderList(rows);
+  $("csvBtn").disabled=rows.length===0;
+}
+
+function suggestOutName(name){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(name);
+  if(!m) return name+"_リンク解除済み.xlsx";
+  return m[1]+"_リンク解除済み."+m[2].toLowerCase();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("selLocal").addEventListener("click",function(){
+  flatRows().forEach(function(r){ if(r.link.type==="localFile") state.selected[r.key]=true; });
+  renderList(flatRows());
+});
+$("selBrokenInternal").addEventListener("click",function(){
+  flatRows().forEach(function(r){ if(r.link.brokenInternal) state.selected[r.key]=true; });
+  renderList(flatRows());
+});
+$("selMissingRel").addEventListener("click",function(){
+  flatRows().forEach(function(r){ if(r.link.missingRel) state.selected[r.key]=true; });
+  renderList(flatRows());
+});
+$("selNone").addEventListener("click",function(){ state.selected={}; renderList(flatRows()); });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.parseResult || selectedCount()===0) return;
+  state.building=true; state.buildMsg=""; $("buildBtn").textContent=T[lang].buildBtnBusy; updateBuildState();
+  var removeSet=new Set(Object.keys(state.selected));
+  setTimeout(function(){
+    try{
+      var outBytes=buildCleanedXlsx(state.parseResult, removeSet);
+      var outName=suggestOutName(state.fileName);
+      var blob=new Blob([outBytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a"); a.href=url; a.download=outName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url)},2000);
+      state.buildMsg=T[lang].buildDone+outName;
+    }catch(err){
+      state.buildMsg=T[lang].errBad;
+    }
+    state.building=false; $("buildBtn").textContent=T[lang].buildBtn; updateBuildState();
+    $("buildMsg").textContent=state.buildMsg;
+  },0);
+});
+
+$("csvBtn").addEventListener("click",function(){
+  var rows=flatRows();
+  if(!rows.length) return;
+  var out=[[T[lang].csvHeaderSheet,T[lang].csvHeaderRef,T[lang].csvHeaderType,T[lang].csvHeaderTarget,T[lang].csvHeaderDisplay,T[lang].csvHeaderLocal,T[lang].csvHeaderBrokenInternal,T[lang].csvHeaderMissingRel]];
+  rows.forEach(function(r){
+    var l=r.link;
+    out.push([r.sheetName, l.ref, TYPE_LABEL[lang][l.type]||l.type, l.type==="internal"?(l.internalRef||l.location||""):(l.target||""), l.display!==null?l.display:"",
+      l.type==="localFile"?"1":"0", l.brokenInternal?"1":"0", l.missingRel?"1":"0"]);
+  });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3);
+  bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var base=(state.fileName||"hyperlinks").replace(/\.[^.]+$/,"");
+  var a=document.createElement("a"); a.href=url; a.download=base+"_ハイパーリンク一覧.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  $("buildBtn").textContent=state.building?T[lang].buildBtnBusy:T[lang].buildBtn;
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
