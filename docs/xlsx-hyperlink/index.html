@@ -177,6 +177,7 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
       <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
       <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
+          <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出す。見た目は変わらない。</li>
     </ul>
   </div>
   <div class="en-only">
@@ -191,6 +192,7 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly.</li>
       <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
       <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell (#REF!, #N/A, #VALUE! and more) across every sheet and file, with counts by type and a likely cause, exportable as CSV.</li>
+          <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks.</li>
     </ul>
   </div>
 </section>

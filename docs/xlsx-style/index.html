@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ | てのひらツール</title>
+<meta name="description" content="コピペを繰り返すうちにセルの書式（フォント・塗りつぶし・罫線・表示形式の組み合わせ）が増え続け、保存時に「異なるセルの書式の数が多すぎます」というエラーで保存できない、ファイルが重い——というときに。Excel(.xlsx/.xlsm)の全セルの書式を解析し、見た目が完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出します。見た目や数式を変える操作は一切行いません。When Excel refuses to save with a 'too many different cell formats' error, or the file is just heavy from accumulated formatting: merge byte-identical cell formats and drop ones no cell actually uses, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-style/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.ok .n{color:var(--accent)}
+.sizeRow{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:4px 0 10px;font-size:.95rem}
+.sizeRow .arrow{color:var(--muted)}
+.sizeRow .pct{color:var(--accent);font-weight:700}
+.quickRow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:340px;word-break:break-all}
+td.center{text-align:center;white-space:nowrap}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px;margin-right:10px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:11px 18px;cursor:pointer;min-height:44px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">「異なるセルの書式の数が多すぎます」エラー・ファイルが重いときの書式クリーンアップ</h1>
+    <p class="sub" data-i="sub">コピペを繰り返すうちにセルの書式（フォント・塗りつぶし・罫線・表示形式の組み合わせ）が増え続け、保存時に「異なるセルの書式の数が多すぎます」というエラーで保存できなくなったり、ファイルが重くなったりすることがあります。Excel(.xlsx/.xlsm)の全セルが使っている書式を解析し、見た目が完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出します。見た目・数式・セルの値を変える操作は一切行いません。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。全シートのセル書式（cellXfs）を解析します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">書式（cellXfs）の集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <div class="sizeRow" id="sizeRow"></div>
+  <p id="resultMsgOk" class="okBox" style="display:none" data-i="resultMsgOk">重複・未使用の書式が見つかりました。下のボタンで、まとめ・削除した新しいファイルを書き出せます。見た目・数式は変わりません。</p>
+  <p id="resultMsgNone" class="warnBox" style="display:none" data-i="resultMsgNone">重複・未使用の書式は見つかりませんでした。このファイルの書式はすでに整理されています。</p>
+  <p style="margin-top:4px">
+    <button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">まとめ・削除したファイルを書き出す</button>
+    <button type="button" class="secondary" id="csvBtn" disabled data-i="csvBtn">内訳をCSVで書き出す</button>
+  </p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="listHeading">まとめ・削除される書式の内訳</h2>
+  <p class="hint" data-i="listHint">「重複」は、他の書式と完全に同一（フォント・塗り・罫線・表示形式・配置などすべて一致）なため1つにまとめられる書式です。「未使用」は、どのセル・行・列からも参照されていない書式です。どちらも削除してもファイルの見た目は変わりません。</p>
+  <div id="listBox"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>自動で解析され、元の書式数・まとめられる重複数・削除される未使用数・整理後の書式数と、実際のファイルサイズの変化が表示されます。</li>
+      <li>内訳（どの書式がどれだけまとめられるか）を確認し、「まとめ・削除したファイルを書き出す」でダウンロードします。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. 「異なるセルの書式の数が多すぎます」とは何ですか？</h3>
+    <p>A. Excelのブックは、フォント・塗りつぶし・罫線・表示形式・配置・保護設定などの組み合わせ（セル書式）を内部に1つずつ記録しており、この組み合わせの総数には上限があります（Excel 2007以降は約64,000通り）。別のブックからのコピーや、書式のコピー＆貼り付けを繰り返すと、見た目が同じ、あるいはもう使われていない書式が気づかないうちに積み重なり、上限に達すると保存時にこのエラーが出て保存できなくなります。見た目を変えずに済むのは、重複している書式を1つにまとめ、使われていない書式を削除することです。このツールはその2つの処理だけを自動で行います。</p>
+    <h3>Q. 本当に見た目は変わりませんか？</h3>
+    <p>A. はい。まとめる対象は、フォント・塗りつぶし・罫線・表示形式・配置・保護設定などがすべて完全に一致する書式だけです。1文字でも設定が違う書式は別物として残すため、統合によって見た目が変わることはありません。削除する「未使用」の書式も、どのセル・行・列からも参照されていないものだけなので、削除してもどのセルの見た目にも影響しません。似ているけれど完全に同一ではない書式（例：色が1段階だけ違う）は、安全のためまとめません。</p>
+    <h3>Q. 対象は「セルの書式」のどこまでですか？</h3>
+    <p>A. セルに直接適用される書式の組み合わせ（ファイル内部ではcellXfsと呼ばれる部分）だけが対象です。「ホーム」タブの「セルのスタイル」ギャラリーに登録された名前付きスタイル（Normal・Percentなど）、テーブルのデザイン、条件付き書式用の書式（差分書式）は対象外で、変更しません。カスタムの表示形式（例："yyyy年m月d日"のような独自の書式コード）の定義自体も削除せず、セル側がその定義をもう使っていない場合だけ、セル書式の組み合わせの方を整理します。</p>
+    <h3>Q. どんなファイルで効果がありますか？</h3>
+    <p>A. 他のブックから何度もシートやセルをコピーした履歴があるファイル、条件付き書式や結合セルを使い回しながら作り込んだ長年運用中のファイル、「異なるセルの書式の数が多すぎます」のエラーが出て保存できないファイルなどで、重複・未使用の書式が多く見つかりやすい傾向があります。すでに整理されたシンプルなファイルでは「見つかりませんでした」と表示されることもあります。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_書式整理済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>It's analyzed automatically: the original format count, how many are duplicates to merge, how many are unused and droppable, the resulting count, and the actual file-size change are shown.</li>
+      <li>Review the breakdown of exactly which formats will be merged or dropped, then click "Build a cleaned file" to download it. Your original file is untouched.</li>
+    </ol>
+    <h3>Q. What does Excel's "too many different cell formats" error mean?</h3>
+    <p>A. Every Excel workbook stores each unique combination of font, fill, border, number format, alignment and protection settings as one internal "cell format" record, and there's a cap on how many such combinations a workbook can hold (roughly 64,000 in Excel 2007 and later). Copying between workbooks, or copying and pasting formatting repeatedly, quietly piles up formats that look identical or are no longer used by any cell. Once the cap is hit, Excel refuses to save with this error. The safe fix, without changing how anything looks, is to merge the duplicate formats into one and drop the ones nothing uses — which is exactly what this tool does, automatically.</p>
+    <h3>Q. Will this really leave the look of my file unchanged?</h3>
+    <p>A. Yes. Formats are only merged when every setting — font, fill, border, number format, alignment, protection — matches exactly; a format that differs in even one setting is kept as its own entry, so merging never changes how anything looks. The "unused" formats it removes are, by definition, not referenced by any cell, row or column, so dropping them can't affect any cell's appearance either. Formats that are merely similar but not byte-identical (say, one shade of color apart) are deliberately left alone for safety.</p>
+    <h3>Q. What part of "cell formatting" does this cover?</h3>
+    <p>A. Only the pool of format combinations applied directly to cells (internally called cellXfs). Named cell styles from the "Cell Styles" gallery (Normal, Percent, etc.), table styles, and the differential formats used by conditional formatting are untouched. Custom number-format codes themselves (e.g. a custom date pattern) are not deleted either — only the cell-format combinations that no longer reference them are cleaned up.</p>
+    <h3>Q. Which files benefit most?</h3>
+    <p>A. Files with a long history of copying sheets or cells from other workbooks, long-lived files built up with repeated conditional formatting or merged cells, and files that already throw the "too many different cell formats" error tend to have the most duplicate or unused formats. A simple, already-tidy file may show nothing to clean up.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_cleaned" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる（スタイルの組み合わせ数が多いと指摘されたら、このツールで実際に整理できます）。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、重複・不要なルールを削除。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、どこで使われているかを列挙。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、CSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。</li>
+      <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、壊れたリンクを自動検出して解除。</li>
+      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化してCSV出力。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes (if it flags "too many style combinations", this tool actually fixes that).</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every rule across every sheet and remove the overlapping or unneeded ones.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, then export to CSV.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once.</li>
+      <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet and remove the broken ones.</li>
+      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell across every sheet and file, exportable as CSV.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「異なるセルの書式の数が多すぎます」とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"Excelはフォント・塗り・罫線・表示形式などの組み合わせ（セル書式）を内部に記録し、総数には上限（約64,000通り）があります。コピーや書式の貼り付けを繰り返すと重複・未使用の書式が積み重なり、上限に達すると保存できなくなります。"}},
+    {"@type":"Question","name":"本当に見た目は変わりませんか？","acceptedAnswer":{"@type":"Answer","text":"はい。まとめるのは設定が完全に一致する書式だけで、削除するのはどのセルからも使われていない書式だけなので、見た目は変わりません。似ているだけで完全に同一でない書式は安全のためまとめません。"}},
+    {"@type":"Question","name":"対象は「セルの書式」のどこまでですか？","acceptedAnswer":{"@type":"Answer","text":"セルに直接適用される書式の組み合わせ（cellXfs）だけが対象です。名前付きセルスタイル・テーブルデザイン・条件付き書式の差分書式は変更しません。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。変更後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-junkan/xlsx-hyperlink/xlsx-error (no external
+   libraries; only standard browser APIs: DecompressionStream/TextDecoder/
+   TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+/* Unlike a plain "store" zip, this compresses each entry with deflate-raw
+   (the same CompressionStream API family already used to read .xlsx
+   files above) so that a rebuilt workbook doesn't balloon to several
+   times its original size — important for a tool whose whole point is
+   making a heavy file smaller, not bigger. */
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+
+/* =====================================================================
+   styles.xml: cellXfs parsing, duplicate/unused detection, human
+   descriptions (font/fill/border/numFmt), and the cleaned rebuild.
+   ===================================================================== */
+var BUILTIN_NUMFMT={
+  0:"General",1:"0",2:"0.00",3:"#,##0",4:"#,##0.00",9:"0%",10:"0.00%",11:"0.00E+00",
+  12:"# ?/?",13:"# ??/??",14:"m/d/yy",15:"d-mmm-yy",16:"d-mmm",17:"mmm-yy",
+  18:"h:mm AM/PM",19:"h:mm:ss AM/PM",20:"h:mm",21:"h:mm:ss",22:"m/d/yy h:mm",
+  37:"#,##0;(#,##0)",38:"#,##0;[Red](#,##0)",39:"#,##0.00;(#,##0.00)",40:"#,##0.00;[Red](#,##0.00)",
+  45:"mm:ss",46:"[h]:mm:ss",47:"mmss.0",48:"##0.0E+0",49:"@"
+};
+function attrsSig(attrs){ return Object.keys(attrs).sort().map(function(k){return k+"="+attrs[k]}).join(","); }
+function xfSignature(xf){
+  return attrsSig(xf.attrs)+"||"+(xf.inner===null?"SC":xf.inner.replace(/\s+/g," ").trim());
+}
+function numFmtDesc(id,customMap){
+  if(customMap[id]!==undefined) return customMap[id];
+  if(BUILTIN_NUMFMT[id]!==undefined) return BUILTIN_NUMFMT[id];
+  return "id:"+id;
+}
+function fontDesc(fonts,id,lang){
+  var f=fonts[id]; if(!f) return "";
+  var inner=f.inner||"";
+  var name=findTags(inner,"name")[0]; var sz=findTags(inner,"sz")[0];
+  var bold=findTags(inner,"b").length>0, italic=findTags(inner,"i").length>0;
+  var color=findTags(inner,"color")[0];
+  var parts=[];
+  if(name) parts.push(name.attrs.val);
+  if(sz) parts.push(sz.attrs.val+"pt");
+  if(bold) parts.push(lang==="ja"?"太字":"bold");
+  if(italic) parts.push(lang==="ja"?"斜体":"italic");
+  if(color && color.attrs.rgb) parts.push("#"+color.attrs.rgb.slice(-6).toUpperCase());
+  return parts.join(" ");
+}
+function fillDesc(fills,id,lang){
+  var f=fills[id]; if(!f) return "";
+  var pf=findTags(f.inner||"","patternFill")[0];
+  var pt=pf?(pf.attrs.patternType||"none"):"none";
+  if(pt==="none") return "";
+  if(pt!=="solid") return pt;
+  var fg=findTags(pf.inner||"","fgColor")[0];
+  if(fg && fg.attrs.rgb) return "#"+fg.attrs.rgb.slice(-6).toUpperCase();
+  if(fg && fg.attrs.theme!==undefined) return (lang==="ja"?"テーマ色":"theme color")+fg.attrs.theme;
+  return lang==="ja"?"塗りあり":"filled";
+}
+function borderDesc(borders,id,lang){
+  var b=borders[id]; if(!b) return "";
+  var inner=b.inner||"";
+  var any=["left","right","top","bottom"].some(function(side){
+    var t=findTags(inner,side)[0]; return t && t.attrs.style;
+  });
+  return any ? (lang==="ja"?"枠線あり":"border") : "";
+}
+function groupDesc(ctx,xf,lang){
+  var numFmtId=xf.attrs.numFmtId!==undefined?parseInt(xf.attrs.numFmtId,10):0;
+  var fontId=xf.attrs.fontId!==undefined?parseInt(xf.attrs.fontId,10):0;
+  var fillId=xf.attrs.fillId!==undefined?parseInt(xf.attrs.fillId,10):0;
+  var borderId=xf.attrs.borderId!==undefined?parseInt(xf.attrs.borderId,10):0;
+  var parts=[];
+  var nf=numFmtDesc(numFmtId,ctx.customNumFmts);
+  if(nf && nf!=="General") parts.push(nf);
+  var fo=fontDesc(ctx.fonts,fontId,lang); if(fo) parts.push(fo);
+  var fi=fillDesc(ctx.fills,fillId,lang); if(fi) parts.push(fi);
+  var bo=borderDesc(ctx.borders,borderId,lang); if(bo) parts.push(bo);
+  return parts.length?parts.join(" / "):(lang==="ja"?"既定の書式":"default format");
+}
+
+async function parseXlsxStyles(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  var stylesEntry=byName["xl/styles.xml"];
+  if(!wbEntry||!relsEntry||!stylesEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var stylesXml=dec.decode(stylesEntry.bytes);
+  var cellXfsBlock=findTags(stylesXml,"cellXfs")[0];
+  if(!cellXfsBlock || cellXfsBlock.selfClose) throw new Error("NO_CELLXFS");
+  var xfs=findTags(cellXfsBlock.inner||"","xf");
+  if(!xfs.length) throw new Error("NO_CELLXFS");
+
+  var fontsBlock=findTags(stylesXml,"fonts")[0];
+  var fonts=fontsBlock&&!fontsBlock.selfClose?findTags(fontsBlock.inner,"font"):[];
+  var fillsBlock=findTags(stylesXml,"fills")[0];
+  var fills=fillsBlock&&!fillsBlock.selfClose?findTags(fillsBlock.inner,"fill"):[];
+  var bordersBlock=findTags(stylesXml,"borders")[0];
+  var borders=bordersBlock&&!bordersBlock.selfClose?findTags(bordersBlock.inner,"border"):[];
+  var numFmtsBlock=findTags(stylesXml,"numFmts")[0];
+  var customNumFmts={};
+  if(numFmtsBlock && !numFmtsBlock.selfClose){
+    findTags(numFmtsBlock.inner,"numFmt").forEach(function(n){ customNumFmts[parseInt(n.attrs.numFmtId,10)]=n.attrs.formatCode; });
+  }
+
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  var sheets=sheetList.map(function(s){
+    var entry=byName[s.path];
+    return {name:s.name, path:s.path, xml:entry?dec.decode(entry.bytes):""};
+  });
+
+  var used=new Set([0]);
+  var cRe=/<c\b[^>]*\ss="(\d+)"/g, rowRe=/<row\b[^>]*\ss="(\d+)"/g, colRe=/<col\b[^>]*\sstyle="(\d+)"/g, m;
+  sheets.forEach(function(sh){
+    cRe.lastIndex=0; while((m=cRe.exec(sh.xml))) used.add(parseInt(m[1],10));
+    rowRe.lastIndex=0; while((m=rowRe.exec(sh.xml))) used.add(parseInt(m[1],10));
+    colRe.lastIndex=0; while((m=colRe.exec(sh.xml))) used.add(parseInt(m[1],10));
+  });
+
+  return {entries:entries, stylesXml:stylesXml, cellXfsBlock:cellXfsBlock, xfs:xfs,
+    fonts:fonts, fills:fills, borders:borders, customNumFmts:customNumFmts,
+    sheets:sheets, used:used};
+}
+
+function computeStylePlan(parsed){
+  var sigToCanonical={}, canonicalOf=[];
+  parsed.xfs.forEach(function(xf,idx){
+    var sig=xfSignature(xf);
+    if(sigToCanonical[sig]===undefined) sigToCanonical[sig]=idx;
+    canonicalOf[idx]=sigToCanonical[sig];
+  });
+  var usedCanonical=new Set();
+  parsed.used.forEach(function(oldIdx){
+    if(oldIdx>=0 && oldIdx<canonicalOf.length) usedCanonical.add(canonicalOf[oldIdx]);
+  });
+  if(canonicalOf.length) usedCanonical.add(canonicalOf[0]);
+
+  var keptCanonicals=Array.from(usedCanonical).sort(function(a,b){return a-b});
+  var newIndexOfCanonical={};
+  keptCanonicals.forEach(function(c,i){ newIndexOfCanonical[c]=i; });
+  var oldToNew=parsed.xfs.map(function(xf,idx){
+    var nv=newIndexOfCanonical[canonicalOf[idx]];
+    return nv===undefined?idx:nv;
+  });
+
+  var groupsByCanonical={};
+  parsed.xfs.forEach(function(xf,idx){
+    var c=canonicalOf[idx];
+    (groupsByCanonical[c]=groupsByCanonical[c]||[]).push(idx);
+  });
+  var duplicateGroupsUsed=[], unusedGroups=[];
+  Object.keys(groupsByCanonical).forEach(function(cKey){
+    var c=parseInt(cKey,10), members=groupsByCanonical[c];
+    if(!usedCanonical.has(c)){ unusedGroups.push({canonical:c,members:members}); }
+    else if(members.length>1){ duplicateGroupsUsed.push({canonical:c,members:members}); }
+  });
+  var mergedAway=duplicateGroupsUsed.reduce(function(s,g){return s+g.members.length-1},0);
+  var unusedAway=unusedGroups.reduce(function(s,g){return s+g.members.length},0);
+
+  return {canonicalOf:canonicalOf, usedCanonical:usedCanonical, oldToNew:oldToNew,
+    keptCanonicals:keptCanonicals, duplicateGroupsUsed:duplicateGroupsUsed, unusedGroups:unusedGroups,
+    totalOriginal:parsed.xfs.length, totalFinal:keptCanonicals.length,
+    mergedAway:mergedAway, unusedAway:unusedAway};
+}
+
+function remapSheetStyleRefs(xml,mapFn){
+  var out=[], last=0;
+  var re=/<(c|row|col)(?=[\s/>])/g, m;
+  while((m=re.exec(xml))){
+    var tag=m[1], tagStart=m.index;
+    var open=parseOpenTag(xml,tagStart+1+tag.length);
+    var openText=xml.slice(tagStart,open.end);
+    var attrName=tag==="col"?"style":"s";
+    var attrVal=open.attrs[attrName];
+    var newOpenText=openText;
+    if(attrVal!==undefined && /^\d+$/.test(attrVal)){
+      var oldIdx=parseInt(attrVal,10), newIdx=mapFn(oldIdx);
+      if(newIdx!==oldIdx){
+        var re2=new RegExp("(\\s"+attrName+"=)([\"'])"+attrVal+"\\2");
+        newOpenText=openText.replace(re2,function(mm,pfx,q){return pfx+q+newIdx+q;});
+      }
+    }
+    out.push(xml.slice(last,tagStart),newOpenText);
+    last=open.end; re.lastIndex=open.end;
+  }
+  out.push(xml.slice(last));
+  return out.join("");
+}
+
+async function buildCleanedXlsx(parsed,plan){
+  var enc=new TextEncoder();
+  var newXfTexts=plan.keptCanonicals.map(function(c){
+    var xf=parsed.xfs[c];
+    return xf.selfClose ? xf.openText : xf.openText+(xf.inner||"")+"</xf>";
+  });
+  var newCellXfsBlock="<cellXfs count=\""+plan.keptCanonicals.length+"\">"+newXfTexts.join("")+"</cellXfs>";
+  var newStylesXml=parsed.stylesXml.slice(0,parsed.cellXfsBlock.start)+newCellXfsBlock+parsed.stylesXml.slice(parsed.cellXfsBlock.end);
+
+  function mapFn(oldIdx){ var nv=plan.oldToNew[oldIdx]; return nv===undefined?oldIdx:nv; }
+  var patchedSheets={};
+  parsed.sheets.forEach(function(sh){ patchedSheets[sh.path]=remapSheetStyleRefs(sh.xml,mapFn); });
+
+  var outFiles=parsed.entries.map(function(e){
+    if(e.name==="xl/styles.xml") return {name:e.name, bytes:enc.encode(newStylesXml)};
+    if(patchedSheets[e.name]!==undefined) return {name:e.name, bytes:enc.encode(patchedSheets[e.name])};
+    return {name:e.name, bytes:e.bytes};
+  });
+  return await buildZip(outFiles);
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"「異なるセルの書式の数が多すぎます」エラー・ファイルが重いときの書式クリーンアップ",
+  sub:"コピペを繰り返すうちにセルの書式（フォント・塗りつぶし・罫線・表示形式の組み合わせ）が増え続け、保存時に「異なるセルの書式の数が多すぎます」というエラーで保存できなくなったり、ファイルが重くなったりすることがあります。Excel(.xlsx/.xlsm)の全セルが使っている書式を解析し、見た目が完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出します。見た目・数式・セルの値を変える操作は一切行いません。元のファイルは変更しません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。全シートのセル書式（cellXfs）を解析します。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"書式（cellXfs）の集計",
+  statTotal:"元の書式数",statMerged:"重複をまとめた数",statUnused:"未使用を削除した数",statFinal:"整理後の書式数",
+  resultMsgOk:"重複・未使用の書式が見つかりました。下のボタンで、まとめ・削除した新しいファイルを書き出せます。見た目・数式は変わりません。",
+  resultMsgNone:"重複・未使用の書式は見つかりませんでした。このファイルの書式はすでに整理されています。",
+  buildBtn:"まとめ・削除したファイルを書き出す",buildBtnBusy:"書き出し中…",
+  csvBtn:"内訳をCSVで書き出す",
+  listHeading:"まとめ・削除される書式の内訳",
+  listHint:"「重複」は、他の書式と完全に同一（フォント・塗り・罫線・表示形式・配置などすべて一致）なため1つにまとめられる書式です。「未使用」は、どのセル・行・列からも参照されていない書式です。どちらも削除してもファイルの見た目は変わりません。",
+  removeBtn:"削除",loadingLabel:"読み込み中…",
+  colType:"種別",colDesc:"書式の内容",colCount:"件数",colIndexes:"元のインデックス",
+  badgeDup:"重複",badgeUnused:"未使用",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護、または書式情報(styles.xml)が無いファイルの可能性があります）",
+  sizeBefore:"元のファイルサイズ",sizeAfter:"整理後のファイルサイズ",
+  buildDone:"ダウンロードしました：",
+  csvHeaderType:"種別",csvHeaderDesc:"書式の内容",csvHeaderCount:"件数",csvHeaderIndexes:"元のインデックス",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Fix \"too many different cell formats\" / a heavy workbook: clean up styles",
+  sub:"Repeated copy-paste can quietly pile up cell formats (combinations of font, fill, border and number format) until Excel refuses to save with a \"too many different cell formats\" error, or the file simply gets heavy. This tool analyzes every cell format an Excel (.xlsx/.xlsm) workbook actually uses, merges the ones that are byte-identical, drops the ones no cell references at all, and builds a cleaned copy. It never changes how anything looks, any formula, or any cell value. Your original file is untouched.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Every sheet's cell formats (cellXfs) are analyzed. Everything happens on this device.",
+  statsHeading:"Cell format (cellXfs) summary",
+  statTotal:"Original formats",statMerged:"Merged as duplicates",statUnused:"Dropped as unused",statFinal:"Formats after cleanup",
+  resultMsgOk:"Duplicate or unused formats were found. Use the button below to download a cleaned copy — nothing visual or any formula changes.",
+  resultMsgNone:"No duplicate or unused formats were found. This file's formats are already tidy.",
+  buildBtn:"Build a cleaned file",buildBtnBusy:"Building…",
+  csvBtn:"Export the breakdown as CSV",
+  listHeading:"What will be merged or dropped",
+  listHint:"\"Duplicate\" means a format that matches another one exactly (font, fill, border, number format, alignment — everything) and gets merged into it. \"Unused\" means a format no cell, row or column actually references. Removing either never changes how the file looks.",
+  removeBtn:"Remove",loadingLabel:"Loading…",
+  colType:"Type",colDesc:"Format",colCount:"Count",colIndexes:"Original indexes",
+  badgeDup:"duplicate",badgeUnused:"unused",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, may be password-protected, or has no style information)",
+  sizeBefore:"Original size",sizeAfter:"Cleaned size",
+  buildDone:"Downloaded: ",
+  csvHeaderType:"Type",csvHeaderDesc:"Format",csvHeaderCount:"Count",csvHeaderIndexes:"Original indexes",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"",fileSize:0,loading:false,error:"",parsed:null,plan:null,outBytes:null,building:false,buildMsg:""};
+
+function resetFile(){ state={fileName:"",fileSize:0,loading:false,error:"",parsed:null,plan:null,outBytes:null,building:false,buildMsg:""}; render(); }
+
+function addFile(file){
+  state={fileName:file.name,fileSize:file.size,loading:true,error:"",parsed:null,plan:null,outBytes:null,building:false,buildMsg:""};
+  render();
+  (async function(){
+    try{
+      var buf=await file.arrayBuffer();
+      var parsed=await parseXlsxStyles(new Uint8Array(buf));
+      var plan=computeStylePlan(parsed);
+      var outBytes=(plan.mergedAway+plan.unusedAway)>0 ? await buildCleanedXlsx(parsed,plan) : null;
+      state.loading=false; state.parsed=parsed; state.plan=plan; state.outBytes=outBytes; render();
+    }catch(e){
+      state.loading=false; state.error=T[lang].errBad; render();
+    }
+  })();
+}
+
+function groupRows(){
+  if(!state.parsed || !state.plan) return [];
+  var ctx=state.parsed, rows=[];
+  state.plan.duplicateGroupsUsed.forEach(function(g){
+    rows.push({type:"dup", desc:groupDesc(ctx,ctx.xfs[g.canonical],lang), count:g.members.length, indexes:g.members});
+  });
+  state.plan.unusedGroups.forEach(function(g){
+    rows.push({type:"unused", desc:groupDesc(ctx,ctx.xfs[g.canonical],lang), count:g.members.length, indexes:g.members});
+  });
+  rows.sort(function(a,b){return a.indexes[0]-b.indexes[0]});
+  return rows;
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.parsed){ h+="<span class='fMeta'>"+fmtBytes(state.fileSize)+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function renderStats(){
+  var plan=state.plan;
+  var items=[
+    [plan.totalOriginal,T[lang].statTotal,""],
+    [plan.mergedAway,T[lang].statMerged,plan.mergedAway?"ok":""],
+    [plan.unusedAway,T[lang].statUnused,plan.unusedAway?"ok":""],
+    [plan.totalFinal,T[lang].statFinal,""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+
+  var sizeHtml="";
+  if(state.outBytes){
+    var before=state.fileSize, after=state.outBytes.length;
+    var pct=before>0?Math.round((1-after/before)*1000)/10:0;
+    sizeHtml="<span>"+esc(T[lang].sizeBefore)+": "+fmtBytes(before)+"</span><span class='arrow'>→</span>"+
+      "<span>"+esc(T[lang].sizeAfter)+": "+fmtBytes(after)+"</span>"+
+      (pct>0?" <span class='pct'>-"+pct+"%</span>":"");
+  }
+  $("sizeRow").innerHTML=sizeHtml;
+
+  var hasFix=(plan.mergedAway+plan.unusedAway)>0;
+  $("resultMsgOk").style.display=hasFix?"":"none";
+  $("resultMsgNone").style.display=hasFix?"none":"";
+  $("buildBtn").disabled=!hasFix || state.building;
+  $("csvBtn").disabled=!hasFix;
+}
+
+function escTrunc(s,max){ s=String(s); max=max||200; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function renderList(){
+  var rows=groupRows();
+  if(!rows.length){ $("listCard").style.display="none"; return; }
+  $("listCard").style.display="";
+  var h="<div class='scroll'><table><thead><tr><th>"+esc(T[lang].colType)+"</th><th>"+esc(T[lang].colDesc)+"</th><th>"+esc(T[lang].colCount)+"</th><th>"+esc(T[lang].colIndexes)+"</th></tr></thead><tbody>";
+  rows.forEach(function(r){
+    h+="<tr>";
+    h+="<td>"+(r.type==="dup"?"<span class='badge warn'>"+esc(T[lang].badgeDup)+"</span>":"<span class='badge diff'>"+esc(T[lang].badgeUnused)+"</span>")+"</td>";
+    h+="<td class='mono'>"+escTrunc(r.desc,160)+"</td>";
+    h+="<td class='center'>"+r.count+"</td>";
+    h+="<td class='mono'>"+escTrunc(r.indexes.join(", "),200)+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody></table></div>";
+  $("listBox").innerHTML=h;
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.parsed){
+    $("statsCard").style.display="none"; $("listCard").style.display="none";
+    return;
+  }
+  $("statsCard").style.display="";
+  renderStats();
+  renderList();
+}
+
+function suggestOutName(name){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(name);
+  if(!m) return name+"_書式整理済み.xlsx";
+  return m[1]+"_書式整理済み."+m[2].toLowerCase();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.outBytes) return;
+  state.building=true; state.buildMsg=""; $("buildBtn").textContent=T[lang].buildBtnBusy; $("buildBtn").disabled=true;
+  setTimeout(function(){
+    try{
+      var outName=suggestOutName(state.fileName);
+      var blob=new Blob([state.outBytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a"); a.href=url; a.download=outName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url)},2000);
+      state.buildMsg=T[lang].buildDone+outName;
+    }catch(err){
+      state.buildMsg=T[lang].errBad;
+    }
+    state.building=false; $("buildBtn").textContent=T[lang].buildBtn; $("buildBtn").disabled=false;
+    $("buildMsg").textContent=state.buildMsg;
+  },0);
+});
+
+$("csvBtn").addEventListener("click",function(){
+  var rows=groupRows();
+  if(!rows.length) return;
+  var out=[[T[lang].csvHeaderType,T[lang].csvHeaderDesc,T[lang].csvHeaderCount,T[lang].csvHeaderIndexes]];
+  rows.forEach(function(r){ out.push([r.type==="dup"?T[lang].badgeDup:T[lang].badgeUnused, r.desc, r.count, r.indexes.join(" ")]); });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3);
+  bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var base=(state.fileName||"styles").replace(/\.[^.]+$/,"");
+  var a=document.createElement("a"); a.href=url; a.download=base+"_書式内訳.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  $("buildBtn").textContent=state.building?T[lang].buildBtnBusy:T[lang].buildBtn;
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

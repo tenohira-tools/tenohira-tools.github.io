@@ -704,6 +704,41 @@
       },
       "total": 8,
       "note": "xlsx-error公開前の取得。前回10-08 17:28Z比で変化なし（サイト全体累計8、個別25ページも引き続き全て0件）。health.md・計測タグ・表記いずれも不備なし。改善対象になる閲覧増加ページが無く、backlog残り3件も差別化未確定のため、STRATEGY.mdの最優先分野でWebSearchにより新角度を確認し、エラー値（#REF!・#N/A・#DIV/0!等）セルの全件一覧化ツール（xlsx-error）を新規公開。"
+    },
+    {
+      "date": "2026-10-09T17:10:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": {
+        "/": 8,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0,
+        "/xlsx-error/": 0,
+        "/xlsx-hyperlink/": 0,
+        "/xlsx-jouken/": 0,
+        "/xlsx-junkan/": 0,
+        "/xlsx-ketsugo/": 0,
+        "/xlsx-link/": 0,
+        "/xlsx-merge/": 0,
+        "/xlsx-namae/": 0,
+        "/xlsx-omoi/": 0,
+        "/xlsx-suushiki/": 0
+      },
+      "total": 8,
+      "note": "xlsx-style公開前の取得。前回10-08 20:20Z比で変化なし（サイト全体累計8、個別25ページ・トップのみの構成も引き続き0件）。health.md・計測タグ・表記いずれも不備なし。backlog残り3件（住所英語変換・文字数カウンター・SNS画像切り抜き）は差別化未確定のため見送り、STRATEGY.mdの最優先分野「Excelファイルのトラブル解決」でWebSearchにより新角度（セル書式の重複・未使用クリーンアップ）を確認し、xlsx-styleを新規公開。"
     }
   ],
   "weekly": [
