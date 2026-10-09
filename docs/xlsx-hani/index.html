@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出る原因「使用範囲」をリセット | てのひらツール</title>
+<meta name="description" content="Ctrl+Endを押すとデータの無い遠いセルまで飛ぶ、印刷すると関係ない白紙のページが何十枚も出る、保存が遅い・ファイルが重い——その多くは、実際のデータより先に書式だけが残ってExcelの「使用範囲」が広がっていることが原因です。Excel(.xlsx/.xlsm)の全シートを解析し、実データ＋結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出します（テーブル機能を使っているシートは安全のため対象外）。When Ctrl+End jumps far past your data or printing spits out dozens of blank pages, leftover formatting is usually inflating Excel's recorded used range — this resets it to match your actual data, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-hani/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.ok .n{color:var(--accent)}
+.sizeRow{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:4px 0 10px;font-size:.95rem}
+.sizeRow .arrow{color:var(--muted)}
+.sizeRow .pct{color:var(--accent);font-weight:700}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:nowrap}
+td.center{text-align:center;white-space:nowrap}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px;margin-right:10px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:11px 18px;cursor:pointer;min-height:44px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</h1>
+    <p class="sub" data-i="sub">Ctrl+Endを押すと、データが入っている範囲よりずっと遠いセルまで飛ぶことがあります。これはExcelが「どこかに書式や値が一度でも入った」セルを記憶し続けるためで、印刷すると関係ない白紙のページが何十枚も出たり、保存や起動が遅くなったりする原因になります。このツールはExcel(.xlsx/.xlsm)の全シートを解析し、実際のデータと結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出します。Excelの「テーブル」機能を使っているシートは、安全のため自動的に対象から外します。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。全シートの使用範囲（dimension）とセルを解析します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">シートごとの使用範囲</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <div class="sizeRow" id="sizeRow"></div>
+  <p id="resultMsgOk" class="okBox" style="display:none" data-i="resultMsgOk">実データより先に書式・値が残っているシートが見つかりました。下のボタンで、使用範囲を縮小した新しいファイルを書き出せます。</p>
+  <p id="resultMsgNone" class="warnBox" style="display:none" data-i="resultMsgNone">どのシートも使用範囲はすでに実データ（と結合セル）の範囲に収まっていました。縮小できる箇所は見つかりませんでした。</p>
+  <p class="warnBox" data-i="cautionMsg">注意：実データの外側に、罫線や塗りつぶしなどの書式だけを意図して設定していた場合（将来の入力用に枠を広めに引いていた等）、その部分の書式は削除されます。書き出し後に見た目を確認してください。</p>
+  <p style="margin-top:4px">
+    <button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">使用範囲を縮小したファイルを書き出す</button>
+    <button type="button" class="secondary" id="csvBtn" disabled data-i="csvBtn">内訳をCSVで書き出す</button>
+  </p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="listHeading">シート別の内訳</h2>
+  <p class="hint" data-i="listHint">「記録されている最終セル」は、現在Ctrl+Endを押すと飛ぶ位置に相当します。「実データの最終セル」は、値・数式が入っているセルと結合セルの範囲から計算した、本来の範囲です。差があるシートほど、不要な書式が遠くまで残っている可能性があります。</p>
+  <div id="listBox"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>自動で解析され、シートごとに「記録されている最終セル」と「実データの最終セル」の差、削除される空行・空セルの数が表示されます。</li>
+      <li>内訳を確認し、「使用範囲を縮小したファイルを書き出す」でダウンロードします。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. なぜCtrl+Endで遠いセルまで飛ぶのですか？</h3>
+    <p>A. Excelは、値や数式が入ったセルだけでなく、一度でも書式（フォント・色・枠線など）を設定したセルや、行・列の高さ・幅を変更した範囲も「使われたことがある」として記憶し続けます。そのセルの値を後から消しても、この記憶は自動では消えません。そのため、実際にデータが入っているのはC10まででも、遠くのセルに一度でも色を塗ったり、行や列を広い範囲で選択して書式を変えたりした履歴があると、Ctrl+Endはそのずっと先まで飛んでしまいます。このツールは、値・数式が実際に入っているセルと、結合セルの範囲だけを数え直し、それより先にある書式だけのセル・行を取り除いて、この記憶（使用範囲）を縮小します。</p>
+    <h3>Q. 印刷で白紙のページが大量に出るのと、どう関係しますか？</h3>
+    <p>A. 印刷範囲を明示的に指定していない場合、Excelはこの「使用範囲」をもとに自動で印刷対象のページを決めます。使用範囲が実データよりはるかに先まで広がっていると、何も印刷されない白紙のページまで印刷対象に含まれてしまい、プレビューや実際の印刷で何十枚もの白紙ページが出る原因になります。使用範囲を実データに合わせて縮小すると、この自動判定も実データの範囲に収まりやすくなります。ただし「ページレイアウト」タブで印刷範囲を明示的に設定している場合は、その設定自体は変更しません。</p>
+    <h3>Q. 見た目は変わりませんか？</h3>
+    <p>A. 値・数式が入っているセルと、結合セルの範囲は一切変更しません。変更されるのは、実データや結合セルより先にある、値も数式も入っていない「書式だけのセル・行」だけです。多くの場合これは単純な作業の跡（広い範囲を選んで色を変えた、行の高さをまとめて変更した等）ですが、実データの外側に意図して罫線や色を設定していた場合（将来の入力用に枠を広めに引いていた等）は、その部分の見た目が失われます。書き出し後に一度見た目を確認することをおすすめします。</p>
+    <h3>Q. Excelの「テーブル」機能を使っているシートはどうなりますか？</h3>
+    <p>A. テーブル（ホーム or 挿入タブの「テーブルとして書式設定」）が設定されているシートは、テーブルの範囲指定を壊さないよう、安全のため自動的に対象から外し、そのシートは変更しません。内訳の一覧に「対象外（テーブル機能）」と表示されます。</p>
+    <h3>Q. 列の幅や非表示の行・列も縮小されますか？</h3>
+    <p>A. いいえ。縮小の対象はセル単位の値・数式・結合セルの範囲だけです。列の幅設定（cols要素）、ウィンドウ枠の固定、シートの表示設定、名前定義や印刷範囲の指定そのものは変更しません。これらが原因で重い・範囲が広く見える場合は対象外です。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_使用範囲リセット」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>It's analyzed automatically: for each sheet, the gap between its "recorded last cell" and its "actual data last cell", and how many empty rows/cells will be dropped.</li>
+      <li>Review the breakdown, then click "Build a resized file" to download it. Your original file is untouched.</li>
+    </ol>
+    <h3>Q. Why does Ctrl+End jump to a cell far past my data?</h3>
+    <p>A. Excel remembers any cell that has ever held formatting (font, color, border, etc.) or had its row height / column width changed as "used", not only cells that currently hold a value or formula. Clearing a cell's content later doesn't automatically clear this memory. So even if your real data ends at C10, a one-time color fill or a wide row/column selection far away can push Ctrl+End much further than that. This tool recounts only the cells that actually hold a value or formula, plus any merged-cell ranges, and strips the formatting-only cells and rows beyond that point, shrinking this memory (the "used range").</p>
+    <h3>Q. How does this relate to printing dozens of blank pages?</h3>
+    <p>A. When no print area is explicitly set, Excel decides which pages to print based on this used range. If it extends far past your real data, Excel includes those empty pages in the print job and preview, producing dozens of blank pages. Shrinking the used range to match your real data usually fixes this automatic page detection. An explicitly configured print area (Page Layout tab) is left untouched.</p>
+    <h3>Q. Will this change how my file looks?</h3>
+    <p>A. Cells and merged ranges that actually hold a value or formula are never touched. Only formatting-only cells and rows beyond your real data and merged ranges are removed. This is usually just leftover formatting from selecting a wide range by accident, but if you deliberately formatted cells beyond your data (say, a border drawn wider for future entries), that formatting will be lost. Check the result after downloading.</p>
+    <h3>Q. What about sheets using Excel's Table feature?</h3>
+    <p>A. Sheets with a Table ("Format as Table") are automatically skipped and left unchanged, to avoid breaking the table's range. The breakdown shows them as "skipped (Table)".</p>
+    <h3>Q. Does this also shrink column widths or hidden rows/columns?</h3>
+    <p>A. No. Only the cell-level value/formula/merged-range footprint is affected. Column width definitions, frozen panes, sheet view settings, defined names and any explicit print-area setting are left untouched. If your issue is caused by those instead, this tool won't help.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_range-reset" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。使用範囲の広がりが疑われる場合は、このツールで実際に縮小できます。</li>
+      <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）の重複・未使用を1つにまとめて削除。見た目は変わりません。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、重複・不要なルールを削除。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、CSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化してCSV出力。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes (if a bloated used range is flagged, this tool can actually shrink it).</li>
+      <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop the ones no cell uses, without changing how anything looks.</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every rule across every sheet and remove the overlapping or unneeded ones.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, then export as CSV.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell across every sheet and file, exportable as CSV.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"なぜCtrl+Endで遠いセルまで飛ぶのですか？","acceptedAnswer":{"@type":"Answer","text":"Excelは値や数式だけでなく、一度でも書式を設定したセルや行・列の高さ・幅の変更も使用済みとして記憶し続けます。値を消してもこの記憶は自動では消えないため、実データより遠くまでCtrl+Endが飛びます。"}},
+    {"@type":"Question","name":"印刷で白紙のページが大量に出るのと、どう関係しますか？","acceptedAnswer":{"@type":"Answer","text":"印刷範囲を明示的に指定していない場合、Excelは使用範囲をもとに印刷対象を自動判定します。使用範囲が実データよりはるかに先まで広がっていると、白紙のページまで印刷対象に含まれます。"}},
+    {"@type":"Question","name":"見た目は変わりませんか？","acceptedAnswer":{"@type":"Answer","text":"値・数式・結合セルの範囲は変更しません。実データの外側にある書式だけのセル・行だけを取り除きます。意図して範囲外に書式を設定していた場合はその部分の見た目が失われます。"}},
+    {"@type":"Question","name":"Excelの「テーブル」機能を使っているシートはどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"テーブルの範囲を壊さないよう、安全のため自動的に対象から外し、そのシートは変更しません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-junkan/xlsx-hyperlink/xlsx-error/xlsx-style (no
+   external libraries; only standard browser APIs: DecompressionStream/
+   CompressionStream/TextDecoder/TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+
+/* =====================================================================
+   Used-range (dimension) analysis & trimming.
+   ===================================================================== */
+function colLettersToNum(letters){
+  var n=0;
+  for(var i=0;i<letters.length;i++){ n=n*26+(letters.charCodeAt(i)-64); }
+  return n;
+}
+function colNumToLetters(n){
+  var s="";
+  while(n>0){ var rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+function parseRef(ref){
+  var m=/^([A-Za-z]+)(\d+)$/.exec(ref||"");
+  if(!m) return null;
+  return {col:colLettersToNum(m[1].toUpperCase()), row:parseInt(m[2],10)};
+}
+function parseRangeRef(ref){
+  if(!ref) return null;
+  var parts=String(ref).split(":");
+  var a=parseRef(parts[0]), b=parts[1]?parseRef(parts[1]):a;
+  if(!a||!b) return null;
+  return {minCol:Math.min(a.col,b.col),minRow:Math.min(a.row,b.row),maxCol:Math.max(a.col,b.col),maxRow:Math.max(a.row,b.row)};
+}
+function cellHasData(c){
+  if(c.selfClose) return false;
+  var inner=c.inner||"";
+  return findTags(inner,"v").length>0 || findTags(inner,"f").length>0 || findTags(inner,"is").length>0;
+}
+function analyzeSheet(sheetXml){
+  var hasTable=false;
+  var tp=findTags(sheetXml,"tableParts")[0];
+  if(tp && !tp.selfClose && findTags(tp.inner,"tablePart").length>0) hasTable=true;
+
+  var dimTag=findTags(sheetXml,"dimension")[0];
+  var dim=dimTag?parseRangeRef(dimTag.attrs.ref):null;
+
+  var sheetDataBlock=findTags(sheetXml,"sheetData")[0];
+  var rows=(sheetDataBlock && !sheetDataBlock.selfClose)?findTags(sheetDataBlock.inner,"row"):[];
+
+  var allMaxRow=0, allMaxCol=0, dataMaxRow=0, dataMaxCol=0;
+  rows.forEach(function(row,ri){
+    var rowNum=row.attrs.r?parseInt(row.attrs.r,10):(ri+1);
+    if(rowNum>allMaxRow) allMaxRow=rowNum;
+    if(row.selfClose) return;
+    var cells=findTags(row.inner,"c");
+    cells.forEach(function(c,ci){
+      var p=c.attrs.r?parseRef(c.attrs.r):null;
+      var colNum=p?p.col:(ci+1);
+      if(colNum>allMaxCol) allMaxCol=colNum;
+      if(cellHasData(c)){
+        if(rowNum>dataMaxRow) dataMaxRow=rowNum;
+        if(colNum>dataMaxCol) dataMaxCol=colNum;
+      }
+    });
+  });
+
+  var mergeMaxRow=0, mergeMaxCol=0;
+  var mergeBlock=findTags(sheetXml,"mergeCells")[0];
+  if(mergeBlock && !mergeBlock.selfClose){
+    findTags(mergeBlock.inner,"mergeCell").forEach(function(mc){
+      var d=parseRangeRef(mc.attrs.ref);
+      if(d){ if(d.maxRow>mergeMaxRow) mergeMaxRow=d.maxRow; if(d.maxCol>mergeMaxCol) mergeMaxCol=d.maxCol; }
+    });
+  }
+
+  var safeMaxRow=Math.max(dataMaxRow,mergeMaxRow);
+  var safeMaxCol=Math.max(dataMaxCol,mergeMaxCol);
+  var trimmable=!hasTable && (allMaxRow>safeMaxRow || allMaxCol>safeMaxCol);
+
+  return {hasTable:hasTable, dim:dim, allMaxRow:allMaxRow, allMaxCol:allMaxCol,
+    safeMaxRow:safeMaxRow, safeMaxCol:safeMaxCol, trimmable:trimmable};
+}
+function buildTrimmedSheetXml(sheetXml,safeMaxRow,safeMaxCol){
+  var dimTag=findTags(sheetXml,"dimension")[0];
+  var sheetDataBlock=findTags(sheetXml,"sheetData")[0];
+  if(!sheetDataBlock) return {xml:sheetXml, removedRows:0, removedCells:0};
+
+  var rows=sheetDataBlock.selfClose?[]:findTags(sheetDataBlock.inner,"row");
+  var keptRowTexts=[], removedRows=0, removedCells=0;
+  rows.forEach(function(row,ri){
+    var rowNum=row.attrs.r?parseInt(row.attrs.r,10):(ri+1);
+    if(rowNum>safeMaxRow){ removedRows++; return; }
+    if(row.selfClose){ keptRowTexts.push(row.openText); return; }
+    var cells=findTags(row.inner,"c");
+    if(!cells.length){ keptRowTexts.push(row.openText+(row.inner||"")+"</row>"); return; }
+    var parts=[], last=0;
+    cells.forEach(function(c,ci){
+      var p=c.attrs.r?parseRef(c.attrs.r):null;
+      var colNum=p?p.col:(ci+1);
+      if(colNum>safeMaxCol && !cellHasData(c)){
+        removedCells++;
+        parts.push(row.inner.slice(last,c.start));
+        last=c.end;
+      }
+    });
+    parts.push(row.inner.slice(last));
+    keptRowTexts.push(row.openText+parts.join("")+"</row>");
+  });
+  var newSheetDataInner=keptRowTexts.join("");
+
+  var newXml;
+  if(dimTag){
+    var d=dimTag.attrs.ref?parseRangeRef(dimTag.attrs.ref):null;
+    var minCol=d?d.minCol:1, minRow=d?d.minRow:1;
+    var newMaxRow=Math.max(minRow,safeMaxRow||minRow), newMaxCol=Math.max(minCol,safeMaxCol||minCol);
+    var newRef=(safeMaxRow===0 && safeMaxCol===0) ? "A1" :
+      (colNumToLetters(minCol)+minRow+":"+colNumToLetters(newMaxCol)+newMaxRow);
+    var newDimText="<dimension ref=\""+newRef+"\"/>";
+    newXml=sheetXml.slice(0,dimTag.start)+newDimText+sheetXml.slice(dimTag.end,sheetDataBlock.start)+
+      sheetDataBlock.openText+newSheetDataInner+"</sheetData>"+sheetXml.slice(sheetDataBlock.end);
+  }else{
+    newXml=sheetXml.slice(0,sheetDataBlock.start)+sheetDataBlock.openText+newSheetDataInner+"</sheetData>"+sheetXml.slice(sheetDataBlock.end);
+  }
+  return {xml:newXml, removedRows:removedRows, removedCells:removedCells};
+}
+
+async function parseXlsxForHani(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  if(!sheetList.length) throw new Error("NOT_XLSX");
+
+  var sheets=sheetList.map(function(s){
+    var entry=byName[s.path];
+    if(!entry) return {name:s.name, path:s.path, xml:"", analysis:analyzeSheet(""), removedRows:0, removedCells:0, newXml:null};
+    var xml=dec.decode(entry.bytes);
+    var analysis=analyzeSheet(xml);
+    var removedRows=0, removedCells=0, newXml=null;
+    if(analysis.trimmable){
+      var r=buildTrimmedSheetXml(xml,analysis.safeMaxRow,analysis.safeMaxCol);
+      removedRows=r.removedRows; removedCells=r.removedCells;
+      if(removedRows+removedCells>0) newXml=r.xml;
+    }
+    return {name:s.name, path:s.path, xml:xml, analysis:analysis, removedRows:removedRows, removedCells:removedCells, newXml:newXml};
+  });
+
+  return {entries:entries, sheets:sheets};
+}
+
+async function buildResetXlsx(parsed){
+  var enc=new TextEncoder();
+  var byPath={}; parsed.sheets.forEach(function(s){ if(s.newXml!==null) byPath[s.path]=s.newXml; });
+  var outFiles=parsed.entries.map(function(e){
+    if(byPath[e.name]!==undefined) return {name:e.name, bytes:enc.encode(byPath[e.name])};
+    return {name:e.name, bytes:e.bytes};
+  });
+  return await buildZip(outFiles);
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+function cellLabel(row,col){ return row===0||col===0 ? "A1" : (colNumToLetters(col)+row); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット",
+  sub:"Ctrl+Endを押すと、データが入っている範囲よりずっと遠いセルまで飛ぶことがあります。これはExcelが「どこかに書式や値が一度でも入った」セルを記憶し続けるためで、印刷すると関係ない白紙のページが何十枚も出たり、保存や起動が遅くなったりする原因になります。このツールはExcel(.xlsx/.xlsm)の全シートを解析し、実際のデータと結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出します。Excelの「テーブル」機能を使っているシートは、安全のため自動的に対象から外します。元のファイルは変更しません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。全シートの使用範囲（dimension）とセルを解析します。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"シートごとの使用範囲",
+  statSheets:"シート数",statTrim:"縮小できるシート",statRows:"削除する空行の合計",statCells:"削除する空セルの合計",
+  resultMsgOk:"実データより先に書式・値が残っているシートが見つかりました。下のボタンで、使用範囲を縮小した新しいファイルを書き出せます。",
+  resultMsgNone:"どのシートも使用範囲はすでに実データ（と結合セル）の範囲に収まっていました。縮小できる箇所は見つかりませんでした。",
+  cautionMsg:"注意：実データの外側に、罫線や塗りつぶしなどの書式だけを意図して設定していた場合（将来の入力用に枠を広めに引いていた等）、その部分の書式は削除されます。書き出し後に見た目を確認してください。",
+  buildBtn:"使用範囲を縮小したファイルを書き出す",buildBtnBusy:"書き出し中…",
+  csvBtn:"内訳をCSVで書き出す",
+  listHeading:"シート別の内訳",
+  listHint:"「記録されている最終セル」は、現在Ctrl+Endを押すと飛ぶ位置に相当します。「実データの最終セル」は、値・数式が入っているセルと結合セルの範囲から計算した、本来の範囲です。差があるシートほど、不要な書式が遠くまで残っている可能性があります。",
+  loadingLabel:"読み込み中…",removeBtn:"削除",
+  colSheet:"シート名",colRecorded:"記録されている最終セル",colActual:"実データの最終セル",colRows:"削除する空行",colCells:"削除する空セル",colStatus:"状態",
+  statusSkip:"対象外（テーブル機能）",statusNone:"変更なし",statusTrim:"縮小",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護、またはシート構成を読み取れないファイルの可能性があります）",
+  sizeBefore:"元のファイルサイズ",sizeAfter:"書き出し後のファイルサイズ",
+  buildDone:"ダウンロードしました：",
+  csvHeaderSheet:"シート名",csvHeaderRecorded:"記録されている最終セル",csvHeaderActual:"実データの最終セル",csvHeaderRows:"削除する空行",csvHeaderCells:"削除する空セル",csvHeaderStatus:"状態",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Reset the \"used range\" when Ctrl+End jumps far away or printing spits out blank pages",
+  sub:"Pressing Ctrl+End can land on a cell far past where your data actually ends. That's because Excel keeps remembering any cell that ever held formatting or a value as \"used\" — which is also a common cause of printing dozens of unrelated blank pages, or a file that saves and opens slowly. This tool analyzes every sheet in an Excel (.xlsx/.xlsm) workbook and builds a copy where the used range is shrunk to match the actual data and merged-cell footprint. Sheets using Excel's Table feature are automatically skipped for safety. Your original file is untouched.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Every sheet's recorded dimension and cells are analyzed. Everything happens on this device.",
+  statsHeading:"Used range per sheet",
+  statSheets:"Sheets",statTrim:"Sheets that shrink",statRows:"Empty rows to remove",statCells:"Empty cells to remove",
+  resultMsgOk:"Some sheets have formatting or values recorded beyond the real data. Use the button below to download a copy with the used range shrunk.",
+  resultMsgNone:"Every sheet's used range already matches its real data (and merged cells). Nothing to shrink.",
+  cautionMsg:"Note: if you deliberately formatted cells beyond your real data (say, a wider border drawn for future entries), that formatting will be removed too. Check the result after downloading.",
+  buildBtn:"Build a resized file",buildBtnBusy:"Building…",
+  csvBtn:"Export the breakdown as CSV",
+  listHeading:"Breakdown by sheet",
+  listHint:"\"Recorded last cell\" is roughly where Ctrl+End currently jumps to. \"Actual last cell\" is computed from cells that hold a value or formula, plus merged ranges. A bigger gap usually means more leftover formatting.",
+  loadingLabel:"Loading…",removeBtn:"Remove",
+  colSheet:"Sheet",colRecorded:"Recorded last cell",colActual:"Actual last cell",colRows:"Rows to remove",colCells:"Cells to remove",colStatus:"Status",
+  statusSkip:"Skipped (Table)",statusNone:"No change",statusTrim:"Shrink",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, may be password-protected, or its sheet structure could not be parsed)",
+  sizeBefore:"Original size",sizeAfter:"Size after build",
+  buildDone:"Downloaded: ",
+  csvHeaderSheet:"Sheet",csvHeaderRecorded:"Recorded last cell",csvHeaderActual:"Actual last cell",csvHeaderRows:"Rows to remove",csvHeaderCells:"Cells to remove",csvHeaderStatus:"Status",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"",fileSize:0,loading:false,error:"",parsed:null,outBytes:null,building:false,buildMsg:""};
+
+function resetFile(){ state={fileName:"",fileSize:0,loading:false,error:"",parsed:null,outBytes:null,building:false,buildMsg:""}; render(); }
+
+function addFile(file){
+  state={fileName:file.name,fileSize:file.size,loading:true,error:"",parsed:null,outBytes:null,building:false,buildMsg:""};
+  render();
+  (async function(){
+    try{
+      var buf=await file.arrayBuffer();
+      var parsed=await parseXlsxForHani(new Uint8Array(buf));
+      var anyChange=parsed.sheets.some(function(s){return s.newXml!==null});
+      var outBytes=anyChange?await buildResetXlsx(parsed):null;
+      state.loading=false; state.parsed=parsed; state.outBytes=outBytes; render();
+    }catch(e){
+      state.loading=false; state.error=T[lang].errBad; render();
+    }
+  })();
+}
+
+function sheetRows(){
+  if(!state.parsed) return [];
+  return state.parsed.sheets.map(function(s){
+    var a=s.analysis;
+    var status = a.hasTable ? "skip" : ((s.removedRows+s.removedCells)>0 ? "trim" : "none");
+    return {
+      name:s.name,
+      recorded:cellLabel(a.allMaxRow,a.allMaxCol),
+      actual:cellLabel(a.safeMaxRow,a.safeMaxCol),
+      removedRows:s.removedRows, removedCells:s.removedCells, status:status
+    };
+  });
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.parsed){ h+="<span class='fMeta'>"+fmtBytes(state.fileSize)+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function renderStats(){
+  var rows=sheetRows();
+  var trimCount=rows.filter(function(r){return r.status==="trim"}).length;
+  var totalRows=rows.reduce(function(s,r){return s+r.removedRows},0);
+  var totalCells=rows.reduce(function(s,r){return s+r.removedCells},0);
+  var items=[
+    [rows.length,T[lang].statSheets,""],
+    [trimCount,T[lang].statTrim,trimCount?"ok":""],
+    [totalRows,T[lang].statRows,totalRows?"ok":""],
+    [totalCells,T[lang].statCells,totalCells?"ok":""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+
+  var sizeHtml="";
+  if(state.outBytes){
+    var before=state.fileSize, after=state.outBytes.length;
+    var pct=before>0?Math.round((1-after/before)*1000)/10:0;
+    sizeHtml="<span>"+esc(T[lang].sizeBefore)+": "+fmtBytes(before)+"</span><span class='arrow'>→</span>"+
+      "<span>"+esc(T[lang].sizeAfter)+": "+fmtBytes(after)+"</span>"+
+      (pct>0?" <span class='pct'>-"+pct+"%</span>":"");
+  }
+  $("sizeRow").innerHTML=sizeHtml;
+
+  var hasFix=!!state.outBytes;
+  $("resultMsgOk").style.display=hasFix?"":"none";
+  $("resultMsgNone").style.display=hasFix?"none":"";
+  $("buildBtn").disabled=!hasFix || state.building;
+  $("csvBtn").disabled=rows.length===0;
+}
+
+function renderList(){
+  var rows=sheetRows();
+  if(!rows.length){ $("listCard").style.display="none"; return; }
+  $("listCard").style.display="";
+  var h="<div class='scroll'><table><thead><tr><th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colRecorded)+"</th><th>"+esc(T[lang].colActual)+"</th><th>"+esc(T[lang].colRows)+"</th><th>"+esc(T[lang].colCells)+"</th><th>"+esc(T[lang].colStatus)+"</th></tr></thead><tbody>";
+  rows.forEach(function(r){
+    var badge = r.status==="skip" ? "<span class='badge warn'>"+esc(T[lang].statusSkip)+"</span>" :
+      r.status==="trim" ? "<span class='badge diff'>"+esc(T[lang].statusTrim)+"</span>" :
+      "<span class='badge ok'>"+esc(T[lang].statusNone)+"</span>";
+    h+="<tr><td>"+esc(r.name)+"</td><td class='mono'>"+esc(r.recorded)+"</td><td class='mono'>"+esc(r.actual)+"</td>"+
+      "<td class='center'>"+r.removedRows+"</td><td class='center'>"+r.removedCells+"</td><td>"+badge+"</td></tr>";
+  });
+  h+="</tbody></table></div>";
+  $("listBox").innerHTML=h;
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.parsed){
+    $("statsCard").style.display="none"; $("listCard").style.display="none";
+    return;
+  }
+  $("statsCard").style.display="";
+  renderStats();
+  renderList();
+}
+
+function suggestOutName(name){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(name);
+  if(!m) return name+"_使用範囲リセット.xlsx";
+  return m[1]+"_使用範囲リセット."+m[2].toLowerCase();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.outBytes) return;
+  state.building=true; state.buildMsg=""; $("buildBtn").textContent=T[lang].buildBtnBusy; $("buildBtn").disabled=true;
+  setTimeout(function(){
+    try{
+      var outName=suggestOutName(state.fileName);
+      var blob=new Blob([state.outBytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a"); a.href=url; a.download=outName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url)},2000);
+      state.buildMsg=T[lang].buildDone+outName;
+    }catch(err){
+      state.buildMsg=T[lang].errBad;
+    }
+    state.building=false; $("buildBtn").textContent=T[lang].buildBtn; $("buildBtn").disabled=false;
+    $("buildMsg").textContent=state.buildMsg;
+  },0);
+});
+
+$("csvBtn").addEventListener("click",function(){
+  var rows=sheetRows();
+  if(!rows.length) return;
+  var out=[[T[lang].csvHeaderSheet,T[lang].csvHeaderRecorded,T[lang].csvHeaderActual,T[lang].csvHeaderRows,T[lang].csvHeaderCells,T[lang].csvHeaderStatus]];
+  rows.forEach(function(r){
+    var statusText = r.status==="skip"?T[lang].statusSkip : r.status==="trim"?T[lang].statusTrim : T[lang].statusNone;
+    out.push([r.name,r.recorded,r.actual,r.removedRows,r.removedCells,statusText]);
+  });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3);
+  bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var base=(state.fileName||"used-range").replace(/\.[^.]+$/,"");
+  var a=document.createElement("a"); a.href=url; a.download=base+"_使用範囲内訳.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  $("buildBtn").textContent=state.building?T[lang].buildBtnBusy:T[lang].buildBtn;
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

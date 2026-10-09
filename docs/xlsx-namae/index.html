@@ -180,7 +180,8 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
       <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
           <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出す。見た目は変わらない。</li>
-    </ul>
+    <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。</li>
+</ul>
   </div>
   <div class="en-only">
     <h2>Related tools</h2>
@@ -196,7 +197,8 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet, flag links to a local file or a deleted sheet, and remove the ones you choose.</li>
       <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell (#REF!, #N/A, #VALUE! and more) across every sheet and file, with counts by type and a likely cause, exportable as CSV.</li>
           <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks.</li>
-    </ul>
+    <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away</a> — Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped).</li>
+</ul>
   </div>
 </section>
 

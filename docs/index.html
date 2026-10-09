@@ -55,6 +55,7 @@ footer a{color:var(--accent)}
 <li><a href="xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a><p>クリックすると「指定されたファイルが見つかりません」と出る、コピペで増えすぎて1つずつ解除できないときに。全シートのハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。 / For hyperlinks that won't open or have multiplied from copy-paste: list every clickable link across every sheet, flag links to a local file or a deleted sheet, and remove the ones you choose.</p></li>
 <li><a href="xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a><p>Excelのどこにエラー値が残っているか分からないときに。全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。 / Find every cell with a cached error value (#REF!, #N/A, #VALUE! and more) across every sheet and file, with counts by type and a likely cause.</p></li>
 <li><a href="xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a><p>コピペを繰り返して保存時に「異なるセルの書式の数が多すぎます」と出る、ファイルが重いときに。セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除。見た目は変わらない。 / Fix Excel's "too many different cell formats" error or a heavy file: merge byte-identical cell formats and drop the ones no cell uses, without changing how anything looks.</p></li>
+<li><a href="xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a><p>データの先に書式だけ残って使用範囲が広がり、印刷すると白紙ページが何十枚も出る、保存が遅いときに。実データ・結合セルの範囲だけに縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。 / When leftover formatting inflates Excel's used range, causing dozens of blank pages when printing or a slow save: shrink it back to your real data footprint.</p></li>
 </ul>
 <h2 class="group">テキスト整形 <small>Text formatting</small></h2>
 <ul class="tools">
