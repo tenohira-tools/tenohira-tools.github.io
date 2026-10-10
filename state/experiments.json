@@ -1067,6 +1067,26 @@
           "class": "閲覧0（未インデックスが主因）。2026-11-08の30日判定まで継続"
         }
       ]
+    },
+    {
+      "slug": "csv-to-xlsx",
+      "title": "CSVの先頭の0が消える・日付に化けるときのExcel(.xlsx)変換ツール",
+      "url": "https://tenohira-tools.github.io/csv-to-xlsx/",
+      "published": "2026-10-10",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog",
+      "why": "計測：GoatCounter取得は前回同様プロキシが tenohira.goatcounter.com への接続を403で拒否し失敗（組織のネットワーク制限、既知の問題としてescalations記載済み）。前回10-10 20:11Z時点の値（サイト全体累計8、個別29ページ全て0）を変更せず記録。health.md（29ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象になる閲覧増加ページも無く、ideas/backlog.mdの先頭（2026-10-10週次レビューで並べ替え済み）「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策を選び公開。CSVファイルには列の型情報が無いため、Excelが開くときにセルの内容から型を推測し、0から始まる数字（郵便番号・社員番号など）は数値化されて0が消え、「1-2」のような区切り文字入りの短い数字は日付に誤認識される、という会計・給与ソフトのFAQで繰り返し案内される困りごとに対応。csv-fix・csv-merge等と同じ自作CSVパーサー・文字コード自動判定を再利用し、xlsxの書き出しはxlsx-style/xlsx-haniと同じZIP（CompressionStream deflate-raw）コンテナ生成コードを流用しつつ、最小構成のxl/workbook.xml・styles.xml・worksheets/sheet1.xmlを新規に自作（他ツールは既存xlsxの読み込み・一部書き換えが中心で、新規xlsxを一から書き出すのは本ツールが初めて）。各セルは列ごとのチェックボックス（0埋め・8桁以上の長い数字コード・区切り文字入りの短い数字を自動検出してデフォルトでON）で文字列(inlineStr型)として保存するか選べ、チェックを外していても見た目が純粋な数字でない値は自動的に文字列として書き出されるため、チェックを忘れても0落ち・日付化けは起きない設計。「すべての列を文字列として保存する」の一括トグルも用意。CSV群とExcel群の橋渡しとして、csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・xlsx-mergeの6ツールと双方向に相互リンク。",
+      "metrics": [
+        {
+          "date": "2026-10-10T20:10Z",
+          "note": "公開当日。GoatCounter取得はプロキシの403拒否で失敗（既知の問題）。前回10-10 20:11Z取得時点の値（サイト全体累計8、他29ページ全て0）から変化なし。"
+        }
+      ],
+      "reviews": []
     }
   ]
 }

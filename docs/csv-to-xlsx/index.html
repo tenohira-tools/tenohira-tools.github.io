@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSVをExcelで開くと0が消える・日付になるときの変換ツール（.xlsx書き出し）| てのひらツール</title>
+<meta name="description" content="郵便番号・社員番号・JANコードの先頭の0が消える、「1-2」が日付になってしまう列を選んで文字列として保存し、CSVをExcel（.xlsx）ファイルに変換します。ブラウザだけで処理、ファイルはサーバーに送信されません。Convert CSV to Excel (.xlsx) without losing leading zeros or having values turn into dates — choose which columns stay text, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/csv-to-xlsx/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--text-bg:#fdf0da}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--text-bg:#3a3018}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+label{font-size:.92rem}
+select,input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileInfo{font-size:.92rem;color:var(--muted);margin-top:10px}
+#encStatus{font-weight:600}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.checkline{display:flex;align-items:center;gap:8px;margin:10px 0}
+.checkline input{width:auto;min-height:auto}
+.scroll{max-height:380px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--fg);font-weight:600;position:sticky;top:0;background:var(--card);vertical-align:top}
+th .colname{display:block;color:var(--muted);font-weight:600;margin-top:4px;font-size:.82rem}
+th label{display:flex;align-items:center;gap:4px;white-space:nowrap}
+td.textcell{background:var(--text-bg)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:.85rem;color:var(--muted)}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.legend .sw.text{background:var(--text-bg);border:1px solid var(--line)}
+.legend .sw.num{background:var(--card);border:1px solid var(--line)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">CSVの先頭の0が消える・日付に化けるときの Excel(.xlsx) 変換ツール</h1>
+    <p class="sub" data-i="sub">郵便番号・社員番号・JANコードなどの先頭の0が消える、「1-2」のような文字列が日付になってしまう——そうなりやすい列を選んで文字列として保存し、CSVをExcel（.xlsx）ファイルに変換します。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにCSVファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/csv,text/*" style="display:none">
+  <p id="fileInfo" aria-live="polite"></p>
+</section>
+
+<section class="card" id="encCard" style="display:none">
+  <h2 data-i="detectedLabel">検出した文字コード</h2>
+  <p id="encStatus" aria-live="polite"></p>
+  <div class="row">
+    <label for="encSelect" data-i="encSelectLabel">文字コードを指定（自動判定がおかしい場合に変更）</label>
+    <select id="encSelect">
+      <option value="utf-8">UTF-8</option>
+      <option value="shift_jis">Shift_JIS（CP932）</option>
+      <option value="euc-jp">EUC-JP</option>
+      <option value="iso-2022-jp">ISO-2022-JP（JIS）</option>
+    </select>
+  </div>
+  <div class="note" id="warnBox"></div>
+  <div class="checkline">
+    <input type="checkbox" id="headerCheck" checked>
+    <label for="headerCheck" data-i="headerLabel">先頭行をヘッダー（列名）として使う</label>
+  </div>
+  <div class="checkline">
+    <input type="checkbox" id="forceAllCheck">
+    <label for="forceAllCheck" data-i="forceAllLabel">すべての列を文字列として保存する（最も安全・数式の合計等はできなくなります）</label>
+  </div>
+</section>
+
+<section class="card" id="previewCard" style="display:none">
+  <h2 data-i="previewHeading">列ごとの設定とプレビュー</h2>
+  <p class="hint" data-i="previewHint">チェックした列は「文字列」としてExcelに保存され、0落ちや日付化けが起きません。0埋めの番号や長い数字コードが入っている列は自動でチェックされています。</p>
+  <div id="previewBox"></div>
+  <div class="legend">
+    <span><span class="sw text"></span><span data-i="legendText">文字列として保存される列・セル</span></span>
+    <span><span class="sw num"></span><span data-i="legendNum">数値として保存される列・セル（合計などの数式に使えます）</span></span>
+  </div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="outputHeading">ダウンロード</h2>
+  <div class="row">
+    <label for="sheetNameInput" data-i="sheetNameLabel">シート名</label>
+    <input type="text" id="sheetNameInput" maxlength="31">
+  </div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">Excel(.xlsx)に変換してダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にCSVファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>文字コードが自動判定されます。文字化けして見える場合は「文字コードを指定」で候補を試してください。</li>
+      <li>プレビューの各列の見出しにあるチェックボックスで「文字列として保存」する列を選びます。郵便番号・社員番号・電話番号・JANコードなど0埋めや桁の多い番号の列は自動でチェックされています。手元のファイルに合わせてオン・オフを変更できます。</li>
+      <li>「Excel(.xlsx)に変換してダウンロード」を押すと、新しい.xlsxファイルがダウンロードされます（元のCSVは変更されません）。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで変換されます（サイト全体の閲覧数をCookieなし・個人を特定しない方法で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. なぜCSVをExcelで開くと先頭の0が消えたり日付になってしまうのですか？</h3>
+    <p>A. CSVファイル自体には「この列は文字列」という情報が無いため、Excelが開くときにセルの内容から型を推測します。「0123456」のような0から始まる数字は数値と判断されて0が消え、「1-2」のような区切り文字入りの短い数字は日付と推測されて「1月2日」のような表示に変わってしまいます。このツールはExcel（.xlsx）ファイルとして直接書き出す際に、選んだ列を最初から「文字列」の型でセルに書き込むため、Excelで開いたときに再解釈されず、入力した通りの見た目で表示されます。</p>
+    <h3>Q. どの列を「文字列として保存」すればいいですか？</h3>
+    <p>A. 郵便番号・社員番号・電話番号・JANコードなど、0から始まる値や8桁以上の長い数字が入っている列、「1-2」や「2024/3/4」のような区切り文字入りの短い数字が入っている列は自動でチェックされます。計算に使いたい金額や数量の列はチェックを外したままにしてください（数値としてそのまま書き出され、Excelでの合計などの数式に使えます）。判断に迷う場合や、とにかく安全を優先したい場合は「すべての列を文字列として保存する」を選んでください。</p>
+    <h3>Q. 「文字列として保存」しなかった列はどうなりますか？</h3>
+    <p>A. チェックを外していても、見た目が数字そのもの（0から始まらない、区切り文字も無い）ではない値は、このツールが自動的に文字列として書き出すため0落ちや日付化けは起きません。チェックを外した列が数値として書き出されるのは、純粋な数字（0から始まらない整数・小数）だけです。</p>
+    <h3>Q. 元のCSVファイルは変更されますか？</h3>
+    <p>A. 変更されません。新しい.xlsxファイルを作成してダウンロードするだけで、選んだ元のCSVファイルはそのまま残ります。</p>
+    <h3>Q. 大きなCSVファイルも変換できますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、数万行程度までを想定しています。非常に大きなファイルでは変換に時間がかかる場合があります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop a CSV file into the box above, or click it to choose a file.</li>
+      <li>The character encoding is auto-detected. If it still looks garbled, try another option from the encoding selector.</li>
+      <li>Use the checkbox in each column's header in the preview to choose which columns should be saved as text. Columns with zero-padded numbers, long digit codes, phone numbers or JAN/barcode-style codes are checked automatically — adjust them as needed.</li>
+      <li>Click "Convert to Excel (.xlsx) and download" to get a new .xlsx file. The original CSV is left untouched.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is converted inside your browser, on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Why do leading zeros disappear or values turn into dates when I open a CSV in Excel?</h3>
+    <p>A. A plain CSV file carries no information about a column's intended type, so Excel guesses from each cell's content when it opens the file. A number starting with 0, like "0123456", is read as a number and loses the leading zero; a short number with a separator, like "1-2", is guessed to be a date and displayed as "Jan 2". This tool writes the file directly as Excel's own .xlsx format and marks the columns you choose as text from the start, so Excel never re-guesses their type and shows them exactly as entered.</p>
+    <h3>Q. Which columns should I mark as text?</h3>
+    <p>A. Columns with values that start with 0, or long digit codes of 8+ digits (postal codes, employee IDs, phone numbers, JAN/barcodes), and short separator-based numbers like "1-2" or "2024/3/4" are checked automatically. Leave amount or quantity columns you want to total with formulas unchecked, so they're written as real numbers. If you're unsure, or want maximum safety, use "Save all columns as text".</p>
+    <h3>Q. What happens to columns I leave unchecked?</h3>
+    <p>A. Even unchecked, any value that isn't a plain number (no leading zero, no separators) is still written as text automatically, so no leading zeros or dates get mangled. Only genuinely plain numbers (integers or decimals that don't start with 0) are written as real numeric cells in unchecked columns.</p>
+    <h3>Q. Does this change my original CSV file?</h3>
+    <p>A. No. It only creates and downloads a new .xlsx file — the CSV file you chose is left exactly as it was.</p>
+    <h3>Q. Can it handle large CSV files?</h3>
+    <p>A. Everything runs in browser memory, so it's built for files up to tens of thousands of rows. Very large files may take longer to convert.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../csv-fix/">CSV・テキストの文字化け直し</a> — Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換。ExcelのBOM追加・削除にも対応。</li>
+      <li><a href="../csv-seiri/">CSVの列ごと書式統一</a> — CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロード。</li>
+      <li><a href="../csv-merge/">複数CSVの結合ツール</a> — 文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから見出し名で列をそろえて結合。</li>
+      <li><a href="../csv-group-split/">CSVを列の値ごとに自動分割</a> — 1つのCSVを、選んだ列（都道府県・店舗・担当者など）の値ごとにグループ分けして複数ファイルに分け、ZIPでまとめてダウンロード。</li>
+      <li><a href="../csv-master-replace/">CSVのコード→名称 一括変換ツール</a> — データCSVのコード列を、対応表（マスタ）CSVと突き合わせて店舗名・氏名などの列を一括追加。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま読み込み、1つのCSVに結合。日付・時刻セルも見たままの形式に変換。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../csv-fix/">CSV / Text Mojibake Fixer</a> — Fix mojibake: convert Shift_JIS/EUC-JP files to UTF-8, add or remove a BOM.</li>
+      <li><a href="../csv-seiri/">CSV Column Formatter</a> — Normalize full/half-width characters, katakana, postal codes and hyphen styles column by column in a CSV.</li>
+      <li><a href="../csv-merge/">Multi-CSV Merge Tool</a> — Merge multiple CSV files with different character encodings, aligning columns by header name.</li>
+      <li><a href="../csv-group-split/">Split CSV by Column Value</a> — Split one CSV into files grouped by a column's value (e.g. by store or prefecture), downloaded as a single ZIP.</li>
+      <li><a href="../csv-master-replace/">CSV Code → Name Lookup Converter</a> — Join a data CSV's code column against a lookup-table CSV to add name columns in bulk.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV, with dates and times converted to readable text.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで変換されます（サイト全体の閲覧数をCookieなし・個人を特定しない方法で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"なぜCSVをExcelで開くと先頭の0が消えたり日付になってしまうのですか？","acceptedAnswer":{"@type":"Answer","text":"CSV自体には列の型情報が無いため、Excelがセルの内容から型を推測します。0から始まる数字は数値と判断されて0が消え、区切り文字入りの短い数字は日付と推測されます。このツールはExcelファイルとして書き出す際に選んだ列を最初から文字列型で書き込むため、再解釈されません。"}},
+    {"@type":"Question","name":"どの列を「文字列として保存」すればいいですか？","acceptedAnswer":{"@type":"Answer","text":"郵便番号・社員番号・電話番号・JANコードなど0から始まる値や長い数字コードの列、区切り文字入りの短い数字の列は自動でチェックされます。合計などの数式に使いたい列はチェックを外してください。"}},
+    {"@type":"Question","name":"元のCSVファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"変更されません。新しい.xlsxファイルを作成してダウンロードするだけです。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ---- i18n ---- */
+var ENC_LABEL={
+  "utf-8":{ja:"UTF-8",en:"UTF-8"},
+  "shift_jis":{ja:"Shift_JIS（CP932）",en:"Shift_JIS (CP932)"},
+  "euc-jp":{ja:"EUC-JP",en:"EUC-JP"},
+  "iso-2022-jp":{ja:"ISO-2022-JP（JIS）",en:"ISO-2022-JP (JIS)"}
+};
+var T={
+ ja:{title:"CSVの先頭の0が消える・日付に化けるときの Excel(.xlsx) 変換ツール",
+  sub:"郵便番号・社員番号・JANコードなどの先頭の0が消える、「1-2」のような文字列が日付になってしまう——そうなりやすい列を選んで文字列として保存し、CSVをExcel（.xlsx）ファイルに変換します。ファイルはどこにも送信されません。",
+  dropzoneText:"ここにCSVファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。",
+  fileLabel:"ファイル",detectedLabel:"検出した文字コード",
+  encSelectLabel:"文字コードを指定（自動判定がおかしい場合に変更）",
+  warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。上の文字コードを別の候補に変更してみてください。",
+  warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。手動で文字コードを選び直してください。",
+  headerLabel:"先頭行をヘッダー（列名）として使う",
+  forceAllLabel:"すべての列を文字列として保存する（最も安全・数式の合計等はできなくなります）",
+  previewHeading:"列ごとの設定とプレビュー",
+  previewHint:"チェックした列は「文字列」としてExcelに保存され、0落ちや日付化けが起きません。0埋めの番号や長い数字コードが入っている列は自動でチェックされています。",
+  colLabel:"列",noData:"CSVの内容を読み取れませんでした。",
+  previewNote:"先頭の一部のみ表示しています（ダウンロードするファイルは全体を変換します）。",
+  legendText:"文字列として保存される列・セル",legendNum:"数値として保存される列・セル（合計などの数式に使えます）",
+  outputHeading:"ダウンロード",sheetNameLabel:"シート名",
+  downloadBtn:"Excel(.xlsx)に変換してダウンロード",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"CSV to Excel (.xlsx) Converter — Keep Leading Zeros, Prevent Date Auto-Formatting",
+  sub:"Convert a CSV to Excel (.xlsx) without losing leading zeros (postal codes, employee IDs, JAN codes) or having values like \"1-2\" turn into dates. Choose which columns should be saved as text. Nothing is uploaded.",
+  dropzoneText:"Drag and drop a CSV file here, or click to choose one",
+  dropzoneHint:"Works with CSV and TSV files. Everything happens on this device.",
+  fileLabel:"File",detectedLabel:"Detected encoding",
+  encSelectLabel:"Choose encoding manually (if auto-detect looks wrong)",
+  warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding above.",
+  warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose the correct encoding manually.",
+  headerLabel:"Use the first row as a header (column names)",
+  forceAllLabel:"Save all columns as text (safest — sums and other formulas won't work on them)",
+  previewHeading:"Per-column settings &amp; preview",
+  previewHint:"Checked columns are saved as text in Excel, so leading zeros and dates are never mangled. Columns with zero-padded numbers or long digit codes are checked automatically.",
+  colLabel:"Column",noData:"Could not read this CSV file.",
+  previewNote:"Showing only the first part (the downloaded file will contain everything).",
+  legendText:"Column/cell saved as text",legendNum:"Column/cell saved as a number (usable in sum formulas)",
+  outputHeading:"Download",sheetNameLabel:"Sheet name",
+  downloadBtn:"Convert to Excel (.xlsx) and download",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+/* =====================================================================
+   Core CSV / encoding helpers — same pattern already shipped in
+   csv-fix/csv-seiri/csv-merge/csv-group-split/csv-master-replace.
+   ===================================================================== */
+function tryDecode(bytes,label){
+  try{ return new TextDecoder(label,{fatal:true}).decode(bytes); }
+  catch(e){ return null; }
+}
+function hasBOM(bytes){ return bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF; }
+function detectEncoding(bytes){
+  var order=["utf-8","shift_jis","euc-jp","iso-2022-jp"];
+  for(var i=0;i<order.length;i++){
+    var t=tryDecode(bytes,order[i]);
+    if(t!==null) return {enc:order[i], ok:true};
+  }
+  return {enc:"utf-8", ok:false};
+}
+function parseCSV(text){
+  var rows=[],row=[],cur="",inQ=false,i=0,n=text.length;
+  while(i<n){
+    var c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text.charAt(i+1)==='"'){cur+='"';i+=2;continue;} inQ=false;i++;continue; }
+      cur+=c;i++;continue;
+    }
+    if(c==='"'){inQ=true;i++;continue;}
+    if(c===','){row.push(cur);cur="";i++;continue;}
+    if(c==='\r'){ if(text.charAt(i+1)==='\n') i++; row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    if(c==='\n'){ row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    cur+=c;i++;
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  while(rows.length && rows[rows.length-1].length===1 && rows[rows.length-1][0]==="") rows.pop();
+  return rows;
+}
+
+/* =====================================================================
+   XLSX cell-type logic: decide which cells become real numbers vs.
+   text (inlineStr), and the minimal .xlsx writer (hand-rolled, no
+   external libraries — same CompressionStream/TextEncoder approach
+   already shipped in xlsx-style/xlsx-hani for the ZIP container).
+   ===================================================================== */
+function colName(idx){
+  var s="",n=idx+1;
+  while(n>0){ var m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+function isSafeNumeric(s){
+  if(!/^-?(0|[1-9]\d*)(\.\d+)?$/.test(s)) return false;
+  var intPart=s.replace("-","").split(".")[0];
+  return intPart.length<=15;
+}
+function looksRisky(v){
+  if(!v) return false;
+  if(/^0\d/.test(v)) return true;
+  if(/^\d{8,}$/.test(v)) return true;
+  if(/^\d{1,4}[-\/]\d{1,2}([-\/]\d{1,4})?$/.test(v)) return true;
+  return false;
+}
+function xmlEscape(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+function stripInvalidXmlChars(s){ return String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,""); }
+function sanitizeSheetName(name){
+  name=String(name||"").replace(/[\\\/\?\*\[\]:]/g,"_").replace(/^'+|'+$/g,"");
+  name=name.slice(0,31);
+  if(!name) name="Sheet1";
+  return name;
+}
+function cellIsText(v,forced){
+  if(forced) return true;
+  if(v==="") return false;
+  return !isSafeNumeric(v);
+}
+function buildSheetXml(rows, forcedCols){
+  var xmlRows=[];
+  for(var r=0;r<rows.length;r++){
+    var row=rows[r], cells=[];
+    for(var c=0;c<row.length;c++){
+      var v=row[c];
+      if(v===undefined||v==="") continue;
+      var ref=colName(c)+(r+1);
+      if(cellIsText(v,forcedCols[c])){
+        var t=stripInvalidXmlChars(String(v));
+        var preserve=/^\s|\s$/.test(t)?' xml:space="preserve"':'';
+        cells.push('<c r="'+ref+'" t="inlineStr"><is><t'+preserve+'>'+xmlEscape(t)+'</t></is></c>');
+      } else {
+        cells.push('<c r="'+ref+'"><v>'+v+'</v></c>');
+      }
+    }
+    xmlRows.push('<row r="'+(r+1)+'">'+cells.join("")+'</row>');
+  }
+  return xmlRows.join("");
+}
+
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+var CONTENT_TYPES='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+'<Default Extension="xml" ContentType="application/xml"/>'+
+'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+'</Types>';
+var RELS_ROOT='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+'</Relationships>';
+var RELS_WORKBOOK='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
+'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+'</Relationships>';
+var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+'<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>'+
+'<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'+
+'<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'+
+'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+'<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellXfs>'+
+'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'+
+'</styleSheet>';
+function buildWorkbookXml(sheetName){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+  '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+  '<sheets><sheet name="'+xmlEscape(sheetName)+'" sheetId="1" r:id="rId1"/></sheets></workbook>';
+}
+async function buildXlsx(rows, forcedCols, sheetName){
+  sheetName=sanitizeSheetName(sheetName);
+  var sheetXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<sheetData>'+buildSheetXml(rows,forcedCols)+'</sheetData></worksheet>';
+  var enc=new TextEncoder();
+  var files=[
+    {name:"[Content_Types].xml", bytes:enc.encode(CONTENT_TYPES)},
+    {name:"_rels/.rels", bytes:enc.encode(RELS_ROOT)},
+    {name:"xl/workbook.xml", bytes:enc.encode(buildWorkbookXml(sheetName))},
+    {name:"xl/_rels/workbook.xml.rels", bytes:enc.encode(RELS_WORKBOOK)},
+    {name:"xl/styles.xml", bytes:enc.encode(STYLES_XML)},
+    {name:"xl/worksheets/sheet1.xml", bytes:enc.encode(sheetXml)}
+  ];
+  return buildZip(files);
+}
+
+/* ---- app state & UI ---- */
+var state={bytes:null,name:"",rows:[],colCount:0};
+
+function escTrunc(s){ s=String(s); var t=s.length>40?s.slice(0,40)+"…":s; return esc(t); }
+
+function computeDefaults(startRow){
+  var limit=Math.min(state.rows.length,startRow+3000);
+  var forced=[];
+  for(var c=0;c<state.colCount;c++){
+    var risky=false;
+    for(var r=startRow;r<limit;r++){
+      var v=(state.rows[r]||[])[c];
+      if(v && looksRisky(v)){risky=true;break;}
+    }
+    forced.push(risky);
+  }
+  return forced;
+}
+
+function getForcedArray(){
+  var boxes=document.querySelectorAll(".colforce");
+  var arr=[];
+  for(var i=0;i<boxes.length;i++) arr.push(boxes[i].checked);
+  return arr;
+}
+
+function renderPreview(defaults){
+  var hasHeader=$("headerCheck").checked;
+  var startRow=hasHeader?1:0;
+  var maxCols=10,maxRows=12;
+  var colCount=Math.min(maxCols,state.colCount);
+  var headerLabels=[];
+  for(var c=0;c<state.colCount;c++){
+    headerLabels.push(hasHeader ? (state.rows[0][c]!==undefined?state.rows[0][c]:"") : (T[lang].colLabel+(c+1)));
+  }
+  var dataRows=state.rows.slice(startRow,startRow+maxRows);
+
+  var h="<div class='scroll'><table><thead><tr>";
+  for(var c2=0;c2<colCount;c2++){
+    var checked=defaults[c2]?" checked":"";
+    h+="<th><label><input type='checkbox' class='colforce' data-col='"+c2+"'"+checked+">"+
+       "<span class='colname'>"+(escTrunc(headerLabels[c2])||("&nbsp;"))+"</span></label></th>";
+  }
+  h+="</tr></thead><tbody>";
+  for(var r=0;r<dataRows.length;r++){
+    h+="<tr>";
+    for(var c3=0;c3<colCount;c3++){
+      var v=dataRows[r][c3]!==undefined?dataRows[r][c3]:"";
+      var isText=defaults[c3]||!isSafeNumeric(v);
+      h+="<td"+(v!==""&&isText?" class='textcell'":"")+">"+(v!==""?escTrunc(v):"")+"</td>";
+    }
+    h+="</tr>";
+  }
+  h+="</tbody></table></div>";
+  if(state.colCount>maxCols || (state.rows.length-startRow)>maxRows){
+    h+="<p class='hint'>"+esc(T[lang].previewNote)+"</p>";
+  }
+  $("previewBox").innerHTML=h;
+
+  var boxes=document.querySelectorAll(".colforce");
+  for(var i=0;i<boxes.length;i++){
+    boxes[i].addEventListener("change",function(){ renderPreview(getForcedArray()); });
+  }
+  var forceAll=$("forceAllCheck").checked;
+  for(var j=0;j<boxes.length;j++){ boxes[j].disabled=forceAll; if(forceAll) boxes[j].checked=true; }
+}
+
+function suggestSheetName(filename){
+  var base=String(filename||"").replace(/\.[^.]+$/,"");
+  return sanitizeSheetName(base||"Sheet1");
+}
+
+function resetForHeaderToggle(){
+  var startRow=$("headerCheck").checked?1:0;
+  renderPreview(computeDefaults(startRow));
+}
+
+function handleFile(file){
+  state.name=file.name;
+  file.arrayBuffer().then(function(buf){
+    var bytes=new Uint8Array(buf);
+    state.bytesLen=bytes.length;
+    var d=detectEncoding(bytes);
+    $("encSelect").value=d.enc;
+    $("encCard").style.display="";
+    var bom=hasBOM(bytes);
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+bytes.length+" bytes"+(bom?", BOM":"")+")";
+    applyEncoding(bytes,d.enc,!d.ok);
+  }).catch(function(){
+    $("fileInfo").textContent=T[lang].noData;
+  });
+}
+
+function applyEncoding(bytes,enc,forcedFallback){
+  var t;
+  var decoded=tryDecode(bytes,enc);
+  var warn="";
+  if(decoded===null){
+    t=new TextDecoder(enc,{fatal:false}).decode(bytes);
+    warn=T[lang].warnReplace;
+  } else {
+    t=decoded;
+    if(forcedFallback) warn=T[lang].warnUnknown;
+  }
+  state.lastBytes=bytes;
+  state.lastEnc=enc;
+  var label=ENC_LABEL[enc]?ENC_LABEL[enc][lang]:enc;
+  $("encStatus").innerHTML="<span>"+esc(label)+"</span>";
+  $("warnBox").textContent=warn;
+
+  var rows=parseCSV(t);
+  if(!rows.length){
+    $("previewBox").innerHTML="<p class='hint'>"+esc(T[lang].noData)+"</p>";
+    $("previewCard").style.display="";
+    $("outCard").style.display="none";
+    $("downloadBtn").disabled=true;
+    return;
+  }
+  state.rows=rows;
+  state.colCount=rows.reduce(function(m,r){return Math.max(m,r.length)},0);
+  $("sheetNameInput").value=suggestSheetName(state.name);
+  resetForHeaderToggle();
+  $("previewCard").style.display="";
+  $("outCard").style.display="";
+  $("downloadBtn").disabled=false;
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) handleFile(f);
+});
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){
+  var f=e.target.files && e.target.files[0];
+  if(f) handleFile(f);
+});
+$("encSelect").addEventListener("change",function(){
+  if(state.lastBytes) applyEncoding(state.lastBytes,this.value,false);
+});
+$("headerCheck").addEventListener("change",function(){
+  if(state.rows.length) resetForHeaderToggle();
+});
+$("forceAllCheck").addEventListener("change",function(){
+  if(state.rows.length) renderPreview(getForcedArray());
+});
+
+$("downloadBtn").addEventListener("click",function(){
+  if(!state.rows.length) return;
+  var forced=getForcedArray();
+  var sheetName=$("sheetNameInput").value || suggestSheetName(state.name);
+  var base=state.name.replace(/\.[^.]+$/,"")||"file";
+  buildXlsx(state.rows, forced, sheetName).then(function(bytes){
+    var blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url;a.download=base+".xlsx";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},2000);
+  });
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  if(state.lastBytes){
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytesLen+" bytes"+(hasBOM(state.lastBytes)?", BOM":"")+")";
+    applyEncoding(state.lastBytes,state.lastEnc,false);
+  }
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

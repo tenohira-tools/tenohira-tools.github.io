@@ -259,3 +259,9 @@
 - 修正：xlsx-namae・xlsx-jouken・xlsx-hyperlinkの書き出しが無圧縮で元の約3.6倍に膨らんでいたため圧縮付きに変更（23KB→6.4KB）。xlsx-suushikiの「推定」バッジを英語表示に対応。
 - 発見経路：READMEに全ツールへの直リンクを毎日自動生成する処理をmaintenance.ymlに追加（github.com上のリポジトリページから各ツールへたどれるように）。
 - 方針：backlogを調査済み10件に入れ替え（CSV0落ち→xlsx、作成者名の削除、数式を値に、全シートCSV、まとめページ等）。オーナーにはGoatCounterのドメイン許可をescalationsで依頼。
+
+## 2026-10-10 実験30
+- 計測：GoatCounterはプロキシが引き続き403で拒否し取得不可（3回連続、escalations記載済みの既知の問題）。前回10-10 20:11Z時点の値（サイト全体累計8、個別29ページ全て0）を変更せず記録。health.md（29ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog先頭（2026-10-10週次レビューで並べ替え済み）の「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策（docs/csv-to-xlsx/）を公開。選んだ列を文字列(inlineStr)型のセルとして書き込む.xlsxファイルを新規に自作し、0埋め・8桁以上の長い数字コード・区切り文字入りの短い数字（1-2等）の列は自動でチェック、チェックを外していても見た目が数字でない値は自動的に文字列になるため0落ち・日付化けが起きない設計。csv-fix等と同じCSVパーサー・文字コード自動判定、xlsx-style/xlsx-haniと同じZIP圧縮書き出しを再利用しつつ、新規xlsxを一から書き出す部分（workbook.xml・styles.xml等の最小構成）は本ツールが初めて自作。
+- 検証：Node.js単体テスト（列文字変換・数値判定・リスク検出・XML生成）→生成した.xlsxをPython openpyxlで再読込し型と値を確認（UTF-8・Shift_JIS両方の入力、0埋め・日付様文字列・JANコード・引用符混在テキストを含む）→Playwright（ja-JP/英語切替・390px幅）で文字コード自動判定・ヘッダー行トグル・列ごとの文字列チェックボックス・全列強制トグル・シート名サニタイズ・ダウンロードを確認。JSエラーなし。
+- 次回：csv-to-xlsxの初回閲覧数を記録。csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・xlsx-mergeの6ツールと双方向に相互リンク（grepで件数確認済み）。GoatCounter取得は4回連続失敗になるため、次回も取得できなければ引き続きescalationsの対応待ちとして様子を見る。

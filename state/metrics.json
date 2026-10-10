@@ -782,6 +782,13 @@
       "pages": null,
       "total": null,
       "note": "取得失敗：ネットワークプロキシがtenohira.goatcounter.comへのCONNECTを403で拒否（http://127.0.0.1:40109/__agentproxy/status のrecentRelayFailuresに記録）。WebFetch経由も無人実行のため承認待ちで失敗。前回10-09 20:11Z時点の値（サイト全体累計8、個別29ページ全て0）から更新できず。"
+    },
+    {
+      "date": "2026-10-10T20:29:18Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": null,
+      "total": null,
+      "note": "取得失敗：引き続きプロキシがtenohira.goatcounter.comへのCONNECTを403で拒否（組織ポリシー、curl $HTTPS_PROXY/__agentproxy/status のrecentRelayFailuresで確認）。WebFetch経由もPROVENANCE_REQUIREDで無人実行のため承認待ちとなり失敗。前回10-10 20:11Z時点の値（サイト全体累計8、個別29ページ全て0）から更新できず（escalations記載済みの既知の問題、オーナー対応待ち）。health.md（29ページ・問題0件）・計測タグ（29ページ全てに存在）・表記（grep「追跡なし」等の不備なし）を確認し、backlog先頭「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策（csv-to-xlsx）を新規公開。新ツールはsitemap未反映のためこの回の計測対象に含まれず、次回から計測対象に加わる。"
     }
   ],
   "weekly": [
