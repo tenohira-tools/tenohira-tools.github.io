@@ -864,6 +864,43 @@
         "/xlsx-suushiki/": 0
       },
       "note": "増加はトップページの+4のみ（累計2→6）。ツール個別18ページは公開以来すべて0件。WebSearchのsite:検索でもトップページだけが検索結果に出て、個別ツールは未掲載。IndexNow送信はHTTP 200で正常（Actionsログで確認）。全19ページにGoatCounterタグあり。原因は需要より『個別ページがまだ検索エンジンに載っていない』ことが続いていると判断。"
+    },
+    {
+      "week": "2026-10-04〜2026-10-10（公開3週目）",
+      "reviewed": "2026-10-10",
+      "total_this_week": ">=2（10-09 20:11Z時点。10-10は取得不可）",
+      "total_last_week": 4,
+      "pages_this_week": {
+        "/": 2,
+        "/config-convert/": 0,
+        "/csv-fix/": 0,
+        "/csv-group-split/": 0,
+        "/csv-master-replace/": 0,
+        "/csv-merge/": 0,
+        "/csv-seiri/": 0,
+        "/hyoki-yure/": 0,
+        "/kotsuhi-seisan/": 0,
+        "/receipt-sheet/": 0,
+        "/regex-ja/": 0,
+        "/shohyo-rename/": 0,
+        "/shorui-scan/": 0,
+        "/timezone-planner/": 0,
+        "/tozan-checklist/": 0,
+        "/wareki-toitsu/": 0,
+        "/wareki/": 0,
+        "/xlsx-error/": 0,
+        "/xlsx-hyperlink/": 0,
+        "/xlsx-jouken/": 0,
+        "/xlsx-junkan/": 0,
+        "/xlsx-ketsugo/": 0,
+        "/xlsx-link/": 0,
+        "/xlsx-merge/": 0,
+        "/xlsx-namae/": 0,
+        "/xlsx-omoi/": 0,
+        "/xlsx-style/": 0,
+        "/xlsx-suushiki/": 0
+      },
+      "note": "今週もtenohira.goatcounter.comへの接続がプロキシ（組織ポリシー）で403拒否、WebFetchも無人実行で承認待ちのため取得不可。最後に取れた10-09 20:11Zの累計8（先週末6→+2、すべてトップ）を今週分とした。個別28ページは公開以来0。site:検索（WebSearch）でも個別ページ・トップとも見つからず、未インデックスが続く。計測タグは全29ページにあり。"
     }
   ]
 }

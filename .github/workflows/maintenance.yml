@@ -40,12 +40,29 @@ jobs:
               '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
               + body + "\n</urlset>\n")
           open("docs/robots.txt", "w").write("User-agent: *\nAllow: /\nSitemap: " + base + "sitemap.xml\n")
+          # README のツール一覧（github.com 上のリポジトリページから各ツールへ直接たどれるようにする）
+          import re, html as H
+          items = []
+          for u, _ in urls:
+              path = u[len(base):]
+              if not path:
+                  continue
+              src = open(os.path.join("docs", path, "index.html"), encoding="utf-8").read()
+              m = re.search(r"<title>(.*?)</title>", src, re.S)
+              t = H.unescape(m.group(1)).strip() if m else path
+              t = re.sub(r"\s*[｜|]\s*てのひらツール.*$", "", t)
+              items.append(f"- [{t}]({u})")
+          readme = open("README.md", encoding="utf-8").read()
+          s, e = "<!-- tools:start -->", "<!-- tools:end -->"
+          if s in readme and e in readme:
+              readme = readme.split(s)[0] + s + "\n" + "\n".join(items) + "\n" + e + readme.split(e, 1)[1]
+              open("README.md", "w", encoding="utf-8").write(readme)
           PY
       - name: Commit if changed
         run: |
           git config user.name "tenohira-tools"
           git config user.email "tenohira-tools@users.noreply.github.com"
-          git add docs/sitemap.xml docs/robots.txt
+          git add docs/sitemap.xml docs/robots.txt README.md
           git diff --cached --quiet || (git commit -m "chore: update sitemap" && git push)
       - name: Notify IndexNow about changed pages
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'

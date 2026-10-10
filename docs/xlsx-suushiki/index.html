@@ -589,7 +589,7 @@ var T={
   fileListHeading:"追加したファイル",
   statsHeading:"数式セルの集計",
   statsHint:"「エラー」はExcelが最後に保存したときの計算結果。「他シート参照」「外部参照の可能性」は数式の文字列からの機械判定で、断定ではありません。",
-  statTotal:"数式セル数",statErr:"エラー",statCross:"他シート参照",statExt:"外部参照の可能性",statDerived:"推定（共有数式）",
+  statTotal:"数式セル数",statErr:"エラー",statCross:"他シート参照",statExt:"外部参照の可能性",statDerived:"推定（共有数式）",derivedBadge:"推定",
   filterHeading:"絞り込み",
   filterFile:"ファイル：",filterSheet:"シート：",
   searchPh:"数式・セルを検索",
@@ -611,7 +611,7 @@ var T={
   fileListHeading:"Added files",
   statsHeading:"Formula cell summary",
   statsHint:"\"Error\" reflects Excel's last-saved result. \"Cross-sheet\" and \"possible external ref\" are text-pattern guesses, not certainties.",
-  statTotal:"Formula cells",statErr:"Errors",statCross:"Cross-sheet refs",statExt:"Possible external refs",statDerived:"Derived (shared formula)",
+  statTotal:"Formula cells",statErr:"Errors",statCross:"Cross-sheet refs",statExt:"Possible external refs",statDerived:"Derived (shared formula)",derivedBadge:"derived",
   filterHeading:"Filters",
   filterFile:"File:",filterSheet:"Sheet:",
   searchPh:"Search formula / cell",
@@ -742,7 +742,7 @@ function renderResult(rows){
     var badges="";
     if(r.ftype==="array") badges+="<span class='badge arr'>配列</span>";
     if(r.ftype==="dataTable") badges+="<span class='badge arr'>データテーブル</span>";
-    if(r.derived) badges+="<span class='badge derived'>推定</span>";
+    if(r.derived) badges+="<span class='badge derived'>"+esc(T[lang].derivedBadge)+"</span>";
     h+="<td class='formula'>"+badges+"="+escTrunc(r.formula,220)+"</td>";
     h+="<td class='"+(r.isError?"mark":"")+"'>"+escTrunc(r.value,60)+"</td>";
     h+="<td class='center'>"+(r.isError?"●":"")+"</td>";
