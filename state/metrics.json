@@ -775,6 +775,13 @@
       },
       "total": 8,
       "note": "xlsx-hani公開前の取得。前回10-09 17:10Z比で変化なし（サイト全体累計8、個別27ページも全て引き続き0件）。health.md（27ページ・問題0件）・計測タグ・表記（grep）いずれも不備なし。backlog残り3件（住所英語変換・文字数カウンター・SNS画像切り抜き）は差別化未確定のため見送り、STRATEGY.mdの最優先分野「Excelファイルのトラブル解決」でWebSearch（3件）し、Ctrl+Endで遠いセルまで飛ぶ・印刷で白紙ページが大量に出る原因「使用範囲」をリセットするツール（xlsx-hani）を新規公開。新ツールはsitemap未反映のためこの回の計測対象に含まれず、次回から計測対象に加わる。"
+    },
+    {
+      "date": "2026-10-10T17:12:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": null,
+      "total": null,
+      "note": "取得失敗：ネットワークプロキシがtenohira.goatcounter.comへのCONNECTを403で拒否（http://127.0.0.1:40109/__agentproxy/status のrecentRelayFailuresに記録）。WebFetch経由も無人実行のため承認待ちで失敗。前回10-09 20:11Z時点の値（サイト全体累計8、個別29ページ全て0）から更新できず。"
     }
   ],
   "weekly": [
