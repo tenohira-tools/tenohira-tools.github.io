@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す | てのひらツール</title>
+<meta name="description" content="取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)に残っている「作成者」「最終更新者」「コメントの投稿者名（会社名・個人のメールアドレスを含む場合あり）」をまとめて消したい——というときに。複数ファイル・3つの形式を一括処理でき、ファイルはサーバーに送らずブラウザの中だけで書き換えます。Before sending files outside your company: strip the creator, last-modified-by and comment-author names from multiple Excel/Word/PowerPoint files at once, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/sakusha-kesu/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.fileCard .fTop{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCard .fName{font-weight:700;word-break:break-all}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.fmt{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.detectBox{font-size:.9rem;margin:6px 0 10px}
+.detectBox .row{display:flex;gap:6px;flex-wrap:wrap;margin:3px 0}
+.detectBox .k{color:var(--muted);min-width:9em}
+.detectBox .v{word-break:break-all}
+.detectBox .v.empty{color:var(--muted)}
+.optRow{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0}
+.optRow label{display:flex;align-items:center;gap:6px}
+.optRow label.disabled{color:var(--muted)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;min-height:40px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.errBox{border:1px solid var(--diff);background:var(--diff-bg);color:var(--diff);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す</h1>
+    <p class="sub" data-i="sub">取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)のプロパティに残っている「作成者」「最終更新者」、コメントの「投稿者名」（社内のメールアドレスが入っている場合もあります）を消したい、というときに。複数のファイル・3つの形式をまとめて一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで書き換えます。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p><strong data-i="dropzoneStrong">ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ</strong><span data-i="dropzoneRest">、またはクリックして選択</span></p>
+    <p class="hint" data-i="dropzoneHint">.xlsx / .xlsm / .docx / .pptx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm,.docx,.pptx" multiple style="display:none">
+</section>
+
+<section class="card" id="listSec" style="display:none">
+  <h2 data-i="listHeading">読み込んだファイル</h2>
+  <div id="fileList"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel/Word/PowerPointファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル可）。</li>
+      <li>各ファイルについて、見つかった作成者・最終更新者・会社名・コメントの投稿者名が表示されます。消したい項目にチェックを入れたまま（既定でチェック済み）「書き出す」を押すとダウンロードされます。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. 具体的にどこを消しますか？</h3>
+    <p>A. ファイル内部のdocProps/core.xml（ファイルのプロパティ）にある「作成者」「最終更新者」、docProps/app.xml（詳細プロパティ）にある「会社名」「所属部門」、そしてコメント機能の投稿者一覧（Excelのコメント作成者、Wordのコメント投稿者とその表示名、PowerPointのコメント投稿者）です。これらはExcel/Wordの「ファイル」→「情報」画面やコメント欄に表示される情報で、ファイルの外から見える形で残っています。</p>
+    <h3>Q. コメント本文や、数式・文章の内容は消えませんか？</h3>
+    <p>A. 消えません。消すのは投稿者の「名前」だけで、コメント本文やセルの値・数式・文章・書式など、他のすべての内容はそのまま残ります。</p>
+    <h3>Q. 100%完全に消えますか？</h3>
+    <p>A. 「作成者」「最終更新者」「会社名」「所属部門」は確実に消せます。コメントの投稿者名も、昔からある形式（レガシー形式）は確実に消せます。ただし、最近のExcel/Wordの「スレッド形式」コメント機能では、投稿者名の保存場所がファイルによって異なることがあり、このツールは主な保存場所（Wordのpeople.xml、Excelのpersons/person.xml）も分かる範囲で追加処理しますが、100%の除去は保証できません。社外に渡す前の最終確認として、Excel/Wordの「ドキュメント検査」機能も併用することをおすすめします。また、Wordの「変更履行の記録（校閲機能）」に残る編集者名は対象外です（対象外である旨、処理後も画面に表示します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel(.xlsx/.xlsm)、Word(.docx)、PowerPoint(.pptx)です。古い.xls/.doc/.ppt形式や、パスワードで保護されたファイルは読み込めません。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_匿名化済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Excel/Word/PowerPoint files into the box above, or click it to choose (multiple files are fine).</li>
+      <li>Each file shows its detected creator, last-modified-by, company and comment-author names. Keep the boxes checked (checked by default) for what you want cleared and click "Build" to download it. Your original file is untouched.</li>
+    </ol>
+    <h3>Q. Exactly what does this remove?</h3>
+    <p>A. Inside the file's docProps/core.xml (file properties): the "creator" and "last modified by" fields. Inside docProps/app.xml (extended properties): "Company" and "Manager". And the comment-author list for each format: Excel's legacy comment authors, Word's comment author name, and PowerPoint's comment author name. These are exactly the fields shown in Word/Excel's "File &gt; Info" screen and in the comment pane, and they stay attached to the file even after you think you've deleted a comment's visible text.</p>
+    <h3>Q. Does it touch comment text, formulas, or document content?</h3>
+    <p>A. No. Only the author's name is cleared. Comment bodies, cell values and formulas, document text, formatting — everything else is left exactly as it was.</p>
+    <h3>Q. Is removal 100% guaranteed?</h3>
+    <p>A. The creator, last-modified-by, Company and Manager fields are reliably cleared. Legacy-style comment authors are reliably cleared too. However, recent Excel/Word "threaded" comment features can store the author's real name in a different internal location depending on the file's history, and while this tool also makes a best-effort pass at the two most likely such locations (Word's people.xml, Excel's persons/person.xml), 100% removal cannot be guaranteed there. Before sending a file outside your organization, we recommend also running Word/Excel's own "Document Inspector" as a final check. Author names left in Word's tracked-changes (Track Changes) history are out of scope and are not touched (this is stated on screen after processing too).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel (.xlsx/.xlsm), Word (.docx) and PowerPoint (.pptx). The older .xls/.doc/.ppt formats and password-protected files are not supported.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_anonymized" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — 社外に渡す前にファイルを軽く・きれいにしたいときにも。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — 渡す前にファイルサイズの内訳を確認できます。</li>
+      <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 渡す前に使用範囲を実データの範囲まで縮小。</li>
+      <li><a href="../csv-to-xlsx/">CSVの先頭の0が消える・日付に化けるときのExcel(.xlsx)変換ツール</a> — CSVとExcelの橋渡し。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-style/">Fix "too many different cell formats" / a heavy workbook</a> — also useful for making a file lighter and tidier before sharing it.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — check the size breakdown before you send a file out.</li>
+      <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away</a> — shrink the used range before sending a file out.</li>
+      <li><a href="../csv-to-xlsx/">Stop CSV losing leading zeros / becoming dates in Excel</a> — bridges CSV and Excel.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"具体的にどこを消しますか？","acceptedAnswer":{"@type":"Answer","text":"docProps/core.xmlの作成者・最終更新者、docProps/app.xmlの会社名・所属部門、Excel/Word/PowerPointのコメント投稿者一覧です。"}},
+    {"@type":"Question","name":"コメント本文や文章の内容は消えませんか？","acceptedAnswer":{"@type":"Answer","text":"消えません。投稿者の名前だけを消し、コメント本文・セルの値・数式・文章・書式など他のすべての内容はそのまま残ります。"}},
+    {"@type":"Question","name":"100%完全に消えますか？","acceptedAnswer":{"@type":"Answer","text":"作成者・最終更新者・会社名・所属部門とレガシー形式のコメント投稿者名は確実に消せます。最近のスレッド形式コメントの投稿者名は分かる範囲で追加処理しますが100%は保証できず、変更履行（校閲）の編集者名は対象外です。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。変更後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =====================================================================
+   ZIP read/write — same hand-rolled approach already shipped across
+   xlsx-merge/xlsx-suushiki/xlsx-namae/.../xlsx-style/xlsx-hani (no
+   external libraries; only standard browser APIs: DecompressionStream /
+   CompressionStream / TextDecoder / TextEncoder). Works for any OOXML
+   zip container (xlsx/docx/pptx all share the same ZIP structure).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =====================================================================
+   Minimal XML tag parser (shared across this site's xlsx-* tools).
+   ===================================================================== */
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function xmlEscapeText(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]}); }
+function xmlEscapeAttr(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function setTagsInnerText(xml,tagName,placeholderFn){
+  var tags=findTags(xml,tagName);
+  if(!tags.length) return {xml:xml,values:[]};
+  var out=[],last=0,values=[];
+  tags.forEach(function(t,idx){
+    var oldVal=t.inner===null?"":t.inner;
+    values.push(decodeXmlEntities(oldVal));
+    out.push(xml.slice(last,t.start));
+    if(t.selfClose){ out.push(t.openText); }
+    else{
+      var newVal=placeholderFn(decodeXmlEntities(oldVal),idx);
+      out.push(t.openText,xmlEscapeText(newVal),"</"+tagName+">");
+    }
+    last=t.end;
+  });
+  out.push(xml.slice(last));
+  return {xml:out.join(""),values:values};
+}
+function scrubAttrsInTags(xml,tagName,attrNames,placeholderFn){
+  var out=[],last=0,found=[];
+  var re=new RegExp("<"+tagName+"(?=[\\s/>])","g"),m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index;
+    var open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    var newOpenText=openText;
+    attrNames.forEach(function(attrName){
+      if(open.attrs[attrName]!==undefined){
+        found.push(open.attrs[attrName]);
+        var newVal=xmlEscapeAttr(placeholderFn(attrName,open.attrs[attrName]));
+        var escName=attrName.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+        var re2=new RegExp("("+escName+"=)([\"'])(?:(?!\\2).)*\\2");
+        newOpenText=newOpenText.replace(re2,function(mm,pfx,q){return pfx+q+newVal+q;});
+      }
+    });
+    out.push(xml.slice(last,tagStart),newOpenText);
+    last=open.end; re.lastIndex=open.end;
+  }
+  out.push(xml.slice(last));
+  return {xml:out.join(""),found:found};
+}
+function scrubAttrsByPattern(xml,tagName,namePatterns,excludePatterns,placeholderFn){
+  var out=[],last=0,found=[];
+  var re=new RegExp("<"+tagName+"(?=[\\s/>])","g"),m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index;
+    var open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    var newOpenText=openText;
+    Object.keys(open.attrs).forEach(function(attrName){
+      var excluded=excludePatterns.some(function(p){return p.test(attrName)});
+      if(excluded) return;
+      var matched=namePatterns.some(function(p){return p.test(attrName)});
+      if(!matched) return;
+      found.push(attrName+"="+open.attrs[attrName]);
+      var newVal=xmlEscapeAttr(placeholderFn(attrName,open.attrs[attrName]));
+      var escName=attrName.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      var re2=new RegExp("("+escName+"=)([\"'])(?:(?!\\2).)*\\2");
+      newOpenText=newOpenText.replace(re2,function(mm,pfx,q){return pfx+q+newVal+q;});
+    });
+    out.push(xml.slice(last,tagStart),newOpenText);
+    last=open.end; re.lastIndex=open.end;
+  }
+  out.push(xml.slice(last));
+  return {xml:out.join(""),found:found};
+}
+
+/* =====================================================================
+   Format detection + inspection + scrub (business logic; same functions
+   are covered by this tool's Node.js unit + fixture tests before
+   publishing — see state/log.md for the 2026-10-11 entry).
+   ===================================================================== */
+function detectFormat(entryNames){
+  var has=function(n){return entryNames.indexOf(n)!==-1};
+  if(has("xl/workbook.xml")) return "xlsx";
+  if(has("word/document.xml")) return "docx";
+  if(has("ppt/presentation.xml")) return "pptx";
+  return null;
+}
+function findCommentEntries(entryNames,fmt){
+  if(fmt==="xlsx") return entryNames.filter(function(n){return /^xl\/comments(\d+\.xml|\/comment\d+\.xml)$/i.test(n)});
+  if(fmt==="docx") return entryNames.filter(function(n){return n==="word/comments.xml"});
+  if(fmt==="pptx") return entryNames.filter(function(n){return n==="ppt/commentAuthors.xml"});
+  return [];
+}
+function inspect(entries){
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var names=entries.map(function(e){return e.name});
+  var fmt=detectFormat(names);
+  if(!fmt) return null;
+  var dec=new TextDecoder("utf-8");
+  var core=byName["docProps/core.xml"]?dec.decode(byName["docProps/core.xml"].bytes):"";
+  var app=byName["docProps/app.xml"]?dec.decode(byName["docProps/app.xml"].bytes):"";
+  var creator=findTags(core,"dc:creator")[0];
+  var lastMod=findTags(core,"cp:lastModifiedBy")[0];
+  var company=findTags(app,"Company")[0];
+  var manager=findTags(app,"Manager")[0];
+  var commentNames=findCommentEntries(names,fmt);
+  var commentAuthors=[];
+  commentNames.forEach(function(n){
+    var xml=dec.decode(byName[n].bytes);
+    if(fmt==="xlsx") findTags(xml,"author").forEach(function(t){ if(t.inner) commentAuthors.push(decodeXmlEntities(t.inner)); });
+    if(fmt==="docx") findTags(xml,"w:comment").forEach(function(t){ if(t.attrs["w:author"]) commentAuthors.push(t.attrs["w:author"]); });
+    if(fmt==="pptx") findTags(xml,"p:cmAuthor").forEach(function(t){ if(t.attrs.name) commentAuthors.push(t.attrs.name); });
+  });
+  var personPath=fmt==="docx"?"word/people.xml":(fmt==="xlsx"?"xl/persons/person.xml":null);
+  var peopleNames=[];
+  if(personPath && byName[personPath]){
+    var pxml=dec.decode(byName[personPath].bytes);
+    var tag=fmt==="docx"?"w15:person":"person";
+    findTags(pxml,tag).forEach(function(t){
+      Object.keys(t.attrs).forEach(function(k){ if(/name|author/i.test(k)) peopleNames.push(t.attrs[k]); });
+    });
+  }
+  return {fmt:fmt,
+    creator:creator?decodeXmlEntities(creator.inner||""):"",
+    lastModifiedBy:lastMod?decodeXmlEntities(lastMod.inner||""):"",
+    company:company?decodeXmlEntities(company.inner||""):"",
+    manager:manager?decodeXmlEntities(manager.inner||""):"",
+    commentAuthors:commentAuthors, peopleNames:peopleNames,
+    hasPerson:!!(personPath && byName[personPath])};
+}
+function scrub(entries,opts){
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var names=entries.map(function(e){return e.name});
+  var fmt=detectFormat(names);
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var patched={};
+  if(opts.clearAuthor && byName["docProps/core.xml"]){
+    var core=dec.decode(byName["docProps/core.xml"].bytes);
+    core=setTagsInnerText(core,"dc:creator",function(){return ""}).xml;
+    core=setTagsInnerText(core,"cp:lastModifiedBy",function(){return ""}).xml;
+    patched["docProps/core.xml"]=core;
+  }
+  if(opts.clearCompany && byName["docProps/app.xml"]){
+    var app=dec.decode(byName["docProps/app.xml"].bytes);
+    app=setTagsInnerText(app,"Company",function(){return ""}).xml;
+    app=setTagsInnerText(app,"Manager",function(){return ""}).xml;
+    patched["docProps/app.xml"]=app;
+  }
+  if(opts.clearComments){
+    findCommentEntries(names,fmt).forEach(function(n){
+      var xml=dec.decode(byName[n].bytes);
+      if(fmt==="xlsx") xml=setTagsInnerText(xml,"author",function(){return opts.placeholder}).xml;
+      if(fmt==="docx") xml=scrubAttrsInTags(xml,"w:comment",["w:author","w:initials"],function(){return opts.placeholder}).xml;
+      if(fmt==="pptx") xml=scrubAttrsInTags(xml,"p:cmAuthor",["name","initials"],function(){return opts.placeholder}).xml;
+      patched[n]=xml;
+    });
+    var personPath=fmt==="docx"?"word/people.xml":(fmt==="xlsx"?"xl/persons/person.xml":null);
+    if(personPath && byName[personPath]){
+      var pxml=dec.decode(byName[personPath].bytes);
+      if(fmt==="docx"){
+        pxml=scrubAttrsByPattern(pxml,"w15:person",[/author/i],[],function(){return opts.placeholder}).xml;
+        pxml=scrubAttrsByPattern(pxml,"w15:presenceInfo",[/userid/i],[/providerid/i],function(){return opts.placeholder}).xml;
+      } else {
+        pxml=scrubAttrsByPattern(pxml,"person",[/name/i,/userid/i],[/^id$/i,/providerid/i],function(){return opts.placeholder}).xml;
+      }
+      patched[personPath]=pxml;
+    }
+  }
+  return entries.map(function(e){
+    if(patched[e.name]!==undefined) return {name:e.name, bytes:enc.encode(patched[e.name])};
+    return e;
+  });
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+var FMT_LABEL={xlsx:"Excel",docx:"Word",pptx:"PowerPoint"};
+
+var T={
+ ja:{
+  title:"社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す",
+  sub:"取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)のプロパティに残っている「作成者」「最終更新者」、コメントの「投稿者名」（社内のメールアドレスが入っている場合もあります）を消したい、というときに。複数のファイル・3つの形式をまとめて一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで書き換えます。元のファイルは変更しません。",
+  dropzoneStrong:"ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ",dropzoneRest:"、またはクリックして選択",
+  dropzoneHint:".xlsx / .xlsm / .docx / .pptx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。",
+  listHeading:"読み込んだファイル",
+  kCreator:"作成者",kLastMod:"最終更新者",kCompany:"会社名",kManager:"所属部門",kComments:"コメント投稿者",kPeople:"人物情報(people)",
+  none:"（設定なし）",noneComments:"（コメントなし）",
+  optAuthor:"作成者・最終更新者を消す",optComments:"コメント投稿者名を消す",optCompany:"会社名・所属部門も消す",
+  buildBtn:"消去したファイルを書き出す",buildBtnBusy:"書き出し中…",
+  doneMsg:"ダウンロードしました：",
+  errBad:"読み込めませんでした（.xlsx/.xlsm/.docx/.pptx以外の形式か、パスワード保護、または壊れたファイルの可能性があります）",
+  loadingLabel:"読み込み中…",removeLabel:"削除",
+  bestEffortNote:"スレッド形式コメントの投稿者名は分かる範囲で追加処理（100%保証なし）。変更履行（校閲）の編集者名は対象外。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{
+  title:"Before sending files outside your company: strip creator, last-modified-by and comment-author names from Excel/Word/PowerPoint",
+  sub:"Before you send a file to a client or anyone outside your organization, strip the \"creator\", \"last modified by\" and comment-author names (which can include an internal email address) left in Excel (.xlsx/.xlsm), Word (.docx) and PowerPoint (.pptx) files. Process multiple files across all three formats at once. Files are never uploaded — everything is rewritten inside this browser. Your originals are untouched.",
+  dropzoneStrong:"Drag and drop Excel/Word/PowerPoint files here",dropzoneRest:", or click to choose",
+  dropzoneHint:".xlsx / .xlsm / .docx / .pptx supported. Add multiple files at once. Everything happens on this device.",
+  listHeading:"Loaded files",
+  kCreator:"Creator",kLastMod:"Last modified by",kCompany:"Company",kManager:"Manager",kComments:"Comment authors",kPeople:"Person info (people)",
+  none:"(not set)",noneComments:"(no comments)",
+  optAuthor:"Clear creator / last-modified-by",optComments:"Clear comment-author names",optCompany:"Also clear Company / Manager",
+  buildBtn:"Build the cleaned file",buildBtnBusy:"Building…",
+  doneMsg:"Downloaded: ",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm/.docx/.pptx, may be password-protected, or may be corrupted)",
+  loadingLabel:"Loading…",removeLabel:"Remove",
+  bestEffortNote:"Threaded-comment author names are cleared on a best-effort basis (not 100% guaranteed). Track Changes editor names are out of scope.",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var files=[]; // {id,name,size,loading,error,info,entries,opts,outBytes,outName,building}
+var seq=0;
+
+function addFiles(fileList){
+  Array.prototype.slice.call(fileList).forEach(function(file){
+    var id=++seq;
+    var rec={id:id,name:file.name,size:file.size,loading:true,error:"",info:null,entries:null,
+      opts:{clearAuthor:true,clearComments:true,clearCompany:false},outBytes:null,outName:"",building:false};
+    files.push(rec);
+    render();
+    (async function(){
+      try{
+        var buf=await file.arrayBuffer();
+        var entries=await unzipAllEntries(new Uint8Array(buf));
+        var info=inspect(entries);
+        if(!info) throw new Error("NOT_SUPPORTED");
+        rec.loading=false; rec.entries=entries; rec.info=info;
+        if(!(info.creator||info.lastModifiedBy)) rec.opts.clearAuthor=false;
+        if(!(info.commentAuthors.length||info.peopleNames.length)) rec.opts.clearComments=false;
+      }catch(e){
+        rec.loading=false; rec.error=T[lang].errBad;
+      }
+      render();
+    })();
+  });
+}
+function removeFile(id){ files=files.filter(function(r){return r.id!==id}); render(); }
+
+async function buildOne(rec){
+  rec.building=true; render();
+  try{
+    var cleaned=scrub(rec.entries,{clearAuthor:rec.opts.clearAuthor,clearCompany:rec.opts.clearCompany,
+      clearComments:rec.opts.clearComments, placeholder: lang==="ja"?"匿名":"Anonymous"});
+    var outBytes=await buildZip(cleaned);
+    var dot=rec.name.lastIndexOf(".");
+    var base=dot>0?rec.name.slice(0,dot):rec.name, ext=dot>0?rec.name.slice(dot):"";
+    var suffix=lang==="ja"?"_匿名化済み":"_anonymized";
+    var outName=base+suffix+ext;
+    var blob=new Blob([outBytes],{type:"application/octet-stream"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=outName; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },1000);
+    rec.outName=outName;
+  }catch(e){
+    rec.error=T[lang].errBad;
+  }
+  rec.building=false; render();
+}
+
+function fieldRow(k,v,emptyLabel){
+  var cls=v?"v":"v empty";
+  return '<div class="row"><span class="k">'+k+'：</span><span class="'+cls+'">'+(v?esc(v):emptyLabel)+'</span></div>';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function fileCardHtml(rec){
+  var t=T[lang];
+  if(rec.loading) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+t.loadingLabel+'</span></div></div>';
+  if(rec.error) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div><p class="errBox">'+t.errBad+'</p></div>';
+  var info=rec.info;
+  var commentsLabel=info.commentAuthors.length? info.commentAuthors.map(esc).join(", ")+"（"+info.commentAuthors.length+"）" : "";
+  var peopleLabel=info.peopleNames.length? info.peopleNames.map(esc).join(", ") : "";
+  var html='<div class="fileCard">'
+    +'<div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="badge fmt">'+FMT_LABEL[info.fmt]+'</span>'
+    +'<span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div>'
+    +'<div class="detectBox">'
+    +fieldRow(t.kCreator,info.creator,t.none)
+    +fieldRow(t.kLastMod,info.lastModifiedBy,t.none)
+    +fieldRow(t.kCompany,info.company,t.none)
+    +fieldRow(t.kManager,info.manager,t.none)
+    +fieldRow(t.kComments,commentsLabel,t.noneComments)
+    +(info.peopleNames.length?fieldRow(t.kPeople,peopleLabel,t.none):"")
+    +'</div>'
+    +'<div class="optRow">'
+    +'<label class="'+(info.creator||info.lastModifiedBy?'':'disabled')+'"><input type="checkbox" data-opt="clearAuthor" data-id="'+rec.id+'" '+(rec.opts.clearAuthor?'checked':'')+' '+((info.creator||info.lastModifiedBy)?'':'disabled')+'>'+t.optAuthor+'</label>'
+    +'<label class="'+((info.commentAuthors.length||info.peopleNames.length)?'':'disabled')+'"><input type="checkbox" data-opt="clearComments" data-id="'+rec.id+'" '+(rec.opts.clearComments?'checked':'')+' '+((info.commentAuthors.length||info.peopleNames.length)?'':'disabled')+'>'+t.optComments+'</label>'
+    +'<label class="'+((info.company||info.manager)?'':'disabled')+'"><input type="checkbox" data-opt="clearCompany" data-id="'+rec.id+'" '+(rec.opts.clearCompany?'checked':'')+' '+((info.company||info.manager)?'':'disabled')+'>'+t.optCompany+'</label>'
+    +'</div>'
+    +'<p><button type="button" class="primary" data-build="'+rec.id+'" '+(rec.building?'disabled':'')+'>'+(rec.building?t.buildBtnBusy:t.buildBtn)+'</button></p>'
+    +(rec.outName?'<p class="okBox">'+t.doneMsg+esc(rec.outName)+'</p>':'')
+    +'<p class="hint">'+t.bestEffortNote+'</p>'
+    +'</div>';
+  return html;
+}
+
+function render(){
+  var t=T[lang];
+  document.documentElement.lang=lang;
+  $("listSec").style.display=files.length?"block":"none";
+  $("fileList").innerHTML=files.map(fileCardHtml).join("");
+  document.querySelectorAll("[data-i]").forEach(function(el){
+    var k=el.getAttribute("data-i"); if(t[k]!==undefined) el.textContent=t[k];
+  });
+}
+
+document.addEventListener("click",function(e){
+  var rm=e.target.getAttribute && e.target.getAttribute("data-remove");
+  if(rm){ removeFile(parseInt(rm,10)); return; }
+  var bd=e.target.getAttribute && e.target.getAttribute("data-build");
+  if(bd){ var rec=files.filter(function(r){return r.id===parseInt(bd,10)})[0]; if(rec) buildOne(rec); return; }
+});
+document.addEventListener("change",function(e){
+  var optName=e.target.getAttribute && e.target.getAttribute("data-opt");
+  if(optName){
+    var id=parseInt(e.target.getAttribute("data-id"),10);
+    var rec=files.filter(function(r){return r.id===id})[0];
+    if(rec){ rec.opts[optName]=e.target.checked; }
+  }
+});
+
+var dz=$("dropzone"), fi=$("fileInput");
+dz.addEventListener("click",function(){ fi.click(); });
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fi.click(); } });
+fi.addEventListener("change",function(){ if(fi.files.length) addFiles(fi.files); fi.value=""; });
+["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add("drag"); }); });
+["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove("drag"); }); });
+dz.addEventListener("drop",function(e){ if(e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+document.querySelectorAll(".lang button").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    lang=btn.getAttribute("data-lang");
+    document.querySelectorAll(".lang button").forEach(function(b){ b.setAttribute("aria-pressed", b===btn?"true":"false"); });
+    render();
+  });
+});
+
+render();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -1087,6 +1087,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "sakusha-kesu",
+      "title": "社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す",
+      "url": "https://tenohira-tools.github.io/sakusha-kesu/",
+      "published": "2026-10-11",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog-research",
+      "why": "計測：GoatCounter取得は10-10から継続してプロキシが403で拒否し失敗（既知の問題、escalations記載済み、オーナー対応待ち）。前回10-10 20:29Z時点の値（サイト全体累計8、個別29ページ全て0）から変化なし。health.md（30ページ・問題0件）・計測タグ（30ページ全てに存在）・表記（grep「追跡なし」等の不備なし）を確認し、改善対象になる閲覧増加ページも無いため、2026-10-10週次レビューで並べ替え済みのbacklog先頭「社外に渡す前に作成者・最終更新者・コメントの投稿者名を消す」を新規公開。やったこと：着手前にWebSearchで再確認（2件）：既存の同種ツールはBatchPurifier・4n6 Metadata Remover・Document Metadata Cleanerなど全てWindows専用の非ブラウザソフトで、ブラウザ完結・無料の同等ツールは見当たらないことを確認（STRATEGY.mdの『ファイルを外に出したくない理由が強いものを優先』にも合致）。Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)の3形式に対応し、複数ファイルを一括処理できるツール（sakusha-kesu）を公開。docProps/core.xmlのdc:creator（作成者）・cp:lastModifiedBy（最終更新者）を消去し、docProps/app.xmlのCompany（会社名）・Manager（所属部門）も任意で追加消去できる（既定はオフ）。コメントの投稿者名は、レガシー形式（Excel: xl/comments*.xmlの<authors><author>、Word: word/comments.xmlのw:author/w:initials属性、PowerPoint: ppt/commentAuthors.xmlのname/initials属性）を確実に消去。さらに最近の『スレッド形式』コメント機能ではWordのword/people.xml・Excelのxl/persons/person.xmlに投稿者名（メールアドレスを含む場合あり）が保存されることがあるため、属性名のパターン一致（name/author/userIdを含み、idやproviderIdは除く）でこの2ファイルもベストエフォートで追加処理するが、この2ファイルの正式スキーマ（属性の正式名称）はMicrosoftの公式リファレンスページがWebFetchの無人実行では承認待ちで取得できず裏取りできなかったため、100%の除去は保証しない旨をFAQに明記し、推定の属性名（道中の検索結果と一般的なOOXMLの命名規則から推定）で処理する設計にとどめた。コメント本文・セルの値・数式・文章・書式は一切変更せず、Wordの変更履行（校閲機能）に残る編集者名は明確にスコープ外とした（画面上にも常時表示）。xlsx-style等で確立したZIP+XML読み込み・CompressionStream(deflate-raw)による圧縮書き出し処理を再利用し、新規実装はdocProps・コメント関連パーツの解析・置換ロジックのみ（3形式共通のOOXMLコンテナ構造を利用）。xlsx-style・xlsx-omoi・xlsx-hani・csv-to-xlsxの4ツールと相互リンク（双方向）し、docs/index.htmlに追加。",
+      "metrics": [
+        {
+          "date": "2026-10-11T17:33:01Z",
+          "note": "公開当日。GoatCounter取得はプロキシの403拒否で失敗（既知の問題）。前回10-10 20:29Z取得時点の値（サイト全体累計8、他29ページ全て0）から変化なし。新ツールはsitemap未反映のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ]
 }
