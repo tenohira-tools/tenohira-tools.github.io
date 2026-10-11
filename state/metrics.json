@@ -796,6 +796,13 @@
       "pages": null,
       "total": null,
       "note": "取得失敗：引き続きプロキシがtenohira.goatcounter.comへのCONNECTを403で拒否（既知の問題、escalations記載済み、オーナー対応待ち）。前回10-10 20:29Z時点の値（サイト全体累計8、個別29ページ全て0）から更新できず。health.md（30ページ・問題0件）・計測タグ（30ページ全てに存在）・表記（grep不備なし）を確認し、backlog先頭「社外に渡す前に作成者・最終更新者・コメント投稿者名を消す」ツール（sakusha-kesu）を新規公開。Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)の3形式に対応し、新ツールはsitemap未反映のためこの回の計測対象に含まれず、次回から対象に加わる。"
+    },
+    {
+      "date": "2026-10-11T20:32:35Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": null,
+      "total": null,
+      "note": "取得失敗：引き続きプロキシがtenohira.goatcounter.comへのCONNECTを403で拒否（既知の問題、escalations記載済み、オーナー対応待ち）。前回10-11 17:33Z時点の値（サイト全体累計8、個別30ページ全て0）から更新できず。health.md（30ページ・問題0件）・計測タグ（30ページ全てに存在、新ページにも追加済み）・表記（grep不備なし）を確認し、改善対象になる閲覧増加ページも無いため、2026-10-10週次レビューで並べ替え済みのbacklog先頭「数式を値に一括変換」を新規公開。新ツールはsitemap未反映のためこの回の計測対象に含まれず、次回から対象に加わる。"
     }
   ],
   "weekly": [

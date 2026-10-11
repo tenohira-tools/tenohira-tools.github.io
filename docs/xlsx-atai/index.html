@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excelの数式を値に変換：外部ファイルへのリンクが解除できないときに | てのひらツール</title>
+<meta name="description" content="「データ」タブの「リンクの編集」→「リンクの解除」を押しても外部ファイルへの参照が消えない・エラーになる、社外にファイルを渡す前に数式を外して値だけ残したい——というときに。Excel（.xlsx/.xlsm）の数式を、保存されている計算結果（値）に変換します。「すべての数式」と「外部ファイルを参照している数式だけ」のどちらを値にするか選べ、外部参照を含む数式がすべて値になり、名前定義・入力規則・条件付き書式・グラフのどこでも使われていない場合に限り、外部リンクの記録そのものも安全にまとめて削除します。ブラウザ内だけで処理し、ファイルは送信されません。Convert Excel formulas to their cached values, with a scope limited to formulas referencing an external workbook — for when Excel's own Break Links fails, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-atai/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.err .n{color:var(--diff)}
+.scopeRow{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:12px}
+.scopeOpt{border:1px solid var(--line);border-radius:10px;padding:10px 14px;flex:1 1 220px;cursor:pointer}
+.scopeOpt:hover{border-color:var(--accent)}
+.scopeOpt input{margin-right:6px}
+.scopeOpt .ot{font-weight:700}
+.scopeOpt .od{color:var(--muted);font-size:.85rem;margin-top:2px}
+.cleanupBox{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:4px}
+.cleanupBox label{display:flex;align-items:flex-start;gap:8px}
+.cleanupBox input{margin-top:3px}
+.cleanupBox .cd{color:var(--muted);font-size:.85rem;margin-top:4px}
+.cleanupBox[data-disabled="1"]{opacity:.6}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:340px;word-break:break-all}
+td.center{text-align:center;white-space:nowrap}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px;margin-right:10px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:11px 18px;cursor:pointer;min-height:44px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">数式を値に変換：外部ファイルへのリンクが解除できないときに</h1>
+    <p class="sub" data-i="sub">「データ」タブの「リンクの編集」→「リンクの解除」を押しても外部ファイルへの参照が消えない・エラーになる、社外にファイルを渡す前に数式を外して値だけ残したい——というときに。Excel(.xlsx/.xlsm)の数式を、保存されている計算結果（値）に変換します。「すべての数式」と「外部ファイルを参照している数式だけ」のどちらを値にするか選べ、条件を満たす場合だけ外部リンクの記録そのものも一緒に削除できます。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。すべてのシートの数式セルを解析します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">数式セルの集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">「外部参照の可能性」「他シート参照」は数式の文字列からの機械判定で、断定ではありません。「計算結果が未保存」は、数式はあるが直近の保存時に計算結果が記録されていないセルで、値に変換すると空欄になってしまうため、どちらのスコープでも常に数式のまま残します。</p>
+</section>
+
+<section class="card" id="scopeCard" style="display:none">
+  <h2 data-i="scopeHeading">値に変換する範囲</h2>
+  <div class="scopeRow">
+    <label class="scopeOpt"><input type="radio" name="scope" id="scopeExternal" value="external"><span class="ot" data-i="scopeExternalT">外部ファイルを参照している数式だけ</span><div class="od" data-i="scopeExternalD">他のExcelファイルを参照している数式（とその共有数式グループ全体）だけを値に変換し、それ以外の数式はそのまま残します。社外に渡す前の処理や「リンクの解除」対策に。</div></label>
+    <label class="scopeOpt"><input type="radio" name="scope" id="scopeAll" value="all"><span class="ot" data-i="scopeAllT">すべての数式</span><div class="od" data-i="scopeAllD">このファイルの数式セルを全部、計算結果（値）に変換します。以後、元の数式には戻せません。</div></label>
+  </div>
+  <p class="hint" id="scopeSummary"></p>
+  <div class="cleanupBox" id="cleanupBox">
+    <label><input type="checkbox" id="removeExtLinks"><span data-i="cleanupLabel">外部ファイルへのリンクの記録（外部参照）も、安全な場合だけ一緒に削除する</span></label>
+    <p class="cd" id="cleanupDetail"></p>
+  </div>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="listHeading">数式セルの一覧</h2>
+  <p class="hint" id="resultCount"></p>
+  <div id="resultBox"></div>
+  <div class="warnBox" data-i="warnText">変換されたセルは、保存されている計算結果がそのまま固定された値になります。再計算はしません（元の数式内に再計算が必要な未保存の変更があった場合、その変更は反映されません）。元のファイルは変更されず、新しいファイルとして書き出されます。</div>
+  <p style="margin-top:12px">
+    <button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">選んだ範囲で値に変換したファイルを書き出す</button>
+    <button type="button" class="secondary" id="csvBtn" data-i="csvBtn">一覧をCSVで書き出す</button>
+  </p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>数式セルの集計と、どの範囲を値に変換するか（外部参照の数式だけ／すべての数式）を選びます。</li>
+      <li>条件を満たしていれば、外部リンクの記録そのものも一緒に削除するチェックが使えます。</li>
+      <li>「選んだ範囲で値に変換したファイルを書き出す」でダウンロードします。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. Excel自身の「リンクの解除」（Break Links）ではダメなのですか？</h3>
+    <p>A. Excelの「データ」タブ→「リンクの編集」→「リンクの解除」は、参照先が見つからない・壊れている・名前付き範囲やグラフなど一部の箇所からも参照されている、といった条件がそろうと失敗したり、解除したつもりでも再度開くと「更新」を聞かれたりすることがあります。このツールは数式セル1つ1つをブラウザの中で直接読み取り、保存されている計算結果に置き換えるため、Excel側の「リンクの解除」が効かない場合の代わりになります。</p>
+    <h3>Q. 「外部ファイルを参照している数式だけ」を選ぶとどうなりますか？</h3>
+    <p>A. 数式の文字列に「[1]」「[ファイル名.xlsx]」のような、他のExcelファイルを指す書き方が含まれているセルだけを値に変換します。文字列パターンによる機械判定のため、名前定義を経由して間接的に外部ファイルを参照している数式などは検出できないことがあります。フィルハンドルでコピーされた「共有数式」については、グループ内のどこか1つでも外部参照が見つかれば、参照のずれで見逃しが起きないよう、そのグループ全体を値に変換します。</p>
+    <h3>Q. 「外部ファイルへのリンクの記録も一緒に削除する」はいつ使えますか？</h3>
+    <p>A. このチェックは、変換後にファイル内のどこにも外部参照が残らないと確認できたときだけ有効になります。具体的には、(1) 外部参照を含む数式セルが1つ残らず値に変換され、かつ (2) 名前定義・データの入力規則・条件付き書式・グラフのいずれでも外部参照が使われていない、という2つの条件がそろった場合です。どちらか一方でも満たさない場合はチェックが無効化され、その理由を表示します（このツールは数式セル以外の書き換えをしないため、そちらで使われている外部参照は安全に消せないと判断しています）。有効な場合、workbook内の外部参照の記録（参照先ファイルの情報）そのものを削除し、Excelの「リンクの編集」ダイアログにも何も表示されなくなります。</p>
+    <h3>Q. 「計算結果が未保存」のセルはどうなりますか？</h3>
+    <p>A. 値に変換せず、数式のまま残します。数式セルに計算結果（キャッシュされた値）が保存されていない場合、空欄のセルに置き換えてしまうと内容が失われるため、安全のため常にスキップします。該当するセルがある場合は一覧に表示されるので、必要であれば一度Excelで開いて保存してから、このツールを使い直してください。</p>
+    <h3>Q. 配列数式・データテーブルはどう扱われますか？</h3>
+    <p>A. 配列数式（CSE数式・動的配列数式）やデータテーブルは、数式が保存されている先頭セルだけを数式セルとして検出し、値に変換すると保存されていた計算結果で固定されます。結果が広がっている他のセルは元々数式を持たないため、影響はありません。ただし、この操作を行うと配列・データテーブルとしての再計算は行われなくなります。</p>
+    <h3>Q. 対応しているファイル形式・元のファイルへの影響は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。元のファイルはブラウザのメモリ上で読み込むだけで変更されず、結果は新しいファイルとしてダウンロードされます（ファイル名の末尾に「_値変換済み」を付けます）。数式セル以外のシート構成・値・通常の書式・グラフ・画像などはそのまま保持されます。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>Check the formula summary and choose the scope to convert — external-reference formulas only, or every formula.</li>
+      <li>When the conditions are met, you can also tick a box to remove the external-link records themselves.</li>
+      <li>Click "Build a file converted to values" to download the result — your original file is untouched.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Why not just use Excel's own "Break Links"?</h3>
+    <p>A. Excel's Data → Edit Links → Break Links can fail, or silently leave you being prompted to "update" links again later, especially when the target file is missing, when a defined name or a chart still points at the external reference, or when the link is otherwise in an inconsistent state. This tool reads every formula cell directly in your browser and replaces it with its cached value, so it works even when Excel's own Break Links doesn't.</p>
+    <h3>Q. What does "external-reference formulas only" do?</h3>
+    <p>A. It converts only the cells whose formula text contains a pattern that points at another workbook, such as "[1]" or "[filename.xlsx]". This is a text-pattern check, so a formula that reaches an external workbook only indirectly through a defined name may not be detected. For "shared formulas" (created by filling/copying a formula down or across), if any one member of the group is flagged as external, the whole group is converted together, so a relative-reference offset can't cause a cell to be silently missed.</p>
+    <h3>Q. When can I also remove the external-link records themselves?</h3>
+    <p>A. That checkbox is only enabled when no external reference would remain anywhere in the file after conversion — specifically when (1) every formula cell referencing an external workbook has been converted to a value, and (2) no defined name, data validation rule, conditional formatting rule, or chart still uses an external reference. If either condition isn't met, the checkbox is disabled with an explanation (this tool only rewrites formula cells, so it won't guess at removing a reference that's still used elsewhere). When it's available, the workbook's external-reference records are removed entirely, so Excel's Edit Links dialog shows nothing afterward.</p>
+    <h3>Q. What happens to cells with no cached result?</h3>
+    <p>A. They're left as formulas, untouched. If a formula cell has no cached value saved (nothing stored alongside the formula), converting it would turn it into a blank cell and lose information, so this is always skipped for safety. Any such cells are listed — open the file in Excel, let it recalculate and save, then run this tool again if you need them converted too.</p>
+    <h3>Q. How are array formulas and data tables handled?</h3>
+    <p>A. Array formulas (legacy CSE or dynamic arrays) and what-if data tables only store their formula on the anchor cell; converting that cell freezes it at its last cached result. Other cells the result spills into never had a formula of their own, so they're unaffected — but the range no longer recalculates as an array or data table afterward.</p>
+    <h3>Q. Which formats are supported, and is my original file changed?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files aren't supported. Your original file is only ever read into browser memory — the result downloads as a new file ("_values" appended to the name). Everything besides the converted formula cells — other cell values, regular formatting, charts, images — is carried over unchanged.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
+      <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。</li>
+      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。</li>
+      <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
+      <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出す。見た目は変わらない。</li>
+      <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used — formulas, names, validation, formatting and charts.</li>
+      <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once, even when iterative calculation hides Excel's own warning.</li>
+      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell (#REF!, #N/A, #VALUE! and more) across every sheet and file, with counts by type and a likely cause, exportable as CSV.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every conditional-formatting rule across all sheets, flag overlapping ranges, whole-row/column rules and broken style references, and remove the ones you choose.</li>
+      <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet, flag links to a local file or a deleted sheet, and remove the ones you choose.</li>
+      <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks.</li>
+      <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away</a> — Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped).</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"Excel自身の「リンクの解除」ではダメなのですか？","acceptedAnswer":{"@type":"Answer","text":"参照先が見つからない・名前定義やグラフからも参照されているなどの条件がそろうと、Excelの「リンクの解除」は失敗したり、再度「更新」を聞かれたりすることがあります。このツールは数式セルを直接値に置き換えるため、その代わりになります。"}},
+    {"@type":"Question","name":"「外部ファイルを参照している数式だけ」を選ぶとどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"数式の文字列に外部ファイルを指す書き方が含まれるセルだけを値に変換します。文字列パターンによる機械判定のため断定はできず、共有数式のグループは一部だけが見逃されないよう常にまとめて扱います。"}},
+    {"@type":"Question","name":"外部ファイルへのリンクの記録も一緒に削除できますか？","acceptedAnswer":{"@type":"Answer","text":"変換後にファイル内のどこにも外部参照が残らないと確認できた場合に限り、そのチェックが有効になります。数式以外（名前定義・入力規則・条件付き書式・グラフ）で使われている場合は無効になり、理由が表示されます。"}},
+    {"@type":"Question","name":"計算結果が保存されていないセルはどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"内容が失われないよう、常に数式のまま残します。一覧に表示されるので、必要ならExcelで開いて保存し直してから使い直してください。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function escXmlText(s){return String(s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-hani/xlsx-style (no external libraries; only standard
+   browser APIs: DecompressionStream/CompressionStream/TextDecoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+/* findTags with position info (start/end/openText/selfClose), as used in
+   xlsx-jouken/xlsx-hani, so a partially-edited element can be rebuilt from
+   openText + newInner + its literal close tag. */
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+function colIndexToLetter(idx){
+  var s="", n=idx+1;
+  while(n>0){ var rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+function refToRowCol(ref){
+  var m=/^\$?([A-Z]+)\$?([0-9]+)$/.exec(ref);
+  if(!m) return null;
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+
+/* =====================================================================
+   Formula reference shifting (for reconstructing "shared formula"
+   follower cells) and cross-sheet / external-reference heuristics —
+   the same approach already shipped in xlsx-suushiki/xlsx-link/xlsx-junkan.
+   ===================================================================== */
+var SHEET_QUOTED=/^'([^']*)'!/;
+var SHEET_BARE=/^[\p{L}\p{N}_.][\p{L}\p{N}_.]*!/u;
+var CELLREF=/^(\$?)([A-Z]{1,3})(\$?)([0-9]{1,7})/;
+
+function matchRefAt(formula,i){
+  var rest=formula.slice(i);
+  var mQ=SHEET_QUOTED.exec(rest);
+  var mB=!mQ?SHEET_BARE.exec(rest):null;
+  var prefixText="", prefixLen=0;
+  if(mQ){ prefixText=mQ[0]; prefixLen=mQ[0].length; }
+  else if(mB){ prefixText=mB[0]; prefixLen=mB[0].length; }
+  var cellPart=rest.slice(prefixLen);
+  var mc=CELLREF.exec(cellPart);
+  if(!mc) return null;
+  if(prefixLen===0){
+    var prev=i>0?formula[i-1]:"";
+    if(/[A-Za-z0-9_.]/.test(prev)) return null;
+  }
+  var after=cellPart.slice(mc[0].length,mc[0].length+1);
+  if(after==="(" ) return null;
+  if(/[A-Za-z0-9_]/.test(after)) return null;
+  return {
+    end:i+prefixLen+mc[0].length, prefixText:prefixText,
+    colAbs:mc[1]==="$", colLetters:mc[2], rowAbs:mc[3]==="$", rowDigits:mc[4]
+  };
+}
+function shiftOneRef(m,colDelta,rowDelta){
+  var newColStr=m.colLetters, newRowNum=parseInt(m.rowDigits,10);
+  if(!m.colAbs){ newColStr=colIndexToLetter(Math.max(0,colLetterToIndex(m.colLetters)+colDelta)); }
+  if(!m.rowAbs){ newRowNum=Math.max(1,newRowNum+rowDelta); }
+  return m.prefixText+(m.colAbs?"$":"")+newColStr+(m.rowAbs?"$":"")+newRowNum;
+}
+function shiftFormulaRefs(formula,colDelta,rowDelta){
+  if(colDelta===0 && rowDelta===0) return formula;
+  var out="", i=0, n=formula.length;
+  while(i<n){
+    var ch=formula[i];
+    if(ch==='"'){
+      var j=i+1;
+      while(j<n){
+        if(formula[j]==='"'){ if(formula[j+1]==='"'){ j+=2; continue; } j++; break; }
+        j++;
+      }
+      out+=formula.slice(i,j); i=j; continue;
+    }
+    var m=matchRefAt(formula,i);
+    if(m){ out+=shiftOneRef(m,colDelta,rowDelta); i=m.end; continue; }
+    out+=ch; i++;
+  }
+  return out;
+}
+function stripStringLiterals(s){
+  var out="", i=0, n=s.length;
+  while(i<n){
+    if(s[i]==='"'){
+      out+=" "; i++;
+      while(i<n){
+        if(s[i]==='"'){ if(s[i+1]==='"'){ out+="  "; i+=2; continue; } out+=" "; i++; break; }
+        out+=" "; i++;
+      }
+      continue;
+    }
+    out+=s[i]; i++;
+  }
+  return out;
+}
+function classifyFormula(formulaText){
+  var stripped=stripStringLiterals(formulaText);
+  var crossSheet=/(?:'[^']*'|[\p{L}\p{N}_.]+)!/u.test(stripped);
+  var externalRef=/\[[0-9]+\]/.test(stripped) || /\[[^\]]*\.xls[xm]?\]/i.test(stripped);
+  return {crossSheet:crossSheet, externalRef:externalRef};
+}
+function findRefIndices(text){
+  var stripped=stripStringLiterals(text), idxs=[], seen={}, re=/\[(\d+)\]/g, m;
+  while((m=re.exec(stripped))){ var n=m[1]; if(!seen[n]){seen[n]=true; idxs.push(parseInt(n,10));} }
+  return idxs;
+}
+
+/* =====================================================================
+   Per-sheet formula-cell extraction, directly on the full sheet XML
+   (every <c> element is top-level inside <sheetData>, so scanning the
+   whole sheet text for "c" tags gives absolute offsets without needing
+   to track <row> boundaries separately).
+   ===================================================================== */
+function extractSheetCells(sheetXml){
+  var cTags=findTags(sheetXml,"c");
+  var records=[];
+  cTags.forEach(function(c){
+    if(c.selfClose || c.inner===null) return;
+    var fTags=findTags(c.inner,"f");
+    if(!fTags.length) return;
+    var f=fTags[0];
+    var vTags=findTags(c.inner,"v");
+    var isTags=findTags(c.inner,"is");
+    records.push({
+      ref:c.attrs.r||"", cAttrsT:c.attrs.t, cAttrsS:c.attrs.s,
+      cStart:c.start, cEnd:c.end, openText:c.openText, innerText:c.inner,
+      ftype:f.attrs.t||"normal", si:f.attrs.si,
+      fRelStart:f.start, fRelEnd:f.end,
+      formulaText:f.inner!==null?decodeXmlEntities(f.inner):null,
+      hasV:vTags.length>0, hasIs:isTags.length>0,
+      vRaw:vTags.length?vTags[0].inner:null,
+      resolvedFormula:null, derived:false, crossSheet:false, externalRef:false, groupExternal:false
+    });
+  });
+  /* shared-formula master lookup (anchor cell carries the full text) */
+  var sharedMaster={};
+  records.forEach(function(r){
+    if(r.ftype==="shared" && r.formulaText!==null && r.si!==undefined){ sharedMaster[r.si]={ref:r.ref,formula:r.formulaText}; }
+  });
+  records.forEach(function(r){
+    var text=r.formulaText, derived=false;
+    if(text===null && r.ftype==="shared" && r.si!==undefined && sharedMaster[r.si]){
+      var master=sharedMaster[r.si], mp=refToRowCol(master.ref), cp=refToRowCol(r.ref);
+      if(mp && cp){ text=shiftFormulaRefs(master.formula,cp.col-mp.col,cp.row-mp.row); derived=true; }
+    }
+    r.resolvedFormula=text||""; r.derived=derived;
+    if(text){ var cls=classifyFormula(text); r.crossSheet=cls.crossSheet; r.externalRef=cls.externalRef; }
+  });
+  /* group shared-formula members so a scope of "external only" converts
+     a whole fill-copied group together if any one member is flagged —
+     otherwise a relative-reference offset in one member could make it
+     silently escape detection while its siblings get converted. */
+  var bySi={};
+  records.forEach(function(r,i){ if(r.si!==undefined){ (bySi[r.si]=bySi[r.si]||[]).push(i); } });
+  Object.keys(bySi).forEach(function(si){
+    var idxs=bySi[si], anyExt=idxs.some(function(i){return records[i].externalRef});
+    if(anyExt) idxs.forEach(function(i){ records[i].groupExternal=true; });
+  });
+  return records;
+}
+
+/* =====================================================================
+   Workbook-level external-reference usage (outside formula cells): the
+   same categories xlsx-link lists — defined names, data validation,
+   conditional formatting and charts — reused here only to decide whether
+   it's safe to also delete the external-reference records themselves.
+   ===================================================================== */
+function extractDefinedNameUsages(workbookXml){
+  var out=[];
+  findTags(workbookXml,"definedNames").forEach(function(block){
+    findTags(block.inner||"","definedName").forEach(function(dn){
+      var text=dn.inner!==null?decodeXmlEntities(dn.inner):"";
+      if(findRefIndices(text).length) out.push(1);
+    });
+  });
+  return out;
+}
+function extractDataValidationUsages(sheetXml){
+  var out=[];
+  findTags(sheetXml,"dataValidations").forEach(function(block){
+    findTags(block.inner||"","dataValidation").forEach(function(dv){
+      ["formula1","formula2"].forEach(function(tag){
+        findTags(dv.inner||"",tag).forEach(function(ft){
+          var text=ft.inner!==null?decodeXmlEntities(ft.inner):"";
+          if(findRefIndices(text).length) out.push(1);
+        });
+      });
+    });
+  });
+  return out;
+}
+function extractConditionalFormattingUsages(sheetXml){
+  var out=[];
+  findTags(sheetXml,"conditionalFormatting").forEach(function(block){
+    findTags(block.inner||"","cfRule").forEach(function(rule){
+      findTags(rule.inner||"","formula").forEach(function(ft){
+        var text=ft.inner!==null?decodeXmlEntities(ft.inner):"";
+        if(findRefIndices(text).length) out.push(1);
+      });
+    });
+  });
+  return out;
+}
+function extractChartUsages(byName,dec){
+  var out=[];
+  Object.keys(byName).forEach(function(path){
+    if(!/^xl\/charts\/chart\d+\.xml$/i.test(path)) return;
+    var xml=dec.decode(byName[path].bytes);
+    findTags(xml,"c:f").forEach(function(ft){
+      var text=ft.inner!==null?decodeXmlEntities(ft.inner):"";
+      if(findRefIndices(text).length) out.push(1);
+    });
+  });
+  return out;
+}
+
+/* =====================================================================
+   <externalReferences> parsing (workbook.xml order = bracket index).
+   ===================================================================== */
+function parseExternalRefsBasic(workbookXml,relsXml){
+  var block=findTags(workbookXml,"externalReferences")[0]||null;
+  var items=[];
+  if(block){
+    var relTarget={};
+    findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+    findTags(block.inner||"","externalReference").forEach(function(ref,i){
+      var rid=ref.attrs["r:id"]||ref.attrs.rid;
+      items.push({index:i+1, rId:rid, target:relTarget[rid]||null});
+    });
+  }
+  return {block:block, items:items};
+}
+
+/* =====================================================================
+   Parse the whole workbook: formula cells per sheet, plus everything
+   needed to judge whether the external-reference records can safely be
+   dropped afterward.
+   ===================================================================== */
+async function parseXlsxForValues(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  if(!sheetList.length) throw new Error("NOT_XLSX");
+  var ctEntry=byName["[Content_Types].xml"];
+  var contentTypesXml=ctEntry?dec.decode(ctEntry.bytes):null;
+
+  var sheets=sheetList.map(function(s){
+    var entry=byName[s.path];
+    var xml=entry?dec.decode(entry.bytes):"";
+    return {name:s.name, path:s.path, xml:xml, records:entry?extractSheetCells(xml):[]};
+  });
+
+  var otherUsages=extractDefinedNameUsages(workbookXml).length;
+  sheets.forEach(function(sh){
+    otherUsages+=extractDataValidationUsages(sh.xml).length;
+    otherUsages+=extractConditionalFormattingUsages(sh.xml).length;
+  });
+  otherUsages+=extractChartUsages(byName,dec).length;
+
+  var extInfo=parseExternalRefsBasic(workbookXml,relsXml);
+
+  return {entries:entries, byName:byName, sheets:sheets, workbookXml:workbookXml, relsXml:relsXml,
+    contentTypesXml:contentTypesXml, otherUsages:otherUsages, extInfo:extInfo};
+}
+
+/* =====================================================================
+   Selection / stats helpers (pure functions of the current scope).
+   ===================================================================== */
+function isSelected(rec,scope){ return scope==="all" || rec.externalRef || rec.groupExternal; }
+function willConvert(rec,scope){ return isSelected(rec,scope) && (rec.hasV||rec.hasIs); }
+
+function computeStats(parsed,scope){
+  var total=0,cross=0,extFlag=0,willCount=0,noValueCount=0,remaining=0;
+  parsed.sheets.forEach(function(sh){
+    sh.records.forEach(function(r){
+      total++;
+      if(r.crossSheet) cross++;
+      if(r.externalRef) extFlag++;
+      if(isSelected(r,scope)){
+        if(r.hasV||r.hasIs) willCount++; else noValueCount++;
+      }
+    });
+  });
+  remaining=total-willCount;
+  return {total:total,cross:cross,extFlag:extFlag,willCount:willCount,noValueCount:noValueCount,remaining:remaining};
+}
+function computeCleanup(parsed,scope){
+  var hasExtRefs=parsed.extInfo.items.length>0;
+  var remainingExternalFormula=false;
+  parsed.sheets.forEach(function(sh){
+    sh.records.forEach(function(r){
+      if(r.externalRef && !willConvert(r,scope)) remainingExternalFormula=true;
+    });
+  });
+  var available=hasExtRefs && !remainingExternalFormula && parsed.otherUsages===0;
+  return {hasExtRefs:hasExtRefs, available:available, remainingExternalFormula:remainingExternalFormula, otherUsages:parsed.otherUsages};
+}
+
+/* =====================================================================
+   Build the converted workbook: rewrite each sheet's selected formula
+   cells to their cached value, then (optionally, only when safe) strip
+   the workbook's external-reference records entirely.
+   ===================================================================== */
+function buildConvertedCellXml(r){
+  if(r.cAttrsT==="str" && r.hasV){
+    var decodedVal=decodeXmlEntities(r.vRaw||"");
+    var openAttrs="r=\""+esc(r.ref)+"\""+(r.cAttrsS!==undefined?(" s=\""+esc(r.cAttrsS)+"\""):"")+" t=\"inlineStr\"";
+    return "<c "+openAttrs+"><is><t xml:space=\"preserve\">"+escXmlText(decodedVal)+"</t></is></c>";
+  }
+  var newInner=r.innerText.slice(0,r.fRelStart)+r.innerText.slice(r.fRelEnd);
+  return r.openText+newInner+"</c>";
+}
+function buildPatchedSheetXml(sheetXml,records,scope){
+  var toConvert=records.filter(function(r){return willConvert(r,scope)});
+  if(!toConvert.length) return null;
+  toConvert.sort(function(a,b){return b.cStart-a.cStart});
+  var newXml=sheetXml;
+  toConvert.forEach(function(r){
+    var replacement=buildConvertedCellXml(r);
+    newXml=newXml.slice(0,r.cStart)+replacement+newXml.slice(r.cEnd);
+  });
+  return newXml;
+}
+function stripExternalLinkParts(parsed){
+  var items=parsed.extInfo.items;
+  var removeTargets=[];
+  items.forEach(function(it){
+    if(!it.target) return;
+    var norm=it.target.replace(/^\.?\//,"");
+    var absPath=/^xl\//.test(norm)?norm:"xl/"+norm;
+    removeTargets.push(absPath);
+  });
+  var newWorkbookXml=parsed.workbookXml.slice(0,parsed.extInfo.block.start)+parsed.workbookXml.slice(parsed.extInfo.block.end);
+  var ridSet={}; items.forEach(function(it){ if(it.rId) ridSet[it.rId]=true; });
+  var relTags=findTags(parsed.relsXml,"Relationship").filter(function(r){return ridSet[r.attrs.Id]}).sort(function(a,b){return b.start-a.start});
+  var newRelsXml=parsed.relsXml;
+  relTags.forEach(function(r){ newRelsXml=newRelsXml.slice(0,r.start)+newRelsXml.slice(r.end); });
+  var newContentTypesXml=parsed.contentTypesXml;
+  var dropPaths={};
+  removeTargets.forEach(function(p){
+    dropPaths[p]=true;
+    var m=/^(.*)\/([^/]+)$/.exec(p);
+    if(m) dropPaths[m[1]+"/_rels/"+m[2]+".rels"]=true;
+  });
+  if(newContentTypesXml!==null){
+    var overrideTags=findTags(newContentTypesXml,"Override").filter(function(o){
+      var pn=(o.attrs.PartName||"").replace(/^\//,"");
+      return dropPaths[pn]===true;
+    }).sort(function(a,b){return b.start-a.start});
+    overrideTags.forEach(function(o){ newContentTypesXml=newContentTypesXml.slice(0,o.start)+newContentTypesXml.slice(o.end); });
+  }
+  return {newWorkbookXml:newWorkbookXml, newRelsXml:newRelsXml, newContentTypesXml:newContentTypesXml, dropPaths:dropPaths};
+}
+async function buildValueXlsx(parsed,scope,removeExtLinks){
+  var enc=new TextEncoder();
+  var patchedByPath={};
+  parsed.sheets.forEach(function(sh){
+    var newXml=buildPatchedSheetXml(sh.xml,sh.records,scope);
+    if(newXml!==null) patchedByPath[sh.path]=enc.encode(newXml);
+  });
+  var dropPaths={};
+  if(removeExtLinks && computeCleanup(parsed,scope).available && parsed.extInfo.block){
+    var r=stripExternalLinkParts(parsed);
+    patchedByPath["xl/workbook.xml"]=enc.encode(r.newWorkbookXml);
+    patchedByPath["xl/_rels/workbook.xml.rels"]=enc.encode(r.newRelsXml);
+    if(r.newContentTypesXml!==null) patchedByPath["[Content_Types].xml"]=enc.encode(r.newContentTypesXml);
+    dropPaths=r.dropPaths;
+  }
+  var outFiles=parsed.entries.filter(function(e){return !dropPaths[e.name]}).map(function(e){
+    if(patchedByPath[e.name]!==undefined) return {name:e.name, bytes:patchedByPath[e.name]};
+    return {name:e.name, bytes:e.bytes};
+  });
+  return await buildZip(outFiles);
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"数式を値に変換：外部ファイルへのリンクが解除できないときに",
+  sub:"「データ」タブの「リンクの編集」→「リンクの解除」を押しても外部ファイルへの参照が消えない・エラーになる、社外にファイルを渡す前に数式を外して値だけ残したい——というときに。Excel(.xlsx/.xlsm)の数式を、保存されている計算結果（値）に変換します。「すべての数式」と「外部ファイルを参照している数式だけ」のどちらを値にするか選べ、条件を満たす場合だけ外部リンクの記録そのものも一緒に削除できます。元のファイルは変更しません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。すべてのシートの数式セルを解析します。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"数式セルの集計",
+  statsHint:"「外部参照の可能性」「他シート参照」は数式の文字列からの機械判定で、断定ではありません。「計算結果が未保存」は、数式はあるが直近の保存時に計算結果が記録されていないセルで、値に変換すると空欄になってしまうため、どちらのスコープでも常に数式のまま残します。",
+  statTotal:"数式セル数",statCross:"他シート参照",statExt:"外部参照の可能性",
+  scopeHeading:"値に変換する範囲",
+  scopeExternalT:"外部ファイルを参照している数式だけ",
+  scopeExternalD:"他のExcelファイルを参照している数式（とその共有数式グループ全体）だけを値に変換し、それ以外の数式はそのまま残します。社外に渡す前の処理や「リンクの解除」対策に。",
+  scopeAllT:"すべての数式",
+  scopeAllD:"このファイルの数式セルを全部、計算結果（値）に変換します。以後、元の数式には戻せません。",
+  summaryConvert:"件を値に変換します。",summarySkip:"件は計算結果が未保存のため数式のまま残ります。",summaryRemain:"件は対象外のため数式のまま残ります。",
+  cleanupLabel:"外部ファイルへのリンクの記録（外部参照）も、安全な場合だけ一緒に削除する",
+  cleanupOkBoth:"この操作の後、外部参照は0件になります。削除すると、Excelの「リンクの編集」ダイアログにも何も表示されなくなります。",
+  cleanupNoExt:"このファイルには外部ファイルへの参照が見つからなかったため、このオプションは不要です。",
+  cleanupBlockedFormula:"選んだ範囲では外部参照を含む数式が ",
+  cleanupBlockedFormulaTail:" 件、変換されずに残るため、このオプションは使えません（スコープを「すべての数式」にするか、計算結果を保存し直してから再度お試しください）。",
+  cleanupBlockedOther:"名前定義・データの入力規則・条件付き書式・グラフのいずれかで外部参照が使われているため、このオプションは使えません（数式セル以外は書き換えないため、安全に削除できるか判断できません）。",
+  listHeading:"数式セルの一覧",
+  warnText:"変換されたセルは、保存されている計算結果がそのまま固定された値になります。再計算はしません（元の数式内に再計算が必要な未保存の変更があった場合、その変更は反映されません）。元のファイルは変更されず、新しいファイルとして書き出されます。",
+  buildBtn:"選んだ範囲で値に変換したファイルを書き出す",
+  buildBtnBusy:"書き出し中…",
+  csvBtn:"一覧をCSVで書き出す",
+  loadingLabel:"読み込み中…",
+  colSheet:"シート",colCell:"セル",colFormula:"数式",colCross:"他シート",colExt:"外部参照?",colStatus:"状態",
+  derivedBadge:"推定",
+  statusConvert:"変換対象",statusSkipNoValue:"計算結果が未保存",statusRemain:"対象外",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護の可能性があります）",
+  errNone:"数式セルが見つかりませんでした（このファイルには数式が入っているセルがありません）",
+  moreNote:"件まで表示しています（ダウンロードには全件が含まれます）。",
+  buildDone:"ダウンロードしました：",
+  csvHeaderSheet:"シート",csvHeaderCell:"セル",csvHeaderFormula:"数式",csvHeaderCross:"他シート参照",csvHeaderExt:"外部参照の可能性",csvHeaderStatus:"状態",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Convert formulas to values — when you can't break an external link",
+  sub:"For when Excel's Data → Edit Links → Break Links fails to remove a reference to another workbook, or you need to strip formulas down to plain values before sending a file outside your company. Converts every formula cell in an Excel (.xlsx/.xlsm) workbook to its cached value. Choose whether to convert every formula or only the ones referencing an external workbook, and — only when it's safe — remove the external-link records themselves too. Your original file is untouched.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Every sheet's formula cells are analyzed. Everything happens on this device.",
+  statsHeading:"Formula cell summary",
+  statsHint:"\"Possible external ref\" and \"cross-sheet\" are text-pattern guesses, not certainties. \"No cached value\" means the formula has nothing recalculated and saved alongside it — converting it would leave a blank cell, so it's always left as a formula under either scope.",
+  statTotal:"Formula cells",statCross:"Cross-sheet refs",statExt:"Possible external refs",
+  scopeHeading:"Scope to convert",
+  scopeExternalT:"External-workbook formulas only",
+  scopeExternalD:"Converts only formulas referencing another Excel file (and their whole shared-formula group) to values, leaving everything else as a formula. For sending files outside your company, or when Break Links fails.",
+  scopeAllT:"Every formula",
+  scopeAllD:"Converts every formula cell in this workbook to its cached value. There's no way back to the original formulas afterward.",
+  summaryConvert:" cell(s) will be converted to values.",summarySkip:" cell(s) have no cached value and stay as formulas.",summaryRemain:" cell(s) are out of scope and stay as formulas.",
+  cleanupLabel:"Also remove the external-link records themselves, when it's safe to",
+  cleanupOkBoth:"After this operation, zero external references will remain. Removing them clears Excel's Edit Links dialog entirely.",
+  cleanupNoExt:"No external-workbook reference was found in this file, so this option isn't needed.",
+  cleanupBlockedFormula:"With the current scope, ",
+  cleanupBlockedFormulaTail:" formula cell(s) referencing an external workbook would stay unconverted, so this option is unavailable (switch the scope to \"every formula\", or re-save the file in Excel so a cached value exists, then try again).",
+  cleanupBlockedOther:"A defined name, data validation rule, conditional formatting rule or chart still uses an external reference, so this option is unavailable (this tool only rewrites formula cells, so it can't safely judge removing a reference used elsewhere).",
+  listHeading:"Formula cells",
+  warnText:"Converted cells are frozen at their last cached result — nothing is recalculated (if the formula had an unsaved pending change, that change won't be reflected). Your original file is untouched; the result downloads as a new file.",
+  buildBtn:"Build a file converted to values",
+  buildBtnBusy:"Building…",
+  csvBtn:"Export the list as CSV",
+  loadingLabel:"Loading…",
+  colSheet:"Sheet",colCell:"Cell",colFormula:"Formula",colCross:"Cross-sheet",colExt:"Ext ref?",colStatus:"Status",
+  derivedBadge:"derived",
+  statusConvert:"will convert",statusSkipNoValue:"no cached value",statusRemain:"out of scope",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, or it's password-protected)",
+  errNone:"No formula cells found in this file",
+  moreNote:" rows shown (the download includes every row).",
+  buildDone:"Downloaded: ",
+  csvHeaderSheet:"Sheet",csvHeaderCell:"Cell",csvHeaderFormula:"Formula",csvHeaderCross:"Cross-sheet",csvHeaderExt:"Possible ext ref",csvHeaderStatus:"Status",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"", loading:false, error:"", parsed:null, scope:"external", removeExtLinks:false, building:false, buildMsg:""};
+var MAX_RENDER=1000;
+
+function escTrunc(s,max){ s=String(s); max=max||200; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function addFile(file){
+  state={fileName:file.name, loading:true, error:"", parsed:null, scope:"external", removeExtLinks:false, building:false, buildMsg:""};
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxForValues(new Uint8Array(buf)); })
+    .then(function(result){
+      state.loading=false; state.parsed=result;
+      var anyExt=result.sheets.some(function(sh){return sh.records.some(function(r){return r.externalRef})});
+      state.scope=anyExt?"external":"all";
+      render();
+    }).catch(function(){
+      state.loading=false; state.error=T[lang].errBad; render();
+    });
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ box.innerHTML=""; return; }
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading) h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>";
+  else if(state.error) h+="<span class='fWarn'>"+esc(state.error)+"</span>";
+  box.innerHTML=h;
+}
+
+function renderStats(stats){
+  var items=[
+    [stats.total,T[lang].statTotal,""],
+    [stats.cross,T[lang].statCross,""],
+    [stats.extFlag,T[lang].statExt,""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function renderScopeSummary(stats){
+  var skip=stats.noValueCount, remain=stats.remaining-skip;
+  var txt=stats.willCount+T[lang].summaryConvert;
+  if(skip>0) txt+=" "+skip+T[lang].summarySkip;
+  if(state.scope==="external" && remain>0) txt+=" "+remain+T[lang].summaryRemain;
+  $("scopeSummary").textContent=txt;
+}
+
+function renderCleanup(cleanup){
+  var box=$("cleanupBox"), cb=$("removeExtLinks"), detail=$("cleanupDetail");
+  if(!cleanup.hasExtRefs){
+    box.style.display="none";
+    cb.checked=false; state.removeExtLinks=false;
+    return;
+  }
+  box.style.display="";
+  if(cleanup.available){
+    box.setAttribute("data-disabled","0"); cb.disabled=false;
+    detail.textContent=T[lang].cleanupOkBoth;
+  }else{
+    box.setAttribute("data-disabled","1"); cb.disabled=true; cb.checked=false; state.removeExtLinks=false;
+    if(cleanup.remainingExternalFormula){
+      var cnt=0;
+      state.parsed.sheets.forEach(function(sh){ sh.records.forEach(function(r){ if(r.externalRef && !willConvert(r,state.scope)) cnt++; }); });
+      detail.textContent=T[lang].cleanupBlockedFormula+cnt+T[lang].cleanupBlockedFormulaTail;
+    } else if(cleanup.otherUsages>0){
+      detail.textContent=T[lang].cleanupBlockedOther;
+    } else {
+      detail.textContent="";
+    }
+  }
+}
+
+function flatRows(){
+  if(!state.parsed) return [];
+  var out=[];
+  state.parsed.sheets.forEach(function(sh){
+    sh.records.forEach(function(r){
+      var status = willConvert(r,state.scope) ? "convert" : (isSelected(r,state.scope) ? "skip" : "remain");
+      out.push({sheet:sh.name, ref:r.ref, formula:r.resolvedFormula, derived:r.derived,
+        crossSheet:r.crossSheet, externalRef:r.externalRef, status:status});
+    });
+  });
+  return out;
+}
+
+function renderList(){
+  var rows=flatRows();
+  $("resultCount").textContent=rows.length+"";
+  if(!rows.length){ $("resultBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>"; $("buildBtn").disabled=true; return; }
+  var shown=rows.slice(0,MAX_RENDER);
+  var h="<div class='scroll'><table><thead><tr>"+
+    "<th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colCell)+"</th><th>"+esc(T[lang].colFormula)+"</th>"+
+    "<th>"+esc(T[lang].colCross)+"</th><th>"+esc(T[lang].colExt)+"</th><th>"+esc(T[lang].colStatus)+"</th></tr></thead><tbody>";
+  shown.forEach(function(r){
+    var badges=r.derived?("<span class='badge warn'>"+esc(T[lang].derivedBadge)+"</span>"):"";
+    var statusBadge = r.status==="convert" ? "<span class='badge ok'>"+esc(T[lang].statusConvert)+"</span>" :
+      r.status==="skip" ? "<span class='badge diff'>"+esc(T[lang].statusSkipNoValue)+"</span>" :
+      "<span class='badge'>"+esc(T[lang].statusRemain)+"</span>";
+    h+="<tr><td>"+escTrunc(r.sheet,30)+"</td><td>"+esc(r.ref)+"</td>"+
+       "<td class='formula'>"+badges+"="+escTrunc(r.formula,220)+"</td>"+
+       "<td class='center'>"+(r.crossSheet?"●":"")+"</td><td class='center'>"+(r.externalRef?"●":"")+"</td>"+
+       "<td class='center'>"+statusBadge+"</td></tr>";
+  });
+  h+="</tbody></table></div>";
+  if(rows.length>MAX_RENDER) h+="<p class='hint'>"+MAX_RENDER+T[lang].moreNote+"</p>";
+  $("resultBox").innerHTML=h;
+  $("buildBtn").disabled=false;
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.parsed){
+    $("statsCard").style.display="none"; $("scopeCard").style.display="none"; $("listCard").style.display="none";
+    return;
+  }
+  $("scopeExternal").checked = state.scope==="external";
+  $("scopeAll").checked = state.scope==="all";
+  $("removeExtLinks").checked = state.removeExtLinks;
+  var stats=computeStats(state.parsed,state.scope);
+  var cleanup=computeCleanup(state.parsed,state.scope);
+  $("statsCard").style.display=""; renderStats(stats);
+  $("scopeCard").style.display=""; renderScopeSummary(stats); renderCleanup(cleanup);
+  $("listCard").style.display=""; renderList();
+}
+
+function suggestOutName(name){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(name);
+  if(!m) return name+"_値変換済み.xlsx";
+  return m[1]+"_値変換済み."+m[2].toLowerCase();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("scopeExternal").addEventListener("change",function(){ if(this.checked){ state.scope="external"; render(); } });
+$("scopeAll").addEventListener("change",function(){ if(this.checked){ state.scope="all"; render(); } });
+$("removeExtLinks").addEventListener("change",function(){ state.removeExtLinks=this.checked; });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.parsed || state.building) return;
+  state.building=true; state.buildMsg=""; $("buildBtn").textContent=T[lang].buildBtnBusy; $("buildBtn").disabled=true;
+  buildValueXlsx(state.parsed,state.scope,state.removeExtLinks).then(function(outBytes){
+    var outName=suggestOutName(state.fileName);
+    var blob=new Blob([outBytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=outName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},2000);
+    state.buildMsg=T[lang].buildDone+outName;
+  }).catch(function(){
+    state.buildMsg=T[lang].errBad;
+  }).then(function(){
+    state.building=false; $("buildBtn").textContent=T[lang].buildBtn; $("buildBtn").disabled=false;
+    $("buildMsg").textContent=state.buildMsg;
+  });
+});
+
+$("csvBtn").addEventListener("click",function(){
+  var rows=flatRows();
+  if(!rows.length) return;
+  var statusText=function(s){ return s==="convert"?T[lang].statusConvert:(s==="skip"?T[lang].statusSkipNoValue:T[lang].statusRemain); };
+  var out=[[T[lang].csvHeaderSheet,T[lang].csvHeaderCell,T[lang].csvHeaderFormula,T[lang].csvHeaderCross,T[lang].csvHeaderExt,T[lang].csvHeaderStatus]];
+  rows.forEach(function(r){ out.push([r.sheet,r.ref,"="+r.formula,r.crossSheet?"1":"",r.externalRef?"1":"",statusText(r.status)]); });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var base=(state.fileName||"formulas").replace(/\.[^.]+$/,"");
+  var a=document.createElement("a"); a.href=url; a.download=base+"_数式一覧.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  $("buildBtn").textContent=state.building?T[lang].buildBtnBusy:T[lang].buildBtn;
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

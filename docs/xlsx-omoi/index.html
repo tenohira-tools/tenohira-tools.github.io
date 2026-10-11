@@ -172,6 +172,7 @@ html[lang=en] .en-only{display:block}
           <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出す。見た目は変わらない。</li>
     <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。</li>
     <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。</li>
+<li><a href="../xlsx-atai/">数式を値に変換：外部ファイルへのリンクが解除できないときに</a> — Excelの数式を保存されている計算結果に変換。外部ファイルを参照している数式だけを選んで値にし、条件を満たせば外部リンクの記録も削除。</li>
 </ul>
   </div>
   <div class="en-only">
@@ -189,6 +190,7 @@ html[lang=en] .en-only{display:block}
           <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks.</li>
     <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away</a> — Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped).</li>
     <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up Excel, Word and PowerPoint files at once before sending them outside your company.</li>
+<li><a href="../xlsx-atai/">Convert formulas to values — when you can't break an external link</a> — Converts formula cells to their cached values, with a scope limited to formulas referencing an external workbook, and removes the external-link records too when it's safe.</li>
 </ul>
   </div>
 </section>
