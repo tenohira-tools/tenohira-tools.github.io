@@ -29,6 +29,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [登山装備チェックリスト（季節・日程で自動生成）](https://tenohira-tools.github.io/tozan-checklist/)
 - [和暦・西暦 混在日付の一括統一（文章・CSV対応）](https://tenohira-tools.github.io/wareki-toitsu/)
 - [和暦・西暦・年齢 変換と早見表（令和・平成・昭和・大正・明治）｜入学・卒業年も](https://tenohira-tools.github.io/wareki/)
+- [Excelの数式を値に変換：外部ファイルへのリンクが解除できないときに](https://tenohira-tools.github.io/xlsx-atai/)
 - [#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に：エラー値チェッカー](https://tenohira-tools.github.io/xlsx-error/)
 - [Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出る原因「使用範囲」をリセット](https://tenohira-tools.github.io/xlsx-hani/)
 - [エクセルのハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール](https://tenohira-tools.github.io/xlsx-hyperlink/)
