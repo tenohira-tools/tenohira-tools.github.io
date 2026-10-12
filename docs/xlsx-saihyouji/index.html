@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>シートの「再表示」に出てこない・一覧に無いときの対策：非表示・完全非表示（veryHidden）の一覧・一括変更 | てのひらツール</title>
+<meta name="description" content="消したはずのシートが見つからない、シート見出しを右クリックして「再表示」を開いても一覧に名前が出てこない——それは普通の「非表示」ではなく、VBA(マクロ)でしか設定・解除できない「完全非表示（veryHidden）」の可能性があります。Excel(.xlsx/.xlsm)の全シートの表示状態（表示／非表示／完全非表示）を一覧化し、選んだシートをまとめて表示に戻す（または非表示にする）新しいファイルをブラウザだけで書き出します。マクロもVBAも使わず、ファイルはサーバーに送信されません。Can't find a hidden Excel sheet, or it doesn't show up in the Unhide dialog? It may be set to "very hidden" — a state only VBA can normally set or clear. This tool lists every sheet's visibility (visible/hidden/very hidden) and lets you change any of them in bulk, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-saihyouji/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+#fileListBox{display:grid;gap:14px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:12px}
+.fileCard .fRow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.name{word-break:break-all}
+.badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.78rem;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.changed{outline:2px solid var(--accent);outline-offset:-2px;border-radius:6px}
+select.stateSel{font:inherit;font-size:.86rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
+select.stateSel:focus{outline:2px solid var(--accent);outline-offset:1px}
+.summaryRow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:10px;font-size:.88rem;color:var(--muted)}
+.summaryRow strong{color:var(--fg)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;min-height:40px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:9px 16px;cursor:pointer;min-height:40px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:8px 12px;font-size:.88rem;margin-top:10px}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:.88rem;margin-top:10px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">シートの「再表示」に出てこないときの対策：非表示・完全非表示シートの一覧・一括変更</h1>
+    <p class="sub" data-i="sub">シート見出しを右クリックして「再表示」を開いても、消えたはずのシートの名前が一覧に出てこないことがあります。それは普通の「非表示」ではなく、VBA(マクロ)でしか設定・解除できない「完全非表示（veryHidden）」の可能性があります。Excel(.xlsx/.xlsm)の全シートの表示状態を一覧化し、選んだシートをまとめて表示に戻す（または非表示にする）新しいファイルを書き出します。マクロは使いません。ファイルはサーバーに送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">複数ファイルを一度に追加できます。どこにも送信されません。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイルも一度に追加できます）。</li>
+      <li>そのファイルに入っている全シートが、現在の表示状態（表示／非表示／完全非表示）のバッジ付きで一覧表示されます。</li>
+      <li>各シートの「変更後」欄で、そのシートをどうするか（表示にする／非表示にする／完全非表示にする）を選びます。非表示・完全非表示のシートは既定で「表示」が選ばれています（そのまま「ダウンロード」を押すだけで全部が戻ります）。</li>
+      <li>「ファイルをダウンロード」を押すと、選んだ変更を反映した新しいファイルが保存されます（元のファイルは変更されません）。変更したシートだけが一覧上で色の枠で強調表示されます。</li>
+      <li>一覧だけCSVで保存したい場合は「一覧をCSV出力」を押します。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 「非表示」と「完全非表示（veryHidden）」はどう違いますか？</h3>
+    <p>A. シート見出しを右クリックして「非表示」にした通常のシートは、「再表示」ダイアログに名前が出て、クリックするだけで元に戻せます。一方、VBA（マクロ）で<code>Worksheets("Sheet1").Visible = xlSheetVeryHidden</code>のように設定された「完全非表示」のシートは、Excelの「再表示」ダイアログの一覧に一切出てきません。VBAエディタ（開発タブ→Visual Basic）を開いて、該当シートのプロパティから直接「Visible」を変更するしか戻す方法がなく、VBAやマクロに不慣れな場合は事実上手を出せない状態になります。このツールはどちらの状態も検出し、クリックだけで元に戻せます。</p>
+    <h3>Q. なぜ完全非表示のシートが存在するのですか？</h3>
+    <p>A. 作業用の下書き・集計元データ・他のシートが参照している補助シートなどを、通常の「非表示」よりも誤って表示・削除されにくくする目的でVBAから完全非表示に設定することがあります。ファイルを作った人や前任者がこの機能を使っていた場合、引き継いだ側は存在自体に気づけないことがあります。</p>
+    <h3>Q. シートを一覧から選んで「非表示」や「完全非表示」に変更することもできますか？</h3>
+    <p>A. できます。表示中のシートを社外に渡す前に隠したい場合など、逆方向の変更にも対応しています。ただし、全シートの「変更後」が「表示」以外になる組み合わせは選べません（Excelのファイルとして開くには表示中のシートが最低1つ必要なため、ダウンロードボタンが無効になります）。</p>
+    <h3>Q. シートの並び順やセルの内容は変わりますか？</h3>
+    <p>A. 変わりません。変更するのは各シートの表示状態だけで、シートの並び順・名前・セルの値や数式・書式は一切変更しません。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one (several files at once are fine too).</li>
+      <li>Every sheet in that file is listed with a badge showing its current visibility (visible / hidden / very hidden).</li>
+      <li>For each sheet, pick what to do with it in the "New state" column (visible / hidden / very hidden). Hidden and very-hidden sheets default to "visible", so just clicking Download brings everything back.</li>
+      <li>Click "Download file" to save a new file with your chosen changes (the original is untouched). Changed rows are outlined for clarity.</li>
+      <li>Click "Export list as CSV" to save just the list.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and rewritten inside your browser, on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. What's the difference between "hidden" and "very hidden"?</h3>
+    <p>A. A sheet hidden the normal way (right-click a tab → Hide) shows up by name in Excel's own Unhide dialog — one click brings it back. A sheet set to "very hidden" via VBA (<code>Worksheets("Sheet1").Visible = xlSheetVeryHidden</code>) never appears in that dialog at all. The only built-in way back is opening the VBA editor (Developer tab → Visual Basic) and changing that sheet's Visible property directly — out of reach if you're not comfortable with VBA or macros are disabled. This tool detects both states and lets you flip either one back with a click.</p>
+    <h3>Q. Why would a very-hidden sheet exist in the first place?</h3>
+    <p>A. People sometimes use VBA to mark scratch data, raw source data for other sheets, or helper sheets as very hidden specifically so they're harder to accidentally reveal or delete than an ordinarily hidden sheet. If whoever built the file (or a predecessor) used this, you may inherit the file with no idea such sheets even exist.</p>
+    <h3>Q. Can I also hide or very-hide a currently visible sheet?</h3>
+    <p>A. Yes — useful if you want to hide a sheet before sending the file elsewhere. The only restriction: you can't set every sheet to anything other than visible at once (an Excel file needs at least one visible sheet), so the download button is disabled if your choices would leave none.</p>
+    <h3>Q. Does this change sheet order or cell contents?</h3>
+    <p>A. No. Only each sheet's visibility state is changed — sheet order, names, cell values/formulas and formatting are all left exactly as they were.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported — if a file fails to load, an error is shown next to it.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
+      <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。</li>
+      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。</li>
+      <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
+      <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出す。見た目は変わらない。</li>
+      <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。</li>
+      <li><a href="../xlsx-atai/">数式を値に変換：外部ファイルへのリンクが解除できないときに</a> — Excelの数式を保存されている計算結果に変換。外部ファイルを参照している数式だけを選んで値にし、条件を満たせば外部リンクの記録も削除。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used — formulas, names, validation, formatting and charts.</li>
+      <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once, even when iterative calculation hides Excel's own warning.</li>
+      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell (#REF!, #N/A, #VALUE! and more) across every sheet and file, with counts by type and a likely cause, exportable as CSV.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every conditional-formatting rule across all sheets, flag overlapping ranges, whole-row/column rules and broken style references, and remove the ones you choose.</li>
+      <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet, flag links to a local file or a deleted sheet, and remove the ones you choose.</li>
+      <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks.</li>
+      <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away</a> — Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped).</li>
+      <li><a href="../xlsx-atai/">Convert formulas to values — when you can't break an external link</a> — Converts formula cells to their cached values, with a scope limited to formulas referencing an external workbook, and removes the external-link records too when it's safe.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"「非表示」と「完全非表示（veryHidden）」はどう違いますか？","acceptedAnswer":{"@type":"Answer","text":"通常の「非表示」はExcelの「再表示」ダイアログに名前が出てクリックで戻せます。VBAで設定された「完全非表示」はこのダイアログに一切出てこず、VBAエディタから直接Visibleプロパティを変更するしか戻す方法がありません。このツールはどちらも検出し、クリックだけで元に戻せます。"}},
+    {"@type":"Question","name":"シートを「非表示」や「完全非表示」に変更することもできますか？","acceptedAnswer":{"@type":"Answer","text":"できます。表示中のシートを社外に渡す前に隠すなど、逆方向の変更にも対応しています。ただし全シートが表示以外になる組み合わせは選べません。"}},
+    {"@type":"Question","name":"シートの並び順やセルの内容は変わりますか？","acceptedAnswer":{"@type":"Answer","text":"変わりません。変更するのは各シートの表示状態だけです。"}},
+    {"@type":"Question","name":"対応しているファイル形式は？","acceptedAnswer":{"@type":"Answer","text":"Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式やパスワード保護されたファイルは読み込めません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-junkan/xlsx-hyperlink/xlsx-error/xlsx-style/xlsx-hani/
+   xlsx-atai (no external libraries; only standard browser APIs:
+   DecompressionStream/CompressionStream/TextDecoder/TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+
+/* =====================================================================
+   Sheet-visibility specific logic.
+   state attribute on <sheet>: absent = visible, "hidden" = hidden,
+   "veryHidden" = very hidden (only VBA can normally set/clear this —
+   it never appears in Excel's own Unhide dialog).
+   ===================================================================== */
+function sheetState(attrs){
+  var s=attrs.state;
+  if(s==="veryHidden") return "veryHidden";
+  if(s==="hidden") return "hidden";
+  return "visible";
+}
+function stripOrSetStateAttr(openText, newState){
+  var stripped=openText.replace(/\s+state\s*=\s*"[^"]*"/,"").replace(/\s+state\s*=\s*'[^']*'/,"");
+  if(newState==="visible") return stripped;
+  var attr=' state="'+newState+'"';
+  return stripped.replace(/\s*\/?>$/,function(m){ return attr+m; });
+}
+async function parseXlsxForSaihyouji(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"];
+  if(!wbEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes);
+  var sheetTags=findTags(workbookXml,"sheet");
+  if(!sheetTags.length) throw new Error("NOT_XLSX");
+  var sheets=sheetTags.map(function(tag){
+    var st=sheetState(tag.attrs);
+    return {name:tag.attrs.name||"", origState:st, newState:"visible"};
+  });
+  return {entries:entries, workbookXml:workbookXml, sheetTags:sheetTags, sheets:sheets};
+}
+function buildNewWorkbookXml(workbookXml, sheetTags, sheets){
+  var out="", last=0;
+  sheetTags.forEach(function(tag, idx){
+    out+=workbookXml.slice(last, tag.start);
+    var newState=sheets[idx].newState;
+    out+= newState===sheets[idx].origState ? tag.openText : stripOrSetStateAttr(tag.openText, newState);
+    last=tag.end;
+  });
+  out+=workbookXml.slice(last);
+  return out;
+}
+async function buildOutputXlsx(parsed){
+  var enc=new TextEncoder();
+  var newWorkbookXml=buildNewWorkbookXml(parsed.workbookXml, parsed.sheetTags, parsed.sheets);
+  var outFiles=parsed.entries.map(function(e){
+    if(e.name==="xl/workbook.xml") return {name:e.name, bytes:enc.encode(newWorkbookXml)};
+    return {name:e.name, bytes:e.bytes};
+  });
+  return await buildZip(outFiles);
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var STATE_LABEL={
+  ja:{visible:"表示",hidden:"非表示",veryHidden:"完全非表示"},
+  en:{visible:"Visible",hidden:"Hidden",veryHidden:"Very hidden"}
+};
+var T={
+ ja:{title:"シートの「再表示」に出てこないときの対策：非表示・完全非表示シートの一覧・一括変更",
+  sub:"シート見出しを右クリックして「再表示」を開いても、消えたはずのシートの名前が一覧に出てこないことがあります。それは普通の「非表示」ではなく、VBA(マクロ)でしか設定・解除できない「完全非表示（veryHidden）」の可能性があります。Excel(.xlsx/.xlsm)の全シートの表示状態を一覧化し、選んだシートをまとめて表示に戻す（または非表示にする）新しいファイルを書き出します。マクロは使いません。ファイルはサーバーに送信されません。",
+  dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"複数ファイルを一度に追加できます。どこにも送信されません。",
+  fileListHeading:"追加したファイル",
+  removeBtn:"削除",
+  downloadBtn:"ファイルをダウンロード",
+  csvBtn:"一覧をCSV出力",
+  loadingLabel:"読み込み中…",
+  colName:"シート名",colCurrent:"現在の状態",colNew:"変更後",
+  noChange:"変更はありません（必要に応じて「変更後」を選んでください）。",
+  changedCount:function(n){return n+"件のシートを変更します。"},
+  allVisibleWarn:"少なくとも1つのシートは「表示」のままにしてください（全シートを非表示にすることはできません）。",
+  errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Sheet missing from the Unhide dialog? List and bulk-change hidden / very-hidden sheets",
+  sub:"Right-clicked a tab and opened Unhide, but the sheet you're looking for isn't in the list? It may be set to \"very hidden\" — a state only VBA can normally set or clear. This lists every sheet's visibility in an Excel (.xlsx/.xlsm) file and writes a new file with the changes you choose to any of them. No macros used; nothing is uploaded.",
+  dropzoneText:"Drag and drop an Excel (.xlsx) file here, or click to choose one",
+  dropzoneHint:"You can add several files at once. Nothing is ever uploaded.",
+  fileListHeading:"Added files",
+  removeBtn:"Remove",
+  downloadBtn:"Download file",
+  csvBtn:"Export list as CSV",
+  loadingLabel:"Loading…",
+  colName:"Sheet name",colCurrent:"Current state",colNew:"New state",
+  noChange:"No changes yet (pick a new state below if needed).",
+  changedCount:function(n){return n+" sheet(s) will be changed."},
+  allVisibleWarn:"At least one sheet must stay visible — a workbook can't have every sheet hidden.",
+  errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1};
+
+function escTrunc(s){ s=String(s); var t=s.length>80?s.slice(0,80)+"…":s; return esc(t); }
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", parsed:null};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){
+    return parseXlsxForSaihyouji(new Uint8Array(buf));
+  }).then(function(parsed){
+    f.parsed=parsed;
+    f.loading=false;
+    render();
+  }).catch(function(){
+    f.loading=false; f.error=T[lang].errBad;
+    render();
+  });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function visibleCountAfter(sheets){
+  var n=0; sheets.forEach(function(s){ if(s.newState==="visible") n++; });
+  return n;
+}
+function changedCount(sheets){
+  var n=0; sheets.forEach(function(s){ if(s.newState!==s.origState) n++; });
+  return n;
+}
+
+function badgeFor(st){
+  var cls = st==="visible" ? "ok" : (st==="hidden" ? "warn" : "diff");
+  return "<span class='badge "+cls+"'>"+esc(STATE_LABEL[lang][st])+"</span>";
+}
+
+function renderSheetTable(f){
+  var sheets=f.parsed.sheets;
+  var h="<div class='scroll'><table><thead><tr><th>"+esc(T[lang].colName)+"</th><th>"+esc(T[lang].colCurrent)+"</th><th>"+esc(T[lang].colNew)+"</th></tr></thead><tbody>";
+  sheets.forEach(function(s,idx){
+    var rowCls = s.newState!==s.origState ? " class='changed'" : "";
+    h+="<tr"+rowCls+"><td class='name'>"+escTrunc(s.name)+"</td><td>"+badgeFor(s.origState)+"</td><td>";
+    h+="<select class='stateSel' data-fid='"+f.id+"' data-idx='"+idx+"'>";
+    ["visible","hidden","veryHidden"].forEach(function(opt){
+      h+="<option value='"+opt+"'"+(opt===s.newState?" selected":"")+">"+esc(STATE_LABEL[lang][opt])+"</option>";
+    });
+    h+="</select></td></tr>";
+  });
+  h+="</tbody></table></div>";
+  var changed=changedCount(sheets), visCount=visibleCountAfter(sheets);
+  h+="<div class='summaryRow'>";
+  h+= changed>0 ? "<strong>"+esc(T[lang].changedCount(changed))+"</strong>" : esc(T[lang].noChange);
+  h+="</div>";
+  if(visCount<1){
+    h+="<div class='warnBox'>"+esc(T[lang].allVisibleWarn)+"</div>";
+  }
+  h+="<div class='actions'>";
+  h+="<button type='button' class='primary dlBtn' data-id='"+f.id+"'"+((changed>0&&visCount>=1)?"":" disabled")+">"+esc(T[lang].downloadBtn)+"</button>";
+  h+="<button type='button' class='secondary csvBtn' data-id='"+f.id+"'>"+esc(T[lang].csvBtn)+"</button>";
+  h+="</div>";
+  return h;
+}
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<div class='fRow'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){
+      h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>";
+    } else if(f.error){
+      h+="<span class='fWarn'>"+esc(f.error)+"</span>";
+    } else {
+      h+="<span class='fMeta'>"+f.parsed.sheets.length+"</span>";
+    }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+    if(!f.loading && !f.error){
+      h+=renderSheetTable(f);
+    }
+    h+="</div>";
+  });
+  box.innerHTML=h;
+
+  var sels=box.querySelectorAll(".stateSel");
+  for(var i=0;i<sels.length;i++){
+    sels[i].addEventListener("change",function(){
+      var fid=parseInt(this.getAttribute("data-fid"),10), idx=parseInt(this.getAttribute("data-idx"),10);
+      var f=state.files.filter(function(x){return x.id===fid})[0];
+      if(f){ f.parsed.sheets[idx].newState=this.value; render(); }
+    });
+  }
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+  var dls=box.querySelectorAll(".dlBtn");
+  for(var k=0;k<dls.length;k++){ dls[k].addEventListener("click",function(){ downloadFile(parseInt(this.getAttribute("data-id"),10)); }); }
+  var csvs=box.querySelectorAll(".csvBtn");
+  for(var m=0;m<csvs.length;m++){ csvs[m].addEventListener("click",function(){ downloadCsv(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function downloadBlob(bytes, name, mime){
+  var blob=new Blob([bytes],{type:mime});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+
+function downloadFile(id){
+  var f=state.files.filter(function(x){return x.id===id})[0];
+  if(!f || !f.parsed) return;
+  var visCount=visibleCountAfter(f.parsed.sheets);
+  if(visCount<1) return;
+  buildOutputXlsx(f.parsed).then(function(bytes){
+    var dot=f.name.lastIndexOf("."), ext=dot>=0?f.name.slice(dot):".xlsx", base=dot>=0?f.name.slice(0,dot):f.name;
+    downloadBlob(bytes, base+"-saihyouji"+ext, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  });
+}
+function downloadCsv(id){
+  var f=state.files.filter(function(x){return x.id===id})[0];
+  if(!f || !f.parsed) return;
+  var rows=[[lang==="ja"?"シート名":"Sheet name", lang==="ja"?"元の状態":"Original state", lang==="ja"?"変更後":"New state"]];
+  f.parsed.sheets.forEach(function(s){ rows.push([s.name, STATE_LABEL[lang][s.origState], STATE_LABEL[lang][s.newState]]); });
+  var csvText=serializeCSV(rows);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3);
+  bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var dot=f.name.lastIndexOf("."), base=dot>=0?f.name.slice(0,dot):f.name;
+  downloadBlob(bytes, base+"-sheets.csv", "text/csv;charset=utf-8");
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
