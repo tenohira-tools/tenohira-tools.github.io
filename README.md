@@ -40,6 +40,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [Excelファイルを複数まとめて1つに：CSV結合ツール](https://tenohira-tools.github.io/xlsx-merge/)
 - [Excelで「名前'○○'は既に存在します」対策：名前定義の点検・削除ツール](https://tenohira-tools.github.io/xlsx-namae/)
 - [「エクセルが重い」原因を診断：ファイル内訳チェッカー](https://tenohira-tools.github.io/xlsx-omoi/)
+- [シートの「再表示」に出てこない・一覧に無いときの対策：非表示・完全非表示（veryHidden）の一覧・一括変更](https://tenohira-tools.github.io/xlsx-saihyouji/)
 - [「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ](https://tenohira-tools.github.io/xlsx-style/)
 - [引き継いだExcelの数式を一覧に：棚卸し・エラーチェックツール](https://tenohira-tools.github.io/xlsx-suushiki/)
 <!-- tools:end -->
