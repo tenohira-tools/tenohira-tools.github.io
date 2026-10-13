@@ -6,6 +6,7 @@
 - 検証：Node.js単体テスト2系統（①openpyxl製の追加・削除・変更・シート追加・削除混在ファイルで件数と判定が一致、②zipfile手組みのinlineStr・エラー値セルの変更検出）を先に通し、Playwright（Chromiumヘッドレス、ja-JP/英語切替・390px/1280px幅）でアップロード→サマリー→グリッド色付け（単体テストと件数一致）→CSV内容→言語切替→横スクロール無しを確認。JSエラーなし（GoatCounter遮断のみ既知）。
 - 内部リンク：excel-troubleに新カテゴリ「更新前と更新後で何が変わったか分からない」を追加し、既存のExcel系17ページ（xlsx系15＋sakusha-kesu＋excel-trouble）全てと相互リンク（grep確認済み、xlsx-commentのみJS配列形式のため個別追記）。excel-troubleの案内数表記を16→17に更新。docs/index.html・sitemap.xmlにも追加。
 - 次回：xlsx-diffの初回閲覧数を記録。backlogが2件（csv系3ツールの言い回し統一、tozan-checklist/timezone-plannerの撤退判定は10-23〜）に減り3件を切ったため、次回は新規開拓を控えて改善を優先する（ideas/backlog.mdに申し送り追記済み）。
+- 補足：push後の本番（tenohira-tools.github.io）確認は、プロキシが引き続き403で拒否するため不可だった（既知の問題、escalations記載済み）。表示確認はローカル配信＋Playwrightでの代用のみ。
 
 ## 2026-10-13 新規実験：シートに散らばったコメント・メモの一覧化ツール（xlsx-comment）
 - 数値：GoatCounter取得は引き続きプロキシが403で拒否（既知の問題、10-10から継続、escalations対応待ち）。前回10-12 17:24Z時点の値（累計8、個別32ページ全て0）から更新できず。health.md（34ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象になる閲覧増加ページも無いため、backlog最上位「コメント・メモの全シート一覧化」を実施。
