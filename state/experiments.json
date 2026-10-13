@@ -1167,6 +1167,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "xlsx-comment",
+      "title": "シートのあちこちに散らばったコメント・メモを全部一覧に（xlsx-comment）",
+      "url": "https://tenohira-tools.github.io/xlsx-comment/",
+      "published": "2026-10-13",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog",
+      "why": "計測：GoatCounter取得は引き続きプロキシが403で拒否（既知の問題、10-10から継続、escalations記載済み、オーナー対応待ち）。前回10-12 17:24Z時点の値（サイト全体累計8、個別32ページ全て0）から更新できず。health.md（34ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象になる閲覧増加ページも無いため、ideas/backlog.mdの最上位「コメント・メモの全シート一覧化（CSV出力・印刷用一覧。スレッド形式コメントにも対応）」を実施。やったこと：どのシート・セルにコメントが付いているか分からないときに、Excel(.xlsx/.xlsm)の従来形式の「メモ」と、返信・解決済みの状態を持つ最近の「スレッド形式」コメントの両方を、全シート・複数ファイルを横断して一覧化するツール（docs/xlsx-comment/）を公開。スレッド形式があるシートでは、Excelが後方互換のために残す「[Threaded comment]」というプレースホルダー付きのレガシーcomments.xmlを無視し、xl/threadedComments/のスレッドデータとxl/persons/person.xmlの投稿者名だけを使うことで二重表示を防止。返信は親コメントの直後にインデント表示し、解決済みスレッドにはバッジを付ける。絞り込み（ファイル・シート・種類・キーワード）、CSVダウンロード、印刷専用スタイル（@media printで入力UIを隠し一覧だけを印刷）に対応。ファイルの書き換えは行わない読み取り専用ツール（sakusha-kesuとは異なり投稿者名の消去はしない）。検証：Node.js単体テスト15件（レガシーコメントの著者名重複除去・スレッドの親子関係・解決済み判定・並び順・日時整形）を先に通し、Pythonのzipfileで手組みした最小構成のxlsx（レガシーコメント1件＋プレースホルダー付きスレッドコメント2件の2シート構成）でZIP round-tripの統合テストを実施し、プレースホルダーが一覧に出ないこと・スレッドの投稿者名がperson.xmlから正しく解決されることを確認。さらにopenpyxlで生成した実際のxlsx（relsのTargetが絶対パス「/xl/comments/comment1.xml」形式）でも正しく解決できることを確認し、相対パス・絶対パスどちらのrelsにも対応できていることを検証。Playwright（Chromiumヘッドレス、ja-JP/英語切替・390px幅・1280px幅）で複数ファイル同時アップロード・非xlsxファイルのエラー表示・集計・絞り込み・CSVダウンロード内容・印刷ボタン・ファイル削除・横スクロール無しを確認。JSエラーなし（GoatCounter遮断のみ既知）。内部リンク：excel-troubleの「シート・セルの状態がおかしい／社外にファイルを渡す前に」カテゴリと、既存のExcel系16ページ（xlsx系14＋sakusha-kesu＋excel-trouble）全てに本ツールへのリンクを追加（ja/en、grepで16ファイル中16ファイルに存在を確認）。本ツール自身も、excel-trouble・sakusha-kesuと他14のxlsx系ツール全てへリンクする16件の関連ツール欄を実装。excel-troubleが案内するツール数の表記（タイトル・meta description・本文・FAQ・JSON-LD）を「15」から「16」に全て更新し、他15ページの「全15ツールを探す」リンク文言も「全16ツール」に統一（sedで一括置換、置換件数を確認済み）。docs/index.htmlのExcel群・docs/sitemap.xmlにも追加。",
+      "metrics": [
+        {
+          "date": "2026-10-13T17:30:00Z",
+          "note": "公開当日。GoatCounter取得はプロキシの403拒否で失敗（既知の問題）。新ページはsitemap未反映のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ]
 }

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>シートのあちこちに散らばったコメント・メモを全部一覧に：Excelコメント一覧化ツール | てのひらツール</title>
+<meta name="description" content="Excel（.xlsx/.xlsm）ファイルのどのシート・どのセルにコメントやメモが付いているか分からないときに。従来の「メモ」も最近の「スレッド形式」コメント（返信・解決済みの状態を含む）も、全シート・複数ファイルを横断して一覧表示し、CSVダウンロードや印刷用の一覧にも対応。ファイルはどこにも送信されません。List every cell comment and legacy note across every sheet and file at once, including threaded-comment replies and resolved status — entirely in your browser, with CSV export and a print-friendly list.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-comment/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select,input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileListBox{display:grid;gap:10px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:100px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.total .n{color:var(--accent)}
+.filterRow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;margin-bottom:10px}
+.filterRow label{display:flex;align-items:center;gap:6px}
+.filterRow input[type=text]{min-width:200px}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.body{max-width:360px;white-space:pre-wrap;word-break:break-word}
+td.date{white-space:nowrap;color:var(--muted);font-size:.82rem}
+tr.reply td.body{color:var(--fg)}
+tr.reply td.cell{color:var(--muted)}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.memo{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.thread{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.reply{color:var(--muted)}
+.badge.resolved{color:var(--accent);border-color:var(--accent)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+@media print{
+  .top,.lang,#dropzone,#fileListCard,.filterRow,.btnRow,.about,.related,footer{display:none!important}
+  .hint{display:none}
+  .scroll{max-height:none;overflow:visible;border:0}
+  th{position:static}
+  body{background:#fff;color:#000}
+  section.card{border:0;padding:0;margin:0 0 10px}
+}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">シートのあちこちに散らばったコメント・メモを全部一覧に</h1>
+    <p class="sub" data-i="sub">Excelファイルのどのシート・どのセルにコメントやメモが付いているか分からないときに。従来の「メモ」も最近の「スレッド形式」コメント（返信・解決済みの状態を含む）も、全シート・複数ファイルを横断して一覧表示します。CSVダウンロード、印刷用の一覧表示にも対応。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数可）</p>
+    <p class="hint" data-i="dropzoneHint">すべてのシートのコメント・メモだけをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">コメント・メモの集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">「メモ」は昔からある形式のコメント、「コメント」は最近の「スレッド形式」です（返信・解決済みの状態を保持できます）。どちらも全シートから抜き出して合計しています。</p>
+</section>
+
+<section class="card" id="filterCard" style="display:none">
+  <h2 data-i="filterHeading">絞り込み</h2>
+  <div class="filterRow">
+    <label id="fileFilterLabel" style="display:none"><span data-i="filterFile">ファイル：</span><select id="fileFilter"></select></label>
+    <label><span data-i="filterSheet">シート：</span><select id="sheetFilter"></select></label>
+    <label><span data-i="filterType">種類：</span><select id="typeFilter"></select></label>
+    <label><input type="text" id="searchBox" data-i-ph="searchPh"></label>
+  </div>
+</section>
+
+<section class="card" id="resultCard" style="display:none">
+  <h2 data-i="resultHeading">コメント・メモの一覧</h2>
+  <p class="hint" id="resultCount"></p>
+  <div id="resultBox"></div>
+  <div class="btnRow">
+    <button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">この一覧をCSVでダウンロード</button>
+    <button type="button" class="secondary" id="printBtn" disabled data-i="printBtn">この一覧を印刷</button>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル・複数シートも自動でまとめて読み込みます）。</li>
+      <li>集計欄で、コメント・メモの総数と内訳（メモ／コメント／返信／解決済み）を確認します。</li>
+      <li>絞り込みで、特定のファイル・シート・種類に絞って一覧を確認します。</li>
+      <li>必要な一覧を「CSVでダウンロード」で保存するか、「この一覧を印刷」でそのまま印刷します（絞り込んだ内容がそのまま反映されます）。</li>
+    </ol>
+    <h3>Q. 「メモ」と「コメント」は何が違いますか？</h3>
+    <p>A. どちらもセルに付けられる注記ですが、仕組みが異なります。「メモ」は昔からあるコメント機能（Excelの新しいバージョンではこの名前に変わりました）で、1件の注記を1人の投稿者名とともに保存します。「コメント」は比較的新しい「スレッド形式」の機能で、同じセルに複数人がやり取りを重ねられ、返信や「解決済み」の状態も保存できます。このツールはどちらも区別して一覧化します。</p>
+    <h3>Q. 返信（スレッドのやり取り）はどう表示されますか？</h3>
+    <p>A. 元のコメントの直後に、先頭に「↳」を付けてインデントして表示し、種類欄に<span class="badge reply">返信</span>のバッジを付けます。日時が記録されている場合は古い順に並びます。</p>
+    <h3>Q. 「解決済み」はどうやって分かりますか？</h3>
+    <p>A. スレッド形式のコメントには、Excelで「スレッドを解決」した際の状態がファイルに保存されています。元のコメント（返信ではないもの）がその状態の場合、種類欄に<span class="badge resolved">解決済み</span>のバッジを付けます。</p>
+    <h3>Q. 投稿者名や日時が空欄になることがあります</h3>
+    <p>A. 投稿者情報が本来あるはずの場所（スレッド形式コメントの場合は社内のユーザー情報）に見つからない場合や、ファイルの保存元のアプリによって日時が記録されていない場合に空欄になります。本文はそのまま表示されます。</p>
+    <h3>Q. コメント・メモを削除したい場合は？</h3>
+    <p>A. このツールは一覧表示とCSV出力・印刷専用で、ファイルの書き換えは行いません。社外にファイルを渡す前に投稿者名だけを消したい場合は、<a href="../sakusha-kesu/">作成者・最終更新者・コメント投稿者名を消すツール</a>をお使いください（コメント本文自体は残ります）。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
+    <h3>Q. 図形コメント（セルに紐付かないコメント）やセルの背景色・罫線などの書式は読み取れますか？</h3>
+    <p>A. いいえ。このツールはセルに紐付いたコメント・メモの位置・投稿者・本文・日時・解決状態だけを読み取ります。マクロ・グラフ・画像・セルの色や罫線は扱いません。</p>
+    <h3>Q. 大きなファイルや多数のファイルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、コメント・メモの合計が数千〜1万件程度までを想定しています。一覧の表示は先頭の一定件数のみに制限されることがありますが、ダウンロードするCSVには絞り込み後の全件が含まれます。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Excel (.xlsx/.xlsm) files into the box above, or click it to choose one or more (every sheet in every file is scanned automatically).</li>
+      <li>Check the summary panel for the total count and the breakdown (notes / comments / replies / resolved).</li>
+      <li>Use the filters to narrow the list down to one file, one sheet, or one type.</li>
+      <li>Click "Download as CSV" to save the list, or "Print this list" to print it directly — both reflect the current filters.</li>
+    </ol>
+    <h3>Q. What's the difference between a "note" and a "comment"?</h3>
+    <p>A. Both are annotations on a cell, but the underlying mechanism differs. A "note" is the older comment feature (renamed "Note" in newer Excel versions) — a single piece of text with one author. A "comment" is the newer threaded-comment feature, which lets multiple people reply to each other on the same cell and tracks a "resolved" state. This tool lists both, clearly labeled.</p>
+    <h3>Q. How are thread replies shown?</h3>
+    <p>A. Each reply appears right after its parent comment, indented with a leading "↳" and labeled with a <span class="badge reply">reply</span> badge. When timestamps are present, replies are sorted oldest first.</p>
+    <h3>Q. How is "resolved" determined?</h3>
+    <p>A. Threaded comments store Excel's own "resolve thread" state in the file. When a root comment (not a reply) is in that state, it gets a <span class="badge resolved">resolved</span> badge.</p>
+    <h3>Q. Why are some author names or dates blank?</h3>
+    <p>A. This happens when the author information that should be stored for a threaded comment isn't found, or when the application that saved the file didn't record a timestamp. The comment text itself is still shown.</p>
+    <h3>Q. I want to delete comments or notes — can this tool do that?</h3>
+    <p>A. No — this tool only lists, exports and prints; it never rewrites your file. To strip just the author names before sending a file outside your company, see the <a href="../sakusha-kesu/">creator/author name remover</a> (the comment text itself stays).</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and analyzed inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported; a failed file shows an error next to it.</p>
+    <h3>Q. Are shape-based comments, cell colors or borders read?</h3>
+    <p>A. No — only the position, author, text, date and resolved state of cell-attached comments/notes are read. Macros, charts, images, colors and borders are ignored.</p>
+    <h3>Q. Can it handle large or many files?</h3>
+    <p>A. Everything runs in browser memory, built for up to a few thousand to around ten thousand comments in total. The on-screen list may be capped for performance, but the downloaded CSV always contains every row matching the current filters.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul id="relJa"></ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul id="relEn"></ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「メモ」と「コメント」は何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"「メモ」は昔からあるコメント機能（新しいExcelではこの名前）で1人の投稿者の注記、「コメント」はスレッド形式で複数人のやり取り・返信・解決済み状態を保存できます。"}},
+    {"@type":"Question","name":"返信（スレッドのやり取り）はどう表示されますか？","acceptedAnswer":{"@type":"Answer","text":"元のコメントの直後にインデントして表示し、返信のバッジを付けます。"}},
+    {"@type":"Question","name":"コメント・メモを削除したい場合は？","acceptedAnswer":{"@type":"Answer","text":"このツールは一覧表示・CSV出力・印刷専用でファイルは書き換えません。投稿者名だけを消したい場合は別の「作成者・最終更新者・コメント投稿者名を消すツール」をお使いください。"}},
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・解析されます。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX parsing core (no external libraries — ZIP + XML handled by hand,
+   using only standard browser APIs: DecompressionStream/TextDecoder).
+   Shared with xlsx-error / xlsx-suushiki's approach.
+   ===================================================================== */
+
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipToMap(bytes){
+  var entries=zipCentralDirectory(bytes), map={};
+  for(var i=0;i<entries.length;i++){ var en=entries[i]; if(en.name.charAt(en.name.length-1)!=="/") map[en.name]=en; }
+  var out={};
+  for(var name in map){ out[name]=new TextDecoder("utf-8").decode(await zipReadEntry(bytes,map[name])); }
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+function refToRowCol(ref){
+  var m=/^\$?([A-Z]+)\$?([0-9]+)$/.exec(ref);
+  if(!m) return null;
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+
+function relsPathFor(partPath){
+  var idx=partPath.lastIndexOf("/");
+  return partPath.slice(0,idx+1)+"_rels/"+partPath.slice(idx+1)+".rels";
+}
+function resolveRelPath(basePartPath,target){
+  if(/^[a-zA-Z]+:\/\//.test(target)) return null; // external URL, not a package part
+  var baseDir=basePartPath.replace(/\/[^/]*$/,"");
+  var combined=(/^\//.test(target))?target.replace(/^\//,""):(baseDir+"/"+target);
+  var parts=combined.split("/"), stack=[];
+  for(var i=0;i<parts.length;i++){
+    var p=parts[i];
+    if(p===".."){ stack.pop(); }
+    else if(p!=="" && p!=="."){ stack.push(p); }
+  }
+  return stack.join("/");
+}
+
+/* =====================================================================
+   Comment / note extraction.
+   - Legacy "notes" (xl/comments{n}.xml): one comment per ref, one author.
+   - Threaded "comments" (xl/threadedComments/threadedComment{n}.xml):
+     multiple entries per ref (root + replies via parentId), author via
+     xl/persons/person.xml, timestamp via dT, resolved state via done.
+   When a sheet has threaded comments, its legacy comments.xml (which
+   Excel keeps only as a backward-compatible placeholder mirror) is
+   skipped for that sheet to avoid duplicate/placeholder rows.
+   ===================================================================== */
+
+function stripAuthorPrefix(text,author){
+  if(!author) return text;
+  var prefix=author+":";
+  if(text.indexOf(prefix)===0){
+    var rest=text.slice(prefix.length).replace(/^[ \t]*\n+/,"");
+    if(rest.length) return rest;
+  }
+  return text;
+}
+
+function extractLegacyComments(xml,sheetName){
+  var authors=[];
+  findTags(xml,"authors").forEach(function(a){
+    findTags(a.inner||"","author").forEach(function(au){ authors.push(au.inner!==null?decodeXmlEntities(au.inner):""); });
+  });
+  var out=[];
+  findTags(xml,"commentList").forEach(function(cl){
+    findTags(cl.inner||"","comment").forEach(function(c){
+      var ref=c.attrs.ref||"";
+      if(!ref) return;
+      var textTag=findTags(c.inner||"","text")[0];
+      var text="";
+      if(textTag && textTag.inner!==null){
+        findTags(textTag.inner,"t").forEach(function(t){ if(t.inner!==null) text+=decodeXmlEntities(t.inner); });
+      }
+      var idx=parseInt(c.attrs.authorId,10);
+      var author=(!isNaN(idx) && authors[idx]!==undefined)?authors[idx]:"";
+      text=stripAuthorPrefix(text,author);
+      out.push({sheet:sheetName, ref:ref, kind:"memo", author:author, date:"", text:text,
+        isReply:false, resolved:false, id:ref+"#memo", parentId:""});
+    });
+  });
+  return out;
+}
+
+function extractThreadedComments(xml,sheetName,personMap){
+  var out=[];
+  findTags(xml,"threadedComment").forEach(function(tc){
+    var ref=tc.attrs.ref||"";
+    if(!ref) return;
+    var textTag=findTags(tc.inner||"","text")[0];
+    var text=textTag && textTag.inner!==null?decodeXmlEntities(textTag.inner):"";
+    var personId=tc.attrs.personId||"";
+    out.push({
+      sheet:sheetName, ref:ref, kind:"thread",
+      author:personMap[personId]!==undefined?personMap[personId]:"",
+      date:tc.attrs.dT||"", text:text,
+      isReply:!!tc.attrs.parentId, resolved:tc.attrs.done==="1",
+      id:tc.attrs.id||"", parentId:tc.attrs.parentId||""
+    });
+  });
+  return out;
+}
+
+async function parseXlsxComments(bytes){
+  var files=await unzipToMap(bytes);
+  var workbookXml=files["xl/workbook.xml"], workbookRels=files["xl/_rels/workbook.xml.rels"];
+  if(!workbookXml || !workbookRels) throw new Error("NOT_XLSX");
+  var sheetList=parseSheetList(workbookXml,workbookRels);
+
+  var personMap={};
+  if(files["xl/persons/person.xml"]){
+    findTags(files["xl/persons/person.xml"],"person").forEach(function(p){
+      personMap[p.attrs.id]=p.attrs.displayName||"";
+    });
+  }
+
+  var rows=[];
+  sheetList.forEach(function(s){
+    var relsXml=files[relsPathFor(s.path)]||"";
+    var commentsPath=null, threadedPath=null;
+    findTags(relsXml,"Relationship").forEach(function(r){
+      var type=r.attrs.Type||"", target=r.attrs.Target||"";
+      var resolved=resolveRelPath(s.path,target);
+      if(!resolved) return;
+      if(/\/comments$/.test(type)) commentsPath=resolved;
+      if(/\/threadedComment$/.test(type)) threadedPath=resolved;
+    });
+    if(threadedPath && files[threadedPath]){
+      rows=rows.concat(extractThreadedComments(files[threadedPath],s.name,personMap));
+    } else if(commentsPath && files[commentsPath]){
+      rows=rows.concat(extractLegacyComments(files[commentsPath],s.name));
+    }
+  });
+  return {sheetNames:sheetList.map(function(s){return s.name}), rows:rows};
+}
+
+/* Group by sheet+ref, order roots by date then nest their replies. */
+function orderRows(rows){
+  var byKey={}, order=[];
+  rows.forEach(function(r){
+    var key=r.sheet+"\u0001"+r.ref;
+    if(!byKey[key]){ byKey[key]=[]; order.push(key); }
+    byKey[key].push(r);
+  });
+  order.sort(function(a,b){
+    var pa=a.split("\u0001"), pb=b.split("\u0001");
+    if(pa[0]!==pb[0]) return pa[0]<pb[0]?-1:1;
+    var ra=refToRowCol(pa[1])||{row:0,col:0}, rb=refToRowCol(pb[1])||{row:0,col:0};
+    if(ra.row!==rb.row) return ra.row-rb.row;
+    return ra.col-rb.col;
+  });
+  var out=[];
+  order.forEach(function(key){
+    var items=byKey[key];
+    var roots=items.filter(function(r){return !r.isReply});
+    var repliesByParent={};
+    items.filter(function(r){return r.isReply}).forEach(function(r){
+      var pid=r.parentId||"";
+      if(!repliesByParent[pid]) repliesByParent[pid]=[];
+      repliesByParent[pid].push(r);
+    });
+    roots.sort(function(a,b){ return (a.date||"")<(b.date||"")?-1:((a.date||"")>(b.date||"")?1:0) });
+    roots.forEach(function(root){
+      out.push(root);
+      var reps=(repliesByParent[root.id]||[]).slice();
+      reps.sort(function(a,b){ return (a.date||"")<(b.date||"")?-1:((a.date||"")>(b.date||"")?1:0) });
+      reps.forEach(function(r){ out.push(r); });
+    });
+  });
+  return out;
+}
+
+function formatDate(d){
+  if(!d) return "";
+  var m=/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(d);
+  return m?(m[1]+" "+m[2]):d;
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"シートのあちこちに散らばったコメント・メモを全部一覧に",
+  sub:"Excelファイルのどのシート・どのセルにコメントやメモが付いているか分からないときに。従来の「メモ」も最近の「スレッド形式」コメント（返信・解決済みの状態を含む）も、全シート・複数ファイルを横断して一覧表示します。CSVダウンロード、印刷用の一覧表示にも対応。ファイルはどこにも送信されません。",
+  dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
+  dropzoneHint:"すべてのシートのコメント・メモだけをまとめて抜き出します。ファイルは選択した端末の中だけで処理されます。",
+  fileListHeading:"追加したファイル",
+  statsHeading:"コメント・メモの集計",
+  statsHint:"「メモ」は昔からある形式のコメント、「コメント」は最近の「スレッド形式」です（返信・解決済みの状態を保持できます）。どちらも全シートから抜き出して合計しています。",
+  statTotal:"合計",statMemo:"メモ（旧形式）",statThread:"コメント（返信を含む）",statResolved:"解決済みスレッド",
+  filterHeading:"絞り込み",
+  filterFile:"ファイル：",filterSheet:"シート：",filterType:"種類：",
+  searchPh:"セル・投稿者・本文を検索",
+  allOption:"すべて",typeMemo:"メモ",typeThreadRoot:"コメント",typeReply:"返信",
+  resultHeading:"コメント・メモの一覧",
+  downloadBtn:"この一覧をCSVでダウンロード",
+  printBtn:"この一覧を印刷",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  colFile:"ファイル",colSheet:"シート",colCell:"セル",colType:"種類",colAuthor:"投稿者",colDate:"日時",colBody:"本文",
+  errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  errNone:"コメント・メモは見つかりませんでした",
+  resolvedBadge:"解決済み",
+  replyPrefix:"↳ ",
+  moreNote:"件まで表示しています（ダウンロードには絞り込み後の全件が含まれます）。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"List every cell comment and note across every sheet",
+  sub:"Not sure where comments or notes are scattered across a workbook? Lists both the classic \"note\" and the newer threaded \"comment\" (including replies and resolved status) across every sheet and file at once. CSV export and a print-friendly list included. Nothing is uploaded.",
+  dropzoneText:"Drag and drop Excel (.xlsx) file(s) here, or click to choose (multiple allowed)",
+  dropzoneHint:"Only cell comments/notes are extracted, across every sheet. Everything happens on this device.",
+  fileListHeading:"Added files",
+  statsHeading:"Comment / note summary",
+  statsHint:"\"Note\" is the classic comment format; \"comment\" is the newer threaded format (replies and a resolved state). Both are counted across every sheet.",
+  statTotal:"Total",statMemo:"Notes (legacy)",statThread:"Comments (incl. replies)",statResolved:"Resolved threads",
+  filterHeading:"Filters",
+  filterFile:"File:",filterSheet:"Sheet:",filterType:"Type:",
+  searchPh:"Search cell / author / text",
+  allOption:"All",typeMemo:"Note",typeThreadRoot:"Comment",typeReply:"Reply",
+  resultHeading:"Comments / notes",
+  downloadBtn:"Download this list as CSV",
+  printBtn:"Print this list",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  colFile:"File",colSheet:"Sheet",colCell:"Cell",colType:"Type",colAuthor:"Author",colDate:"Date",colBody:"Text",
+  errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  errNone:"No comments or notes found",
+  resolvedBadge:"resolved",
+  replyPrefix:"↳ ",
+  moreNote:" rows shown (the download includes every filtered row).",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1, fileFilter:"", sheetFilter:"", typeFilter:"", search:""};
+var MAX_RENDER=1000;
+
+function escTrunc(s,max){ s=String(s); max=max||200; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function rowTypeKey(r){ return r.isReply?"reply":(r.kind==="memo"?"memo":"thread"); }
+function rowTypeLabel(r){
+  if(r.isReply) return T[lang].typeReply;
+  return r.kind==="memo"?T[lang].typeMemo:T[lang].typeThreadRoot;
+}
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", rows:[], sheetNames:[]};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxComments(new Uint8Array(buf)); })
+    .then(function(result){
+      f.rows=orderRows(result.rows); f.sheetNames=result.sheetNames; f.loading=false; render();
+    }).catch(function(){
+      f.loading=false; f.error=T[lang].errBad; f.rows=[]; render();
+    });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function allRows(){
+  var out=[];
+  state.files.forEach(function(f){
+    if(f.loading||f.error) return;
+    f.rows.forEach(function(r){ out.push({file:f.name,fileId:f.id,sheet:r.sheet,ref:r.ref,kind:r.kind,
+      author:r.author,date:r.date,text:r.text,isReply:r.isReply,resolved:r.resolved}); });
+  });
+  return out;
+}
+function filteredRows(){
+  var rows=allRows(), s=state;
+  var needle=s.search.trim().toLowerCase();
+  return rows.filter(function(r){
+    if(s.fileFilter && String(r.fileId)!==s.fileFilter) return false;
+    if(s.sheetFilter && r.sheet!==s.sheetFilter) return false;
+    if(s.typeFilter && rowTypeKey(r)!==s.typeFilter) return false;
+    if(needle){
+      var hay=(r.ref+" "+(r.author||"")+" "+(r.text||"")).toLowerCase();
+      if(hay.indexOf(needle)===-1) return false;
+    }
+    return true;
+  });
+}
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+    else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+    else { h+="<span class='fMeta'>"+f.sheetNames.length+" / "+f.rows.length+"</span>"; }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+  });
+  box.innerHTML=h;
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function renderStats(rows){
+  var memo=0,thread=0,resolved=0;
+  rows.forEach(function(r){
+    if(r.kind==="memo") memo++; else thread++;
+    if(r.kind==="thread" && !r.isReply && r.resolved) resolved++;
+  });
+  var items=[[rows.length,T[lang].statTotal,"total"],[memo,T[lang].statMemo,""],[thread,T[lang].statThread,""],[resolved,T[lang].statResolved,""]];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function renderFilterOptions(){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  $("fileFilterLabel").style.display=multiFile?"":"none";
+  if(multiFile){
+    var curFile=$("fileFilter").value;
+    var h="<option value=''>"+esc(T[lang].allOption)+"</option>";
+    state.files.forEach(function(f){ if(!f.loading&&!f.error) h+="<option value='"+f.id+"'>"+esc(f.name)+"</option>"; });
+    $("fileFilter").innerHTML=h;
+    $("fileFilter").value=curFile&&state.files.some(function(f){return String(f.id)===curFile})?curFile:"";
+    state.fileFilter=$("fileFilter").value;
+  } else { state.fileFilter=""; }
+  var all=allRows();
+  var sheetSet=[], seenSheet={};
+  all.forEach(function(r){ if(!state.fileFilter||String(r.fileId)===state.fileFilter){ if(!seenSheet[r.sheet]){seenSheet[r.sheet]=true; sheetSet.push(r.sheet);} } });
+  var curSheet=$("sheetFilter").value;
+  var sh="<option value=''>"+esc(T[lang].allOption)+"</option>";
+  sheetSet.forEach(function(s){ sh+="<option value='"+esc(s)+"'>"+esc(s)+"</option>"; });
+  $("sheetFilter").innerHTML=sh;
+  $("sheetFilter").value=sheetSet.indexOf(curSheet)!==-1?curSheet:"";
+  state.sheetFilter=$("sheetFilter").value;
+
+  var curType=$("typeFilter").value;
+  var th="<option value=''>"+esc(T[lang].allOption)+"</option>"+
+    "<option value='memo'>"+esc(T[lang].typeMemo)+"</option>"+
+    "<option value='thread'>"+esc(T[lang].typeThreadRoot)+"</option>"+
+    "<option value='reply'>"+esc(T[lang].typeReply)+"</option>";
+  $("typeFilter").innerHTML=th;
+  $("typeFilter").value=["memo","thread","reply"].indexOf(curType)!==-1?curType:"";
+  state.typeFilter=$("typeFilter").value;
+}
+
+function renderResult(rows){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  $("resultCount").textContent=rows.length;
+  if(!rows.length){
+    $("resultBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>";
+    $("downloadBtn").disabled=true; $("printBtn").disabled=true;
+    return;
+  }
+  var shown=rows.slice(0,MAX_RENDER);
+  var h="<div class='scroll'><table><thead><tr>";
+  if(multiFile) h+="<th>"+esc(T[lang].colFile)+"</th>";
+  h+="<th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colCell)+"</th><th>"+esc(T[lang].colType)+"</th>"+
+     "<th>"+esc(T[lang].colAuthor)+"</th><th>"+esc(T[lang].colDate)+"</th><th>"+esc(T[lang].colBody)+"</th></tr></thead><tbody>";
+  shown.forEach(function(r){
+    var cls=r.isReply?"reply":"";
+    h+="<tr class='"+cls+"'>";
+    if(multiFile) h+="<td>"+escTrunc(r.file,40)+"</td>";
+    h+="<td>"+escTrunc(r.sheet,30)+"</td><td class='cell'>"+esc(r.ref)+"</td>";
+    var typeBadgeClass=r.isReply?"reply":(r.kind==="memo"?"memo":"thread");
+    h+="<td><span class='badge "+typeBadgeClass+"'>"+esc(rowTypeLabel(r))+"</span>";
+    if(r.kind==="thread" && !r.isReply && r.resolved) h+="<span class='badge resolved'>"+esc(T[lang].resolvedBadge)+"</span>";
+    h+="</td>";
+    h+="<td>"+escTrunc(r.author||"",30)+"</td>";
+    h+="<td class='date'>"+esc(formatDate(r.date))+"</td>";
+    h+="<td class='body'>"+(r.isReply?esc(T[lang].replyPrefix):"")+escTrunc(r.text||"",300)+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody></table></div>";
+  if(rows.length>MAX_RENDER) h+="<p class='hint'>"+MAX_RENDER+T[lang].moreNote+"</p>";
+  $("resultBox").innerHTML=h;
+  $("downloadBtn").disabled=false; $("printBtn").disabled=false;
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+  if(!has){
+    $("statsCard").style.display="none"; $("filterCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  var ready=state.files.some(function(f){return !f.loading&&!f.error});
+  if(!ready){
+    $("statsCard").style.display="none"; $("filterCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  renderFilterOptions();
+  $("statsCard").style.display=""; $("filterCard").style.display=""; $("resultCard").style.display="";
+  var all=allRows();
+  renderStats(all);
+  renderResult(filteredRows());
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+$("fileFilter").addEventListener("change",function(){ state.fileFilter=this.value; renderFilterOptions(); renderResult(filteredRows()); });
+$("sheetFilter").addEventListener("change",function(){ state.sheetFilter=this.value; renderResult(filteredRows()); });
+$("typeFilter").addEventListener("change",function(){ state.typeFilter=this.value; renderResult(filteredRows()); });
+$("searchBox").addEventListener("input",function(){ state.search=this.value; renderResult(filteredRows()); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var rows=filteredRows();
+  if(!rows.length) return;
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  var header=[];
+  if(multiFile) header.push(T[lang].colFile);
+  header=header.concat([T[lang].colSheet,T[lang].colCell,T[lang].colType,T[lang].colAuthor,T[lang].colDate,T[lang].colBody]);
+  var out=[header];
+  rows.forEach(function(r){
+    var row=[];
+    if(multiFile) row.push(r.file);
+    var typeLabel=rowTypeLabel(r)+(r.kind==="thread"&&!r.isReply&&r.resolved?"（"+T[lang].resolvedBadge+"）":"");
+    row=row.concat([r.sheet,r.ref,typeLabel,r.author||"",formatDate(r.date),r.text||""]);
+    out.push(row);
+  });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="comments.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+$("printBtn").addEventListener("click",function(){ window.print(); });
+
+var RELATED=[
+ {href:"../excel-trouble/",ja:["エクセルのトラブル解決ガイド","「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全16ツールを探す。"],
+   en:["Excel Troubleshooting Guide","Find the right tool among all 16 by symptom: heavy, save errors, error values, links, printing."]},
+ {href:"../sakusha-kesu/",ja:["社外に渡す前に、作成者・コメント投稿者名を消す","コメント本文は残したまま、投稿者名・作成者・最終更新者だけを消去。"],
+   en:["Remove creator / comment-author names before sending a file out","Clears author names while keeping the comment text itself."]},
+ {href:"../xlsx-suushiki/","ja":["引き継いだExcelの数式を一覧に","数式が入った全セルを一覧化。エラーや他シート参照・外部参照の可能性も検出。"],
+   en:["List every formula in an Excel file","Lists every formula cell and flags cross-sheet / possible external references."]},
+ {href:"../xlsx-error/",ja:["#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に","エラー値セルだけを全シート横断で一覧化してCSV出力。"],
+   en:["Find every cell with a cached error value","Lists every error-valued cell across every sheet, exportable as CSV."]},
+ {href:"../xlsx-jouken/",ja:["条件付き書式の棚卸し削除ツール","条件付き書式ルールを全シート横断で一覧化し、重複・書式参照切れを検出して削除。"],
+   en:["Clean up conditional formatting rules that keep piling up","List every rule across every sheet and remove the ones you choose."]},
+ {href:"../xlsx-junkan/",ja:["循環参照の全件一覧化ツール","循環参照になっているセルのグループを一度に全部一覧化。"],
+   en:["List every circular-reference group at once","Scans every sheet's formulas for circular references."]},
+ {href:"../xlsx-hyperlink/",ja:["ハイパーリンクの一覧・削除ツール","全シートのクリック可能なハイパーリンクを一覧化し、壊れたリンクを検出して解除。"],
+   en:["List and remove hyperlinks","List every clickable hyperlink and flag broken ones."]},
+ {href:"../xlsx-namae/",ja:["「名前は既に存在します」対策","名前定義を全件一覧化し、非表示・エラーの名前を見分けて削除。"],
+   en:["Fix \"Name already exists\"","List every defined name and remove the hidden/broken ones."]},
+ {href:"../xlsx-link/",ja:["外部ソースへのリンク発生源を探すツール","外部参照の使用箇所を数式・名前定義などから一覧化。"],
+   en:["Find external-workbook link sources","List every external-workbook link and where it's used."]},
+ {href:"../xlsx-ketsugo/",ja:["結合セルを解除して値を埋める→CSV出力","結合セルの空欄を左上の値で自動的に埋めてCSV化。"],
+   en:["Unmerge cells and fill the blanks → CSV","Fill blanks left by unmerging, then export as CSV."]},
+ {href:"../xlsx-omoi/",ja:["「エクセルが重い」原因を診断","パーツ別の容量内訳と原因を表示。"],
+   en:["Why is this Excel file heavy?","Breaks down file size by part and ranks likely causes."]},
+ {href:"../xlsx-style/",ja:["「異なるセルの書式の数が多すぎます」エラー対策","重複・未使用のセル書式を統合・削除。"],
+   en:["Fix \"too many different cell formats\"","Merge duplicate cell formats and drop unused ones."]},
+ {href:"../xlsx-hani/",ja:["Ctrl+Endで遠くへ飛ぶときの「使用範囲」リセット","実データの範囲だけに使用範囲を縮小。"],
+   en:["Reset the used range when Ctrl+End jumps far away","Shrink the recorded used range back to your real data."]},
+ {href:"../xlsx-atai/",ja:["数式を値に変換","外部ファイルを参照する数式だけを選んで値に変換。"],
+   en:["Convert formulas to values","Converts formulas referencing an external workbook to values."]},
+ {href:"../xlsx-saihyouji/",ja:["シートの「再表示」に出てこないときの対策","非表示・完全非表示シートを一覧化し一括変更。"],
+   en:["Sheet missing from the Unhide dialog?","List every sheet's visibility and bulk-change it."]},
+ {href:"../xlsx-merge/",ja:["Excelファイルを複数まとめて1つに","複数の.xlsxファイルをそのまま1つのCSVに結合。"],
+   en:["Merge multiple Excel files into one","Merge several .xlsx files directly into one CSV."]}
+];
+function renderRelated(){
+  var ja="", en="";
+  RELATED.forEach(function(r){
+    ja+="<li><a href='"+r.href+"'>"+esc(r.ja[0])+"</a> — "+esc(r.ja[1])+"</li>";
+    en+="<li><a href='"+r.href+"'>"+esc(r.en[0])+"</a> — "+esc(r.en[1])+"</li>";
+  });
+  $("relJa").innerHTML=ja; $("relEn").innerHTML=en;
+}
+renderRelated();
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var phs=document.querySelectorAll("[data-i-ph]");
+  for(var p=0;p<phs.length;p++){var k2=phs[p].getAttribute("data-i-ph");if(T[lang][k2]!==undefined)phs[p].setAttribute("placeholder",T[lang][k2])}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
