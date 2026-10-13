@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示 | てのひらツール</title>
+<meta name="description" content="更新前と更新後のExcel（.xlsx/.xlsm）ファイルのどこが変わったか分からないときに。全シートを一括で比較し、追加・削除・変更されたセルだけを色付きのシート表示と一覧（CSVダウンロード対応）で確認できます。ファイルはサーバーに送信されず、ブラウザ内だけで処理されます。Compare two Excel files — before and after — across every sheet at once, and see only the added, removed or changed cells highlighted in a sheet grid or exportable list, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-diff/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;
+--added:#1a7a3c;--added-bg:#e3f3e8;--removed:#9c3b3b;--removed-bg:#f7e9e8;--changed:#8a5a00;--changed-bg:#fdf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;
+--added:#79c98f;--added-bg:#17301f;--removed:#e0958a;--removed-bg:#3a2320;--changed:#f0c46a;--changed-bg:#3a2f16}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+.dzRow{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+@media (max-width:640px){.dzRow{grid-template-columns:1fr}}
+.dz{border:2px dashed var(--line);border-radius:10px;padding:20px 12px;text-align:center;cursor:pointer;color:var(--muted)}
+.dz.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+.dz strong{color:var(--fg);display:block;margin-bottom:6px}
+.dz .fname{color:var(--fg);font-weight:700;word-break:break-all;margin-top:8px}
+.dz .fmeta{color:var(--muted);font-size:.85rem;margin-top:2px}
+.dz .err{color:var(--removed);font-size:.85rem;margin-top:6px}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select,input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:90px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.added .n{color:var(--added)}
+.statBox.removed .n{color:var(--removed)}
+.statBox.changed .n{color:var(--changed)}
+.sheetTable{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:10px}
+.sheetTable th,.sheetTable td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.sheetTable th{color:var(--muted);font-weight:600}
+.sheetTable td.num{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.78rem;font-weight:600}
+.badge.common{color:var(--muted);background:var(--accent-bg);color:var(--accent)}
+.badge.addedSheet{color:var(--added);background:var(--added-bg)}
+.badge.removedSheet{color:var(--removed);background:var(--removed-bg)}
+.filterRow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;margin-bottom:10px}
+.filterRow label{display:flex;align-items:center;gap:6px}
+.filterRow input[type=text]{min-width:200px}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table.list{width:100%;border-collapse:collapse;font-size:.86rem}
+table.list th,table.list td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.list th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.cellRef{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:nowrap}
+td.oldVal{color:var(--removed);text-decoration:line-through;max-width:260px;word-break:break-all}
+td.newVal{color:var(--added);max-width:260px;word-break:break-all}
+td.typeTag{white-space:nowrap}
+.tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.78rem;font-weight:700}
+.tag.added{color:var(--added);background:var(--added-bg)}
+.tag.removed{color:var(--removed);background:var(--removed-bg)}
+.tag.changed{color:var(--changed);background:var(--changed-bg)}
+.gridWrap{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:8px;margin-top:10px}
+table.grid{border-collapse:collapse;font-size:.78rem}
+table.grid th,table.grid td{border:1px solid var(--line);padding:3px 6px;min-width:64px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.grid th{position:sticky;top:0;background:var(--card);color:var(--muted);z-index:2}
+table.grid th.rowhead{position:sticky;left:0;z-index:3;background:var(--card)}
+table.grid td.rowhead{position:sticky;left:0;background:var(--card);color:var(--muted);z-index:1}
+table.grid td.added{background:var(--added-bg);color:var(--added);font-weight:700}
+table.grid td.removed{background:var(--removed-bg);color:var(--removed);text-decoration:line-through}
+table.grid td.changed{background:var(--changed-bg);color:var(--changed);font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.84rem;color:var(--muted);margin-top:8px}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.sw.added{background:var(--added-bg);border:1px solid var(--added)}
+.sw.removed{background:var(--removed-bg);border:1px solid var(--removed)}
+.sw.changed{background:var(--changed-bg);border:1px solid var(--changed)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{font:inherit;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:8px;padding:6px 12px;cursor:pointer}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示</h1>
+    <p class="sub" data-i="sub">「変更前」と「変更後」の2つのExcelファイルのどこが変わったか分からないときに。全シートを一括で比較し、追加・削除・変更されたセルだけをシート形式の色付き表示と一覧（CSVダウンロード対応）で確認できます。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="uploadHeading">ファイルを選択</h2>
+  <div class="dzRow">
+    <div id="dzOld" class="dz" tabindex="0" role="button" aria-label="変更前のファイルを選択">
+      <strong data-i="dzOldTitle">① 変更前（古い）ファイル</strong>
+      <span data-i="dzHint">ドラッグ＆ドロップ、またはクリックして選択</span>
+      <div class="fname" id="dzOldName"></div>
+      <div class="fmeta" id="dzOldMeta"></div>
+      <div class="err" id="dzOldErr"></div>
+    </div>
+    <div id="dzNew" class="dz" tabindex="0" role="button" aria-label="変更後のファイルを選択">
+      <strong data-i="dzNewTitle">② 変更後（新しい）ファイル</strong>
+      <span data-i="dzHint">ドラッグ＆ドロップ、またはクリックして選択</span>
+      <div class="fname" id="dzNewName"></div>
+      <div class="fmeta" id="dzNewMeta"></div>
+      <div class="err" id="dzNewErr"></div>
+    </div>
+  </div>
+  <input type="file" id="fileOldInput" accept=".xlsx,.xlsm" style="display:none">
+  <input type="file" id="fileNewInput" accept=".xlsx,.xlsm" style="display:none">
+  <p class="hint" data-i="uploadHint">2つのファイルは選択した端末の中だけで読み込み・比較されます。サーバーには送信されません。</p>
+</section>
+
+<section class="card" id="sheetSummaryCard" style="display:none">
+  <h2 data-i="summaryHeading">シート単位の差分サマリー</h2>
+  <div class="statGrid" id="totalStatGrid"></div>
+  <div class="scroll" style="max-height:320px;margin-top:10px">
+    <table class="sheetTable">
+      <thead><tr>
+        <th data-i="colSheet">シート</th><th data-i="colStatus">状態</th>
+        <th data-i="colAdded">追加</th><th data-i="colRemoved">削除</th><th data-i="colChanged">変更</th>
+      </tr></thead>
+      <tbody id="sheetSummaryBody"></tbody>
+    </table>
+  </div>
+  <p class="hint" data-i="summaryHint">「追加」「削除」はそのシートにだけ存在していたセル、「変更」は両方のファイルに同じセル位置があり内容が異なっていたセルの数です。シート名そのものが変わった場合は「シート削除」＋「シート追加」として扱われます。</p>
+</section>
+
+<section class="card" id="gridCard" style="display:none">
+  <h2 data-i="gridHeading">シート表示（色付き）</h2>
+  <div class="filterRow">
+    <label><span data-i="gridSheetLabel">シート：</span><select id="gridSheetSelect"></select></label>
+  </div>
+  <div id="gridBox"></div>
+  <div class="legend">
+    <span><span class="sw added"></span><span data-i="legendAdded">追加されたセル</span></span>
+    <span><span class="sw removed"></span><span data-i="legendRemoved">削除されたセル（表示は変更前の値）</span></span>
+    <span><span class="sw changed"></span><span data-i="legendChanged">内容が変わったセル（マウスを乗せると変更前の値）</span></span>
+  </div>
+</section>
+
+<section class="card" id="filterCard" style="display:none">
+  <h2 data-i="filterHeading">絞り込み</h2>
+  <div class="filterRow">
+    <label><span data-i="filterSheet">シート：</span><select id="sheetFilter"></select></label>
+    <label><span data-i="filterType">種類：</span><select id="typeFilter"></select></label>
+    <label><input type="text" id="searchBox" data-i-ph="searchPh"></label>
+  </div>
+</section>
+
+<section class="card" id="resultCard" style="display:none">
+  <h2 data-i="resultHeading">差分セルの一覧</h2>
+  <p class="hint" id="resultCount"></p>
+  <div id="resultBox"></div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">この一覧をCSVでダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>「①変更前（古い）ファイル」「②変更後（新しい）ファイル」の両方にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップ、またはクリックして選びます。</li>
+      <li>両方読み込まれると、シート単位のサマリー（追加・削除・変更セル数）が自動的に表示されます。</li>
+      <li>「シート表示」で1枚のシートを選ぶと、実際のシートに近い形で変更箇所が色付きで確認できます。</li>
+      <li>絞り込みでシート・種類・セル番地やキーワードを指定し、一覧を「CSVでダウンロード」で保存できます。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。2つのファイルはいずれもサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・比較されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。</p>
+    <h3>Q. どういう基準で「変更」と判定していますか？</h3>
+    <p>A. 同じセル番地（例：B3）に、両方のファイルで値があり、その文字列としての内容が異なる場合に「変更」と判定します。セルの色・フォント・枠線などの書式や、数式の文字列そのものは比較しておらず、Excelが最後に保存したときの計算結果（表示される値）だけを比較します。</p>
+    <h3>Q. 行や列を挿入・削除した場合はどうなりますか？</h3>
+    <p>A. セルの位置（番地）だけで比較するため、行や列を挿入・削除すると、その位置より下・右にあるセルがすべて「内容が変わった」として検出されます。これは実際の値の変化ではなく、ズレによる検出です。表の途中に行を増やしたファイルを比較する場合はご注意ください。</p>
+    <h3>Q. シート名を変更した場合はどうなりますか？</h3>
+    <p>A. シート名の一致で同じシートとみなすため、シート名自体を変更すると「元の名前のシートが削除され、新しい名前のシートが追加された」という扱いになり、中身が同じでも全セルが差分として出ます。</p>
+    <h3>Q. 日付が入ったセルはどう表示されますか？</h3>
+    <p>A. Excelは日付を内部的に数値（シリアル値）として保存しており、表示形式（書式）は別に管理されています。このツールは表示形式を再現せず、保存されている数値のまま比較・表示します。そのため日付のセルが数値で表示されることがあります。</p>
+    <h3>Q. 「シート表示」に何も出ないシートがあります</h3>
+    <p>A. 行数・列数が多いシート（既定では200行×40列を超える場合）は、ブラウザでの表示が重くなるため「シート表示」を省略し、下の一覧でのみ確認できるようにしています。</p>
+    <h3>Q. 大きなファイルや多数の差分セルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、差分セルが数万件程度までを想定しています。一覧の表示は先頭の一定件数のみに制限されることがありますが、ダウンロードするCSVには絞り込み後の全件が含まれます。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop (or click to choose) an Excel (.xlsx/.xlsm) file into both "① Before" and "② After".</li>
+      <li>Once both are loaded, a per-sheet summary (added / removed / changed cell counts) appears automatically.</li>
+      <li>Pick one sheet under "Sheet view" to see the changes highlighted in a grid close to the real worksheet layout.</li>
+      <li>Use the filters to narrow by sheet, change type or a cell/keyword search, then export the list as CSV.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Neither file is uploaded to a server — everything is read and compared inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported.</p>
+    <h3>Q. How is "changed" decided?</h3>
+    <p>A. When the same cell address (e.g. B3) holds a value in both files and the text content differs, it's marked "changed". Formatting (colors, fonts, borders) and the formula text itself are not compared — only the displayed/cached result Excel last saved.</p>
+    <h3>Q. What happens if a row or column is inserted or deleted?</h3>
+    <p>A. Comparison is purely by cell address, so inserting or deleting a row/column shifts everything below/right of it, which this tool reports as every one of those cells having "changed" — even though their actual content didn't. Be aware of this when comparing files where rows were added in the middle of a table.</p>
+    <h3>Q. What if a sheet was renamed?</h3>
+    <p>A. Sheets are matched by name, so renaming a sheet is reported as the old name being removed and the new name being added — with every cell in it, even if nothing inside actually changed.</p>
+    <h3>Q. How are date cells shown?</h3>
+    <p>A. Excel stores dates internally as a plain number (a serial value); the date format is separate. This tool doesn't reproduce formatting, so a date cell may show up as a plain number.</p>
+    <h3>Q. Why does "Sheet view" show nothing for some sheets?</h3>
+    <p>A. A sheet with a very large row/column extent (over 200 rows × 40 columns by default) skips the grid view for performance — use the list below instead.</p>
+    <h3>Q. Can it handle large files or many differences?</h3>
+    <p>A. Everything runs in browser memory, built for up to roughly tens of thousands of differing cells. The on-screen list may be capped for performance, but the downloaded CSV always contains every row matching the current filters.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul id="relatedJa"></ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul id="relatedEn"></ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。2つのファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・比較されます。"}},
+    {"@type":"Question","name":"どういう基準で「変更」と判定していますか？","acceptedAnswer":{"@type":"Answer","text":"同じセル番地に両方のファイルで値があり、その内容が異なる場合に「変更」と判定します。書式や数式の文字列自体は比較せず、保存されている計算結果の値だけを比較します。"}},
+    {"@type":"Question","name":"行や列を挿入・削除した場合はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"セルの位置だけで比較するため、挿入・削除した位置より下・右のセルがすべて「変更」として検出されます。"}},
+    {"@type":"Question","name":"シート名を変更した場合はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"シート名の一致で同じシートとみなすため、名前を変えると元のシートの削除と新しいシートの追加として扱われます。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX parsing core (no external libraries — ZIP + XML handled by hand,
+   using only standard browser APIs: DecompressionStream/TextDecoder).
+   Shared with the approach used across this site's other xlsx-* tools.
+   ===================================================================== */
+
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipToMap(bytes){
+  var entries=zipCentralDirectory(bytes), map={};
+  for(var i=0;i<entries.length;i++){ var en=entries[i]; if(en.name.charAt(en.name.length-1)!=="/") map[en.name]=en; }
+  var out={};
+  for(var name in map){ out[name]=new TextDecoder("utf-8").decode(await zipReadEntry(bytes,map[name])); }
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+function colIndexToLetter(idx){
+  var s="", n=idx+1;
+  while(n>0){ var rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+function refToRowCol(ref){
+  var m=/^\$?([A-Z]+)\$?([0-9]+)$/.exec(ref);
+  if(!m) return null;
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+
+/* =====================================================================
+   Workbook -> {sheetOrder, sheets:{name:{cells:{ref:{value,row,col}},
+   maxRow, maxCol}}}. Only cells with an actual value are kept (formatting
+   -only cells are skipped); shared strings / inline strings / booleans /
+   cached formula results are all resolved to the text a user would see.
+   ===================================================================== */
+
+function parseSharedStrings(xml){
+  if(!xml) return [];
+  return findTags(xml,"si").map(function(si){
+    var ts=findTags(si.inner||"","t");
+    return ts.map(function(t){ return decodeXmlEntities(t.inner||""); }).join("");
+  });
+}
+
+function extractSheetCells(xml,sharedStrings){
+  var cells={}, maxRow=0, maxCol=0;
+  findTags(xml,"sheetData").forEach(function(sd){
+    findTags(sd.inner||"","row").forEach(function(row){
+      findTags(row.inner||"","c").forEach(function(c){
+        var ref=c.attrs.r; if(!ref) return;
+        var pos=refToRowCol(ref); if(!pos) return;
+        var t=c.attrs.t||"n", value=null;
+        if(t==="inlineStr"){
+          var isTags=findTags(c.inner||"","is");
+          if(isTags.length){
+            var tt=findTags(isTags[0].inner||"","t");
+            value=tt.map(function(x){return decodeXmlEntities(x.inner||"")}).join("");
+          }
+        } else {
+          var vTags=findTags(c.inner||"","v");
+          var raw=vTags.length?decodeXmlEntities(vTags[0].inner||""):null;
+          if(raw===null){ value=null; }
+          else if(t==="s"){ var idx=parseInt(raw,10); value=sharedStrings[idx]!==undefined?sharedStrings[idx]:""; }
+          else if(t==="b"){ value=raw==="1"?"TRUE":"FALSE"; }
+          else { value=raw; }
+        }
+        if(value===null) return;
+        cells[ref]={value:value,row:pos.row,col:pos.col};
+        if(pos.row>maxRow) maxRow=pos.row;
+        if(pos.col>maxCol) maxCol=pos.col;
+      });
+    });
+  });
+  return {cells:cells,maxRow:maxRow,maxCol:maxCol};
+}
+
+async function parseWorkbook(bytes){
+  var files=await unzipToMap(bytes);
+  var workbookXml=files["xl/workbook.xml"], relsXml=files["xl/_rels/workbook.xml.rels"];
+  if(!workbookXml||!relsXml) throw new Error("NOT_XLSX");
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  var sharedStrings=parseSharedStrings(files["xl/sharedStrings.xml"]||"");
+  var sheets={};
+  sheetList.forEach(function(s){
+    var xml=files[s.path];
+    if(!xml) return;
+    sheets[s.name]=extractSheetCells(xml,sharedStrings);
+  });
+  return {sheetOrder:sheetList.map(function(s){return s.name}), sheets:sheets};
+}
+
+/* =====================================================================
+   Diff engine
+   ===================================================================== */
+
+function diffSheet(oldSheet,newSheet){
+  var refs={};
+  Object.keys(oldSheet.cells).forEach(function(r){refs[r]=true});
+  Object.keys(newSheet.cells).forEach(function(r){refs[r]=true});
+  var rows=[];
+  Object.keys(refs).forEach(function(ref){
+    var o=oldSheet.cells[ref], n=newSheet.cells[ref];
+    if(o && n){
+      if(o.value!==n.value) rows.push({ref:ref,type:"changed",oldVal:o.value,newVal:n.value,row:n.row,col:n.col});
+    } else if(!o && n){
+      rows.push({ref:ref,type:"added",oldVal:null,newVal:n.value,row:n.row,col:n.col});
+    } else if(o && !n){
+      rows.push({ref:ref,type:"removed",oldVal:o.value,newVal:null,row:o.row,col:o.col});
+    }
+  });
+  rows.sort(function(a,b){return a.row-b.row||a.col-b.col});
+  return rows;
+}
+
+function computeDiff(oldWb,newWb){
+  var order=[], seen={};
+  oldWb.sheetOrder.concat(newWb.sheetOrder).forEach(function(n){ if(!seen[n]){seen[n]=true; order.push(n);} });
+  return order.map(function(name){
+    var o=oldWb.sheets[name], n=newWb.sheets[name];
+    var status=o&&n?"common":(o?"removedSheet":"addedSheet");
+    var rows=status==="common"?diffSheet(o,n):[];
+    var counts={added:0,removed:0,changed:0};
+    rows.forEach(function(r){counts[r.type]++});
+    return {name:name,status:status,rows:rows,counts:counts,oldSheet:o,newSheet:n};
+  });
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var MAX_GRID_ROWS=200, MAX_GRID_COLS=40, MAX_RENDER=1000;
+
+var T={
+ ja:{title:"2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示",
+  sub:"「変更前」と「変更後」の2つのExcelファイルのどこが変わったか分からないときに。全シートを一括で比較し、追加・削除・変更されたセルだけをシート形式の色付き表示と一覧（CSVダウンロード対応）で確認できます。ファイルはどこにも送信されません。",
+  uploadHeading:"ファイルを選択",
+  dzOldTitle:"① 変更前（古い）ファイル",dzNewTitle:"② 変更後（新しい）ファイル",
+  dzHint:"ドラッグ＆ドロップ、またはクリックして選択",
+  uploadHint:"2つのファイルは選択した端末の中だけで読み込み・比較されます。サーバーには送信されません。",
+  loadingLabel:"読み込み中…",
+  errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  summaryHeading:"シート単位の差分サマリー",
+  summaryHint:"「追加」「削除」はそのシートにだけ存在していたセル、「変更」は両方のファイルに同じセル位置があり内容が異なっていたセルの数です。シート名そのものが変わった場合は「シート削除」＋「シート追加」として扱われます。",
+  colSheet:"シート",colStatus:"状態",colAdded:"追加",colRemoved:"削除",colChanged:"変更",
+  statAdded:"追加セル",statRemoved:"削除セル",statChanged:"変更セル",
+  statusCommon:"共通",statusAdded:"シート追加",statusRemoved:"シート削除",
+  gridHeading:"シート表示（色付き）",gridSheetLabel:"シート：",
+  gridTooBig:"このシートは行・列数が多いため、シート表示は省略しています（下の一覧でご確認ください）。",
+  gridNoSheet:"シート追加・削除のみのため、シート表示はありません。",
+  legendAdded:"追加されたセル",legendRemoved:"削除されたセル（表示は変更前の値）",legendChanged:"内容が変わったセル（マウスを乗せると変更前の値）",
+  filterHeading:"絞り込み",
+  filterSheet:"シート：",filterType:"種類：",
+  searchPh:"セル番地・内容を検索",
+  allOption:"すべて",
+  typeAdded:"追加",typeRemoved:"削除",typeChanged:"変更",
+  resultHeading:"差分セルの一覧",
+  downloadBtn:"この一覧をCSVでダウンロード",
+  colCell:"セル",colType:"種類",colOld:"変更前",colNew:"変更後",
+  resultNone:"絞り込み条件に一致する差分セルはありません",
+  moreNote:"件まで表示しています（ダウンロードには絞り込み後の全件が含まれます）。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Compare two Excel files: highlight only the cells that changed",
+  sub:"Can't tell what changed between a “before” and “after” Excel file? Compares every sheet at once and shows only the added, removed or changed cells, as a colored sheet grid or an exportable list. Nothing is uploaded.",
+  uploadHeading:"Choose files",
+  dzOldTitle:"① Before (old) file",dzNewTitle:"② After (new) file",
+  dzHint:"Drag and drop, or click to choose",
+  uploadHint:"Both files are read and compared only on this device. Nothing is sent to a server.",
+  loadingLabel:"Loading…",
+  errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  summaryHeading:"Per-sheet diff summary",
+  summaryHint:"“Added”/“Removed” counts cells that exist in only one file. “Changed” counts cells at the same address in both files whose content differs. A renamed sheet is reported as one sheet removed and one added.",
+  colSheet:"Sheet",colStatus:"Status",colAdded:"Added",colRemoved:"Removed",colChanged:"Changed",
+  statAdded:"Added cells",statRemoved:"Removed cells",statChanged:"Changed cells",
+  statusCommon:"Common",statusAdded:"Sheet added",statusRemoved:"Sheet removed",
+  gridHeading:"Sheet view (highlighted)",gridSheetLabel:"Sheet:",
+  gridTooBig:"This sheet has too many rows/columns for the grid view — use the list below instead.",
+  gridNoSheet:"No grid view (this sheet was only added or removed).",
+  legendAdded:"Added cell",legendRemoved:"Removed cell (shown as its old value)",legendChanged:"Changed cell (hover to see the old value)",
+  filterHeading:"Filters",
+  filterSheet:"Sheet:",filterType:"Type:",
+  searchPh:"Search cell / content",
+  allOption:"All",
+  typeAdded:"Added",typeRemoved:"Removed",typeChanged:"Changed",
+  resultHeading:"Diff list",
+  downloadBtn:"Download this list as CSV",
+  colCell:"Cell",colType:"Type",colOld:"Before",colNew:"After",
+  resultNone:"No differing cells match the current filters",
+  moreNote:" rows shown (the download includes every filtered row).",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={old:null,"new":null,diffSheets:null,sheetFilter:"",typeFilter:"",search:"",gridSheet:""};
+
+function escTrunc(s,max){ s=String(s); max=max||160; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function loadFile(slot,file){
+  var box={loading:true,error:"",name:file.name,wb:null};
+  state[slot]=box;
+  render();
+  file.arrayBuffer().then(function(buf){ return parseWorkbook(new Uint8Array(buf)); })
+    .then(function(wb){ box.loading=false; box.wb=wb; render(); })
+    .catch(function(){ box.loading=false; box.error=T[lang].errBad; render(); });
+}
+
+function recomputeDiff(){
+  if(state.old && !state.old.loading && !state.old.error && state["new"] && !state["new"].loading && !state["new"].error){
+    state.diffSheets=computeDiff(state.old.wb,state["new"].wb);
+  } else {
+    state.diffSheets=null;
+  }
+}
+
+function allDiffRows(){
+  var out=[];
+  if(!state.diffSheets) return out;
+  state.diffSheets.forEach(function(s){
+    s.rows.forEach(function(r){ out.push({sheet:s.name,ref:r.ref,type:r.type,oldVal:r.oldVal,newVal:r.newVal}); });
+  });
+  return out;
+}
+function filteredRows(){
+  var rows=allDiffRows(), s=state, needle=s.search.trim().toLowerCase();
+  return rows.filter(function(r){
+    if(s.sheetFilter && r.sheet!==s.sheetFilter) return false;
+    if(s.typeFilter && r.type!==s.typeFilter) return false;
+    if(needle){
+      var hay=(r.ref+" "+(r.oldVal||"")+" "+(r.newVal||"")).toLowerCase();
+      if(hay.indexOf(needle)===-1) return false;
+    }
+    return true;
+  });
+}
+function typeLabel(t){ return t==="added"?T[lang].typeAdded:(t==="removed"?T[lang].typeRemoved:T[lang].typeChanged); }
+function statusLabel(st){ return st==="common"?T[lang].statusCommon:(st==="addedSheet"?T[lang].statusAdded:T[lang].statusRemoved); }
+
+function renderDropzone(slot,nameEl,metaEl,errEl){
+  var box=state[slot];
+  if(!box){ $(nameEl).textContent=""; $(metaEl).textContent=""; $(errEl).textContent=""; return; }
+  $(nameEl).textContent=box.name;
+  if(box.loading){ $(metaEl).textContent=T[lang].loadingLabel; $(errEl).textContent=""; }
+  else if(box.error){ $(metaEl).textContent=""; $(errEl).textContent=box.error; }
+  else {
+    var sheetCount=box.wb.sheetOrder.length;
+    $(metaEl).textContent=sheetCount+(lang==="en"?" sheet(s)":" シート");
+    $(errEl).textContent="";
+  }
+}
+
+function renderSummary(){
+  var has=!!state.diffSheets;
+  $("sheetSummaryCard").style.display=has?"":"none";
+  $("gridCard").style.display=has?"":"none";
+  $("filterCard").style.display=has?"":"none";
+  $("resultCard").style.display=has?"":"none";
+  if(!has) return;
+  var totals={added:0,removed:0,changed:0};
+  var body="";
+  state.diffSheets.forEach(function(s){
+    totals.added+=s.counts.added; totals.removed+=s.counts.removed; totals.changed+=s.counts.changed;
+    body+="<tr><td>"+esc(s.name)+"</td><td><span class='badge "+s.status+"'>"+esc(statusLabel(s.status))+"</span></td>"+
+      "<td class='num'>"+s.counts.added+"</td><td class='num'>"+s.counts.removed+"</td><td class='num'>"+s.counts.changed+"</td></tr>";
+  });
+  $("sheetSummaryBody").innerHTML=body;
+  $("totalStatGrid").innerHTML=
+    "<div class='statBox added'><div class='n'>"+totals.added+"</div><div class='l'>"+esc(T[lang].statAdded)+"</div></div>"+
+    "<div class='statBox removed'><div class='n'>"+totals.removed+"</div><div class='l'>"+esc(T[lang].statRemoved)+"</div></div>"+
+    "<div class='statBox changed'><div class='n'>"+totals.changed+"</div><div class='l'>"+esc(T[lang].statChanged)+"</div></div>";
+}
+
+function renderGridSelect(){
+  if(!state.diffSheets) return;
+  var cur=$("gridSheetSelect").value||state.gridSheet;
+  var h="";
+  state.diffSheets.forEach(function(s){ h+="<option value='"+esc(s.name)+"'>"+esc(s.name)+"</option>"; });
+  $("gridSheetSelect").innerHTML=h;
+  var names=state.diffSheets.map(function(s){return s.name});
+  state.gridSheet=names.indexOf(cur)!==-1?cur:(names[0]||"");
+  $("gridSheetSelect").value=state.gridSheet;
+}
+
+function renderGrid(){
+  if(!state.diffSheets){ $("gridBox").innerHTML=""; return; }
+  var entry=null;
+  state.diffSheets.forEach(function(s){ if(s.name===state.gridSheet) entry=s; });
+  if(!entry){ $("gridBox").innerHTML=""; return; }
+  if(entry.status!=="common"){ $("gridBox").innerHTML="<p class='hint'>"+esc(T[lang].gridNoSheet)+"</p>"; return; }
+  var maxRow=Math.max(entry.oldSheet.maxRow,entry.newSheet.maxRow);
+  var maxCol=Math.max(entry.oldSheet.maxCol,entry.newSheet.maxCol);
+  if(maxRow+1>MAX_GRID_ROWS || maxCol+1>MAX_GRID_COLS){
+    $("gridBox").innerHTML="<p class='hint'>"+esc(T[lang].gridTooBig)+"</p>";
+    return;
+  }
+  var diffByRef={};
+  entry.rows.forEach(function(r){ diffByRef[r.ref]=r; });
+  var h="<div class='gridWrap'><table class='grid'><thead><tr><th class='rowhead'></th>";
+  for(var c=0;c<=maxCol;c++) h+="<th>"+colIndexToLetter(c)+"</th>";
+  h+="</tr></thead><tbody>";
+  for(var r=0;r<=maxRow;r++){
+    h+="<tr><td class='rowhead'>"+(r+1)+"</td>";
+    for(var c2=0;c2<=maxCol;c2++){
+      var ref=colIndexToLetter(c2)+(r+1);
+      var d=diffByRef[ref];
+      if(d){
+        var cls=d.type, title="", text="";
+        if(d.type==="added"){ text=d.newVal; }
+        else if(d.type==="removed"){ text=d.oldVal; }
+        else { text=d.newVal; title=(d.oldVal!==null?d.oldVal:"")+" → "+(d.newVal!==null?d.newVal:""); }
+        h+="<td class='"+cls+"'"+(title?" title='"+esc(title)+"'":"")+">"+escTrunc(text,40)+"</td>";
+      } else {
+        var oc=entry.oldSheet.cells[ref], nc=entry.newSheet.cells[ref];
+        var plain=nc?nc.value:(oc?oc.value:"");
+        h+="<td>"+(plain?escTrunc(plain,40):"")+"</td>";
+      }
+    }
+    h+="</tr>";
+  }
+  h+="</tbody></table></div>";
+  $("gridBox").innerHTML=h;
+}
+
+function renderFilterOptions(){
+  if(!state.diffSheets) return;
+  var curSheet=$("sheetFilter").value;
+  var sh="<option value=''>"+esc(T[lang].allOption)+"</option>";
+  state.diffSheets.forEach(function(s){ if(s.rows.length) sh+="<option value='"+esc(s.name)+"'>"+esc(s.name)+"</option>"; });
+  $("sheetFilter").innerHTML=sh;
+  var names=state.diffSheets.map(function(s){return s.name});
+  $("sheetFilter").value=names.indexOf(curSheet)!==-1?curSheet:"";
+  state.sheetFilter=$("sheetFilter").value;
+
+  var curType=$("typeFilter").value;
+  var th="<option value=''>"+esc(T[lang].allOption)+"</option>"+
+    "<option value='added'>"+esc(T[lang].typeAdded)+"</option>"+
+    "<option value='removed'>"+esc(T[lang].typeRemoved)+"</option>"+
+    "<option value='changed'>"+esc(T[lang].typeChanged)+"</option>";
+  $("typeFilter").innerHTML=th;
+  $("typeFilter").value=["","added","removed","changed"].indexOf(curType)!==-1?curType:"";
+  state.typeFilter=$("typeFilter").value;
+}
+
+function renderResult(){
+  if(!state.diffSheets) return;
+  var rows=filteredRows();
+  $("resultCount").textContent=rows.length;
+  if(!rows.length){ $("resultBox").innerHTML="<p class='hint'>"+esc(T[lang].resultNone)+"</p>"; $("downloadBtn").disabled=true; return; }
+  var shown=rows.slice(0,MAX_RENDER);
+  var h="<div class='scroll'><table class='list'><thead><tr>"+
+    "<th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colCell)+"</th><th>"+esc(T[lang].colType)+"</th>"+
+    "<th>"+esc(T[lang].colOld)+"</th><th>"+esc(T[lang].colNew)+"</th></tr></thead><tbody>";
+  shown.forEach(function(r){
+    h+="<tr><td>"+escTrunc(r.sheet,30)+"</td><td class='cellRef'>"+esc(r.ref)+"</td>"+
+      "<td class='typeTag'><span class='tag "+r.type+"'>"+esc(typeLabel(r.type))+"</span></td>"+
+      "<td class='oldVal'>"+(r.oldVal!==null?escTrunc(r.oldVal,160):"")+"</td>"+
+      "<td class='newVal'>"+(r.newVal!==null?escTrunc(r.newVal,160):"")+"</td></tr>";
+  });
+  h+="</tbody></table></div>";
+  if(rows.length>MAX_RENDER) h+="<p class='hint'>"+MAX_RENDER+T[lang].moreNote+"</p>";
+  $("resultBox").innerHTML=h;
+  $("downloadBtn").disabled=false;
+}
+
+function render(){
+  renderDropzone("old","dzOldName","dzOldMeta","dzOldErr");
+  renderDropzone("new","dzNewName","dzNewMeta","dzNewErr");
+  recomputeDiff();
+  renderSummary();
+  if(state.diffSheets){
+    renderGridSelect();
+    renderGrid();
+    renderFilterOptions();
+    renderResult();
+  }
+}
+
+function setupDropzone(dzId,fileInputId,slot){
+  var dz=$(dzId), input=$(fileInputId);
+  ["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+  ["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+  dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) loadFile(slot,fs[0]); });
+  dz.addEventListener("click",function(){input.click()});
+  dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();input.click()} });
+  input.addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) loadFile(slot,fs[0]); e.target.value=""; });
+}
+setupDropzone("dzOld","fileOldInput","old");
+setupDropzone("dzNew","fileNewInput","new");
+
+$("gridSheetSelect").addEventListener("change",function(){ state.gridSheet=this.value; renderGrid(); });
+$("sheetFilter").addEventListener("change",function(){ state.sheetFilter=this.value; renderResult(); });
+$("typeFilter").addEventListener("change",function(){ state.typeFilter=this.value; renderResult(); });
+$("searchBox").addEventListener("input",function(){ state.search=this.value; renderResult(); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var rows=filteredRows();
+  if(!rows.length) return;
+  var header=[T[lang].colSheet,T[lang].colCell,T[lang].colType,T[lang].colOld,T[lang].colNew];
+  var out=[header];
+  rows.forEach(function(r){ out.push([r.sheet,r.ref,typeLabel(r.type),r.oldVal!==null?r.oldVal:"",r.newVal!==null?r.newVal:""]); });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="xlsx-diff.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+var RELATED=[
+ {href:"../excel-trouble/",ja:"エクセルのトラブル解決ガイド",jaD:"「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全17ツールを探す。",en:"Excel Troubleshooting Guide",enD:"Find the right tool among all 17 by symptom: heavy, save errors, error values, links, printing."},
+ {href:"../xlsx-suushiki/",ja:"引き継いだExcelの数式を一覧に",jaD:"数式が入った全セルを一覧化（エラーに限らず全件）。他シート参照・外部参照の可能性も検出。",en:"List every formula in an Excel file",enD:"Lists every formula cell, not just errors, and flags cross-sheet / possible external references."},
+ {href:"../xlsx-merge/",ja:"Excelファイルを複数まとめて1つに",jaD:"複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。",en:"Merge multiple Excel files into one",enD:"Merge several .xlsx files directly into one CSV."},
+ {href:"../xlsx-namae/",ja:"「名前は既に存在します」対策：名前定義の点検・削除ツール",jaD:"名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。",en:"Fix “Name already exists”",enD:"List every defined name in a workbook and remove the hidden/broken ones causing the collision."},
+ {href:"../xlsx-link/",ja:"Excelの「外部ソースへのリンク」発生源を探すツール",jaD:"外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。",en:"Find external-workbook link sources",enD:"List every external-workbook link and exactly where it's used — formulas, names, validation, formatting and charts."},
+ {href:"../xlsx-ketsugo/",ja:"Excelの結合セルを解除して値を埋める→CSV出力",jaD:"結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。",en:"Unmerge cells and fill the blanks → CSV",enD:"Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly."},
+ {href:"../xlsx-omoi/",ja:"「エクセルが重い」原因を診断：ファイル内訳チェッカー",jaD:"シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。",en:"Why is this Excel file heavy?",enD:"Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes."},
+ {href:"../xlsx-jouken/",ja:"条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール",jaD:"条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。",en:"Clean up conditional formatting rules that keep piling up",enD:"List every conditional-formatting rule across all sheets, flag overlapping ranges, whole-row/column rules and broken style references, and remove the ones you choose."},
+ {href:"../xlsx-junkan/",ja:"循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール",jaD:"全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。反復計算ONで警告が出ないファイルも検出。",en:"Can't tell where a circular reference is?",enD:"Scan every sheet's formulas and list every circular-reference group at once, even when iterative calculation hides Excel's own warning."},
+ {href:"../xlsx-hyperlink/",ja:"ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール",jaD:"全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。",en:"Hyperlinks that won't open, or too many to remove one by one",enD:"List every clickable hyperlink across every sheet, flag links to a local file or a deleted sheet, and remove the ones you choose."},
+ {href:"../xlsx-style/",ja:"「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ",jaD:"セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出す。見た目は変わらない。",en:"Fix “too many different cell formats”",enD:"Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks."},
+ {href:"../xlsx-hani/",ja:"Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット",jaD:"実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。",en:"Reset the used range when Ctrl+End jumps far away",enD:"Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped)."},
+ {href:"../xlsx-atai/",ja:"数式を値に変換：外部ファイルへのリンクが解除できないときに",jaD:"Excelの数式を保存されている計算結果に変換。外部ファイルを参照している数式だけを選んで値にし、条件を満たせば外部リンクの記録も削除。",en:"Convert formulas to values — when you can't break an external link",enD:"Converts formula cells to their cached values, with a scope limited to formulas referencing an external workbook, and removes the external-link records too when it's safe."},
+ {href:"../xlsx-saihyouji/",ja:"シートの「再表示」に出てこないときの対策：非表示・完全非表示シートの一覧・一括変更",jaD:"非表示・完全非表示（veryHidden）シートの表示状態を一覧化し、選んだシートをまとめて表示に戻す（または非表示にする）新しいファイルを書き出す。",en:"Sheet missing from the Unhide dialog?",enD:"List every sheet's visibility (visible/hidden/very hidden) and bulk-change any of them to a new file."},
+ {href:"../xlsx-comment/",ja:"シートのあちこちに散らばったコメント・メモを全部一覧に",jaD:"従来の「メモ」も最近の「スレッド形式」コメント（返信・解決済みの状態を含む）も全シート横断で一覧化してCSV出力・印刷。",en:"List every cell comment and note across every sheet",enD:"Covers both the classic “note” and the newer threaded “comment” (replies, resolved status), exportable as CSV or printed directly."},
+ {href:"../xlsx-error/",ja:"#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に",jaD:"全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類別の件数とよくある原因も表示。",en:"Find every cell with a cached error value",enD:"Lists every cell across every sheet and file whose cached result is itself an error, with a per-type count and likely cause."},
+ {href:"../sakusha-kesu/",ja:"社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す",jaD:"Excel・Word・PowerPointに残る作成者情報を複数ファイル一括で消去。",en:"Strip author names before sending a file outside your company",enD:"Strip creator, last-modified-by and comment-author names from multiple Excel/Word/PowerPoint files at once."}
+];
+function renderRelated(){
+  var ja=RELATED.map(function(x){return "<li><a href='"+x.href+"'>"+esc(x.ja)+"</a> — "+esc(x.jaD)+"</li>"}).join("");
+  var en=RELATED.map(function(x){return "<li><a href='"+x.href+"'>"+esc(x.en)+"</a> — "+esc(x.enD)+"</li>"}).join("");
+  $("relatedJa").innerHTML=ja;
+  $("relatedEn").innerHTML=en;
+}
+renderRelated();
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var phs=document.querySelectorAll("[data-i-ph]");
+  for(var p=0;p<phs.length;p++){var k2=phs[p].getAttribute("data-i-ph");if(T[lang][k2]!==undefined)phs[p].setAttribute("placeholder",T[lang][k2])}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

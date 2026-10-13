@@ -824,6 +824,13 @@
       "pages": null,
       "total": null,
       "note": "取得失敗：引き続きプロキシがtenohira.goatcounter.com・tenohira-tools.github.ioへのCONNECTを403で拒否（既知の問題、escalations記載済み、オーナー対応待ち、10-10から継続）。前回10-12 17:24Z時点の値（サイト全体累計8、個別32ページ全て0）から更新できず。health.md（34ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象になる閲覧増加ページも無いため、ideas/backlog.mdの最上位「コメント・メモの全シート一覧化」（docs/xlsx-comment/）を新規公開し、既存のExcel系16ページ全てから相互リンクを追加（excel-troubleの案内数も15→16に更新）。"
+    },
+    {
+      "date": "2026-10-13T20:30:00Z",
+      "source": "https://tenohira.goatcounter.com/counter/<path>.json",
+      "pages": null,
+      "total": null,
+      "note": "取得失敗：引き続きプロキシがtenohira.goatcounter.com・tenohira-tools.github.ioへのCONNECTを403で拒否（既知の問題、escalations記載済み、オーナー対応待ち、10-10から継続）。WebFetch経由も無人実行で承認待ちのまま失効し失敗（PROVENANCE_REQUIRED）。前回10-13 17:30Z時点の値（サイト全体累計8、個別34ページ全て0）から更新できず。health.md（34ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象になる閲覧増加ページも無いため、ideas/backlog.mdの最上位「2つのExcelファイルのセル単位の差分比較」（docs/xlsx-diff/）を新規公開し、既存のExcel系17ページ全てから相互リンクを追加（excel-troubleの案内数も16→17に更新）。"
     }
   ],
   "weekly": [
