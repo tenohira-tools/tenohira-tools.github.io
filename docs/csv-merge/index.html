@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>複数CSVの結合ツール（文字コードの違いを自動判定）| てのひらツール</title>
-<meta name="description" content="文字コードがバラバラな複数のCSVファイル（Shift_JIS・EUC-JP・UTF-8混在）を、ファイルごとに自動判定してから1つに結合。見出し名で列をそろえ、ファイルによって列構成が多少違っても足りない列は空欄で結合できます。ブラウザ内だけで処理し、ファイルは送信されません。Merge multiple CSV files that use different character encodings — each file's encoding is auto-detected, columns are aligned by header name, entirely in your browser.">
+<title>文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール（自動判定）| てのひらツール</title>
+<meta name="description" content="文字コードがバラバラな複数のCSVファイル（Shift_JIS・EUC-JP・UTF-8混在）をそのまま結合できないときに、ファイルごとに自動判定してから1つに結合。見出し名で列をそろえ、ファイルによって列構成が多少違っても足りない列は空欄で結合できます。ブラウザ内だけで処理し、ファイルは送信されません。Merge multiple CSV files that use different character encodings — each file's encoding is auto-detected, columns are aligned by header name, entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/csv-merge/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b}
@@ -65,8 +65,8 @@ html[lang=en] .en-only{display:block}
 <p class="top"><a href="../">← てのひらツール</a></p>
 <header>
   <div>
-    <h1 data-i="title">複数CSVの結合ツール</h1>
-    <p class="sub" data-i="sub">文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから1つに結合します。見出し名で列をそろえ、列構成が多少違っても足りない列は空欄にして結合します。ファイルはどこにも送信されません。</p>
+    <h1 data-i="title">文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール</h1>
+    <p class="sub" data-i="sub">文字コードがバラバラな複数のCSVをそのまま結合できないときに、ファイルごとに自動判定してから1つに結合します。見出し名で列をそろえ、列構成が多少違っても足りない列は空欄にして結合します。ファイルはどこにも送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -133,7 +133,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
     <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで結合されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
     <h3>Q. ファイルごとに文字コードが違っても大丈夫ですか？</h3>
-    <p>A. はい。CSV・テキストの文字化け直しツールと同じ判定ロジックで、ファイルごとにUTF-8／Shift_JIS（CP932）／EUC-JP／ISO-2022-JPを個別に自動判定してから結合します。判定がおかしい場合はファイルごとの一覧で手動の文字コードに変更できます。</p>
+    <p>A. はい。CSVやテキストを開くと文字化けする：文字コード変換ツールと同じ判定ロジックで、ファイルごとにUTF-8／Shift_JIS（CP932）／EUC-JP／ISO-2022-JPを個別に自動判定してから結合します。判定がおかしい場合はファイルごとの一覧で手動の文字コードに変更できます。</p>
     <h3>Q. ファイルによって列の並び順や数が違っても結合できますか？</h3>
     <p>A. 「見出し名で列をそろえる」がONのときは、見出し名（前後の空白は無視）が一致する列を同じ列として扱い、全ファイルの見出し名を集めた列構成に結合します。あるファイルに無い見出しの列は、そのファイルの行では空欄になります。見出し名が完全に一致しない限り別の列として扱われるため、「氏名」と「名前」のような表記違いは自動では統合されません（必要であれば先に表記をそろえてください）。</p>
     <h3>Q. 「見出し名で列をそろえる」をOFFにするとどうなりますか？</h3>
@@ -171,7 +171,7 @@ html[lang=en] .en-only{display:block}
     <h2>関連ツール</h2>
     <ul>
       <li><a href="../csv-fix/">CSV・テキストの文字化け直し</a> — Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換。ExcelのBOM追加・削除にも対応。</li>
-      <li><a href="../csv-seiri/">CSVの列ごと書式統一ツール</a> — CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロード。</li>
+      <li><a href="../csv-seiri/">全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール</a> — CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロード。</li>
       <li><a href="../wareki-toitsu/">和暦・西暦 混在日付の一括統一</a> — 令和6年1月2日／R6.1.2／2024/1/2など混在した日付を文章・CSVからまとめて検出し形式を統一。</li>
       <li><a href="../hyoki-yure/">表記ゆれ・全角半角チェッカー</a> — 「サーバ／サーバー」などの表記ゆれ、全角英数字・半角カタカナ・全角スペースの混在を検出してワンクリックで統一。</li>
       <li><a href="../config-convert/">JSON・YAML・TOML 相互変換エディタ</a> — 3つの枠のどれかを編集すると、残り2つの形式にその場で変換。</li>
@@ -224,8 +224,8 @@ var ENC_LABEL={
 };
 
 var T={
- ja:{title:"複数CSVの結合ツール",
-  sub:"文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから1つに結合します。見出し名で列をそろえ、列構成が多少違っても足りない列は空欄にして結合します。ファイルはどこにも送信されません。",
+ ja:{title:"文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール",
+  sub:"文字コードがバラバラな複数のCSVをそのまま結合できないときに、ファイルごとに自動判定してから1つに結合します。見出し名で列をそろえ、列構成が多少違っても足りない列は空欄にして結合します。ファイルはどこにも送信されません。",
   dropzoneText:"ここに複数のCSVファイルをドラッグ＆ドロップ、またはクリックして選択",
   dropzoneHint:"1つずつでも追加できます。文字コードはファイルごとに自動判定します。ファイルは選択した端末の中だけで処理されます。",
   fileListHeading:"追加したファイル",

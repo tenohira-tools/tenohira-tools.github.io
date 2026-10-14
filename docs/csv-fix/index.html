@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CSV・テキストの文字化け直しツール（Shift_JIS・EUC-JP→UTF-8変換、BOM追加/削除）| てのひらツール</title>
-<meta name="description" content="Shift_JIS（CP932）やEUC-JPで文字化けしたCSV・テキストファイルを、ブラウザだけでUTF-8に変換。ExcelでCSVが文字化けする原因のBOM追加・削除にも対応。ファイルはサーバーに送信されません。Fix mojibake: convert Shift_JIS/EUC-JP CSV files to UTF-8 and add or remove a BOM, entirely in your browser.">
+<title>CSVやテキストを開くと文字化けする：文字コード変換ツール（Shift_JIS・EUC-JP→UTF-8、BOM追加/削除）| てのひらツール</title>
+<meta name="description" content="CSVやテキストファイルを開くと文字化けする（Shift_JIS・EUC-JPが原因）ときに、ブラウザだけでUTF-8に変換。ExcelでCSVが文字化けする原因のBOM追加・削除にも対応。ファイルはサーバーに送信されません。Fix mojibake: convert Shift_JIS/EUC-JP CSV files to UTF-8 and add or remove a BOM, entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/csv-fix/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc}
@@ -56,8 +56,8 @@ html[lang=en] .en-only{display:block}
 <p class="top"><a href="../">← てのひらツール</a></p>
 <header>
   <div>
-    <h1 data-i="title">CSV・テキストの文字化け直しツール</h1>
-    <p class="sub" data-i="sub">Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換します。ExcelでCSVが文字化けするときのBOM追加・削除にも対応。ファイルはどこにも送信されません。</p>
+    <h1 data-i="title">CSVやテキストを開くと文字化けする：文字コード変換ツール</h1>
+    <p class="sub" data-i="sub">CSVやテキストファイルがShift_JISやEUC-JPで文字化けして読めないときに、ブラウザだけでUTF-8に変換します。ExcelでCSVを開くと文字化けする原因のBOM追加・削除にも対応。ファイルはどこにも送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -146,12 +146,12 @@ html[lang=en] .en-only{display:block}
   <div class="ja-only">
     <h2>関連ツール</h2>
     <ul>
-      <li><a href="../csv-seiri/">CSVの列ごと書式統一ツール</a> — CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロード。</li>
+      <li><a href="../csv-seiri/">全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール</a> — CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロード。</li>
       <li><a href="../wareki-toitsu/">和暦・西暦 混在日付の一括統一</a> — 令和6年1月2日／R6.1.2／2024/1/2など混在した日付を文章・CSVからまとめて検出し形式を統一。</li>
       <li><a href="../hyoki-yure/">表記ゆれ・全角半角チェッカー</a> — 「サーバ／サーバー」などの表記ゆれ、全角英数字・半角カタカナ・全角スペースの混在を検出してワンクリックで統一。</li>
       <li><a href="../regex-ja/">正規表現テスター（日本語で自動解説）</a> — 正規表現とテスト文字列を入れるとマッチ箇所をハイライトし、パターンの意味を自然な日本語の文章で自動解説。</li>
       <li><a href="../config-convert/">JSON・YAML・TOML 相互変換エディタ</a> — 3つの枠のどれかを編集すると、残り2つの形式にその場で変換。</li>
-      <li><a href="../csv-merge/">複数CSVの結合ツール</a> — 文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから見出し名で列をそろえて結合。</li>
+      <li><a href="../csv-merge/">文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール</a> — 文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから見出し名で列をそろえて結合。</li>
       <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま読み込み、1つのCSVに結合。日付・時刻セルも見たままの形式に変換。</li>
       <li><a href="../csv-group-split/">CSVを列の値ごとに自動分割</a> — 1つのCSVを、選んだ列（都道府県・店舗・担当者など）の値ごとにグループ分けして複数ファイルに分け、ZIPでまとめてダウンロード。</li>
       <li><a href="../csv-master-replace/">CSVのコード→名称 一括変換ツール</a> — データCSVのコード列を、対応表（マスタ）CSVと突き合わせて店舗名・氏名などの列を一括追加。</li>
@@ -206,8 +206,8 @@ var ENC_LABEL={
 };
 
 var T={
- ja:{title:"CSV・テキストの文字化け直しツール",
-  sub:"Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換します。ExcelでCSVが文字化けするときのBOM追加・削除にも対応。ファイルはどこにも送信されません。",
+ ja:{title:"CSVやテキストを開くと文字化けする：文字コード変換ツール",
+  sub:"CSVやテキストファイルがShift_JISやEUC-JPで文字化けして読めないときに、ブラウザだけでUTF-8に変換します。ExcelでCSVを開くと文字化けする原因のBOM追加・削除にも対応。ファイルはどこにも送信されません。",
   dropzoneText:"ここにファイルをドラッグ＆ドロップ、またはクリックして選択",
   dropzoneHint:"CSV・TSV・テキストファイル対応。ファイルは選択した端末の中だけで処理されます。",
   fileLabel:"ファイル",detectedLabel:"検出した文字コード",

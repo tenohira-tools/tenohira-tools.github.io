@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CSVの列ごと書式統一ツール（全角半角・カナ・郵便番号・ハイフンをそろえる）| てのひらツール</title>
-<meta name="description" content="CSVファイルを読み込み、列ごとに「全角英数字→半角」「半角カナ→全角カナ」「郵便番号を123-4567形式に統一」「ハイフン類の統一」などの書式をそろえてダウンロード。すべてブラウザ内で処理し、ファイルは送信されません。Clean up a CSV column by column: normalize full/half-width characters, katakana, postal codes and hyphen styles, entirely in your browser.">
+<title>全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール | てのひらツール</title>
+<meta name="description" content="CSVの列ごとに「全角英数字→半角」「半角カナ→全角カナ」「郵便番号を123-4567形式に統一」「ハイフン類の統一」など、バラバラな表記ゆれをまとめてそろえてダウンロード。すべてブラウザ内で処理し、ファイルは送信されません。Clean up a CSV column by column: normalize full/half-width characters, katakana, postal codes and hyphen styles, entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/csv-seiri/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b}
@@ -62,8 +62,8 @@ html[lang=en] .en-only{display:block}
 <p class="top"><a href="../">← てのひらツール</a></p>
 <header>
   <div>
-    <h1 data-i="title">CSVの列ごと書式統一ツール</h1>
-    <p class="sub" data-i="sub">CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロードします。ファイルはどこにも送信されません。</p>
+    <h1 data-i="title">全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール</h1>
+    <p class="sub" data-i="sub">CSVの列ごとに全角半角・カナ・郵便番号・ハイフンなど、バラバラな表記ゆれをまとめてそろえてダウンロードします。ファイルはどこにも送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -169,7 +169,7 @@ html[lang=en] .en-only{display:block}
       <li><a href="../wareki-toitsu/">和暦・西暦 混在日付の一括統一</a> — 令和6年1月2日／R6.1.2／2024/1/2など混在した日付を文章・CSVからまとめて検出し形式を統一。</li>
       <li><a href="../hyoki-yure/">表記ゆれ・全角半角チェッカー</a> — 「サーバ／サーバー」などの表記ゆれ、全角英数字・半角カタカナ・全角スペースの混在を検出してワンクリックで統一。</li>
       <li><a href="../config-convert/">JSON・YAML・TOML 相互変換エディタ</a> — 3つの枠のどれかを編集すると、残り2つの形式にその場で変換。</li>
-      <li><a href="../csv-merge/">複数CSVの結合ツール</a> — 文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから見出し名で列をそろえて結合。</li>
+      <li><a href="../csv-merge/">文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール</a> — 文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから見出し名で列をそろえて結合。</li>
       <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま読み込み、1つのCSVに結合。日付・時刻セルも見たままの形式に変換。</li>
       <li><a href="../csv-group-split/">CSVを列の値ごとに自動分割</a> — 1つのCSVを、選んだ列（都道府県・店舗・担当者など）の値ごとにグループ分けして複数ファイルに分け、ZIPでまとめてダウンロード。</li>
       <li><a href="../csv-master-replace/">CSVのコード→名称 一括変換ツール</a> — データCSVのコード列を、対応表（マスタ）CSVと突き合わせて店舗名・氏名などの列を一括追加。</li>
@@ -223,8 +223,8 @@ var ENC_LABEL={
 };
 
 var T={
- ja:{title:"CSVの列ごと書式統一ツール",
-  sub:"CSVを読み込み、列ごとに全角半角・カナ・郵便番号・ハイフンの書式をそろえてダウンロードします。ファイルはどこにも送信されません。",
+ ja:{title:"全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール",
+  sub:"CSVの列ごとに全角半角・カナ・郵便番号・ハイフンなど、バラバラな表記ゆれをまとめてそろえてダウンロードします。ファイルはどこにも送信されません。",
   dropzoneText:"ここにCSVファイルをドラッグ＆ドロップ、またはクリックして選択",
   dropzoneHint:"CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。",
   fileLabel:"ファイル",detectedLabel:"検出した文字コード",

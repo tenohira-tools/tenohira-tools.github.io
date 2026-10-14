@@ -61,7 +61,7 @@
     },
     {
       "slug": "csv-fix",
-      "title": "CSV・テキストの文字化け直しツール",
+      "title": "CSVやテキストを開くと文字化けする：文字コード変換ツール",
       "url": "https://tenohira-tools.github.io/csv-fix/",
       "published": "2026-09-23",
       "status": "継続",
@@ -116,6 +116,11 @@
         {
           "date": "2026-10-10",
           "class": "閲覧0（未インデックスが主因）。2026-10-23の30日判定まで継続"
+        },
+        {
+          "date": "2026-10-14",
+          "class": "改善実施",
+          "note": "改善：title/meta description/h1/subを、他のExcel系ツールと同じ「困りごとの言い回し先頭」に変更（ideas/backlog.mdの申し送り）。関連ツール欄・docs/index.html・自ページを含む相互参照のアンカー文言も新しい表記に一括更新（grep確認済み）。GoatCounter取得は今回から成功（累計8、本ツールは0、変化なし）。"
         }
       ]
     },
@@ -563,7 +568,7 @@
     },
     {
       "slug": "csv-seiri",
-      "title": "CSVの列ごと書式統一ツール",
+      "title": "全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール",
       "url": "https://tenohira-tools.github.io/csv-seiri/",
       "published": "2026-09-29",
       "status": "継続",
@@ -591,6 +596,11 @@
         {
           "date": "2026-10-10",
           "class": "閲覧0（未インデックスが主因）。2026-10-29の30日判定まで継続"
+        },
+        {
+          "date": "2026-10-14",
+          "class": "改善実施",
+          "note": "改善：title/meta description/h1/subを、他のExcel系ツールと同じ「困りごとの言い回し先頭」に変更（ideas/backlog.mdの申し送り）。関連ツール欄・docs/index.html・自ページを含む相互参照のアンカー文言も新しい表記に一括更新（grep確認済み）。GoatCounter取得は今回から成功（累計8、本ツールは0、変化なし）。"
         }
       ]
     },
@@ -629,7 +639,7 @@
     },
     {
       "slug": "csv-merge",
-      "title": "複数CSVの結合ツール（文字コードの違いを自動判定）",
+      "title": "文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール",
       "url": "https://tenohira-tools.github.io/csv-merge/",
       "published": "2026-10-01",
       "status": "継続",
@@ -657,6 +667,11 @@
         {
           "date": "2026-10-10",
           "class": "閲覧0（未インデックスが主因）。2026-10-31の30日判定まで継続"
+        },
+        {
+          "date": "2026-10-14",
+          "class": "改善実施",
+          "note": "改善：title/meta description/h1/subを、他のExcel系ツールと同じ「困りごとの言い回し先頭」に変更（ideas/backlog.mdの申し送り）。関連ツール欄・docs/index.html・自ページを含む相互参照のアンカー文言も新しい表記に一括更新（grep確認済み）。GoatCounter取得は今回から成功（累計8、本ツールは0、変化なし）。"
         }
       ]
     },
