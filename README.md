@@ -12,11 +12,11 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 
 <!-- tools:start -->
 - [JSON・YAML・TOML 相互変換エディタ（3形式をリアルタイム同期）](https://tenohira-tools.github.io/config-convert/)
-- [CSV・テキストの文字化け直しツール（Shift_JIS・EUC-JP→UTF-8変換、BOM追加/削除）](https://tenohira-tools.github.io/csv-fix/)
+- [CSVやテキストを開くと文字化けする：文字コード変換ツール（Shift_JIS・EUC-JP→UTF-8、BOM追加/削除）](https://tenohira-tools.github.io/csv-fix/)
 - [CSVを列の値ごとに自動分割（グループ分割）](https://tenohira-tools.github.io/csv-group-split/)
 - [CSVのコード→名称 一括変換ツール（対応表・マスタ結合）](https://tenohira-tools.github.io/csv-master-replace/)
-- [複数CSVの結合ツール（文字コードの違いを自動判定）](https://tenohira-tools.github.io/csv-merge/)
-- [CSVの列ごと書式統一ツール（全角半角・カナ・郵便番号・ハイフンをそろえる）](https://tenohira-tools.github.io/csv-seiri/)
+- [文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール（自動判定）](https://tenohira-tools.github.io/csv-merge/)
+- [全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール](https://tenohira-tools.github.io/csv-seiri/)
 - [CSVをExcelで開くと0が消える・日付になるときの変換ツール（.xlsx書き出し）](https://tenohira-tools.github.io/csv-to-xlsx/)
 - [エクセルが重い・保存できない・エラーが出るときの対策まとめ｜症状から探す17ツール](https://tenohira-tools.github.io/excel-trouble/)
 - [表記ゆれ・全角半角チェッカー（サーバ/サーバーなどを検出して統一）](https://tenohira-tools.github.io/hyoki-yure/)
