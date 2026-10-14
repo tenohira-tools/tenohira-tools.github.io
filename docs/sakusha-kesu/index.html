@@ -136,6 +136,17 @@ html[lang=en] .en-only{display:block}
       <li><a href="../csv-to-xlsx/">CSVの先頭の0が消える・日付に化けるときのExcel(.xlsx)変換ツール</a> — CSVとExcelの橋渡し。</li>
       <li><a href="../xlsx-comment/">シートのあちこちに散らばったコメント・メモを全部一覧に</a> — 作成者名を消す前に、どこに誰のコメントが残っているか確認できます。</li>
     <li><a href="../xlsx-diff/">2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示</a> — 「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルだけをシート形式の色付き表示と一覧で確認。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
+      <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。</li>
+      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。</li>
+      <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
+      <li><a href="../xlsx-saihyouji/">シートの「再表示」に出てこないときの対策：非表示・完全非表示シートの一覧・一括変更</a> — 非表示・完全非表示（veryHidden）シートの表示状態を一覧化し、選んだシートをまとめて表示に戻す（または非表示にする）新しいファイルを書き出す。</li>
+      <li><a href="../xlsx-atai/">数式を値に変換：外部ファイルへのリンクが解除できないときに</a> — Excelの数式を保存されている計算結果に変換。外部ファイルを参照している数式だけを選んで値にし、条件を満たせば外部リンクの記録も削除。</li>
 </ul>
   </div>
   <div class="en-only">
@@ -148,6 +159,17 @@ html[lang=en] .en-only{display:block}
       <li><a href="../csv-to-xlsx/">Stop CSV losing leading zeros / becoming dates in Excel</a> — bridges CSV and Excel.</li>
       <li><a href="../xlsx-comment/">List every cell comment and note across every sheet</a> — check who commented where before you strip the author names.</li>
     <li><a href="../xlsx-diff/">Compare two Excel files: highlight only the cells that changed</a> — Compare a before/after pair of files across every sheet at once, with added/removed/changed cells highlighted in a sheet grid or a list.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used — formulas, names, validation, formatting and charts.</li>
+      <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once, even when iterative calculation hides Excel's own warning.</li>
+      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell (#REF!, #N/A, #VALUE! and more) across every sheet and file, with counts by type and a likely cause, exportable as CSV.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every conditional-formatting rule across all sheets, flag overlapping ranges, whole-row/column rules and broken style references, and remove the ones you choose.</li>
+      <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet, flag links to a local file or a deleted sheet, and remove the ones you choose.</li>
+      <li><a href="../xlsx-saihyouji/">Sheet missing from the Unhide dialog?</a> — List every sheet's visibility (visible/hidden/very hidden) and bulk-change any of them to a new file.</li>
+      <li><a href="../xlsx-atai/">Convert formulas to values — when you can't break an external link</a> — Converts formula cells to their cached values, with a scope limited to formulas referencing an external workbook, and removes the external-link records too when it's safe.</li>
 </ul>
   </div>
 </section>

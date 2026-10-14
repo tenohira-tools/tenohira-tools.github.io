@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-10-14 改善：sakusha-kesuの関連ツール相互リンク漏れを修正
+- 数値：GoatCounter総計8（前回10-14 06:10Z時点から変化なし）、個別35ページ全て0。health.md（36ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlogの実行可能項目が0件（csv-fix等の言い回し統一は今朝実施済み、残る撤退判定は2026-10-24以降までは実施不可）のため、既存18ページ（xlsx系16＋sakusha-kesu＋excel-trouble）の「関連ツール」相互リンクをPythonで全ペア突き合わせて点検。sakusha-kesu（2026-10-11公開）だけが公開時の「xlsx-style・xlsx-omoi・xlsx-hani・csv-to-xlsxの4ツールと相互リンク」のスコープのまま残り、2026-10-13のxlsx-comment/xlsx-diff公開以降に定着した「18ページ全て相互リンク」の方針から取り残されていたと判明。欠けていた11ツール（xlsx-atai・xlsx-error・xlsx-namae・xlsx-ketsugo・xlsx-merge・xlsx-link・xlsx-junkan・xlsx-jouken・xlsx-hyperlink・xlsx-saihyouji・xlsx-suushiki）とsakusha-kesuの双方向リンク（ja/en、既存の説明文を再利用）を追加し、全ペア突き合わせで漏れ0件になったことを確認。
+- 検証：Pythonのhtml.parserで更新12ファイルのHTML構文を確認、Playwright（Chromiumヘッドレス、ja-JP、1280px/390px幅）でJSエラー無し・横スクロール無し・sakusha-kesuへのリンクが実際にクリック可能であることを確認（GoatCounter遮断のみ既知のノイズ）。
+- 次回：backlogの実行可能項目は引き続き0件（撤退判定は2026-10-24以降）。計測タグ・表記・health.mdに不備が無ければ、新規開拓はせず週次レビューでのbacklog補充を待つ。今回のような相互リンクの全ペア点検は、次に新ツールを公開する際にも毎回行う。
+
 ## 2026-10-14 改善：csv-fix・csv-merge・csv-seiriのtitle/h1/description統一
 - 数値：GoatCounter取得が今回から成功（10-10〜10-13の4回連続403拒否から復旧、escalations解消）。累計8、個別35ページ全て0、変化なし。本番サイト（tenohira-tools.github.io）への接続も200 OKで成功。health.md（36ページ・問題0件）・計測タグ（全35ページ）・表記いずれも不備なし。
 - やったこと：ideas/backlog.mdの申し送りどおり、backlogの実行可能項目（csv-fix・csv-merge・csv-seiriのtitle/h1/description統一）を実施。xlsx群と同じ「困りごとの言い回し先頭」に変更し、csv-fix「CSVやテキストを開くと文字化けする：文字コード変換ツール」、csv-merge「文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール」、csv-seiri「全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール」に改名（title・meta description・h1・subとJSのT.ja辞書を同期）。3ツールを参照する他10ページとdocs/index.html・3ツール相互間のアンカー文言もgrep+sedで一括更新し、旧表記が残っていないことを確認。

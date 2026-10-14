@@ -1119,6 +1119,10 @@
         {
           "date": "2026-10-11T17:33:01Z",
           "note": "公開当日。GoatCounter取得はプロキシの403拒否で失敗（既知の問題）。前回10-10 20:29Z取得時点の値（サイト全体累計8、他29ページ全て0）から変化なし。新ツールはsitemap未反映のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        },
+        {
+          "date": "2026-10-14T20:14:00Z",
+          "note": "計測：GoatCounter総計8（前回10-14 06:10Z時点から変化なし）、個別35ページ全て0。健康チェック（36ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象になる閲覧増加ページも無く、backlogの実行可能項目が0件（週次レビューでの補充待ち）のため、既存18ページ（xlsx系16＋sakusha-kesu＋excel-trouble）の関連ツール相互リンクをPythonで全ペア突き合わせて点検。sakusha-kesuだけが2026-10-11公開時の『xlsx-style・xlsx-omoi・xlsx-hani・csv-to-xlsxの4ツールと相互リンク』というスコープのまま残り、2026-10-13のxlsx-comment/xlsx-diff公開以降『18ページ全て相互リンク』になった方針から漏れていたことが分かった。欠けていた11ツール（xlsx-atai・xlsx-error・xlsx-namae・xlsx-ketsugo・xlsx-merge・xlsx-link・xlsx-junkan・xlsx-jouken・xlsx-hyperlink・xlsx-saihyouji・xlsx-suushiki）との双方向リンク（ja/en）を追加し、全ペア突き合わせスクリプトで漏れ0件になったことを確認。検証：Playwright（Chromiumヘッドレス、ja-JP、1280px/390px幅）で更新した12ページ（sakusha-kesu＋11ツール）のJSエラー無し・横スクロール無し・sakusha-kesuへのリンクの実在を確認（GoatCounter遮断のみ既知のノイズ）。"
         }
       ],
       "reviews": []

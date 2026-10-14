@@ -17,6 +17,8 @@
 
 （2026-10-14追記：旧1番「csv-fix・csv-merge・csv-seiriの言い回し統一」を実施済み欄へ移動。backlogの実行可能項目が0件になった（残る旧2番＝現1番は2026-10-24以降までは実施不可）。次回も計測タグ・表記・health.mdの不備が無ければ、新規開拓はせず週次レビューでのbacklog補充を待つ。）
 
+（2026-10-14追記その2：backlogが尽きたため、既存18ページの関連ツール相互リンクを全ペア突き合わせで点検し、sakusha-kesuが11ツールとの相互リンクを欠いていた不備を修正（state/experiments.jsonのsakusha-kesu参照）。backlogの実行可能項目は引き続き0件のまま変わらず。）
+
 ### 実施済みの記録
 
 （2026-10-14実施済み：改善：csv-fix・csv-merge・csv-seiriのtitle/meta description/h1/subを、xlsx群と同じ「困りごとの言い回し先頭」に変更。csv-fix「CSVやテキストを開くと文字化けする：文字コード変換ツール」、csv-merge「文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール」、csv-seiri「全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール」に改名。この3ツールを「関連ツール」として参照する他10ページ・docs/index.html・3ツール同士の相互参照のアンカー文言も新しい表記へ一括更新（grepで旧表記が残っていないことを確認）。英語版（title/h1/sub）は変更なし。Node.jsのsyntaxチェックとPlaywright（ja-JP、390px幅）で3ページのtitle/h1反映・横スクロール無し・JSエラー無しを確認。）
