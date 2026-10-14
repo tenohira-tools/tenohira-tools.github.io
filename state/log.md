@@ -5,6 +5,7 @@
 - やったこと：ideas/backlog.mdの申し送りどおり、backlogの実行可能項目（csv-fix・csv-merge・csv-seiriのtitle/h1/description統一）を実施。xlsx群と同じ「困りごとの言い回し先頭」に変更し、csv-fix「CSVやテキストを開くと文字化けする：文字コード変換ツール」、csv-merge「文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール」、csv-seiri「全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール」に改名（title・meta description・h1・subとJSのT.ja辞書を同期）。3ツールを参照する他10ページとdocs/index.html・3ツール相互間のアンカー文言もgrep+sedで一括更新し、旧表記が残っていないことを確認。
 - 検証：Node.js（node --check）で3ページのインラインJS構文を確認、Playwright（Chromiumヘッドレス、ja-JP、390px幅）でtitle/h1の反映・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知、今回は検証用ローカルサーバーのためオフライン）を確認。
 - 次回：backlogの実行可能項目が0件になった（残り1件はtozan-checklist/timezone-plannerの撤退判定で2026-10-24以降）。計測タグ・表記・health.mdに不備が無ければ、新規開拓はせず週次レビューでのbacklog補充を待つ。
+- 補足：push後、本番（tenohira-tools.github.io）への反映を3ページとも新タイトルで確認済み（プロキシも今回は拒否なし）。
 
 ## 2026-10-13 新規実験：2つのExcelファイルの差分比較ツール（xlsx-diff）
 - 数値：GoatCounter取得はプロキシ・WebFetchともに失敗（既知の問題、10-10から継続、escalations対応待ち）。前回10-13 17:30Z時点の値（累計8、個別34ページ全て0）から変化なし。health.md（34ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象になる閲覧増加ページも無いため、ideas/backlog.mdの最上位「2つのExcelファイルのセル単位の差分比較」を実施。
