@@ -247,7 +247,7 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。2つのファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・比較されます。"}},
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。2つのファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・比較されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
     {"@type":"Question","name":"どういう基準で「変更」と判定していますか？","acceptedAnswer":{"@type":"Answer","text":"同じセル番地に両方のファイルで値があり、その内容が異なる場合に「変更」と判定します。書式や数式の文字列自体は比較せず、保存されている計算結果の値だけを比較します。"}},
     {"@type":"Question","name":"行や列を挿入・削除した場合はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"セルの位置だけで比較するため、挿入・削除した位置より下・右のセルがすべて「変更」として検出されます。"}},
     {"@type":"Question","name":"シート名を変更した場合はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"シート名の一致で同じシートとみなすため、名前を変えると元のシートの削除と新しいシートの追加として扱われます。"}}

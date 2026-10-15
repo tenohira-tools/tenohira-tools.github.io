@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-10-15 改善：計測の注記が構造化データ（JSON-LD）に反映されていなかった4ページを修正
+- 数値：GoatCounter取得成功（サイト全体累計8、前回10-14 20:14Zから変化なし）、個別35ページ全て0。health.md（36ページ・問題0件）、本番サイト接続は今回は未確認（ローカル配信での代用のみ）。
+- やったこと：backlogの実行可能項目が0件（撤退判定は2026-10-24以降まで不可）のため、計測タグ・表記の不備点検を実施。全35ページでGoatCounterタグ自体は設置済みだったが、FAQの画面表示文言とJSON-LD（FAQPage構造化データ）を全ページ横断で突き合わせたところ、csv-group-split・excel-trouble・xlsx-comment・xlsx-diffの4ページで、画面には「サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します」等の注記があるのに、同じ質問のJSON-LD側にはその注記が無く「通信は発生しない」ように読める表記の不一致を発見し、画面表示と同じ注記をJSON-LD側にも追記して揃えた。
+- 検証：Pythonでjson.loadによる4ファイルのJSON-LD構文確認、node --checkでインラインJS構文確認、ローカルHTTPサーバー配信で4ページとも200応答・修正後の文言が反映されていることをcurlで確認。push前に実名・個人アカウント名のgrepチェックで個人情報が無いことを確認。
+- 次回：backlogの実行可能項目は引き続き0件。計測タグ・表記・health.mdに不備が無ければ、新規開拓はせず週次レビューでのbacklog補充を待つ。
+
 ## 2026-10-14 改善：sakusha-kesuの関連ツール相互リンク漏れを修正
 - 数値：GoatCounter総計8（前回10-14 06:10Z時点から変化なし）、個別35ページ全て0。health.md（36ページ・問題0件）・計測タグ・表記いずれも不備なし。
 - やったこと：backlogの実行可能項目が0件（csv-fix等の言い回し統一は今朝実施済み、残る撤退判定は2026-10-24以降までは実施不可）のため、既存18ページ（xlsx系16＋sakusha-kesu＋excel-trouble）の「関連ツール」相互リンクをPythonで全ペア突き合わせて点検。sakusha-kesu（2026-10-11公開）だけが公開時の「xlsx-style・xlsx-omoi・xlsx-hani・csv-to-xlsxの4ツールと相互リンク」のスコープのまま残り、2026-10-13のxlsx-comment/xlsx-diff公開以降に定着した「18ページ全て相互リンク」の方針から取り残されていたと判明。欠けていた11ツール（xlsx-atai・xlsx-error・xlsx-namae・xlsx-ketsugo・xlsx-merge・xlsx-link・xlsx-junkan・xlsx-jouken・xlsx-hyperlink・xlsx-saihyouji・xlsx-suushiki）とsakusha-kesuの双方向リンク（ja/en、既存の説明文を再利用）を追加し、全ペア突き合わせで漏れ0件になったことを確認。
