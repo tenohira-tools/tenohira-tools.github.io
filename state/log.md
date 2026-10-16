@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-10-16 改善：csv-fix・csv-seiriの改名反映漏れ（関連ツール欄のアンカー文言）を修正
+- 数値：GoatCounter取得成功（サイト全体累計8、前回10-16 17:16Zから変化なし）、個別35ページ全て0。health.md（36ページ・問題0件）・計測タグ（grep）いずれも不備なし。
+- やったこと：backlogの実行可能項目は引き続き0件（撤退判定は2026-10-24以降まで不可）のため、既存ページの点検を実施。前回までの相互リンクの全ペア突き合わせ（href有無）は今回も漏れ0件を再確認したが、別の角度としてPythonで各ページの「関連ツール」アンカー文言を抽出し、リンク先の現在のh1と一致しているかを突き合わせたところ、2026-10-14にtitle/h1を改名したcsv-fixについて、2026-10-14のログでは「他10ページ・docs/index.htmlの表記も一括更新・旧表記が残っていないことを確認」と記録されていたにもかかわらず、実際には参照元10ページ（config-convert・csv-group-split・csv-master-replace・csv-merge・csv-seiri・csv-to-xlsx・hyoki-yure・regex-ja・wareki-toitsu・xlsx-merge）すべてで改名前のアンカー文言「CSV・テキストの文字化け直し」が残っていたことを発見（当時の確認検索が改名後の新タイトルの文字列でのgrepだったため、旧表記自体の残存はすり抜けていたと推定）。同様にcsv-seiriもcsv-to-xlsxの1箇所で改名前の「CSVの列ごと書式統一」が残っていた。該当する旧表記2種をsedで新タイトルに一括置換し、site全体で旧表記0件になったことを再確認。
+- 検証：Pythonのhtml.parserで更新9ファイル（csv-fix自身は自己参照を含まないため対象外、csv-seiriを除く9ページ＋csv-to-xlsxのcsv-seiri分）のHTML構文を確認、ローカルHTTPサーバー配信＋Playwright（Chromiumヘッドレス、ja-JP、390px幅）で更新10ページすべて新しい文言が表示されること・旧文言が0件であること・横スクロール無し・JSエラー無し（GoatCounterのDNS失敗のみ既知のノイズ）を確認。push前に実名・個人アカウント名のgrepチェックで個人情報が無いことを確認。
+- 次回：同種の「改名時の反映漏れ」は、新タイトルの文字列のgrepだけでなく旧タイトルの文字列が0件であることも必ず確認する（今回の発見手法を次回以降のチェックリストに追加）。backlogの実行可能項目は引き続き0件（撤退判定は2026-10-24以降）。
+
 ## 2026-10-16 改善：CSV/Excel結合系グループの関連ツール相互リンク漏れを修正
 - 数値：GoatCounter取得成功（サイト全体累計8、前回10-15 20:17Zから変化なし）、個別35ページ全て0。health.md（36ページ・問題0件）、計測タグ・表記（grep確認）いずれも不備なし。
 - やったこと：backlogの実行可能項目が0件（撤退判定は2026-10-24以降まで不可）のため、既存35ページの「関連ツール」相互リンクをPythonで全ペア突き合わせて点検。前回までの点検スクリプトはJS変数内のhref（`href:"../x/"`形式、xlsx-diff・xlsx-commentの動的レンダリング部分）を見落としていたため検出ロジックを拡張したところ、csv-merge⇄csv-group-split/xlsx-merge/xlsx-suushiki、csv-master-replace⇄xlsx-ketsugo/xlsx-namae、csv-seiri⇄xlsx-ketsugo、config-convert⇄csv-group-split/xlsx-merge、hyoki-yure⇄xlsx-mergeの片方向リンク漏れ9件を発見。5ページ（csv-group-split・csv-merge・csv-master-replace・csv-seiri・xlsx-merge）に既存の説明文を再利用した双方向リンク（ja/en）を追加し、全ペア突き合わせで漏れ0件になったことを再確認。

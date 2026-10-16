@@ -121,6 +121,11 @@
           "date": "2026-10-14",
           "class": "改善実施",
           "note": "改善：title/meta description/h1/subを、他のExcel系ツールと同じ「困りごとの言い回し先頭」に変更（ideas/backlog.mdの申し送り）。関連ツール欄・docs/index.html・自ページを含む相互参照のアンカー文言も新しい表記に一括更新（grep確認済み）。GoatCounter取得は今回から成功（累計8、本ツールは0、変化なし）。"
+        },
+        {
+          "date": "2026-10-16",
+          "class": "改善実施",
+          "note": "2026-10-14の改名時に「関連ツール」欄まで一括更新済みと記録していたが、実際には参照元10ページ（config-convert・csv-group-split・csv-master-replace・csv-merge・csv-seiri・csv-to-xlsx・hyoki-yure・regex-ja・wareki-toitsu・xlsx-merge）が改名前のアンカー文言「CSV・テキストの文字化け直し」のまま残っていたことを全ページ横断の文字列突き合わせで発見し、新しいタイトルに一括修正。GoatCounter累計8、本ツールは0、変化なし。"
         }
       ]
     },
@@ -601,6 +606,11 @@
           "date": "2026-10-14",
           "class": "改善実施",
           "note": "改善：title/meta description/h1/subを、他のExcel系ツールと同じ「困りごとの言い回し先頭」に変更（ideas/backlog.mdの申し送り）。関連ツール欄・docs/index.html・自ページを含む相互参照のアンカー文言も新しい表記に一括更新（grep確認済み）。GoatCounter取得は今回から成功（累計8、本ツールは0、変化なし）。"
+        },
+        {
+          "date": "2026-10-16",
+          "class": "改善実施",
+          "note": "2026-10-14の改名時の反映漏れで、csv-to-xlsxの「関連ツール」欄だけが改名前のアンカー文言「CSVの列ごと書式統一」のまま残っていたことを発見し、新しいタイトルに修正。GoatCounter累計8、本ツールは0、変化なし。"
         }
       ]
     },
