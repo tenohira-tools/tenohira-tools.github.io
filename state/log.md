@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-10-16 改善：CSV/Excel結合系グループの関連ツール相互リンク漏れを修正
+- 数値：GoatCounter取得成功（サイト全体累計8、前回10-15 20:17Zから変化なし）、個別35ページ全て0。health.md（36ページ・問題0件）、計測タグ・表記（grep確認）いずれも不備なし。
+- やったこと：backlogの実行可能項目が0件（撤退判定は2026-10-24以降まで不可）のため、既存35ページの「関連ツール」相互リンクをPythonで全ペア突き合わせて点検。前回までの点検スクリプトはJS変数内のhref（`href:"../x/"`形式、xlsx-diff・xlsx-commentの動的レンダリング部分）を見落としていたため検出ロジックを拡張したところ、csv-merge⇄csv-group-split/xlsx-merge/xlsx-suushiki、csv-master-replace⇄xlsx-ketsugo/xlsx-namae、csv-seiri⇄xlsx-ketsugo、config-convert⇄csv-group-split/xlsx-merge、hyoki-yure⇄xlsx-mergeの片方向リンク漏れ9件を発見。5ページ（csv-group-split・csv-merge・csv-master-replace・csv-seiri・xlsx-merge）に既存の説明文を再利用した双方向リンク（ja/en）を追加し、全ペア突き合わせで漏れ0件になったことを再確認。
+- 検証：Pythonのhtml.parserで更新5ファイルのHTML構文を確認、ローカルHTTPサーバー配信＋Playwright（Chromiumヘッドレス、ja-JP、390px幅）で5ページともJSエラー無し（GoatCounterスクリプトのDNS失敗のみ既知のノイズ）・横スクロール無しを確認。push前に実名・個人アカウント名のgrepチェックで個人情報が無いことを確認。
+- 次回：backlogの実行可能項目は引き続き0件（撤退判定は2026-10-24以降）。計測タグ・表記・health.mdに不備が無ければ、新規開拓はせず週次レビューでのbacklog補充を待つ。相互リンク点検スクリプトはJS変数形式のhrefも対象に拡張済みなので、次回以降も同スクリプトを使う。
+
 ## 2026-10-15 改善：テキスト整形・経理事務グループの関連ツール相互リンク漏れを修正
 - 数値：GoatCounter取得成功（サイト全体累計8、前回10-15 17:15Zから変化なし）、個別35ページ全て0。health.md（36ページ・問題0件）、計測タグ・表記（grep確認）いずれも不備なし。
 - やったこと：backlogの実行可能項目が0件（撤退判定は2026-10-24以降まで不可）のため、既存35ページの「関連ツール」相互リンクをPythonで全ペア突き合わせて点検（Excel系18ページは漏れ無しと確認済み）。「テキスト整形」グループ（wareki-toitsu・config-convert・regex-ja・hyoki-yure）でwareki-toitsuだけがconfig-convert・regex-jaとの双方向リンクを欠いていたこと、「経理・事務書類」グループでkotsuhi-seisanがshorui-scanへの片方向リンクを欠いていたことを発見し、4ページ（wareki-toitsu・config-convert・regex-ja・kotsuhi-seisan）に既存の説明文を再利用した双方向リンク（ja/en）を追加して漏れ0件にした。

@@ -657,6 +657,10 @@
         {
           "date": "2026-10-01",
           "note": "公開当日。30日判定は2026-10-31頃。"
+        },
+        {
+          "date": "2026-10-16T17:16:08Z",
+          "note": "計測：GoatCounter総計8（前回10-15 20:17Zから変化なし）、個別35ページ全て0。health.md（36ページ・問題0件）・計測タグ・表記いずれも不備なし。backlogの実行可能項目が0件のため、既存35ページの関連ツール相互リンクを全ペア突き合わせで再点検（JS変数内のhref:\"../x/\"形式も対象に拡張）。csv-merge・csv-group-split・csv-master-replace・csv-seiri・xlsx-merge間で9件の片方向リンク漏れ（csv-merge⇄csv-group-split/xlsx-merge/xlsx-suushiki、csv-master-replace⇄xlsx-ketsugo/xlsx-namae、csv-seiri⇄xlsx-ketsugo、config-convert⇄csv-group-split/xlsx-merge、hyoki-yure⇄xlsx-merge）を発見し、5ページに既存の説明文を再利用した双方向リンク（ja/en）を追加して漏れ0件にした。"
         }
       ],
       "notes": "複数CSVファイルをドラッグ&ドロップで追加すると、ファイルごとにUTF-8/Shift_JIS/EUC-JP/ISO-2022-JPを自動判定して結合。見出し名（前後空白は無視）で列をそろえ、ファイルに無い列は空欄にする「見出し名そろえ」モードと、見出しを使わず列順のまま結合する「位置合わせ」モードを切替可能。先頭に元ファイル名列を追加するオプション、どの列が一部のファイルにしかないかを示す一覧表示あり。",
