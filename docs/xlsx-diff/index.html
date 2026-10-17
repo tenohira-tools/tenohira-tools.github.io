@@ -485,7 +485,8 @@ function computeDiff(oldWb,newWb){
   return order.map(function(name){
     var o=oldWb.sheets[name], n=newWb.sheets[name];
     var status=o&&n?"common":(o?"removedSheet":"addedSheet");
-    var rows=status==="common"?diffSheet(o,n):[];
+    var EMPTY={cells:{}};
+    var rows=diffSheet(o||EMPTY,n||EMPTY);
     var counts={added:0,removed:0,changed:0};
     rows.forEach(function(r){counts[r.type]++});
     return {name:name,status:status,rows:rows,counts:counts,oldSheet:o,newSheet:n};
