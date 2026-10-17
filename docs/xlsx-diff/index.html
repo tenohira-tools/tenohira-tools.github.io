@@ -782,7 +782,7 @@ $("downloadBtn").addEventListener("click",function(){
 });
 
 var RELATED=[
- {href:"../excel-trouble/",ja:"エクセルのトラブル解決ガイド",jaD:"「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全17ツールを探す。",en:"Excel Troubleshooting Guide",enD:"Find the right tool among all 17 by symptom: heavy, save errors, error values, links, printing."},
+ {href:"../excel-trouble/",ja:"エクセルのトラブル解決ガイド",jaD:"「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全18ツールを探す。",en:"Excel Troubleshooting Guide",enD:"Find the right tool among all 18 by symptom: heavy, save errors, error values, links, printing."},
  {href:"../xlsx-suushiki/",ja:"引き継いだExcelの数式を一覧に",jaD:"数式が入った全セルを一覧化（エラーに限らず全件）。他シート参照・外部参照の可能性も検出。",en:"List every formula in an Excel file",enD:"Lists every formula cell, not just errors, and flags cross-sheet / possible external references."},
  {href:"../xlsx-merge/",ja:"Excelファイルを複数まとめて1つに",jaD:"複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。",en:"Merge multiple Excel files into one",enD:"Merge several .xlsx files directly into one CSV."},
  {href:"../xlsx-namae/",ja:"「名前は既に存在します」対策：名前定義の点検・削除ツール",jaD:"名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。",en:"Fix “Name already exists”",enD:"List every defined name in a workbook and remove the hidden/broken ones causing the collision."},
@@ -798,7 +798,8 @@ var RELATED=[
  {href:"../xlsx-saihyouji/",ja:"シートの「再表示」に出てこないときの対策：非表示・完全非表示シートの一覧・一括変更",jaD:"非表示・完全非表示（veryHidden）シートの表示状態を一覧化し、選んだシートをまとめて表示に戻す（または非表示にする）新しいファイルを書き出す。",en:"Sheet missing from the Unhide dialog?",enD:"List every sheet's visibility (visible/hidden/very hidden) and bulk-change any of them to a new file."},
  {href:"../xlsx-comment/",ja:"シートのあちこちに散らばったコメント・メモを全部一覧に",jaD:"従来の「メモ」も最近の「スレッド形式」コメント（返信・解決済みの状態を含む）も全シート横断で一覧化してCSV出力・印刷。",en:"List every cell comment and note across every sheet",enD:"Covers both the classic “note” and the newer threaded “comment” (replies, resolved status), exportable as CSV or printed directly."},
  {href:"../xlsx-error/",ja:"#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に",jaD:"全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類別の件数とよくある原因も表示。",en:"Find every cell with a cached error value",enD:"Lists every cell across every sheet and file whose cached result is itself an error, with a per-type count and likely cause."},
- {href:"../sakusha-kesu/",ja:"社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す",jaD:"Excel・Word・PowerPointに残る作成者情報を複数ファイル一括で消去。",en:"Strip author names before sending a file outside your company",enD:"Strip creator, last-modified-by and comment-author names from multiple Excel/Word/PowerPoint files at once."}
+ {href:"../sakusha-kesu/",ja:"社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す",jaD:"Excel・Word・PowerPointに残る作成者情報を複数ファイル一括で消去。",en:"Strip author names before sending a file outside your company",enD:"Strip creator, last-modified-by and comment-author names from multiple Excel/Word/PowerPoint files at once."},
+ {href:"../xlsx-kakure/",ja:"社外に送る前に確認：Excelの「隠れた情報」一括チェック",jaD:"比較だけでなく、非表示シート・コメント・作成者名・外部リンク・名前定義・白文字セルをまとめて診断（読み取り専用）。",en:"Check an Excel file for \"hidden\" information before sending it outside your company",enD:"Beyond comparison: also checks hidden sheets, comments, author metadata, external links, defined names and invisible text (read-only)."}
 ];
 function renderRelated(){
   var ja=RELATED.map(function(x){return "<li><a href='"+x.href+"'>"+esc(x.ja)+"</a> — "+esc(x.jaD)+"</li>"}).join("");

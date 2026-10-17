@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>社外に送る前に確認：Excelの「隠れた情報」一括チェック（非表示シート・コメント・作成者名・外部リンクなど） | てのひらツール</title>
+<meta name="description" content="取引先や社外にExcel(.xlsx/.xlsm)ファイルを送る前に、「ドキュメント検査」がWindows版しかない・結果が一覧で見えない——と困っていませんか。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセルを1画面で一覧化し、該当があれば専用ツールへ案内します（読み取り専用、ファイルは書き換えません）。ファイルはサーバーに送信されません。Before sending an Excel file outside your company: check for hidden sheets, hidden rows/columns with values, comments, author metadata, external links, defined names and invisible-looking text, all on one screen — entirely in your browser, read-only.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-kakure/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+#fileListBox{display:grid;gap:14px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:12px}
+.fileCard .fRow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.78rem;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.summaryBanner{border-radius:10px;padding:10px 12px;font-size:.92rem;margin-top:10px;font-weight:700}
+.summaryBanner.ok{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent)}
+.summaryBanner.warn{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn)}
+.catList{margin-top:12px}
+.catBlock{border-top:1px solid var(--line);padding:10px 0}
+.catBlock:first-child{border-top:0}
+.catHead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.catName{font-weight:700;font-size:.95rem}
+.catDetail{color:var(--muted);font-size:.86rem;margin-top:4px;word-break:break-word}
+.catLink{margin-top:6px;font-size:.88rem}
+.catLink a{color:var(--accent)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:9px 16px;cursor:pointer;min-height:40px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">社外に送る前に確認：Excelの「隠れた情報」一括チェック</h1>
+    <p class="sub" data-i="sub">Excel(.xlsx/.xlsm)ファイルを社外に送る前に、Windows版Excelの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセルを1画面で一覧化し、該当があれば専用ツールへ案内します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">複数ファイルを一度に追加できます。どこにも送信されません。ファイルは書き換えません（診断のみ）。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイルも一度に追加できます）。</li>
+      <li>7つの項目（非表示・完全非表示シート／非表示の行・列にある値／コメント・メモ／作成者・最終更新者・会社名／外部リンク／名前定義／白文字など背景と同化した書式のセル）ごとに、見つかった件数と内訳が表示されます。</li>
+      <li>該当がある項目には、その内容を詳しく確認したり削除したりできる専用ツールへのリンクが付きます。</li>
+      <li>一覧だけCSVで保存したい場合は「結果をCSV出力」を押します。</li>
+    </ol>
+    <h3>Q. このツールはファイルを書き換えたり、まとめて削除したりできますか？</h3>
+    <p>A. いいえ。このツールは読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。見つかった項目を実際に変更したい場合は、各項目に表示されるリンク先の専用ツール（非表示シートの変更は<a href="../xlsx-saihyouji/">シート再表示ツール</a>、コメントの一覧は<a href="../xlsx-comment/">コメント一覧化ツール</a>、作成者名などの削除は<a href="../sakusha-kesu/">作成者名削除ツール</a>、外部リンクの調査は<a href="../xlsx-link/">外部リンク調査ツール</a>、名前定義の削除は<a href="../xlsx-namae/">名前定義点検ツール</a>）をご利用ください。</p>
+    <h3>Q. 「非表示の行・列にある値」とは何ですか？</h3>
+    <p>A. 行や列を右クリックして「非表示」にした場合、Excelの画面上では消えて見えますが、セルの値自体は残ったままファイル内に保存されています。社外に送ったファイルで非表示の行・列を「再表示」されると、隠したはずの数値や文字列がそのまま見えてしまいます。このツールは非表示の行・列の範囲と、その中に実際に値が入っているセルの数を数えて知らせます（内容は一覧に出さず、件数とシート名だけを表示します）。</p>
+    <h3>Q. 「白文字など背景と同化した書式のセル」はどうやって判定していますか？</h3>
+    <p>A. セルの文字の色と背景（塗りつぶし）の色が、どちらも具体的な色として明示的に同じ値に設定されている場合だけを検出します（例：文字色を白、塗りつぶしも白、または文字色と塗りつぶしを同じ色に指定）。Excelのテーマの配色や「自動」設定の色までは解決していないため、見た目には同化していてもこのツールでは検出できないケースがあります。断定はせず、確認の目安としてご利用ください。</p>
+    <h3>Q. Excel自体の「ドキュメント検査」（ファイル→情報→問題のチェック）と何が違いますか？</h3>
+    <p>A. Excelの「ドキュメント検査」はWindows版のみの機能で、検査結果は項目ごとに別々のダイアログで表示され、削除も検査の流れの中でしかできません。このツールはブラウザだけで完結し（Mac・Windows・Chromebookを問わず使えます）、7項目を1画面で一覧表示し、該当があれば実際に変更できる専用ツールへ直接進めます。削除自体はこのツールでは行わず、各専用ツールに任せる設計です。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one (several files at once are fine too).</li>
+      <li>Seven checks are run (hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, invisible-looking text), each showing a count and a breakdown.</li>
+      <li>Any check with a hit shows a link to the dedicated tool that can inspect or remove it.</li>
+      <li>Click "Export result as CSV" to save just the summary.</li>
+    </ol>
+    <h3>Q. Can this tool rewrite or bulk-remove anything?</h3>
+    <p>A. No. This is a read-only inspection tool — it never rewrites your file. To actually change something it finds, follow the link to the matching dedicated tool: <a href="../xlsx-saihyouji/">hidden-sheet tool</a> for sheet visibility, <a href="../xlsx-comment/">comment listing tool</a> for comments, <a href="../sakusha-kesu/">author-name scrubber</a> for creator/company metadata, <a href="../xlsx-link/">external-link finder</a> for external references, and <a href="../xlsx-namae/">defined-name tool</a> for defined names.</p>
+    <h3>Q. What does "hidden rows/columns with values" mean?</h3>
+    <p>A. Right-click-hiding a row or column only hides it on screen — the cell values stay saved inside the file. If someone unhides those rows/columns after you send the file, whatever you thought was hidden is visible again. This tool counts how many hidden rows/columns actually contain a value and which sheets they're in (it does not list the actual cell contents, only counts and sheet names).</p>
+    <h3>Q. How does it detect "invisible-looking text"?</h3>
+    <p>A. Only cells where the font color and the cell's background (fill) color are both explicitly set to the same specific color (e.g. white text on a white fill, or any matching pair) are flagged. Excel's theme colors and "Automatic" color are not resolved, so some visually-hidden cases won't be caught. This is a conservative check, meant as a starting point, not a guarantee.</p>
+    <h3>Q. How is this different from Excel's own "Document Inspector"?</h3>
+    <p>A. Excel's Document Inspector is Windows-only, shows each category in its own separate dialog, and only lets you remove things from inside that same flow. This tool works in any browser (Mac, Windows, Chromebook), lists all seven checks on one screen, and links straight to a dedicated tool when you want to actually change something — it does not remove anything itself.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported — if a file fails to load, an error is shown next to it.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul id="relatedJa"></ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul id="relatedEn"></ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールはファイルを書き換えたり、まとめて削除したりできますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。実際に変更したい場合は各項目のリンク先の専用ツールを利用します。"}},
+    {"@type":"Question","name":"「非表示の行・列にある値」とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"行・列を非表示にしても値自体は保存されたまま残っています。このツールは非表示の行・列の中に実際に値が入っているセルの数とシート名を数えて知らせます。"}},
+    {"@type":"Question","name":"「白文字など背景と同化した書式のセル」はどうやって判定していますか？","acceptedAnswer":{"@type":"Answer","text":"文字の色と背景色がどちらも具体的な色として明示的に同じ値に設定されている場合だけを検出します。テーマ色や自動設定色までは解決しないため、確認の目安としてご利用ください。"}},
+    {"@type":"Question","name":"Excelの「ドキュメント検査」と何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"ドキュメント検査はWindows版のみの機能で結果が別々のダイアログに分かれます。このツールはブラウザだけで完結し、7項目を1画面で一覧表示して該当する専用ツールへ案内します。"}},
+    {"@type":"Question","name":"対応しているファイル形式は？","acceptedAnswer":{"@type":"Answer","text":"Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式やパスワード保護されたファイルは読み込めません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-junkan/xlsx-hyperlink/xlsx-error/xlsx-style/xlsx-hani/
+   xlsx-atai/xlsx-saihyouji/xlsx-comment/xlsx-diff/sakusha-kesu
+   (no external libraries; only standard browser APIs:
+   DecompressionStream/TextDecoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipToMap(bytes){
+  var entries=zipCentralDirectory(bytes), map={};
+  for(var i=0;i<entries.length;i++){ var en=entries[i]; if(en.name.charAt(en.name.length-1)!=="/") map[en.name]=en; }
+  var out={};
+  for(var name in map){ out[name]=new TextDecoder("utf-8").decode(await zipReadEntry(bytes,map[name])); }
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+function refToRowCol(ref){
+  var m=/^\$?([A-Z]+)\$?([0-9]+)$/.exec(ref);
+  if(!m) return null;
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+function relsPathFor(partPath){
+  var idx=partPath.lastIndexOf("/");
+  return partPath.slice(0,idx+1)+"_rels/"+partPath.slice(idx+1)+".rels";
+}
+function resolveRelPath(basePartPath,target){
+  if(/^[a-zA-Z]+:\/\//.test(target)) return null;
+  var baseDir=basePartPath.replace(/\/[^/]*$/,"");
+  var combined=(/^\//.test(target))?target.replace(/^\//,""):(baseDir+"/"+target);
+  var parts=combined.split("/"), stack=[];
+  for(var i=0;i<parts.length;i++){
+    var p=parts[i];
+    if(p===".."){ stack.pop(); }
+    else if(p!=="" && p!=="."){ stack.push(p); }
+  }
+  return stack.join("/");
+}
+function sheetState(attrs){
+  var s=attrs.state;
+  if(s==="veryHidden") return "veryHidden";
+  if(s==="hidden") return "hidden";
+  return "visible";
+}
+function parseSharedStrings(xml){
+  if(!xml) return [];
+  return findTags(xml,"si").map(function(si){
+    var ts=findTags(si.inner||"","t");
+    return ts.map(function(t){ return decodeXmlEntities(t.inner||""); }).join("");
+  });
+}
+
+/* =====================================================================
+   styles.xml: build the set of cellXfs indices where the font color and
+   the cell's effective background color are both explicitly the same
+   RGB value (conservative: theme/indexed/"automatic" colors are treated
+   as unknown and never matched, so this only ever under-counts).
+   ===================================================================== */
+function explicitRgb(colorTag){
+  if(!colorTag || !colorTag.attrs.rgb) return null;
+  var h=colorTag.attrs.rgb.toUpperCase();
+  return h.length>=6 ? h.slice(-6) : null;
+}
+function parseInvisibleStyleSet(stylesXml){
+  var result={};
+  if(!stylesXml) return result;
+  var fontsBlock=findTags(stylesXml,"fonts")[0];
+  var fonts=fontsBlock&&!fontsBlock.selfClose?findTags(fontsBlock.inner,"font"):[];
+  var fillsBlock=findTags(stylesXml,"fills")[0];
+  var fills=fillsBlock&&!fillsBlock.selfClose?findTags(fillsBlock.inner,"fill"):[];
+  var cellXfsBlock=findTags(stylesXml,"cellXfs")[0];
+  var xfs=cellXfsBlock&&!cellXfsBlock.selfClose?findTags(cellXfsBlock.inner,"xf"):[];
+
+  var fontColors=fonts.map(function(f){ return explicitRgb(findTags(f.inner||"","color")[0]); });
+  var fillBg=fills.map(function(f){
+    var pf=findTags(f.inner||"","patternFill")[0];
+    if(!pf) return "FFFFFF";
+    var pt=pf.attrs.patternType||"none";
+    if(pt==="none") return "FFFFFF";
+    if(pt!=="solid") return null;
+    return explicitRgb(findTags(pf.inner||"","fgColor")[0]);
+  });
+  xfs.forEach(function(xf,idx){
+    var fontId=xf.attrs.fontId!==undefined?parseInt(xf.attrs.fontId,10):0;
+    var fillId=xf.attrs.fillId!==undefined?parseInt(xf.attrs.fillId,10):0;
+    var fc=fontColors[fontId], bc=fillBg[fillId];
+    if(fc && bc && fc===bc) result[idx]=true;
+  });
+  return result;
+}
+
+/* =====================================================================
+   Main per-file scan.
+   ===================================================================== */
+async function parseXlsxKakure(bytes){
+  var files=await unzipToMap(bytes);
+  var workbookXml=files["xl/workbook.xml"], workbookRels=files["xl/_rels/workbook.xml.rels"];
+  if(!workbookXml||!workbookRels) throw new Error("NOT_XLSX");
+
+  var relTarget={};
+  findTags(workbookRels,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  var sheets=findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name||"", path:"xl/"+target, state:sheetState(s.attrs)};
+  });
+  if(!sheets.length) throw new Error("NOT_XLSX");
+
+  var sharedStrings=parseSharedStrings(files["xl/sharedStrings.xml"]||"");
+  var invisibleStyleSet=parseInvisibleStyleSet(files["xl/styles.xml"]||"");
+
+  var hiddenSheets=sheets.filter(function(s){ return s.state!=="visible"; });
+
+  var hiddenValueTotal=0, hiddenValueBySheet=[];
+  var invisTotal=0, invisBySheet=[];
+  var commentTotal=0, commentBySheet=[];
+
+  sheets.forEach(function(sh){
+    var xml=files[sh.path];
+    if(!xml) return;
+
+    var colsBlock=findTags(xml,"cols")[0];
+    var hiddenColRanges=[];
+    if(colsBlock && !colsBlock.selfClose){
+      findTags(colsBlock.inner,"col").forEach(function(c){
+        if(c.attrs.hidden==="1"||c.attrs.hidden==="true"){
+          var min=parseInt(c.attrs.min,10)-1, max=parseInt(c.attrs.max,10)-1;
+          if(!isNaN(min)&&!isNaN(max)) hiddenColRanges.push([min,max]);
+        }
+      });
+    }
+
+    var sheetDataBlock=findTags(xml,"sheetData")[0];
+    var rowHiddenVal=0, invisCount=0;
+    if(sheetDataBlock && !sheetDataBlock.selfClose){
+      findTags(sheetDataBlock.inner,"row").forEach(function(row){
+        var isHiddenRow=row.attrs.hidden==="1"||row.attrs.hidden==="true";
+        findTags(row.inner||"","c").forEach(function(c){
+          var ref=c.attrs.r; if(!ref) return;
+          var pos=refToRowCol(ref); if(!pos) return;
+          var t=c.attrs.t||"n", value=null;
+          if(t==="inlineStr"){
+            var isTags=findTags(c.inner||"","is");
+            if(isTags.length){ var tt=findTags(isTags[0].inner||"","t"); value=tt.map(function(x){return decodeXmlEntities(x.inner||"")}).join(""); }
+          } else {
+            var vTags=findTags(c.inner||"","v");
+            var raw=vTags.length?decodeXmlEntities(vTags[0].inner||""):null;
+            if(raw===null){ value=null; }
+            else if(t==="s"){ var sidx=parseInt(raw,10); value=sharedStrings[sidx]!==undefined?sharedStrings[sidx]:""; }
+            else if(t==="b"){ value=raw==="1"?"TRUE":"FALSE"; }
+            else { value=raw; }
+          }
+          if(value===null || value==="") return;
+          var inHiddenCol=hiddenColRanges.some(function(r){ return pos.col>=r[0] && pos.col<=r[1]; });
+          if(isHiddenRow || inHiddenCol) rowHiddenVal++;
+          var sIdx=c.attrs.s!==undefined?parseInt(c.attrs.s,10):0;
+          if(invisibleStyleSet[sIdx]) invisCount++;
+        });
+      });
+    }
+    hiddenValueTotal+=rowHiddenVal;
+    if(rowHiddenVal>0) hiddenValueBySheet.push({sheet:sh.name,count:rowHiddenVal});
+    invisTotal+=invisCount;
+    if(invisCount>0) invisBySheet.push({sheet:sh.name,count:invisCount});
+
+    var relsXml=files[relsPathFor(sh.path)]||"";
+    var commentsPath=null, threadedPath=null;
+    findTags(relsXml,"Relationship").forEach(function(r){
+      var type=r.attrs.Type||"", target=r.attrs.Target||"";
+      var resolved=resolveRelPath(sh.path,target);
+      if(!resolved) return;
+      if(/\/comments$/.test(type)) commentsPath=resolved;
+      if(/\/threadedComment$/.test(type)) threadedPath=resolved;
+    });
+    var refsWithComments={};
+    if(threadedPath && files[threadedPath]){
+      findTags(files[threadedPath],"threadedComment").forEach(function(tc){ if(tc.attrs.ref) refsWithComments[tc.attrs.ref]=true; });
+    } else if(commentsPath && files[commentsPath]){
+      findTags(files[commentsPath],"commentList").forEach(function(cl){
+        findTags(cl.inner||"","comment").forEach(function(c){ if(c.attrs.ref) refsWithComments[c.attrs.ref]=true; });
+      });
+    }
+    var cCount=Object.keys(refsWithComments).length;
+    commentTotal+=cCount;
+    if(cCount>0) commentBySheet.push({sheet:sh.name,count:cCount});
+  });
+
+  var dnBlock=findTags(workbookXml,"definedNames")[0];
+  var dnEntries=dnBlock&&!dnBlock.selfClose?findTags(dnBlock.inner,"definedName"):[];
+  var dnUser=dnEntries.filter(function(e){ return (e.attrs.name||"").indexOf("_xlnm.")!==0; });
+  var dnHidden=dnEntries.filter(function(e){ return e.attrs.hidden==="1"||e.attrs.hidden==="true"; });
+
+  var extBlock=findTags(workbookXml,"externalReferences")[0];
+  var extCount=extBlock&&!extBlock.selfClose?findTags(extBlock.inner,"externalReference").length:0;
+
+  var core=files["docProps/core.xml"]||"", app=files["docProps/app.xml"]||"";
+  var creatorTag=findTags(core,"dc:creator")[0], lastModTag=findTags(core,"cp:lastModifiedBy")[0], companyTag=findTags(app,"Company")[0];
+  var creator=creatorTag?decodeXmlEntities(creatorTag.inner||""):"";
+  var lastModifiedBy=lastModTag?decodeXmlEntities(lastModTag.inner||""):"";
+  var company=companyTag?decodeXmlEntities(companyTag.inner||""):"";
+
+  return {
+    sheetCount:sheets.length,
+    hiddenSheets:hiddenSheets,
+    hiddenValueTotal:hiddenValueTotal, hiddenValueBySheet:hiddenValueBySheet,
+    invisTotal:invisTotal, invisBySheet:invisBySheet,
+    commentTotal:commentTotal, commentBySheet:commentBySheet,
+    dnUserCount:dnUser.length, dnHiddenCount:dnHidden.length,
+    extCount:extCount,
+    creator:creator, lastModifiedBy:lastModifiedBy, company:company
+  };
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var STATE_LABEL={ja:{visible:"表示",hidden:"非表示",veryHidden:"完全非表示"},en:{visible:"Visible",hidden:"Hidden",veryHidden:"Very hidden"}};
+var RELATED=[
+  {href:"../excel-trouble/",ja:"エクセルのトラブル解決ガイド",jaDesc:"「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全18ツールを探す。",en:"Excel Troubleshooting Guide",enDesc:"Find the right tool among all 18 by symptom: heavy, save errors, error values, links, printing."},
+  {href:"../xlsx-saihyouji/",ja:"シートの「再表示」に出てこないときの対策",jaDesc:"非表示・完全非表示（veryHidden）シートを一覧化し、まとめて表示に戻す。",en:"Sheet missing from the Unhide dialog?",enDesc:"List every sheet's visibility (visible/hidden/very hidden) and bulk-change it."},
+  {href:"../xlsx-comment/",ja:"シートのあちこちに散らばったコメント・メモを全部一覧に",jaDesc:"従来の「メモ」も最近の「スレッド形式」コメントも全シート横断で一覧化。",en:"List every cell comment and note across every sheet",enDesc:"Covers both the classic note and the newer threaded comment."},
+  {href:"../sakusha-kesu/",ja:"社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す",jaDesc:"Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。",en:"Strip creator / last-modified-by / comment-author names before sharing",enDesc:"Clean up Excel, Word and PowerPoint files at once before sending them outside your company."},
+  {href:"../xlsx-link/",ja:"Excelの「外部ソースへのリンク」発生源を探すツール",jaDesc:"外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。",en:"Find external-workbook link sources",enDesc:"List every external-workbook link and exactly where it's used."},
+  {href:"../xlsx-namae/",ja:"「名前は既に存在します」対策：名前定義の点検・削除ツール",jaDesc:"名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。",en:"Fix \"Name already exists\"",enDesc:"List every defined name in a workbook and remove the hidden/broken ones causing the collision."},
+  {href:"../xlsx-suushiki/",ja:"引き継いだExcelの数式を一覧に",jaDesc:"数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。",en:"List formulas in an inherited Excel file",enDesc:"List every formula cell without opening it; flags errors, cross-sheet and external references."},
+  {href:"../xlsx-junkan/",ja:"循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール",jaDesc:"全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。",en:"Can't tell where a circular reference is?",enDesc:"Scan every sheet's formulas and list every circular-reference group at once, even when iterative calculation hides Excel's own warning."},
+  {href:"../xlsx-error/",ja:"#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に",jaDesc:"全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。",en:"Find every cell with a cached error value",enDesc:"List every error-valued cell across every sheet and file, with counts by type and a likely cause, exportable as CSV."},
+  {href:"../xlsx-ketsugo/",ja:"Excelの結合セルを解除して値を埋める→CSV出力",jaDesc:"結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。",en:"Unmerge cells and fill the blanks → CSV",enDesc:"Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly."},
+  {href:"../xlsx-merge/",ja:"Excelファイルを複数まとめて1つに",jaDesc:"複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。",en:"Merge multiple Excel files into one",enDesc:"Merge several .xlsx files directly into one CSV."},
+  {href:"../xlsx-omoi/",ja:"「エクセルが重い」原因を診断：ファイル内訳チェッカー",jaDesc:"シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。",en:"Why is this Excel file heavy?",enDesc:"Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes."},
+  {href:"../xlsx-jouken/",ja:"条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール",jaDesc:"条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。",en:"Clean up conditional formatting rules that keep piling up",enDesc:"List every conditional-formatting rule across all sheets, flag overlapping ranges and broken style references, and remove the ones you choose."},
+  {href:"../xlsx-hyperlink/",ja:"ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール",jaDesc:"全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。",en:"Hyperlinks that won't open, or too many to remove one by one",enDesc:"List every clickable hyperlink across every sheet and remove the ones you choose."},
+  {href:"../xlsx-style/",ja:"「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ",jaDesc:"セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除。見た目は変わらない。",en:"Fix \"too many different cell formats\"",enDesc:"Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks."},
+  {href:"../xlsx-hani/",ja:"Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット",jaDesc:"実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。",en:"Reset the used range when Ctrl+End jumps far away",enDesc:"Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped)."},
+  {href:"../xlsx-diff/",ja:"2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示",jaDesc:"「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルを確認。",en:"Compare two Excel files: highlight only the cells that changed",enDesc:"Compare a before/after pair of files across every sheet at once."},
+  {href:"../xlsx-atai/",ja:"数式を値に変換：外部ファイルへのリンクが解除できないときに",jaDesc:"外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。",en:"Convert formulas to values — when you can't break an external link",enDesc:"Converts formula cells to their cached values, scoped to external references."}
+];
+var T={
+ ja:{title:"社外に送る前に確認：Excelの「隠れた情報」一括チェック",
+  sub:"Excel(.xlsx/.xlsm)ファイルを社外に送る前に、Windows版Excelの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセルを1画面で一覧化し、該当があれば専用ツールへ案内します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。",
+  dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"複数ファイルを一度に追加できます。どこにも送信されません。ファイルは書き換えません（診断のみ）。",
+  fileListHeading:"追加したファイル",
+  removeBtn:"削除", csvBtn:"結果をCSV出力", loadingLabel:"読み込み中…",
+  errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。",
+  bannerOk:"7項目とも、特に気になる点は見つかりませんでした。",
+  bannerWarn:function(n){return "7項目中 "+n+"項目で、確認をおすすめする内容が見つかりました。"},
+  cat1:"非表示・完全非表示シート", cat2:"非表示の行・列にある値", cat3:"コメント・メモ",
+  cat4:"作成者・最終更新者・会社名", cat5:"外部リンク（別ファイルへの参照）", cat6:"名前定義",
+  cat7:"白文字など背景と同化した書式のセル",
+  none:"見つかりませんでした", sheetsLabel:"件のシート：", cellsLabel:"件のセル：",
+  link1:"→ シートの表示状態を変更する", link3:"→ 一覧で確認する（印刷・CSV対応）", link4:"→ まとめて消す",
+  link5:"→ 発生源を調べる", link6:"→ 点検・削除する",
+  noToolHint2:"行・列を選んでExcelの「再表示」から手動で戻すか、社内で確認してください。",
+  noToolHint7:"Excel上でセルを選び、ホームタブのフォントの色を確認してください。"},
+ en:{title:"Before sending outside your company: check an Excel file for “hidden” information",
+  sub:"Excel's own Document Inspector is Windows-only and never shows every category on one screen. This checks for hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, and invisible-looking text — all at once, read-only, with a link to a dedicated tool wherever something is found. Nothing is uploaded.",
+  dropzoneText:"Drag and drop an Excel (.xlsx) file here, or click to choose one",
+  dropzoneHint:"You can add several files at once. Nothing is ever uploaded. Read-only — files are never rewritten.",
+  fileListHeading:"Added files",
+  removeBtn:"Remove", csvBtn:"Export result as CSV", loadingLabel:"Loading…",
+  errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser.",
+  bannerOk:"Nothing stood out across all 7 checks.",
+  bannerWarn:function(n){return n+" of 7 checks found something worth a look.";},
+  cat1:"Hidden / very-hidden sheets", cat2:"Hidden rows/columns with values", cat3:"Comments / notes",
+  cat4:"Creator / last-modified-by / company", cat5:"External links (other workbook references)", cat6:"Defined names",
+  cat7:"Invisible-looking text (same font/background color)",
+  none:"None found", sheetsLabel:"sheet(s): ", cellsLabel:"cell(s): ",
+  link1:"→ Change sheet visibility", link3:"→ View list (print/CSV)", link4:"→ Strip them",
+  link5:"→ Find where they're used", link6:"→ Inspect / remove",
+  noToolHint2:"Select the rows/columns and use Excel's own Unhide, or check with your team.",
+  noToolHint7:"Select the cell in Excel and check its font color on the Home tab."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1};
+
+function escTrunc(s){ s=String(s); var t=s.length>60?s.slice(0,60)+"…":s; return esc(t); }
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", result:null};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){
+    return parseXlsxKakure(new Uint8Array(buf));
+  }).then(function(result){
+    f.result=result; f.loading=false; render();
+  }).catch(function(){
+    f.loading=false; f.error=T[lang].errBad; render();
+  });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function catBlock(name,hit,detailHtml,linkHtml){
+  var cls=hit?"warn":"ok";
+  var badgeHtml="<span class='badge "+cls+"'>"+(hit?"!":"OK")+"</span>";
+  var h="<div class='catBlock'><div class='catHead'><span class='catName'>"+esc(name)+"</span>"+badgeHtml+"</div>";
+  h+="<div class='catDetail'>"+detailHtml+"</div>";
+  if(linkHtml) h+="<div class='catLink'>"+linkHtml+"</div>";
+  h+="</div>";
+  return h;
+}
+
+function renderResult(f){
+  var r=f.result, t=T[lang], issues=0, h="";
+
+  // 1. hidden sheets
+  var hs=r.hiddenSheets;
+  if(hs.length){ issues++; }
+  var d1 = hs.length ? hs.map(function(s){return escTrunc(s.name)+"（"+esc(STATE_LABEL[lang][s.state])+"）";}).join("、") : esc(t.none);
+  h+=catBlock(t.cat1, hs.length>0, d1, hs.length?("<a href='../xlsx-saihyouji/'>"+esc(t.link1)+"</a>"):"");
+
+  // 2. hidden rows/cols with values
+  var hv=r.hiddenValueTotal>0;
+  if(hv) issues++;
+  var d2 = hv ? (r.hiddenValueTotal+esc(t.cellsLabel)+" "+r.hiddenValueBySheet.map(function(x){return escTrunc(x.sheet)+"："+x.count;}).join("、")) : esc(t.none);
+  h+=catBlock(t.cat2, hv, d2, hv?("<span class='catDetail'>"+esc(t.noToolHint2)+"</span>"):"");
+
+  // 3. comments
+  var cm=r.commentTotal>0;
+  if(cm) issues++;
+  var d3 = cm ? (r.commentTotal+esc(t.cellsLabel)+" "+r.commentBySheet.map(function(x){return escTrunc(x.sheet)+"："+x.count;}).join("、")) : esc(t.none);
+  h+=catBlock(t.cat3, cm, d3, cm?("<a href='../xlsx-comment/'>"+esc(t.link3)+"</a>"):"");
+
+  // 4. author metadata
+  var authorFields=[];
+  if(r.creator) authorFields.push((lang==="ja"?"作成者：":"Creator: ")+esc(r.creator));
+  if(r.lastModifiedBy) authorFields.push((lang==="ja"?"最終更新者：":"Last modified by: ")+esc(r.lastModifiedBy));
+  if(r.company) authorFields.push((lang==="ja"?"会社名：":"Company: ")+esc(r.company));
+  var am=authorFields.length>0;
+  if(am) issues++;
+  var d4 = am ? authorFields.join("　") : esc(t.none);
+  h+=catBlock(t.cat4, am, d4, am?("<a href='../sakusha-kesu/'>"+esc(t.link4)+"</a>"):"");
+
+  // 5. external links
+  var el=r.extCount>0;
+  if(el) issues++;
+  var d5 = el ? (r.extCount+(lang==="ja"?"件":"")) : esc(t.none);
+  h+=catBlock(t.cat5, el, d5, el?("<a href='../xlsx-link/'>"+esc(t.link5)+"</a>"):"");
+
+  // 6. defined names
+  var dn=r.dnUserCount>0;
+  if(dn) issues++;
+  var d6 = dn ? (r.dnUserCount+(lang==="ja"?"件（うち非表示 ":" (")+r.dnHiddenCount+(lang==="ja"?"件）":" hidden)")) : esc(t.none);
+  h+=catBlock(t.cat6, dn, d6, dn?("<a href='../xlsx-namae/'>"+esc(t.link6)+"</a>"):"");
+
+  // 7. invisible text
+  var iv=r.invisTotal>0;
+  if(iv) issues++;
+  var d7 = iv ? (r.invisTotal+esc(t.cellsLabel)+" "+r.invisBySheet.map(function(x){return escTrunc(x.sheet)+"："+x.count;}).join("、")) : esc(t.none);
+  h+=catBlock(t.cat7, iv, d7, iv?("<span class='catDetail'>"+esc(t.noToolHint7)+"</span>"):"");
+
+  var bannerCls=issues>0?"warn":"ok";
+  var bannerText=issues>0?t.bannerWarn(issues):t.bannerOk;
+  var out="<div class='summaryBanner "+bannerCls+"'>"+esc(bannerText)+"</div>";
+  out+="<div class='catList'>"+h+"</div>";
+  out+="<div class='actions'><button type='button' class='secondary csvBtn' data-id='"+f.id+"'>"+esc(t.csvBtn)+"</button></div>";
+  return out;
+}
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<div class='fRow'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+    else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+    else { h+="<span class='fMeta'>"+f.result.sheetCount+(lang==="ja"?"シート":" sheets")+"</span>"; }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+    if(!f.loading && !f.error){ h+=renderResult(f); }
+    h+="</div>";
+  });
+  box.innerHTML=h;
+
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+  var csvs=box.querySelectorAll(".csvBtn");
+  for(var m=0;m<csvs.length;m++){ csvs[m].addEventListener("click",function(){ downloadCsv(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function downloadBlob(bytes, name, mime){
+  var blob=new Blob([bytes],{type:mime});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function downloadCsv(id){
+  var f=state.files.filter(function(x){return x.id===id})[0];
+  if(!f || !f.result) return;
+  var r=f.result, t=T[lang];
+  var rows=[[lang==="ja"?"項目":"Check", lang==="ja"?"件数":"Count", lang==="ja"?"内訳":"Detail"]];
+  rows.push([t.cat1, r.hiddenSheets.length, r.hiddenSheets.map(function(s){return s.name+"("+STATE_LABEL[lang][s.state]+")";}).join(" / ")]);
+  rows.push([t.cat2, r.hiddenValueTotal, r.hiddenValueBySheet.map(function(x){return x.sheet+":"+x.count;}).join(" / ")]);
+  rows.push([t.cat3, r.commentTotal, r.commentBySheet.map(function(x){return x.sheet+":"+x.count;}).join(" / ")]);
+  rows.push([t.cat4, (r.creator||r.lastModifiedBy||r.company)?1:0, ["creator:"+r.creator,"lastModifiedBy:"+r.lastModifiedBy,"company:"+r.company].filter(function(s){return !/:$/.test(s)}).join(" / ")]);
+  rows.push([t.cat5, r.extCount, ""]);
+  rows.push([t.cat6, r.dnUserCount, (lang==="ja"?"うち非表示:":"hidden:")+r.dnHiddenCount]);
+  rows.push([t.cat7, r.invisTotal, r.invisBySheet.map(function(x){return x.sheet+":"+x.count;}).join(" / ")]);
+  var csvText=serializeCSV(rows);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3);
+  bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var dot=f.name.lastIndexOf("."), base=dot>=0?f.name.slice(0,dot):f.name;
+  downloadBlob(bytes, base+"-kakure.csv", "text/csv;charset=utf-8");
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+function renderRelated(){
+  var ja=RELATED.map(function(r){ return "<li><a href='"+r.href+"'>"+esc(r.ja)+"</a> — "+esc(r.jaDesc)+"</li>"; }).join("");
+  var en=RELATED.map(function(r){ return "<li><a href='"+r.href+"'>"+esc(r.en)+"</a> — "+esc(r.enDesc)+"</li>"; }).join("");
+  $("relatedJa").innerHTML=ja;
+  $("relatedEn").innerHTML=en;
+}
+renderRelated();
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
