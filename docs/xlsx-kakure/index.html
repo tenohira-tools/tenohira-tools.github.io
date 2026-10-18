@@ -505,7 +505,8 @@ var RELATED=[
   {href:"../xlsx-style/",ja:"「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ",jaDesc:"セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除。見た目は変わらない。",en:"Fix \"too many different cell formats\"",enDesc:"Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks."},
   {href:"../xlsx-hani/",ja:"Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット",jaDesc:"実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。",en:"Reset the used range when Ctrl+End jumps far away",enDesc:"Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped)."},
   {href:"../xlsx-diff/",ja:"2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示",jaDesc:"「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルを確認。",en:"Compare two Excel files: highlight only the cells that changed",enDesc:"Compare a before/after pair of files across every sheet at once."},
-  {href:"../xlsx-atai/",ja:"数式を値に変換：外部ファイルへのリンクが解除できないときに",jaDesc:"外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。",en:"Convert formulas to values — when you can't break an external link",enDesc:"Converts formula cells to their cached values, scoped to external references."}
+  {href:"../xlsx-atai/",ja:"数式を値に変換：外部ファイルへのリンクが解除できないときに",jaDesc:"外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。",en:"Convert formulas to values — when you can't break an external link",enDesc:"Converts formula cells to their cached values, scoped to external references."},
+  {href:"../xlsx-suuchika/",ja:"「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換",jaDesc:"テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけ数値に変換。0始まりコード列は既定で対象外。",en:"Fix the green-triangle \"Number Stored as Text\" warning, column by column",enDesc:"List number-looking text cells by column and convert only the columns you choose. Zero-padded code columns are excluded by default."}
 ];
 var T={
  ja:{title:"社外に送る前に確認：Excelの「隠れた情報」一括チェック",

@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換 | てのひらツール</title>
+<meta name="description" content="Excel(.xlsx/.xlsm)でセルの左上に緑の三角が出て「数値が文字列として保存されています」と注意される、SUMで合計されない・並べ替えがおかしいときに。全シート横断でテキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけ数値に変換した新しいファイルを書き出します。郵便番号・社員番号など0から始まるコードの列や8桁以上の長い数字コードの列は、誤って数値化しないよう既定でチェックを外しています。ファイルはサーバーに送信されず、すべてブラウザ内だけで処理されます。Fix Excel's green-triangle \"Number Stored as Text\" warning across every sheet at once — list the affected cells by column and convert only the ones you choose, entirely in your browser. Zero-padded codes and long digit strings are excluded by default.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-suuchika/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:#c0392b;font-size:.85rem;flex-basis:100%}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.center{text-align:center;white-space:nowrap}
+td.samples{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:320px;word-break:break-all;color:var(--muted)}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px;margin-right:10px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:11px 18px;cursor:pointer;min-height:44px;margin-right:8px;margin-bottom:8px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換</h1>
+    <p class="sub" data-i="sub">セルの左上に緑の三角マークが出て「このセルの数値は、テキストとして保存されています」と注意される、SUM関数で合計されない、並べ替え・フィルターがおかしい——というときに。Excel(.xlsx/.xlsm)の全シートを横断して、テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけを数値に変換した新しいファイルを書き出します。郵便番号・社員番号など0から始まるコードの列や、8桁以上の長い数字コードの列は、誤って数値化しないよう既定でチェックを外しています。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。すべてのシートを解析します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">テキストとして保存された数値らしいセルの集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">数式が入っているセル（キャッシュされた文字列の計算結果を含む）は対象外です。判定は「数字だけ（符号・小数点を含む）で構成された文字列かどうか」の機械的なチェックで、桁区切りのカンマが入った文字列は対象になりません。</p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="listHeading">列ごとの一覧（シート横断）</h2>
+  <p class="hint" id="resultCount"></p>
+  <div class="toolbar">
+    <button type="button" class="secondary" id="selectAllBtn" data-i="selectAllBtn">すべて選択</button>
+    <button type="button" class="secondary" id="selectNoneBtn" data-i="selectNoneBtn">すべて選択解除</button>
+    <button type="button" class="secondary" id="selectDefaultBtn" data-i="selectDefaultBtn">既定に戻す</button>
+  </div>
+  <div id="resultBox"></div>
+  <div class="warnBox" data-i="warnText">数値に変換されたセルは、元の文字列と同じ値の「数値」になります（0始まりだった先頭の0や、見た目の桁数は失われます）。セルの表示形式（書式）が「文字列」のままの場合、変換後も左詰めで表示されることがあります。その場合はExcelで列を選び「標準」などの表示形式に変更してください。数式・他のセルの値や書式は一切変更しません。元のファイルは変更されず、新しいファイルとして書き出されます。</div>
+  <p style="margin-top:12px">
+    <button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">選んだ列を数値に変換したファイルを書き出す</button>
+    <button type="button" class="secondary" id="csvBtn" data-i="csvBtn">一覧をCSVで書き出す</button>
+  </p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>全シートを横断して、テキストとして保存された数値らしいセルが列ごとに一覧表示されます。郵便番号・社員番号のような0始まりのコード列や、8桁以上の長い数字コードの列は、既定でチェックが外れています。</li>
+      <li>数値に変換したい列だけチェックを入れ（または外し）ます。</li>
+      <li>「選んだ列を数値に変換したファイルを書き出す」でダウンロードします。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. どんなセルが「対象」として一覧に出ますか？</h3>
+    <p>A. セルの実体が文字列として保存されている（共有文字列、またはインライン文字列）セルのうち、中身が符号（+/-）・数字・小数点だけで構成されている文字列だけを対象にします。数式が入っているセル（計算結果が文字列のものを含む）は、文字列として保存されているわけではないため対象外です。桁区切りのカンマが入った「12,345」のような文字列や、日付・時刻のような文字列も、数字だけの文字列ではないため対象になりません。</p>
+    <h3>Q. 0から始まるコード列や、長い数字の列が既定で対象外（チェックなし）なのはなぜですか？</h3>
+    <p>A. 郵便番号・社員番号・電話番号・JANコードのように「0始まりの桁」や「長い桁数」が意味を持つ列は、数値に変換すると先頭の0が消えたり、Excelが指数表記で丸めてしまったりして、かえって困ることが多いためです。列の中に1つでも0始まりの2桁以上の数字（例：0123）があれば、または整数部分が8桁以上の数字（電話番号・JANコードなど）があれば、その列は既定でチェックを外しています。必要であれば手動でチェックを入れ直せます。</p>
+    <h3>Q. 変換すると、セルの表示（左詰め・右詰め）はどうなりますか？</h3>
+    <p>A. セルが保持している「書式（スタイル）」自体は変更しないため、表示形式が「文字列」に明示的に設定されている列は、数値に変換した後も左詰めのまま表示されることがあります。その場合はExcelでセルの書式設定を「標準」や「数値」に変更してください。数式での集計（SUM等）や並べ替え・フィルターは、表示形式に関わらず数値として正しく扱われるようになります。</p>
+    <h3>Q. 共有数式でコピーされたセルや、結合セルはどう扱われますか？</h3>
+    <p>A. このツールは数式セルを対象にしないため、共有数式そのものには影響しません。結合セルは、値を保持している左上のセルだけが判定・変換の対象になります（結合の解除は行いません）。</p>
+    <h3>Q. 対応しているファイル形式・元のファイルへの影響は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。元のファイルはブラウザのメモリ上で読み込むだけで変更されず、結果は新しいファイルとしてダウンロードされます（ファイル名の末尾に「_数値変換済み」を付けます）。選んだ列の対象セル以外は、数式・値・書式・グラフ・画像などすべてそのまま保持されます。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>Every sheet is scanned for cells whose text content looks like a plain number, listed by column. Columns that contain a zero-padded code (like a postal code) or a long digit string (8+ digits) are unchecked by default.</li>
+      <li>Check (or uncheck) the columns you want converted to real numbers.</li>
+      <li>Click "Build a file converted to numbers" to download the result — your original file is untouched.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which cells show up as candidates?</h3>
+    <p>A. Cells whose stored content is text (a shared string or an inline string) where the text consists only of an optional sign, digits and a decimal point — nothing else. Formula cells (including ones whose cached result is text) aren't included, since their content isn't a stored text constant. A string with a thousands separator like "12,345", or a date/time-looking string, doesn't match either, since it isn't purely digits.</p>
+    <h3>Q. Why are zero-padded or long digit columns unchecked by default?</h3>
+    <p>A. Columns like postal codes, employee numbers, phone numbers or JAN/barcode numbers often depend on a leading zero or an exact digit count that has no numeric meaning. Converting them to real numbers would drop the leading zero or risk Excel rounding a very long number into scientific notation. If any cell in a column starts with a zero followed by another digit (like "0123"), or has an integer part of 8 or more digits, that column is left unchecked by default — you can still check it manually if you want it converted.</p>
+    <h3>Q. What happens to how the cell is displayed (left- vs. right-aligned)?</h3>
+    <p>A. This tool doesn't touch a cell's style, so a column whose number format is explicitly set to "Text" may still display left-aligned after conversion. If that happens, change that column's format to "General" or "Number" in Excel. Either way, the value is now a real number, so SUM and other formulas, sorting and filtering all work correctly regardless of the display format.</p>
+    <h3>Q. What about cells copied via a shared formula, or merged cells?</h3>
+    <p>A. This tool never touches formula cells, so shared formulas are unaffected. For a merged cell, only its top-left cell (which holds the actual value) is checked and converted; merging itself is left as-is.</p>
+    <h3>Q. Which formats are supported, and is my original file changed?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files aren't supported. Your original file is only ever read into browser memory — the result downloads as a new file ("_数値変換済み" appended to the name). Everything besides the converted cells in the columns you chose — other formulas, values, formatting, charts, images — is carried over unchanged.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全ツールを探す。</li>
+      <li><a href="../csv-to-xlsx/">CSVの先頭の0が消える・日付に化けるときのExcel変換</a> — こちらは逆方向。CSVをExcel化する時点で、0埋め・長い数字コードの列を自動で文字列として保存し、先頭の0落ち・日付化けを防ぐ。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
+      <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。</li>
+      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。</li>
+      <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
+      <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除した新しいファイルを書き出す。見た目は変わらない。</li>
+      <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。</li>
+      <li><a href="../xlsx-saihyouji/">シートの「再表示」に出てこないときの対策：非表示・完全非表示シートの一覧・一括変更</a> — 非表示・完全非表示（veryHidden）シートの表示状態を一覧化し、選んだシートをまとめて表示に戻す（または非表示にする）新しいファイルを書き出す。</li>
+      <li><a href="../xlsx-comment/">シートのあちこちに散らばったコメント・メモを全部一覧に</a> — 従来の「メモ」も最近の「スレッド形式」コメント（返信・解決済みの状態を含む）も全シート横断で一覧化してCSV出力・印刷。</li>
+      <li><a href="../xlsx-diff/">2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示</a> — 「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルだけをシート形式の色付き表示と一覧で確認。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — 非表示シート・非表示行列の値・コメント・作成者名・外部リンク・名前定義・白文字セルを1画面で診断し、該当する専用ツールへ案内（読み取り専用）。</li>
+      <li><a href="../xlsx-atai/">数式を値に変換：外部ファイルへのリンクが解除できないときに</a> — 外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool by symptom: heavy, save errors, error values, links, printing.</li>
+      <li><a href="../csv-to-xlsx/">Convert a CSV to Excel without losing leading zeros or dates turning wrong</a> — the reverse direction: when building the .xlsx, zero-padded and long digit-code columns are auto-saved as text to begin with.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used — formulas, names, validation, formatting and charts.</li>
+      <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once, even when iterative calculation hides Excel's own warning.</li>
+      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell (#REF!, #N/A, #VALUE! and more) across every sheet and file, with counts by type and a likely cause, exportable as CSV.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, so the table sorts, filters and pivots correctly.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every conditional-formatting rule across all sheets, flag overlapping ranges, whole-row/column rules and broken style references, and remove the ones you choose.</li>
+      <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet, flag links to a local file or a deleted sheet, and remove the ones you choose.</li>
+      <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop ones no cell uses, without changing how anything looks.</li>
+      <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away</a> — Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped).</li>
+      <li><a href="../xlsx-saihyouji/">Sheet missing from the Unhide dialog?</a> — List every sheet's visibility (visible/hidden/very hidden) and bulk-change any of them to a new file.</li>
+      <li><a href="../xlsx-comment/">List every cell comment and note across every sheet</a> — Covers both the classic "note" and the newer threaded "comment" (replies, resolved status), exportable as CSV or printed directly.</li>
+      <li><a href="../xlsx-diff/">Compare two Excel files: highlight only the cells that changed</a> — Compare a before/after pair of files across every sheet at once, with added/removed/changed cells highlighted in a sheet grid or a list.</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for &quot;hidden&quot; information before sending it outside your company</a> — Checks hidden sheets, hidden-row/column values, comments, author metadata, external links, defined names and invisible text on one screen, with links to the matching tool (read-only).</li>
+      <li><a href="../xlsx-atai/">Convert formulas to values — when you can't break an external link</a> — Converts formula cells to their cached values, scoped to external references.</li>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up Excel, Word and PowerPoint files at once before sending them outside your company.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"どんなセルが「対象」として一覧に出ますか？","acceptedAnswer":{"@type":"Answer","text":"文字列として保存されているセルのうち、中身が符号・数字・小数点だけで構成されている文字列だけが対象です。数式セルや、カンマ区切りの文字列は対象外です。"}},
+    {"@type":"Question","name":"0から始まるコード列や、長い数字の列が既定で対象外なのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"郵便番号・社員番号・電話番号・JANコードなど、0始まりや桁数そのものに意味がある列を誤って数値化しないためです。該当する列は既定でチェックを外しており、必要なら手動でチェックできます。"}},
+    {"@type":"Question","name":"変換すると、セルの表示（左詰め・右詰め）はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"セルの書式自体は変更しないため、表示形式が「文字列」のままの列は左詰め表示が残ることがあります。その場合はExcelで表示形式を「標準」などに変更してください。SUMや並べ替えは表示形式に関わらず正しく動作します。"}},
+    {"@type":"Question","name":"対応しているファイル形式・元のファイルへの影響は？","acceptedAnswer":{"@type":"Answer","text":"Excel 2007以降の.xlsx・.xlsm形式に対応しています。元のファイルは変更されず、結果は新しいファイルとしてダウンロードされます。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-hani/xlsx-style/xlsx-atai (no external libraries; only
+   standard browser APIs: DecompressionStream/CompressionStream/TextDecoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+function colIndexToLetter(idx){
+  var s="", n=idx+1;
+  while(n>0){ var rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+function refToRowCol(ref){
+  var m=/^\$?([A-Z]+)\$?([0-9]+)$/.exec(ref);
+  if(!m) return null;
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+function parseSharedStrings(xml){
+  if(!xml) return [];
+  return findTags(xml,"si").map(function(si){
+    var ts=findTags(si.inner||"","t");
+    return ts.map(function(t){ return decodeXmlEntities(t.inner||""); }).join("");
+  });
+}
+
+/* =====================================================================
+   Candidate detection: a cell counts only if its stored content is a
+   TEXT constant (shared string "s", or inline string "inlineStr") — never
+   a formula cell, whatever its cached result type — and that text, once
+   trimmed, consists solely of an optional sign, digits and one decimal
+   point (the same thing Excel's own "Number Stored as Text" check flags).
+   ===================================================================== */
+var NUM_RE=/^[+-]?(\d+)(\.\d+)?$/;
+function classifyNumericText(s){
+  var m=NUM_RE.exec(s);
+  if(!m) return {isNumeric:false};
+  var value=parseFloat(s);
+  if(!isFinite(value)) return {isNumeric:false};
+  var intPart=m[1];
+  var leadingZero = intPart.length>1 && intPart.charAt(0)==="0";
+  var longDigits = intPart.length>=8;
+  var risky = leadingZero || longDigits;
+  var reason = leadingZero ? "leadingZero" : (longDigits ? "longDigits" : null);
+  return {isNumeric:true, value:value, risky:risky, reason:reason};
+}
+function extractSheetCandidates(sheetXml,sharedStrings){
+  var cTags=findTags(sheetXml,"c");
+  var records=[];
+  cTags.forEach(function(c){
+    if(c.selfClose || c.inner===null) return;
+    if(findTags(c.inner,"f").length) return;
+    var t=c.attrs.t, ref=c.attrs.r||"";
+    var pos=refToRowCol(ref);
+    if(!pos) return;
+    var text=null;
+    if(t==="inlineStr"){
+      var isTags=findTags(c.inner,"is");
+      if(isTags.length){
+        var tt=findTags(isTags[0].inner||"","t");
+        text=tt.map(function(x){return decodeXmlEntities(x.inner||"")}).join("");
+      }
+    } else if(t==="s"){
+      var vTags=findTags(c.inner,"v");
+      if(vTags.length){
+        var idx=parseInt(decodeXmlEntities(vTags[0].inner||""),10);
+        text=sharedStrings[idx]!==undefined?sharedStrings[idx]:null;
+      }
+    } else {
+      return;
+    }
+    if(text===null) return;
+    var trimmed=text.trim();
+    if(trimmed==="") return;
+    var info=classifyNumericText(trimmed);
+    if(!info.isNumeric) return;
+    records.push({
+      ref:ref, row:pos.row, col:pos.col, colLetter:colIndexToLetter(pos.col),
+      trimmed:trimmed, value:info.value, risky:info.risky, reason:info.reason,
+      cStart:c.start, cEnd:c.end, attrsS:c.attrs.s
+    });
+  });
+  return records;
+}
+function groupKey(sheetName,colLetter){ return sheetName+"\u0000"+colLetter; }
+function groupColumns(sheets){
+  var groups=[], index={};
+  sheets.forEach(function(sh){
+    sh.records.forEach(function(r){
+      var key=groupKey(sh.name,r.colLetter);
+      var g=index[key];
+      if(!g){ g={key:key,sheetName:sh.name,colLetter:r.colLetter,col:r.col,count:0,riskyCount:0,reasons:{},samples:[]}; index[key]=g; groups.push(g); }
+      g.count++;
+      if(r.risky){ g.riskyCount++; g.reasons[r.reason]=true; }
+      if(g.samples.length<5) g.samples.push(r.trimmed);
+    });
+  });
+  groups.forEach(function(g){ g.defaultChecked=g.riskyCount===0; g.checked=g.defaultChecked; });
+  groups.sort(function(a,b){ return a.sheetName===b.sheetName ? (a.col-b.col) : (a.sheetName<b.sheetName?-1:1); });
+  return groups;
+}
+
+async function parseXlsxCandidates(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  if(!sheetList.length) throw new Error("NOT_XLSX");
+  var sharedStrings=parseSharedStrings(byName["xl/sharedStrings.xml"]?dec.decode(byName["xl/sharedStrings.xml"].bytes):"");
+  var sheets=sheetList.map(function(s){
+    var entry=byName[s.path];
+    var xml=entry?dec.decode(entry.bytes):"";
+    return {name:s.name, path:s.path, xml:xml, records:entry?extractSheetCandidates(xml,sharedStrings):[]};
+  });
+  var groups=groupColumns(sheets);
+  return {entries:entries, sheets:sheets, groups:groups};
+}
+
+/* =====================================================================
+   Build: rewrite every selected cell (sheetName+column is checked) in
+   place — remove the text type, write the numeric value — leaving
+   everything else byte-identical.
+   ===================================================================== */
+function buildConvertedCellXml(r){
+  var openAttrs="r=\""+esc(r.ref)+"\""+(r.attrsS!==undefined?(" s=\""+esc(r.attrsS)+"\""):"");
+  return "<c "+openAttrs+"><v>"+numToXmlString(r.value)+"</v></c>";
+}
+function numToXmlString(v){
+  if(Object.is(v,-0)) v=0;
+  return String(v);
+}
+function buildPatchedSheetXml(sheetXml,records){
+  if(!records.length) return null;
+  var sorted=records.slice().sort(function(a,b){return b.cStart-a.cStart});
+  var newXml=sheetXml;
+  sorted.forEach(function(r){
+    newXml=newXml.slice(0,r.cStart)+buildConvertedCellXml(r)+newXml.slice(r.cEnd);
+  });
+  return newXml;
+}
+async function buildConvertedXlsx(parsed){
+  var enc=new TextEncoder();
+  var checkedKeys={};
+  parsed.groups.forEach(function(g){ if(g.checked) checkedKeys[g.key]=true; });
+  var patchedByPath={};
+  parsed.sheets.forEach(function(sh){
+    var toConvert=sh.records.filter(function(r){ return checkedKeys[groupKey(sh.name,r.colLetter)]; });
+    var newXml=buildPatchedSheetXml(sh.xml,toConvert);
+    if(newXml!==null) patchedByPath[sh.path]=enc.encode(newXml);
+  });
+  var outFiles=parsed.entries.map(function(e){
+    if(patchedByPath[e.name]!==undefined) return {name:e.name, bytes:patchedByPath[e.name]};
+    return {name:e.name, bytes:e.bytes};
+  });
+  return await buildZip(outFiles);
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換",
+  sub:"セルの左上に緑の三角マークが出て「このセルの数値は、テキストとして保存されています」と注意される、SUM関数で合計されない、並べ替え・フィルターがおかしい——というときに。Excel(.xlsx/.xlsm)の全シートを横断して、テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけを数値に変換した新しいファイルを書き出します。郵便番号・社員番号など0から始まるコードの列や、8桁以上の長い数字コードの列は、誤って数値化しないよう既定でチェックを外しています。元のファイルは変更しません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。すべてのシートを解析します。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"テキストとして保存された数値らしいセルの集計",
+  statsHint:"数式が入っているセル（キャッシュされた文字列の計算結果を含む）は対象外です。判定は「数字だけ（符号・小数点を含む）で構成された文字列かどうか」の機械的なチェックで、桁区切りのカンマが入った文字列は対象になりません。",
+  statTotal:"対象セル数",statCols:"対象列数",statRisky:"既定で対象外の列数",
+  listHeading:"列ごとの一覧（シート横断）",
+  selectAllBtn:"すべて選択",selectNoneBtn:"すべて選択解除",selectDefaultBtn:"既定に戻す",
+  warnText:"数値に変換されたセルは、元の文字列と同じ値の「数値」になります（0始まりだった先頭の0や、見た目の桁数は失われます）。セルの表示形式（書式）が「文字列」のままの場合、変換後も左詰めで表示されることがあります。その場合はExcelで列を選び「標準」などの表示形式に変更してください。数式・他のセルの値や書式は一切変更しません。元のファイルは変更されず、新しいファイルとして書き出されます。",
+  buildBtn:"選んだ列を数値に変換したファイルを書き出す",
+  buildBtnBusy:"書き出し中…",
+  csvBtn:"一覧をCSVで書き出す",
+  loadingLabel:"読み込み中…",
+  colChk:"変換",colSheet:"シート",colCol:"列",colCount:"件数",colReason:"既定の扱い",colSamples:"サンプル値",
+  reasonLeadingZero:"既定で対象外：0始まりのコード",reasonLongDigits:"既定で対象外：8桁以上の長い数字",reasonNone:"既定で対象",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護の可能性があります）",
+  errNone:"テキストとして保存された数値らしいセルは見つかりませんでした",
+  buildDone:"ダウンロードしました：",
+  csvHeaderSheet:"シート",csvHeaderCol:"列",csvHeaderCount:"件数",csvHeaderReason:"既定の扱い",csvHeaderSamples:"サンプル値",csvHeaderChecked:"変換対象",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Fix the green-triangle \"Number Stored as Text\" warning, column by column",
+  sub:"For when a cell shows a green triangle warning that its number is stored as text, SUM doesn't add it up, or sorting/filtering behaves oddly. Scans every sheet of an Excel (.xlsx/.xlsm) workbook for cells whose text content looks like a plain number, lists them by column, and builds a new file with only the columns you choose converted to real numbers. Columns that look like a zero-padded code (postal code, employee number) or a long digit string (8+ digits) are unchecked by default so they aren't converted by accident. Your original file is untouched.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Every sheet is analyzed. Everything happens on this device.",
+  statsHeading:"Summary of text-stored, number-looking cells",
+  statsHint:"Formula cells (including ones whose cached result is text) are never included. The check is purely mechanical — does the text consist only of an optional sign, digits and a decimal point — so a string with a thousands separator isn't matched.",
+  statTotal:"Candidate cells",statCols:"Columns",statRisky:"Unchecked by default",
+  listHeading:"Columns, across every sheet",
+  selectAllBtn:"Select all",selectNoneBtn:"Deselect all",selectDefaultBtn:"Reset to default",
+  warnText:"A converted cell becomes a real number with the same value as the original text (a leading zero, or the original digit count, is lost). If a column's number format is explicitly set to \"Text\", it may still display left-aligned after conversion — change that column's format to \"General\" in Excel if so. Nothing else — formulas, other cells' values or formatting — is touched. Your original file is untouched; the result downloads as a new file.",
+  buildBtn:"Build a file converted to numbers",
+  buildBtnBusy:"Building…",
+  csvBtn:"Export the list as CSV",
+  loadingLabel:"Loading…",
+  colChk:"Convert",colSheet:"Sheet",colCol:"Column",colCount:"Count",colReason:"Default",colSamples:"Sample values",
+  reasonLeadingZero:"Unchecked: zero-padded code",reasonLongDigits:"Unchecked: 8+ digit number",reasonNone:"Checked by default",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, or it's password-protected)",
+  errNone:"No text-stored, number-looking cells were found",
+  buildDone:"Downloaded: ",
+  csvHeaderSheet:"Sheet",csvHeaderCol:"Column",csvHeaderCount:"Count",csvHeaderReason:"Default",csvHeaderSamples:"Sample values",csvHeaderChecked:"Will convert",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"", loading:false, error:"", parsed:null, building:false, buildMsg:""};
+
+function esc5(s){ s=String(s); return s.length>60?s.slice(0,60)+"…":s; }
+
+function addFile(file){
+  state={fileName:file.name, loading:true, error:"", parsed:null, building:false, buildMsg:""};
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxCandidates(new Uint8Array(buf)); })
+    .then(function(result){
+      state.loading=false; state.parsed=result; render();
+    }).catch(function(){
+      state.loading=false; state.error=T[lang].errBad; render();
+    });
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ box.innerHTML=""; return; }
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading) h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>";
+  else if(state.error) h+="<span class='fWarn'>"+esc(state.error)+"</span>";
+  box.innerHTML=h;
+}
+
+function renderStats(){
+  var groups=state.parsed.groups;
+  var total=groups.reduce(function(s,g){return s+g.count},0);
+  var riskyCols=groups.filter(function(g){return !g.defaultChecked}).length;
+  var items=[
+    [total,T[lang].statTotal],
+    [groups.length,T[lang].statCols],
+    [riskyCols,T[lang].statRisky]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function reasonLabel(g){
+  if(g.reasons.leadingZero) return T[lang].reasonLeadingZero;
+  if(g.reasons.longDigits) return T[lang].reasonLongDigits;
+  return T[lang].reasonNone;
+}
+
+function renderList(){
+  var groups=state.parsed.groups;
+  $("resultCount").textContent=groups.length+"";
+  if(!groups.length){ $("resultBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>"; $("buildBtn").disabled=true; return; }
+  var h="<div class='scroll'><table><thead><tr>"+
+    "<th>"+esc(T[lang].colChk)+"</th><th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colCol)+"</th>"+
+    "<th>"+esc(T[lang].colCount)+"</th><th>"+esc(T[lang].colReason)+"</th><th>"+esc(T[lang].colSamples)+"</th></tr></thead><tbody>";
+  groups.forEach(function(g,i){
+    var badge = g.defaultChecked ? "<span class='badge ok'>"+esc(T[lang].reasonNone)+"</span>" : "<span class='badge warn'>"+esc(reasonLabel(g))+"</span>";
+    h+="<tr><td class='center'><input type='checkbox' data-idx='"+i+"' class='colChk' "+(g.checked?"checked":"")+"></td>"+
+       "<td>"+esc(g.sheetName)+"</td><td class='center'>"+esc(g.colLetter)+"</td><td class='center'>"+g.count+"</td>"+
+       "<td>"+badge+"</td><td class='samples'>"+esc(g.samples.map(esc5).join(", "))+"</td></tr>";
+  });
+  h+="</tbody></table></div>";
+  $("resultBox").innerHTML=h;
+  var chks=$("resultBox").querySelectorAll(".colChk");
+  for(var i=0;i<chks.length;i++){
+    chks[i].addEventListener("change",function(e){
+      var idx=parseInt(e.target.getAttribute("data-idx"),10);
+      state.parsed.groups[idx].checked=e.target.checked;
+    });
+  }
+  $("buildBtn").disabled=false;
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.parsed){
+    $("statsCard").style.display="none"; $("listCard").style.display="none";
+    return;
+  }
+  $("statsCard").style.display=""; renderStats();
+  $("listCard").style.display=""; renderList();
+}
+
+function suggestOutName(name){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(name);
+  if(!m) return name+"_数値変換済み.xlsx";
+  return m[1]+"_数値変換済み."+m[2].toLowerCase();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("selectAllBtn").addEventListener("click",function(){ if(!state.parsed) return; state.parsed.groups.forEach(function(g){g.checked=true}); render(); });
+$("selectNoneBtn").addEventListener("click",function(){ if(!state.parsed) return; state.parsed.groups.forEach(function(g){g.checked=false}); render(); });
+$("selectDefaultBtn").addEventListener("click",function(){ if(!state.parsed) return; state.parsed.groups.forEach(function(g){g.checked=g.defaultChecked}); render(); });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.parsed || state.building) return;
+  state.building=true; state.buildMsg=""; $("buildBtn").textContent=T[lang].buildBtnBusy; $("buildBtn").disabled=true;
+  buildConvertedXlsx(state.parsed).then(function(outBytes){
+    var outName=suggestOutName(state.fileName);
+    var blob=new Blob([outBytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=outName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},2000);
+    state.buildMsg=T[lang].buildDone+outName;
+  }).catch(function(){
+    state.buildMsg=T[lang].errBad;
+  }).then(function(){
+    state.building=false; $("buildBtn").textContent=T[lang].buildBtn; $("buildBtn").disabled=false;
+    $("buildMsg").textContent=state.buildMsg;
+  });
+});
+
+$("csvBtn").addEventListener("click",function(){
+  if(!state.parsed || !state.parsed.groups.length) return;
+  var out=[[T[lang].csvHeaderSheet,T[lang].csvHeaderCol,T[lang].csvHeaderCount,T[lang].csvHeaderReason,T[lang].csvHeaderChecked,T[lang].csvHeaderSamples]];
+  state.parsed.groups.forEach(function(g){
+    out.push([g.sheetName,g.colLetter,g.count,reasonLabel(g),g.checked?"1":"",g.samples.join(" / ")]);
+  });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var base=(state.fileName||"suuchika").replace(/\.[^.]+$/,"");
+  var a=document.createElement("a"); a.href=url; a.download=base+"_数値化対象列一覧.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  $("buildBtn").textContent=state.building?T[lang].buildBtnBusy:T[lang].buildBtn;
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
