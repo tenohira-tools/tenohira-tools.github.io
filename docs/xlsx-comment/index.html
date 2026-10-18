@@ -809,7 +809,8 @@ var RELATED=[
    en:["Check an Excel file for \"hidden\" information before sending it outside your company","Beyond comments: also checks hidden sheets, author metadata, external links, defined names and invisible text (read-only)."]},
  {href:"../xlsx-suuchika/",ja:["「数値が文字列として保存されています」を列ごと一括で数値に変換","テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけ数値に変換。"],
    en:["Fix the green-triangle \"Number Stored as Text\" warning, column by column","List number-looking text cells by column and convert only the columns you choose."]}
-];
+,
+  {href:"../xlsx-nyuryoku/",ja:"入力規則（プルダウン）がどこにあるか分からない：全シート一覧化",jaDesc:"セル範囲・種類・リスト元（他シート参照・名前定義経由も含む）を全シート横断で一覧化し、参照が壊れているものを検出してCSV出力。",en:"List every data-validation (dropdown) rule across all sheets",enDesc:"Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV."}];
 function renderRelated(){
   var ja="", en="";
   RELATED.forEach(function(r){

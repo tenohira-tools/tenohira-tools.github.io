@@ -187,6 +187,7 @@ html[lang=en] .en-only{display:block}
 <li><a href="../xlsx-diff/">2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示</a> — 「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルだけをシート形式の色付き表示と一覧で確認。</li>
 
       <li><a href="../xlsx-suuchika/">「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換</a> — テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけ数値に変換。郵便番号等の0始まりコード列や8桁以上の長い数字コードの列は既定で対象外。</li>
+<li><a href="../xlsx-nyuryoku/">入力規則（プルダウン）がどこにあるか分からない：全シート一覧化</a> — セル範囲・種類・リスト元（他シート参照・名前定義経由も含む）を全シート横断で一覧化し、参照が壊れているものを検出してCSV出力。</li>
 </ul>
   </div>
   <div class="en-only">
@@ -212,6 +213,7 @@ html[lang=en] .en-only{display:block}
 <li><a href="../xlsx-diff/">Compare two Excel files: highlight only the cells that changed</a> — Compare a before/after pair of files across every sheet at once, with added/removed/changed cells highlighted in a sheet grid or a list.</li>
 
       <li><a href="../xlsx-suuchika/">Fix the green-triangle "Number Stored as Text" warning, column by column</a> — List cells whose text looks like a plain number, grouped by column, and convert only the columns you choose. Zero-padded or long digit-code columns are excluded by default.</li>
+<li><a href="../xlsx-nyuryoku/">List every data-validation (dropdown) rule across all sheets</a> — Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV.</li>
 </ul>
   </div>
 </section>

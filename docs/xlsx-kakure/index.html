@@ -507,7 +507,8 @@ var RELATED=[
   {href:"../xlsx-diff/",ja:"2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示",jaDesc:"「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルを確認。",en:"Compare two Excel files: highlight only the cells that changed",enDesc:"Compare a before/after pair of files across every sheet at once."},
   {href:"../xlsx-atai/",ja:"数式を値に変換：外部ファイルへのリンクが解除できないときに",jaDesc:"外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。",en:"Convert formulas to values — when you can't break an external link",enDesc:"Converts formula cells to their cached values, scoped to external references."},
   {href:"../xlsx-suuchika/",ja:"「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換",jaDesc:"テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけ数値に変換。0始まりコード列は既定で対象外。",en:"Fix the green-triangle \"Number Stored as Text\" warning, column by column",enDesc:"List number-looking text cells by column and convert only the columns you choose. Zero-padded code columns are excluded by default."}
-];
+,
+  {href:"../xlsx-nyuryoku/",ja:"入力規則（プルダウン）がどこにあるか分からない：全シート一覧化",jaDesc:"セル範囲・種類・リスト元（他シート参照・名前定義経由も含む）を全シート横断で一覧化し、参照が壊れているものを検出してCSV出力。",en:"List every data-validation (dropdown) rule across all sheets",enDesc:"Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV."}];
 var T={
  ja:{title:"社外に送る前に確認：Excelの「隠れた情報」一括チェック",
   sub:"Excel(.xlsx/.xlsm)ファイルを社外に送る前に、Windows版Excelの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセルを1画面で一覧化し、該当があれば専用ツールへ案内します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。",
