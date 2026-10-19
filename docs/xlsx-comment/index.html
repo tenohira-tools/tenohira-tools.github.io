@@ -813,7 +813,9 @@ var RELATED=[
   {href:"../xlsx-nyuryoku/",ja:["入力規則（プルダウン）がどこにあるか分からない：全シート一覧化","セル範囲・種類・リスト元（他シート参照・名前定義経由も含む）を全シート横断で一覧化し、参照が壊れているものを検出してCSV出力。"],
    en:["List every data-validation (dropdown) rule across all sheets","Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV."]},
   {href:"../xlsx-insatsu/",ja:["シートごとに印刷範囲・印刷タイトル・改ページがバラバラなときの一覧・一括解除","印刷範囲・印刷タイトル・手動の改ページの設定状況を全シート一覧化し、選んだシート・項目だけをまとめて解除した新しいファイルを書き出す。"],
-   en:["List every sheet's print area, print titles and page breaks — and clear the ones you choose","Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared."]}];
+   en:["List every sheet's print area, print titles and page breaks — and clear the ones you choose","Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared."]},
+  {href:"../xlsx-zukei/",ja:["図形が知らないうちに増えている・見えない図形が残っていないか一覧でチェック","非表示設定の図形、サイズが実質ゼロの図形、同じ名前が繰り返し付いた図形（コピーで増えた可能性）を全シート横断で一覧表示（読み取り専用）。"],
+   en:["Check every sheet for invisible shapes, or ones that multiplied by copy-paste","Lists every shape, picture, chart frame and group across every sheet, flagging hidden ones, zero-size ones, and repeated names that suggest copy-paste growth (read-only)."]}];
 function renderRelated(){
   var ja="", en="";
   RELATED.forEach(function(r){

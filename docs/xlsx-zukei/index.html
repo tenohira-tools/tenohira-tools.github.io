@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>図形が勝手に増えた・見えない図形が残っている：全シート横断の図形一覧ツール | てのひらツール</title>
+<meta name="description" content="シートにシェイプや画像を繰り返しコピーしているうちに、画面には映らないサイズ0や非表示の図形、同じ名前の図形が何十個も残っていませんか。「ホーム」→「検索と選択」→「オブジェクトの選択と表示」を開いても、名前の一覧が出るだけで、どれが非表示でどれがコピーで増えた図形かは教えてくれません。Excel(.xlsx/.xlsm)の全シートにある図形・画像・グラフ枠・グループを解析し、非表示設定、サイズが実質ゼロ、同じ名前が繰り返し付いた図形を自動で見分けて一覧表示します。ブラウザ内だけで処理し、ファイルは送信されません。When shapes or pictures get copy-pasted over and over, some end up invisible (hidden or zero-size) or repeated under the same name dozens of times. This tool scans every sheet in an Excel (.xlsx/.xlsm) file and flags exactly those, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-zukei/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+#fileListBox{display:grid;gap:14px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:12px}
+.fileCard .fRow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:100px}
+.statBox .n{font-size:1.3rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.8rem}
+.statBox.warn .n{color:var(--warn)}
+.statBox.ok .n{color:var(--accent)}
+.summaryBanner{border-radius:10px;padding:10px 12px;font-size:.92rem;margin:10px 0;font-weight:700}
+.summaryBanner.ok{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent)}
+.summaryBanner.warn{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn)}
+.hintBox{border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:.86rem;color:var(--muted);margin:8px 0}
+.filterRow{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:.9rem}
+.filterRow input{width:auto;min-height:auto}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.name{white-space:normal;word-break:break-all;max-width:220px}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:3px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:9px 16px;cursor:pointer;min-height:40px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+.about code{background:var(--accent-bg);border-radius:4px;padding:1px 5px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">図形が知らないうちに増えている・見えない図形が残っていないか：全シート一覧チェック</h1>
+    <p class="sub" data-i="sub">Excelでシェイプや画像を繰り返しコピーしているうちに、画面には映らない非表示・サイズ実質ゼロの図形や、同じ名前が何十個も付いた図形が残っていることがあります。「ホーム」→「検索と選択」→「オブジェクトの選択と表示」を開いても、名前が並ぶだけで、どれが非表示か、どれがコピーで増えたのかは分かりません。このツールはExcel(.xlsx/.xlsm)の全シートにある図形・画像・グラフ枠・グループを解析し、シートごとに一覧表示したうえで、非表示設定の図形、サイズが実質ゼロの図形、同じ名前が繰り返し付いた図形（コピーで増えた可能性）に印を付けます。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">複数ファイルを一度に追加できます。全シートの図形・画像・グラフ枠・グループを解析します。ファイルは選択した端末の中だけで処理され、どこにも送信されません。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイルも一度に追加できます）。</li>
+      <li>シートごとに図形・画像・グラフ枠・グループの件数が表示され、非表示設定・サイズ実質ゼロ・同じ名前の繰り返し（コピーの疑い）のいずれかに当てはまるものには印が付きます。</li>
+      <li>既定では「疑わしい図形だけ表示」にチェックが入った状態で一覧が出ます。チェックを外すと全ての図形が見られます。</li>
+      <li>一覧はCSVとしてダウンロードできます。</li>
+    </ol>
+    <h3>Q. 「非表示」「サイズ実質ゼロ」はどうやって判定していますか？</h3>
+    <p>A. 「非表示」は図形のプロパティ（xdr:cNvPrのhidden属性）が明示的にオンになっている場合です。「サイズ実質ゼロ」は、図形自体の大きさ（a:ext要素のcx・cyのいずれか）が0に設定されている場合です。どちらも断定的な「不要」の判定ではなく、見落としやすい候補として示しています。大きさの情報自体が読み取れない図形は「不明」として扱い、誤って疑わしいと表示しないようにしています。</p>
+    <h3>Q. 「同じ名前が繰り返されている」図形はなぜ疑わしいのですか？</h3>
+    <p>A. Excelは図形をコピーすると「四角形 12」のように元の名前に連番を振って増やしていきます。同じシート内で同じ基本名（末尾の連番を除いた部分）の図形が4個以上あると、コピー＆ペーストを繰り返すうちに増えた図形である可能性が高いと判断し、印を付けています。意図して複数作った図形（凡例や装飾など）にも印が付くことがあるため、内容を確認してから判断してください。</p>
+    <h3>Q. 見つけた図形を実際に削除するにはどうすればいいですか？</h3>
+    <p>A. このツールは一覧表示のみで、ファイルの書き換えは行いません。該当シートを開き、「ホーム」タブ→「検索と選択」→「オブジェクトの選択と表示」を開くと、図形が名前の一覧で表示されます。一覧に出てきた名前をクリックすれば（Ctrlキーで複数選択も可能）、該当の図形だけを選択してDeleteキーで削除できます。どの名前が怪しいか分かっていれば、この操作がずっと速くなります。</p>
+    <h3>Q. グラフやSmartArt、埋め込みのOLEオブジェクトも対象ですか？</h3>
+    <p>A. シート上に描画オブジェクト（DrawingML、xl/drawings以下）として配置された図形・画像・グラフの枠・グループ・コネクタを対象にしています。グラフ自体はグラフ枠（graphicFrame）として検出されますが、グラフ内部の要素までは解析しません。また、フォームコントロール（チェックボックスやボタンなど）や、古い形式のコメント用VML図形など、別の仕組み（legacy VML drawing）で保存されているオブジェクトは対象外です。</p>
+    <h3>Q. 透明な図形（塗りつぶしなし）も検出できますか？</h3>
+    <p>A. いいえ。塗りつぶしの色や透明度まではファイルの構造だけでは安全に判定できないため、対象外としています（誤って普通の図形を「透明」と表示してしまうリスクを避けるためです）。検出できるのは、図形のプロパティで明示的に「非表示」と設定されている場合と、大きさが実質ゼロに設定されている場合の2つです。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。このツールは読み取り専用で、ファイルの内容を変更したり書き出したりする機能はありません。一覧をCSVとして保存できるだけです。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析が行われます（サイト全体の閲覧数をCookieなし・個人を特定しない方法で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop one or more Excel (.xlsx/.xlsm) files into the box above, or click it to choose them.</li>
+      <li>For every sheet, the number of shapes, pictures, chart frames and groups is listed, and anything hidden, effectively zero-size, or sharing a repeated base name (suggesting copy-paste growth) is flagged.</li>
+      <li>By default, "Show flagged shapes only" is checked. Uncheck it to see every shape.</li>
+      <li>The list can be downloaded as CSV.</li>
+    </ol>
+    <h3>Q. How are "hidden" and "effectively zero-size" determined?</h3>
+    <p>A. "Hidden" means the shape's own property (the hidden attribute on xdr:cNvPr) is explicitly turned on. "Effectively zero-size" means the shape's own extent (the cx or cy of its a:ext element) is set to 0. Neither is a definitive "this is junk" verdict — they're flagged as easy-to-miss candidates. Shapes whose size information can't be read are treated as "unknown" rather than being flagged.</p>
+    <h3>Q. Why is a repeated shape name treated as suspicious?</h3>
+    <p>A. When you copy a shape in Excel, it numbers the copy from the original name, e.g. "Rectangle 12". If four or more shapes on the same sheet share the same base name (with the trailing number stripped), it's flagged as likely having grown from repeated copy-paste. Shapes you deliberately created in a set (a legend, decorations) can also get flagged, so check the content before deciding.</p>
+    <h3>Q. How do I actually delete the shapes this finds?</h3>
+    <p>A. This tool only lists shapes — it never modifies or rewrites your file. Open the sheet, then Home → Find &amp; Select → Selection Pane, which lists every shape by name. Click a name there (Ctrl-click for several) to select just that shape and press Delete. Knowing which names to look for in advance makes this much faster.</p>
+    <h3>Q. Does this cover charts, SmartArt, or embedded OLE objects?</h3>
+    <p>A. It covers drawing objects placed on a sheet as DrawingML (under xl/drawings): shapes, pictures, chart frames, groups and connectors. A chart itself is detected as a chart frame, but its internal elements aren't analyzed. Form controls (checkboxes, buttons) and legacy VML-based comment shapes, which use a different storage mechanism, are out of scope.</p>
+    <h3>Q. Can this detect transparent (no-fill) shapes?</h3>
+    <p>A. No. Fill color and opacity can't be resolved safely from the file structure alone (doing so risks misflagging an ordinary shape as "transparent"), so it's out of scope. Only two conditions are detected: a shape explicitly marked hidden, and a shape whose size is set to effectively zero.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. This tool is read-only — it has no feature to change or rewrite your file's contents. You can only save the list itself as CSV.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and analyzed inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全22ツールを探す。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。「描画」が大きい場合はこちらのツールで内訳を確認。</li>
+      <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
+      <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — 非表示シート・非表示行列の値・コメント・作成者名・外部リンク・名前定義・白文字セルを1画面で診断し、該当する専用ツールへ案内（読み取り専用）。</li>
+      <li><a href="../xlsx-comment/">シートのあちこちに散らばったコメント・メモを全部一覧に</a> — 従来の「メモ」も最近の「スレッド形式」コメントも全シート横断で一覧化してCSV出力・印刷。</li>
+      <li><a href="../xlsx-diff/">2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示</a> — 「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルを確認。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
+      <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除。見た目は変わらない。</li>
+      <li><a href="../xlsx-atai/">数式を値に変換：外部ファイルへのリンクが解除できないときに</a> — 外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。</li>
+      <li><a href="../xlsx-saihyouji/">シートの「再表示」に出てこないときの対策</a> — 非表示・完全非表示（veryHidden）シートを一覧化し、まとめて表示に戻す。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。</li>
+      <li><a href="../xlsx-suuchika/">「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換</a> — テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけ数値に変換。0始まりコード列は既定で対象外。</li>
+      <li><a href="../csv-to-xlsx/">「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策</a> — 選んだ列を文字列として書き込む新しいxlsxファイルを作成。</li>
+      <li><a href="../xlsx-nyuryoku/">入力規則（プルダウン）がどこにあるか分からない：全シート一覧化</a> — セル範囲・種類・リスト元（他シート参照・名前定義経由も含む）を全シート横断で一覧化し、参照が壊れているものを検出してCSV出力。</li>
+      <li><a href="../xlsx-insatsu/">印刷範囲・印刷タイトル・改ページがシートごとにバラバラ：全シート一覧・一括解除</a> — 印刷範囲・印刷タイトル・手動の改ページの設定状況を全シート一覧化し、選んだシート・項目だけをまとめて解除した新しいファイルを書き出す。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool among all 22 by symptom: heavy, save errors, error values, links, printing.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes. Check the breakdown here first if "drawings" comes up large.</li>
+      <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away or printing spits out blank pages</a> — Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped).</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every rule across every sheet and remove the overlapping or unneeded ones.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell across every sheet and file, exportable as CSV.</li>
+      <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once.</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for "hidden" information before sending it outside your company</a> — Checks hidden sheets, hidden-row/column values, comments, author metadata, external links, defined names and invisible text on one screen (read-only).</li>
+      <li><a href="../xlsx-comment/">List every cell comment and note across every sheet</a> — Covers both the classic note and the newer threaded comment, exportable as CSV or printed directly.</li>
+      <li><a href="../xlsx-diff/">Compare two Excel files: highlight only the cells that changed</a> — Compare a before/after pair of files across every sheet at once.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, then export as CSV.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet and remove the broken ones.</li>
+      <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop the ones no cell uses, without changing how anything looks.</li>
+      <li><a href="../xlsx-atai/">Convert formulas to values — when you can't break an external link</a> — Converts formula cells to their cached values, scoped to external references, and removes the link records too when it's safe.</li>
+      <li><a href="../xlsx-saihyouji/">Sheet missing from the Unhide dialog?</a> — List every sheet's visibility (visible/hidden/very hidden) and bulk-change any of them to a new file.</li>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up Excel, Word and PowerPoint files at once before sending them outside your company.</li>
+      <li><a href="../xlsx-suuchika/">Fix the green-triangle "Number Stored as Text" warning, column by column</a> — List cells whose text looks like a plain number, grouped by column, and convert only the columns you choose. Zero-padded or long digit-code columns are excluded by default.</li>
+      <li><a href="../csv-to-xlsx/">Fix the "leading zeros disappear / turn into a date" problem when opening a CSV in Excel</a> — Writes a new .xlsx that stores the chosen columns as text.</li>
+      <li><a href="../xlsx-nyuryoku/">List every data-validation (dropdown) rule across all sheets</a> — Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV.</li>
+      <li><a href="../xlsx-insatsu/">List every sheet's print area, print titles and page breaks — and clear the ones you choose</a> — Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「非表示」「サイズ実質ゼロ」はどうやって判定していますか？","acceptedAnswer":{"@type":"Answer","text":"「非表示」は図形のプロパティ（hidden属性）が明示的にオンになっている場合、「サイズ実質ゼロ」は図形自体の大きさ（cx・cyのいずれか）が0に設定されている場合です。大きさの情報が読み取れない図形は「不明」として扱い、誤って疑わしいと表示しません。"}},
+    {"@type":"Question","name":"「同じ名前が繰り返されている」図形はなぜ疑わしいのですか？","acceptedAnswer":{"@type":"Answer","text":"Excelは図形をコピーすると元の名前に連番を振って増やします。同じシート内で同じ基本名の図形が4個以上あると、コピー＆ペーストを繰り返すうちに増えた可能性が高いと判断して印を付けます。"}},
+    {"@type":"Question","name":"見つけた図形を実際に削除するにはどうすればいいですか？","acceptedAnswer":{"@type":"Answer","text":"このツールは一覧表示のみでファイルは書き換えません。「ホーム」→「検索と選択」→「オブジェクトの選択と表示」を開き、一覧に出た名前をクリックして選択し、Deleteキーで削除してください。"}},
+    {"@type":"Question","name":"対応しているファイル形式は？","acceptedAnswer":{"@type":"Answer","text":"Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式やパスワードで保護されたファイルは読み込めません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-junkan/xlsx-hyperlink/xlsx-error/xlsx-style/xlsx-hani/
+   xlsx-kakure/xlsx-insatsu/xlsx-nyuryoku (no external libraries; only
+   standard browser APIs: DecompressionStream/TextDecoder/TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function firstTagAttrs(xml,tagName){
+  var re=new RegExp("<"+tagName+"(?=[\\s/>])");
+  var m=re.exec(xml);
+  if(!m) return null;
+  return parseOpenTag(xml,m.index+1+tagName.length).attrs;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function sheetRelsPath(sheetPath){
+  var m=/^(.*)\/([^/]+)$/.exec(sheetPath);
+  if(!m) return null;
+  return m[1]+"/_rels/"+m[2]+".rels";
+}
+function normalizeRelTarget(basePath, target){
+  var parts=basePath.split("/").concat(target.split("/")), out=[];
+  parts.forEach(function(p){ if(p===".."){ out.pop(); } else if(p!=="." && p!==""){ out.push(p); } });
+  return out.join("/");
+}
+
+/* =====================================================================
+   Drawing (DrawingML) shape parsing — new logic for this tool.
+   Detects: explicit "hidden" flag, effectively zero width/height, and
+   sibling shapes sharing a base name repeated 4+ times on the same
+   sheet (a sign of growth by repeated copy/paste).
+   ===================================================================== */
+var SHAPE_TAGS=["xdr:sp","xdr:pic","xdr:graphicFrame","xdr:grpSp","xdr:cxnSp"];
+var TYPE_LABEL={"xdr:sp":{ja:"図形",en:"Shape"},"xdr:pic":{ja:"画像",en:"Picture"},
+  "xdr:graphicFrame":{ja:"グラフ/表枠",en:"Chart/frame"},"xdr:grpSp":{ja:"グループ",en:"Group"},
+  "xdr:cxnSp":{ja:"コネクタ",en:"Connector"}};
+var REPEAT_THRESHOLD=4;
+
+function isHidden(attrs){ if(!attrs) return false; var h=attrs.hidden; return h==="1"||h==="true"; }
+function entryExt(innerXml){
+  var ext=firstTagAttrs(innerXml,"a:ext");
+  if(!ext) ext=firstTagAttrs(innerXml,"xdr:ext");
+  return ext;
+}
+function isZeroSize(ext){ if(!ext) return null; return ext.cx==="0" || ext.cy==="0"; }
+
+function parseDrawingXml(drawingXml){
+  var entries=[];
+  SHAPE_TAGS.forEach(function(tagName){
+    findTags(drawingXml,tagName).forEach(function(t){
+      var inner=t.inner||"";
+      var cNvPr=firstTagAttrs(inner,"xdr:cNvPr");
+      var ext=entryExt(inner);
+      var zero=isZeroSize(ext);
+      var hidden=isHidden(cNvPr);
+      entries.push({
+        tag:tagName, type:TYPE_LABEL[tagName],
+        id: cNvPr ? cNvPr.id : null, name: cNvPr ? (cNvPr.name||"") : "",
+        hidden:hidden, zeroSize:(zero===true), sizeUnknown:(zero===null),
+        suspect: hidden || zero===true
+      });
+    });
+  });
+  var groups={};
+  entries.forEach(function(e){
+    var base=String(e.name||"").replace(/\s*\d+\s*$/,"").trim();
+    if(!base) base="—";
+    if(!groups[base]) groups[base]=[];
+    groups[base].push(e);
+  });
+  Object.keys(groups).forEach(function(base){
+    var list=groups[base];
+    if(list.length>=REPEAT_THRESHOLD){
+      list.forEach(function(e){ e.repeatGroup=base; e.repeatCount=list.length; e.suspect=true; });
+    }
+  });
+  return entries;
+}
+
+async function parseXlsxForZukei(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  if(!sheetList.length) throw new Error("NOT_XLSX");
+
+  var rows=sheetList.map(function(s,i){
+    var sheetEntry=byName[s.path];
+    var sheetXml = sheetEntry ? dec.decode(sheetEntry.bytes) : "";
+    var row={index:i, name:s.name, hasDrawing:false, entries:[]};
+    if(!sheetXml) return row;
+    var drawingTag=findTags(sheetXml,"drawing")[0];
+    if(!drawingTag) return row;
+    var rid=drawingTag.attrs["r:id"];
+    var relsPath=sheetRelsPath(s.path);
+    var sheetRelsEntry=relsPath?byName[relsPath]:null;
+    if(!sheetRelsEntry) return row;
+    var sheetRelsXml=dec.decode(sheetRelsEntry.bytes);
+    var rel=findTags(sheetRelsXml,"Relationship").filter(function(r){return r.attrs.Id===rid})[0];
+    if(!rel) return row;
+    var drawingPath=normalizeRelTarget("xl/worksheets", rel.attrs.Target);
+    var drawingEntry=byName[drawingPath];
+    if(!drawingEntry) return row;
+    row.hasDrawing=true;
+    row.entries=parseDrawingXml(dec.decode(drawingEntry.bytes));
+    return row;
+  });
+
+  var totalShapes=0, totalSuspect=0, totalHidden=0, totalZero=0, totalRepeat=0, sheetsWithDrawing=0;
+  rows.forEach(function(r){
+    if(r.hasDrawing) sheetsWithDrawing++;
+    r.entries.forEach(function(e){
+      totalShapes++;
+      if(e.suspect) totalSuspect++;
+      if(e.hidden) totalHidden++;
+      if(e.zeroSize) totalZero++;
+      if(e.repeatGroup) totalRepeat++;
+    });
+  });
+  return {rows:rows, totalShapes:totalShapes, totalSuspect:totalSuspect, totalHidden:totalHidden,
+    totalZero:totalZero, totalRepeat:totalRepeat, sheetsWithDrawing:sheetsWithDrawing};
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"図形が知らないうちに増えている・見えない図形が残っていないか：全シート一覧チェック",
+  sub:"Excelでシェイプや画像を繰り返しコピーしているうちに、画面には映らない非表示・サイズ実質ゼロの図形や、同じ名前が何十個も付いた図形が残っていることがあります。「ホーム」→「検索と選択」→「オブジェクトの選択と表示」を開いても、名前が並ぶだけで、どれが非表示か、どれがコピーで増えたのかは分かりません。このツールはExcel(.xlsx/.xlsm)の全シートにある図形・画像・グラフ枠・グループを解析し、シートごとに一覧表示したうえで、非表示設定の図形、サイズが実質ゼロの図形、同じ名前が繰り返し付いた図形（コピーで増えた可能性）に印を付けます。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"複数ファイルを一度に追加できます。全シートの図形・画像・グラフ枠・グループを解析します。ファイルは選択した端末の中だけで処理され、どこにも送信されません。",
+  fileListHeading:"追加したファイル",
+  loadingLabel:"読み込み中…",removeBtn:"削除",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護、または図形の構成を読み取れないファイルの可能性があります）",
+  sheets:"シート数（図形あり）",shapesTotal:"図形の総数",suspectTotal:"疑わしい図形",
+  bannerOk:"非表示・サイズ実質ゼロ・同名の繰り返しのいずれにも当てはまる図形はありませんでした。",
+  bannerWarn:function(n){return "疑わしい図形が "+n+" 件見つかりました。"},
+  hintText:"削除するには、該当シートで「ホーム」→「検索と選択」→「オブジェクトの選択と表示」を開き、下の名前をクリックして選択・Deleteキーで削除してください。",
+  filterLabel:"疑わしい図形だけ表示",
+  colSheet:"シート名",colName:"図形名",colType:"種類",colId:"ID",colFlags:"印",
+  flagHidden:"非表示",flagZero:"サイズ実質ゼロ",flagRepeat:function(base,n){return "同名"+n+"件（"+base+"）"},
+  noneInSheet:"この絞り込みに該当する図形はありません。",
+  noDrawingAtAll:"図形・画像・グラフ枠は見つかりませんでした。",
+  csvBtn:"一覧をCSVで書き出す",
+  csvHeaderFile:"ファイル名",csvHeaderSheet:"シート名",csvHeaderName:"図形名",csvHeaderType:"種類",csvHeaderId:"ID",
+  csvHeaderHidden:"非表示",csvHeaderZero:"サイズ実質ゼロ",csvHeaderRepeatBase:"同名グループ",csvHeaderRepeatCount:"同名件数",
+  yes:"はい",no:"いいえ",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Check every sheet for invisible shapes, or ones that multiplied by copy-paste",
+  sub:"When shapes or pictures get copy-pasted over and over in Excel, some end up invisible — hidden, or effectively zero-size — and others pile up under the same name. Home → Find &amp; Select → Selection Pane only lists names; it won't tell you which ones are hidden or which grew from copying. This tool scans every shape, picture, chart frame and group across every sheet in an Excel (.xlsx/.xlsm) workbook and flags hidden shapes, effectively zero-size shapes, and repeated base names that suggest copy-paste growth. Read-only — your file is never rewritten or uploaded.",
+  dropzoneText:"Drag and drop one or more Excel (.xlsx/.xlsm) files here, or click to choose",
+  dropzoneHint:"Add several files at once. Every sheet's shapes, pictures, chart frames and groups are analyzed. Everything happens on this device.",
+  fileListHeading:"Files added",
+  loadingLabel:"Loading…",removeBtn:"Remove",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, may be password-protected, or its drawing structure could not be parsed)",
+  sheets:"Sheets with shapes",shapesTotal:"Total shapes",suspectTotal:"Flagged shapes",
+  bannerOk:"No shape was hidden, effectively zero-size, or part of a repeated-name group.",
+  bannerWarn:function(n){return n+" flagged shape(s) found."},
+  hintText:"To delete one, open that sheet's Home → Find & Select → Selection Pane, click the name below to select it, and press Delete.",
+  filterLabel:"Show flagged shapes only",
+  colSheet:"Sheet",colName:"Shape name",colType:"Type",colId:"ID",colFlags:"Flags",
+  flagHidden:"Hidden",flagZero:"Zero-size",flagRepeat:function(base,n){return n+" named \""+base+"\""},
+  noneInSheet:"No shape matches this filter.",
+  noDrawingAtAll:"No shapes, pictures or chart frames were found.",
+  csvBtn:"Export the list as CSV",
+  csvHeaderFile:"File",csvHeaderSheet:"Sheet",csvHeaderName:"Shape name",csvHeaderType:"Type",csvHeaderId:"ID",
+  csvHeaderHidden:"Hidden",csvHeaderZero:"Zero-size",csvHeaderRepeatBase:"Repeat group",csvHeaderRepeatCount:"Repeat count",
+  yes:"Yes",no:"No",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1};
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", result:null, filterSuspect:true};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){
+    return parseXlsxForZukei(new Uint8Array(buf));
+  }).then(function(result){
+    f.result=result; f.loading=false; render();
+  }).catch(function(){
+    f.loading=false; f.error=T[lang].errBad; render();
+  });
+}
+function removeFile(id){ state.files=state.files.filter(function(x){return x.id!==id}); render(); }
+
+function flagBadges(e,t){
+  var h="";
+  if(e.hidden) h+="<span class='badge warn'>"+esc(t.flagHidden)+"</span>";
+  if(e.zeroSize) h+="<span class='badge warn'>"+esc(t.flagZero)+"</span>";
+  if(e.repeatGroup) h+="<span class='badge warn'>"+esc(t.flagRepeat(e.repeatGroup,e.repeatCount))+"</span>";
+  if(!h) h="<span class='badge ok'>OK</span>";
+  return h;
+}
+
+function renderResult(f){
+  var r=f.result, t=T[lang];
+  var h="";
+  var stats=[[r.sheetsWithDrawing,t.sheets],[r.totalShapes,t.shapesTotal],[r.totalSuspect,t.suspectTotal]];
+  h+="<div class='statGrid'>";
+  stats.forEach(function(s,i){ h+="<div class='statBox "+(i===2&&s[0]>0?"warn":"")+"'><div class='n'>"+s[0]+"</div><div class='l'>"+esc(s[1])+"</div></div>"; });
+  h+="</div>";
+
+  if(r.totalShapes===0){
+    h+="<div class='summaryBanner ok'>"+esc(t.noDrawingAtAll)+"</div>";
+    return h;
+  }
+
+  h+="<div class='summaryBanner "+(r.totalSuspect>0?"warn":"ok")+"'>"+esc(r.totalSuspect>0?t.bannerWarn(r.totalSuspect):t.bannerOk)+"</div>";
+  if(r.totalSuspect>0) h+="<div class='hintBox'>"+esc(t.hintText)+"</div>";
+
+  h+="<div class='filterRow'><label><input type='checkbox' class='filterCb' data-id='"+f.id+"' "+(f.filterSuspect?"checked":"")+"> "+esc(t.filterLabel)+"</label></div>";
+
+  var rowsHtml="", shown=0;
+  r.rows.forEach(function(sr){
+    sr.entries.forEach(function(e){
+      if(f.filterSuspect && !e.suspect) return;
+      shown++;
+      rowsHtml+="<tr><td>"+esc(sr.name)+"</td><td class='name'>"+esc(e.name||"—")+"</td>"+
+        "<td>"+esc(e.type?e.type[lang]:"")+"</td><td>"+esc(e.id||"—")+"</td>"+
+        "<td>"+flagBadges(e,t)+"</td></tr>";
+    });
+  });
+  h+="<div class='scroll'><table><thead><tr><th>"+esc(t.colSheet)+"</th><th>"+esc(t.colName)+"</th>"+
+    "<th>"+esc(t.colType)+"</th><th>"+esc(t.colId)+"</th><th>"+esc(t.colFlags)+"</th></tr></thead><tbody>";
+  h+= shown>0 ? rowsHtml : "<tr><td colspan='5'>"+esc(t.noneInSheet)+"</td></tr>";
+  h+="</tbody></table></div>";
+
+  h+="<div class='actions'><button type='button' class='secondary csvBtn' data-id='"+f.id+"'>"+esc(t.csvBtn)+"</button></div>";
+  return h;
+}
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<div class='fRow'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+    else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+    if(!f.loading && !f.error && f.result){ h+=renderResult(f); }
+    h+="</div>";
+  });
+  box.innerHTML=h;
+
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+  var csvs=box.querySelectorAll(".csvBtn");
+  for(var m=0;m<csvs.length;m++){ csvs[m].addEventListener("click",function(){ downloadCsv(parseInt(this.getAttribute("data-id"),10)); }); }
+  var fcbs=box.querySelectorAll(".filterCb");
+  for(var k=0;k<fcbs.length;k++){
+    fcbs[k].addEventListener("change",function(){
+      var id=parseInt(this.getAttribute("data-id"),10);
+      var f=state.files.filter(function(x){return x.id===id})[0];
+      if(f){ f.filterSuspect=this.checked; renderFileList(); }
+    });
+  }
+}
+
+function downloadBlob(bytes, name, mime){
+  var blob=new Blob([bytes],{type:mime});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function downloadCsv(id){
+  var f=state.files.filter(function(x){return x.id===id})[0];
+  if(!f || !f.result) return;
+  var t=T[lang];
+  var rows=[[t.csvHeaderSheet,t.csvHeaderName,t.csvHeaderType,t.csvHeaderId,t.csvHeaderHidden,t.csvHeaderZero,t.csvHeaderRepeatBase,t.csvHeaderRepeatCount]];
+  f.result.rows.forEach(function(sr){
+    sr.entries.forEach(function(e){
+      rows.push([sr.name, e.name||"", e.type?e.type[lang]:"", e.id||"",
+        e.hidden?t.yes:t.no, e.zeroSize?t.yes:t.no, e.repeatGroup||"", e.repeatGroup?e.repeatCount:""]);
+    });
+  });
+  var csvText=serializeCSV(rows);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3);
+  bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var dot=f.name.lastIndexOf("."), base=dot>=0?f.name.slice(0,dot):f.name;
+  downloadBlob(bytes, base+"_zukei.csv", "text/csv;charset=utf-8");
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
