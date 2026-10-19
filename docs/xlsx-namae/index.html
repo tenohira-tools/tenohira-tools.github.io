@@ -192,6 +192,7 @@ html[lang=en] .en-only{display:block}
 
       <li><a href="../xlsx-suuchika/">「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換</a> — テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけ数値に変換。郵便番号等の0始まりコード列や8桁以上の長い数字コードの列は既定で対象外。</li>
 <li><a href="../xlsx-nyuryoku/">入力規則（プルダウン）がどこにあるか分からない：全シート一覧化</a> — セル範囲・種類・リスト元（他シート参照・名前定義経由も含む）を全シート横断で一覧化し、参照が壊れているものを検出してCSV出力。</li>
+      <li><a href="../xlsx-insatsu/">シートごとに印刷範囲・印刷タイトル・改ページがバラバラなときの一覧・一括解除</a> — 印刷範囲・印刷タイトル・手動の改ページの設定状況を全シート一覧化し、選んだシート・項目だけをまとめて解除した新しいファイルを書き出す。印刷の向き・用紙サイズ・余白は変更しない。</li>
 </ul>
   </div>
   <div class="en-only">
@@ -219,6 +220,7 @@ html[lang=en] .en-only{display:block}
 
       <li><a href="../xlsx-suuchika/">Fix the green-triangle "Number Stored as Text" warning, column by column</a> — List cells whose text looks like a plain number, grouped by column, and convert only the columns you choose. Zero-padded or long digit-code columns are excluded by default.</li>
 <li><a href="../xlsx-nyuryoku/">List every data-validation (dropdown) rule across all sheets</a> — Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV.</li>
+      <li><a href="../xlsx-insatsu/">List every sheet's print area, print titles and page breaks — and clear the ones you choose</a> — Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared. Orientation, paper size and margins are untouched.</li>
 </ul>
   </div>
 </section>
