@@ -18,7 +18,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール（自動判定）](https://tenohira-tools.github.io/csv-merge/)
 - [全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール](https://tenohira-tools.github.io/csv-seiri/)
 - [CSVをExcelで開くと0が消える・日付になるときの変換ツール（.xlsx書き出し）](https://tenohira-tools.github.io/csv-to-xlsx/)
-- [エクセルが重い・保存できない・エラーが出るときの対策まとめ｜症状から探す21ツール](https://tenohira-tools.github.io/excel-trouble/)
+- [エクセルが重い・保存できない・エラーが出るときの対策まとめ｜症状から探す22ツール](https://tenohira-tools.github.io/excel-trouble/)
 - [表記ゆれ・全角半角チェッカー（サーバ/サーバーなどを検出して統一）](https://tenohira-tools.github.io/hyoki-yure/)
 - [交通費精算書メーカー｜区間・金額を入力してその場で集計・印刷](https://tenohira-tools.github.io/kotsuhi-seisan/)
 - [領収書まとめ台紙メーカー｜複数のレシート写真を1枚のPDFに整列](https://tenohira-tools.github.io/receipt-sheet/)
@@ -50,4 +50,5 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ](https://tenohira-tools.github.io/xlsx-style/)
 - [「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換](https://tenohira-tools.github.io/xlsx-suuchika/)
 - [引き継いだExcelの数式を一覧に：棚卸し・エラーチェックツール](https://tenohira-tools.github.io/xlsx-suushiki/)
+- [図形が勝手に増えた・見えない図形が残っている：全シート横断の図形一覧ツール](https://tenohira-tools.github.io/xlsx-zukei/)
 <!-- tools:end -->
