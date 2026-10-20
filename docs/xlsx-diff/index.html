@@ -33,6 +33,7 @@ h2{font-size:1.1rem;margin:0 0 12px}
 .dz .fmeta{color:var(--muted);font-size:.85rem;margin-top:2px}
 .dz .err{color:var(--removed);font-size:.85rem;margin-top:6px}
 .hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.hint.err{color:var(--removed)}
 label{font-size:.92rem}
 select,input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
 select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
@@ -99,7 +100,7 @@ html[lang=en] .en-only{display:block}
 <header>
   <div>
     <h1 data-i="title">2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示</h1>
-    <p class="sub" data-i="sub">「変更前」と「変更後」の2つのExcelファイルのどこが変わったか分からないときに。全シートを一括で比較し、追加・削除・変更されたセルだけをシート形式の色付き表示と一覧（CSVダウンロード対応）で確認できます。ファイルはどこにも送信されません。</p>
+    <p class="sub" data-i="sub">「変更前」と「変更後」の2つのExcelファイルのどこが変わったか分からないときに。全シートを一括で比較し、追加・削除・変更されたセルだけをシート形式の色付き表示と一覧（CSVダウンロード対応）で確認できます。行の挿入・削除があるときは「キー列で比較」でそのズレを防げます。ファイルはどこにも送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -128,6 +129,20 @@ html[lang=en] .en-only{display:block}
   <input type="file" id="fileOldInput" accept=".xlsx,.xlsm" style="display:none">
   <input type="file" id="fileNewInput" accept=".xlsx,.xlsm" style="display:none">
   <p class="hint" data-i="uploadHint">2つのファイルは選択した端末の中だけで読み込み・比較されます。サーバーには送信されません。</p>
+</section>
+
+<section class="card" id="modeCard" style="display:none">
+  <h2 data-i="modeHeading">比較方法</h2>
+  <div class="filterRow" style="margin-bottom:6px">
+    <label><input type="radio" name="diffMode" id="modeAddress" value="address" checked> <span data-i="modeAddress">セル位置で比較（既定）</span></label>
+    <label><input type="radio" name="diffMode" id="modeKey" value="key"> <span data-i="modeKey">キー列で行をそろえて比較</span></label>
+  </div>
+  <div class="filterRow" id="keyModeOpts" style="display:none">
+    <label><span data-i="keyHeaderRowsLabel">見出し行数：</span><input type="text" inputmode="numeric" id="keyHeaderRows" value="1" style="width:4em"></label>
+    <label><span data-i="keyColLabel">キー列（列記号）：</span><input type="text" id="keyColInput" value="A" style="width:4em"></label>
+  </div>
+  <p class="hint" data-i="keyModeHint">すべてのシートに同じ見出し行数・キー列を適用し、キー列の値が同じ行どうしを対応づけて比較します。行の挿入・削除があっても、その行より後ろ全体が「変更」として誤検出されるのを防げます。キーが空欄・重複している行は、従来どおりセル位置での比較にフォールバックします。</p>
+  <p class="hint err" id="keyModeWarn" style="display:none"></p>
 </section>
 
 <section class="card" id="sheetSummaryCard" style="display:none">
@@ -190,13 +205,17 @@ html[lang=en] .en-only{display:block}
     <h3>Q. どういう基準で「変更」と判定していますか？</h3>
     <p>A. 同じセル番地（例：B3）に、両方のファイルで値があり、その文字列としての内容が異なる場合に「変更」と判定します。セルの色・フォント・枠線などの書式や、数式の文字列そのものは比較しておらず、Excelが最後に保存したときの計算結果（表示される値）だけを比較します。</p>
     <h3>Q. 行や列を挿入・削除した場合はどうなりますか？</h3>
-    <p>A. セルの位置（番地）だけで比較するため、行や列を挿入・削除すると、その位置より下・右にあるセルがすべて「内容が変わった」として検出されます。これは実際の値の変化ではなく、ズレによる検出です。表の途中に行を増やしたファイルを比較する場合はご注意ください。</p>
+    <p>A. 既定の「セル位置で比較」では、セルの位置（番地）だけで比較するため、行や列を挿入・削除すると、その位置より下・右にあるセルがすべて「内容が変わった」として検出されます。これは実際の値の変化ではなく、ズレによる検出です。表の途中で行の増減があるファイルを比較する場合は、下の「キー列で比較」をお使いください。</p>
+    <h3>Q. 「キー列で比較」とは何ですか？</h3>
+    <p>A. ID・社員番号・注文番号など、行ごとに一意な値が入った列（キー列）を指定すると、行の位置ではなくキー列の値で行を対応づけて比較するモードです。たとえば3行目に新しい行を挿入しても、挿入位置より下の既存の行は同じキー値で正しく対応づけられ、実際に内容が変わった行・列だけが検出されます。すべてのシートに同じ「見出し行数」（既定1行）と「キー列（列記号、例：A）」を適用します。見出し行は従来どおりセル位置で比較されます。</p>
+    <h3>Q. キー列に空欄や重複した値があるとどうなりますか？</h3>
+    <p>A. キー列が空欄の行、同じ値が2回以上出てくる行は、安全のため一意な対応付けができないと判断し、その行だけ従来の「セル位置で比較」にフォールバックします（該当件数はサマリー欄に注記されます）。シートによってキー列の位置が違う場合は、現時点では全シートに同じ列番号を適用するためうまく対応づけられません。</p>
     <h3>Q. シート名を変更した場合はどうなりますか？</h3>
     <p>A. シート名の一致で同じシートとみなすため、シート名自体を変更すると「元の名前のシートが削除され、新しい名前のシートが追加された」という扱いになり、中身が同じでも全セルが差分として出ます。</p>
     <h3>Q. 日付が入ったセルはどう表示されますか？</h3>
     <p>A. Excelは日付を内部的に数値（シリアル値）として保存しており、表示形式（書式）は別に管理されています。このツールは表示形式を再現せず、保存されている数値のまま比較・表示します。そのため日付のセルが数値で表示されることがあります。</p>
     <h3>Q. 「シート表示」に何も出ないシートがあります</h3>
-    <p>A. 行数・列数が多いシート（既定では200行×40列を超える場合）は、ブラウザでの表示が重くなるため「シート表示」を省略し、下の一覧でのみ確認できるようにしています。</p>
+    <p>A. 行数・列数が多いシート（既定では200行×40列を超える場合）は、ブラウザでの表示が重くなるため「シート表示」を省略し、下の一覧でのみ確認できるようにしています。また「キー列で比較」を選んでいる間は、行の位置が変わるためシート形式の表示自体を省略し、一覧でのみ確認できます。</p>
     <h3>Q. 大きなファイルや多数の差分セルは扱えますか？</h3>
     <p>A. ブラウザのメモリ上で処理するため、差分セルが数万件程度までを想定しています。一覧の表示は先頭の一定件数のみに制限されることがありますが、ダウンロードするCSVには絞り込み後の全件が含まれます。</p>
   </div>
@@ -215,13 +234,17 @@ html[lang=en] .en-only{display:block}
     <h3>Q. How is "changed" decided?</h3>
     <p>A. When the same cell address (e.g. B3) holds a value in both files and the text content differs, it's marked "changed". Formatting (colors, fonts, borders) and the formula text itself are not compared — only the displayed/cached result Excel last saved.</p>
     <h3>Q. What happens if a row or column is inserted or deleted?</h3>
-    <p>A. Comparison is purely by cell address, so inserting or deleting a row/column shifts everything below/right of it, which this tool reports as every one of those cells having "changed" — even though their actual content didn't. Be aware of this when comparing files where rows were added in the middle of a table.</p>
+    <p>A. With the default "compare by cell address" mode, comparison is purely by cell address, so inserting or deleting a row/column shifts everything below/right of it, which this tool reports as every one of those cells having "changed" — even though their actual content didn't. Use "compare by key column" below when a file has rows inserted or removed in the middle of a table.</p>
+    <h3>Q. What is "compare by key column"?</h3>
+    <p>A. If one column holds a value that's unique per row (an ID, employee number, order number…), pick it as the key column and rows are matched by that value instead of by position. For example, inserting a new row at row 3 no longer shifts every row below it — rows keep matching by their key, so only the rows and columns that actually changed are reported. The same header-row count (default 1) and key column (a column letter, e.g. A) are applied to every sheet; header rows are still compared by position.</p>
+    <h3>Q. What happens with blank or duplicate values in the key column?</h3>
+    <p>A. A row with a blank key, or a key value that appears more than once, can't be matched safely, so those specific rows fall back to the default position-based comparison (the summary notes how many). If different sheets use the key column in different positions, this mode can't handle that yet — it applies the same column to every sheet.</p>
     <h3>Q. What if a sheet was renamed?</h3>
     <p>A. Sheets are matched by name, so renaming a sheet is reported as the old name being removed and the new name being added — with every cell in it, even if nothing inside actually changed.</p>
     <h3>Q. How are date cells shown?</h3>
     <p>A. Excel stores dates internally as a plain number (a serial value); the date format is separate. This tool doesn't reproduce formatting, so a date cell may show up as a plain number.</p>
     <h3>Q. Why does "Sheet view" show nothing for some sheets?</h3>
-    <p>A. A sheet with a very large row/column extent (over 200 rows × 40 columns by default) skips the grid view for performance — use the list below instead.</p>
+    <p>A. A sheet with a very large row/column extent (over 200 rows × 40 columns by default) skips the grid view for performance — use the list below instead. The grid is also skipped entirely while "compare by key column" is selected, since rows no longer sit at the same position in both files — use the list below.</p>
     <h3>Q. Can it handle large files or many differences?</h3>
     <p>A. Everything runs in browser memory, built for up to roughly tens of thousands of differing cells. The on-screen list may be capped for performance, but the downloaded CSV always contains every row matching the current filters.</p>
   </div>
@@ -250,7 +273,8 @@ html[lang=en] .en-only{display:block}
   "mainEntity": [
     {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。2つのファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・比較されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
     {"@type":"Question","name":"どういう基準で「変更」と判定していますか？","acceptedAnswer":{"@type":"Answer","text":"同じセル番地に両方のファイルで値があり、その内容が異なる場合に「変更」と判定します。書式や数式の文字列自体は比較せず、保存されている計算結果の値だけを比較します。"}},
-    {"@type":"Question","name":"行や列を挿入・削除した場合はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"セルの位置だけで比較するため、挿入・削除した位置より下・右のセルがすべて「変更」として検出されます。"}},
+    {"@type":"Question","name":"行や列を挿入・削除した場合はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"既定の「セル位置で比較」ではセルの位置だけで比較するため、挿入・削除した位置より下・右のセルがすべて「変更」として検出されます。行の増減がある場合は「キー列で比較」を使うとズレを防げます。"}},
+    {"@type":"Question","name":"「キー列で比較」とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"行ごとに一意な値が入った列（ID等）を指定し、位置ではなくその値で行を対応づけて比較するモードです。行の挿入・削除があっても、実際に内容が変わった行・列だけを検出できます。"}},
     {"@type":"Question","name":"シート名を変更した場合はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"シート名の一致で同じシートとみなすため、名前を変えると元のシートの削除と新しいシートの追加として扱われます。"}}
   ]
 }
@@ -479,17 +503,104 @@ function diffSheet(oldSheet,newSheet){
   return rows;
 }
 
-function computeDiff(oldWb,newWb){
+/* ---- key-column matching (aligns rows by a unique column instead of
+   by position, so an inserted/deleted row doesn't shift everything below
+   it). Header rows (row index < headerRows) are still compared by
+   position; rows whose key is blank or duplicated fall back to
+   position-based comparison too, since they can't be matched safely. ---- */
+function parseKeyCol(s){
+  var letters=String(s||"").toUpperCase().replace(/[^A-Z]/g,"");
+  if(!letters) return -1;
+  return colLetterToIndex(letters);
+}
+function filterSheetByRow(sheet,pred){
+  var cells={};
+  Object.keys(sheet.cells).forEach(function(ref){ if(pred(sheet.cells[ref].row)) cells[ref]=sheet.cells[ref]; });
+  return {cells:cells};
+}
+function groupRowsByIndex(sheet,minRow){
+  var byRow={};
+  Object.keys(sheet.cells).forEach(function(ref){
+    var c=sheet.cells[ref];
+    if(c.row<minRow) return;
+    (byRow[c.row]=byRow[c.row]||[]).push(c);
+  });
+  return byRow;
+}
+function indexRowsByKey(rowsByIndex,keyColIdx){
+  var groups={}, fallbackRowIdx=[];
+  Object.keys(rowsByIndex).forEach(function(rIdxStr){
+    var rIdx=Number(rIdxStr), rowCells=rowsByIndex[rIdx], k=null;
+    for(var i=0;i<rowCells.length;i++){ if(rowCells[i].col===keyColIdx){ k=rowCells[i].value; break; } }
+    if(k===null || k===""){ fallbackRowIdx.push(rIdx); return; }
+    (groups[k]=groups[k]||[]).push(rIdx);
+  });
+  var byKey={}, dupKeyCount=0;
+  Object.keys(groups).forEach(function(k){
+    if(groups[k].length===1){ byKey[k]=groups[k][0]; }
+    else { dupKeyCount++; groups[k].forEach(function(rIdx){ fallbackRowIdx.push(rIdx); }); }
+  });
+  return {byKey:byKey,fallbackRowIdx:fallbackRowIdx,dupKeyCount:dupKeyCount};
+}
+function keyedDiffSheet(oldSheet,newSheet,keyColIdx,headerRows){
+  var headerRowsDiff = headerRows>0
+    ? diffSheet(filterSheetByRow(oldSheet,function(r){return r<headerRows}), filterSheetByRow(newSheet,function(r){return r<headerRows}))
+    : [];
+  var oldRows=groupRowsByIndex(oldSheet,headerRows), newRows=groupRowsByIndex(newSheet,headerRows);
+  var oldIdx=indexRowsByKey(oldRows,keyColIdx), newIdx=indexRowsByKey(newRows,keyColIdx);
+  var dataRows=[], matchedKeys={};
+  Object.keys(oldIdx.byKey).forEach(function(k){matchedKeys[k]=true});
+  Object.keys(newIdx.byKey).forEach(function(k){matchedKeys[k]=true});
+  Object.keys(matchedKeys).forEach(function(k){
+    var orIdx=oldIdx.byKey[k], nrIdx=newIdx.byKey[k];
+    if(orIdx!==undefined && nrIdx!==undefined){
+      var oCells={}; oldRows[orIdx].forEach(function(c){oCells[c.col]=c.value});
+      var nCells={}; newRows[nrIdx].forEach(function(c){nCells[c.col]=c.value});
+      var cols={}; Object.keys(oCells).forEach(function(c){cols[c]=true}); Object.keys(nCells).forEach(function(c){cols[c]=true});
+      Object.keys(cols).forEach(function(colStr){
+        var col=Number(colStr);
+        var ov=oCells.hasOwnProperty(col)?oCells[col]:null, nv=nCells.hasOwnProperty(col)?nCells[col]:null;
+        var oldRef=colIndexToLetter(col)+(orIdx+1), newRef=colIndexToLetter(col)+(nrIdx+1);
+        if(ov!==null && nv!==null){ if(ov!==nv) dataRows.push({ref:newRef,type:"changed",oldVal:ov,newVal:nv,row:nrIdx,col:col}); }
+        else if(ov===null && nv!==null){ dataRows.push({ref:newRef,type:"added",oldVal:null,newVal:nv,row:nrIdx,col:col}); }
+        else if(ov!==null && nv===null){ dataRows.push({ref:oldRef,type:"removed",oldVal:ov,newVal:null,row:orIdx,col:col}); }
+      });
+    } else if(orIdx!==undefined){
+      oldRows[orIdx].forEach(function(c){ var ref=colIndexToLetter(c.col)+(orIdx+1); dataRows.push({ref:ref,type:"removed",oldVal:c.value,newVal:null,row:orIdx,col:c.col}); });
+    } else if(nrIdx!==undefined){
+      newRows[nrIdx].forEach(function(c){ var ref=colIndexToLetter(c.col)+(nrIdx+1); dataRows.push({ref:ref,type:"added",oldVal:null,newVal:c.value,row:nrIdx,col:c.col}); });
+    }
+  });
+  var fallbackOldSet={}; oldIdx.fallbackRowIdx.forEach(function(r){fallbackOldSet[r]=true});
+  var fallbackNewSet={}; newIdx.fallbackRowIdx.forEach(function(r){fallbackNewSet[r]=true});
+  var fallbackRows = (oldIdx.fallbackRowIdx.length || newIdx.fallbackRowIdx.length)
+    ? diffSheet(filterSheetByRow(oldSheet,function(r){return r>=headerRows && fallbackOldSet[r]}), filterSheetByRow(newSheet,function(r){return r>=headerRows && fallbackNewSet[r]}))
+    : [];
+  var rows=headerRowsDiff.concat(dataRows).concat(fallbackRows);
+  rows.sort(function(a,b){return a.row-b.row||a.col-b.col});
+  return {rows:rows,fallbackRowCount:oldIdx.fallbackRowIdx.length+newIdx.fallbackRowIdx.length,dupKeyCount:oldIdx.dupKeyCount+newIdx.dupKeyCount};
+}
+
+function computeDiff(oldWb,newWb,opts){
+  opts=opts||{mode:"address"};
   var order=[], seen={};
   oldWb.sheetOrder.concat(newWb.sheetOrder).forEach(function(n){ if(!seen[n]){seen[n]=true; order.push(n);} });
   return order.map(function(name){
     var o=oldWb.sheets[name], n=newWb.sheets[name];
     var status=o&&n?"common":(o?"removedSheet":"addedSheet");
     var EMPTY={cells:{}};
-    var rows=diffSheet(o||EMPTY,n||EMPTY);
+    var keyMode=status==="common" && opts.mode==="key" && opts.keyColIdx>=0;
+    var rows, fallbackRowCount=0, dupKeyCount=0;
+    if(keyMode){
+      var kd=keyedDiffSheet(o,n,opts.keyColIdx,opts.headerRows||0);
+      rows=kd.rows; fallbackRowCount=kd.fallbackRowCount; dupKeyCount=kd.dupKeyCount;
+    } else {
+      rows=diffSheet(o||EMPTY,n||EMPTY);
+    }
     var counts={added:0,removed:0,changed:0};
     rows.forEach(function(r){counts[r.type]++});
-    return {name:name,status:status,rows:rows,counts:counts,oldSheet:o,newSheet:n};
+    return {name:name,status:status,rows:rows,counts:counts,oldSheet:o,newSheet:n,
+      keyMode:keyMode,fallbackRowCount:fallbackRowCount,dupKeyCount:dupKeyCount};
   });
 }
 
@@ -513,6 +624,15 @@ var T={
   uploadHint:"2つのファイルは選択した端末の中だけで読み込み・比較されます。サーバーには送信されません。",
   loadingLabel:"読み込み中…",
   errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  modeHeading:"比較方法",
+  modeAddress:"セル位置で比較（既定）",
+  modeKey:"キー列で行をそろえて比較",
+  keyHeaderRowsLabel:"見出し行数：",
+  keyColLabel:"キー列（列記号）：",
+  keyModeHint:"すべてのシートに同じ見出し行数・キー列を適用し、キー列の値が同じ行どうしを対応づけて比較します。行の挿入・削除があっても、その行より後ろ全体が「変更」として誤検出されるのを防げます。キーが空欄・重複している行は、従来どおりセル位置での比較にフォールバックします。",
+  keyColInvalid:"キー列の指定（A・B・AA等の列記号）が読み取れないため、セル位置での比較を使っています。",
+  keyFallbackNote:"キーが空欄または重複していた行が{n}行（重複キー{d}件）あり、それらはセル位置での比較にフォールバックしています。",
+  gridKeyModeSkip:"「キー列で比較」を選んでいる間は、行の位置がファイル間でそろわないためシート表示を省略しています。下の一覧でご確認ください。",
   summaryHeading:"シート単位の差分サマリー",
   summaryHint:"「追加」「削除」はそのシートにだけ存在していたセル、「変更」は両方のファイルに同じセル位置があり内容が異なっていたセルの数です。シート名そのものが変わった場合は「シート削除」＋「シート追加」として扱われます。",
   colSheet:"シート",colStatus:"状態",colAdded:"追加",colRemoved:"削除",colChanged:"変更",
@@ -541,6 +661,15 @@ var T={
   uploadHint:"Both files are read and compared only on this device. Nothing is sent to a server.",
   loadingLabel:"Loading…",
   errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  modeHeading:"Comparison mode",
+  modeAddress:"Compare by cell address (default)",
+  modeKey:"Compare by key column (aligns rows)",
+  keyHeaderRowsLabel:"Header rows:",
+  keyColLabel:"Key column (letter):",
+  keyModeHint:"Applies the same header-row count and key column to every sheet, matching rows by the key column's value instead of position. This keeps an inserted or deleted row from making everything below it look \"changed\". Rows with a blank or duplicate key fall back to the default position-based comparison.",
+  keyColInvalid:"Couldn't read the key column (a letter like A, B, AA…) — falling back to compare-by-address.",
+  keyFallbackNote:"{n} row(s) had a blank or duplicate key ({d} duplicate key value(s)); those fell back to compare-by-address.",
+  gridKeyModeSkip:"The sheet grid is skipped while \"compare by key column\" is selected, since rows don't sit at the same position in both files. Use the list below instead.",
   summaryHeading:"Per-sheet diff summary",
   summaryHint:"“Added”/“Removed” counts cells that exist in only one file. “Changed” counts cells at the same address in both files whose content differs. A renamed sheet is reported as one sheet removed and one added.",
   colSheet:"Sheet",colStatus:"Status",colAdded:"Added",colRemoved:"Removed",colChanged:"Changed",
@@ -565,7 +694,8 @@ var T={
 var lang="ja";
 try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
 
-var state={old:null,"new":null,diffSheets:null,sheetFilter:"",typeFilter:"",search:"",gridSheet:""};
+var state={old:null,"new":null,diffSheets:null,sheetFilter:"",typeFilter:"",search:"",gridSheet:"",
+  mode:"address",keyCol:"A",headerRows:1,keyColValid:true};
 
 function escTrunc(s,max){ s=String(s); max=max||160; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
 
@@ -580,7 +710,14 @@ function loadFile(slot,file){
 
 function recomputeDiff(){
   if(state.old && !state.old.loading && !state.old.error && state["new"] && !state["new"].loading && !state["new"].error){
-    state.diffSheets=computeDiff(state.old.wb,state["new"].wb);
+    var keyColIdx=parseKeyCol(state.keyCol);
+    state.keyColValid=keyColIdx>=0;
+    var headerRows=parseInt(state.headerRows,10); if(isNaN(headerRows)||headerRows<0) headerRows=0;
+    state.diffSheets=computeDiff(state.old.wb,state["new"].wb,{
+      mode: (state.mode==="key" && state.keyColValid) ? "key" : "address",
+      keyColIdx: keyColIdx,
+      headerRows: headerRows
+    });
   } else {
     state.diffSheets=null;
   }
@@ -624,15 +761,17 @@ function renderDropzone(slot,nameEl,metaEl,errEl){
 
 function renderSummary(){
   var has=!!state.diffSheets;
+  $("modeCard").style.display=has?"":"none";
   $("sheetSummaryCard").style.display=has?"":"none";
   $("gridCard").style.display=has?"":"none";
   $("filterCard").style.display=has?"":"none";
   $("resultCard").style.display=has?"":"none";
   if(!has) return;
   var totals={added:0,removed:0,changed:0};
-  var body="";
+  var body="", totalFallback=0, totalDup=0, anyKeyMode=false;
   state.diffSheets.forEach(function(s){
     totals.added+=s.counts.added; totals.removed+=s.counts.removed; totals.changed+=s.counts.changed;
+    if(s.keyMode){ anyKeyMode=true; totalFallback+=s.fallbackRowCount; totalDup+=s.dupKeyCount; }
     body+="<tr><td>"+esc(s.name)+"</td><td><span class='badge "+s.status+"'>"+esc(statusLabel(s.status))+"</span></td>"+
       "<td class='num'>"+s.counts.added+"</td><td class='num'>"+s.counts.removed+"</td><td class='num'>"+s.counts.changed+"</td></tr>";
   });
@@ -641,6 +780,12 @@ function renderSummary(){
     "<div class='statBox added'><div class='n'>"+totals.added+"</div><div class='l'>"+esc(T[lang].statAdded)+"</div></div>"+
     "<div class='statBox removed'><div class='n'>"+totals.removed+"</div><div class='l'>"+esc(T[lang].statRemoved)+"</div></div>"+
     "<div class='statBox changed'><div class='n'>"+totals.changed+"</div><div class='l'>"+esc(T[lang].statChanged)+"</div></div>";
+
+  var warnMsg="";
+  if(state.mode==="key" && !state.keyColValid){ warnMsg=T[lang].keyColInvalid; }
+  else if(anyKeyMode && (totalFallback>0 || totalDup>0)){ warnMsg=T[lang].keyFallbackNote.replace("{n}",totalFallback).replace("{d}",totalDup); }
+  $("keyModeWarn").style.display=warnMsg?"":"none";
+  $("keyModeWarn").textContent=warnMsg;
 }
 
 function renderGridSelect(){
@@ -660,6 +805,7 @@ function renderGrid(){
   state.diffSheets.forEach(function(s){ if(s.name===state.gridSheet) entry=s; });
   if(!entry){ $("gridBox").innerHTML=""; return; }
   if(entry.status!=="common"){ $("gridBox").innerHTML="<p class='hint'>"+esc(T[lang].gridNoSheet)+"</p>"; return; }
+  if(entry.keyMode){ $("gridBox").innerHTML="<p class='hint'>"+esc(T[lang].gridKeyModeSkip)+"</p>"; return; }
   var maxRow=Math.max(entry.oldSheet.maxRow,entry.newSheet.maxRow);
   var maxCol=Math.max(entry.oldSheet.maxCol,entry.newSheet.maxCol);
   if(maxRow+1>MAX_GRID_ROWS || maxCol+1>MAX_GRID_COLS){
@@ -759,6 +905,18 @@ function setupDropzone(dzId,fileInputId,slot){
 }
 setupDropzone("dzOld","fileOldInput","old");
 setupDropzone("dzNew","fileNewInput","new");
+
+function updateModeFromUI(){
+  state.mode=$("modeKey").checked?"key":"address";
+  $("keyModeOpts").style.display=state.mode==="key"?"":"none";
+  var hr=parseInt($("keyHeaderRows").value,10);
+  state.headerRows=isNaN(hr)||hr<0?0:hr;
+  state.keyCol=$("keyColInput").value;
+}
+$("modeAddress").addEventListener("change",function(){ updateModeFromUI(); render(); });
+$("modeKey").addEventListener("change",function(){ updateModeFromUI(); render(); });
+$("keyHeaderRows").addEventListener("input",function(){ updateModeFromUI(); render(); });
+$("keyColInput").addEventListener("input",function(){ updateModeFromUI(); render(); });
 
 $("gridSheetSelect").addEventListener("change",function(){ state.gridSheet=this.value; renderGrid(); });
 $("sheetFilter").addEventListener("change",function(){ state.sheetFilter=this.value; renderResult(); });
