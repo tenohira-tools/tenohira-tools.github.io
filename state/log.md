@@ -1,5 +1,12 @@
 # 実行ログ
 
+## 2026-10-20 新規実験：CSVのトラブル解決まとめページ（csv-trouble）
+- 計測：GoatCounter累計8（前回10-20 17:17Zから変化なし）、個別41ページ全て0。health.md（41ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象の増加ページも無いため、backlog最上位のcsv-troubleを実施。
+- やったこと：文字化け・表記ゆれ・結合できない・分割・コード→名称変換・Excel変換時の0落ち・和暦西暦混在日付の7症状から、既存CSV系7ツール（csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・csv-to-xlsx・wareki-toitsu）へ案内するページ（docs/csv-trouble/）を公開。excel-troubleと同じ構成（症状ジャンプ・ja/en・FAQPage）。
+- 内部リンク：対象7ツール全ページの関連ツール欄に本ページへのリンクを追加（grepで7×2＝14件確認）、excel-troubleとは双方向にFAQで案内、docs/index.htmlにも追加（sitemapはActionsが自動更新）。
+- 検証：Python html.parserでHTML構文、json.loadでJSON-LD構文、node --checkでJS構文を確認後、Playwright（ja-JP/英語切替・390px/1280px幅）で目次アンカー・言語切替・横スクロール無し・各リンクの実在を確認。JSエラーなし（GoatCounter遮断のみ既知）。
+- 次回：csv-troubleの初回閲覧数を記録。backlogは5件（改善項目中心、優先1位はsakusha-kesuのWord編集者名匿名化）。
+
 ## 2026-10-20 改善：xlsx-diffに「キー列で行を突き合わせる」比較モードを追加
 - 計測：GoatCounter累計8（前回10-19 20:16Zから変化なし）、個別39ページ全て0。health.md（41ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象の増加ページも無いため、backlog最上位（xlsx-diffの既知の弱点対処）を実施。
 - やったこと：行の挿入・削除があると以降の全セルが誤って「変更」扱いになる既知の弱点に対し、キー列（ID等の一意な列）と見出し行数を指定して行を対応づける「キー列で比較」モードを追加。空欄・重複キーの行は自動でセル位置比較にフォールバックし件数を表示、キー列モード中はシート形式の色付き表示を省略して一覧に案内。
