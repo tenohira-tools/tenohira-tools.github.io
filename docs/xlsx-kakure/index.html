@@ -98,9 +98,9 @@ html[lang=en] .en-only{display:block}
       <li>一覧だけCSVで保存したい場合は「結果をCSV出力」を押します。</li>
     </ol>
     <h3>Q. このツールはファイルを書き換えたり、まとめて削除したりできますか？</h3>
-    <p>A. いいえ。このツールは読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。見つかった項目を実際に変更したい場合は、各項目に表示されるリンク先の専用ツール（非表示シートの変更は<a href="../xlsx-saihyouji/">シート再表示ツール</a>、コメントの一覧は<a href="../xlsx-comment/">コメント一覧化ツール</a>、作成者名などの削除は<a href="../sakusha-kesu/">作成者名削除ツール</a>、外部リンクの調査は<a href="../xlsx-link/">外部リンク調査ツール</a>、名前定義の削除は<a href="../xlsx-namae/">名前定義点検ツール</a>）をご利用ください。</p>
+    <p>A. いいえ。このツールは読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。見つかった項目を実際に変更したい場合は、各項目に表示されるリンク先の専用ツール（非表示シートの変更は<a href="../xlsx-saihyouji/">シート再表示ツール</a>、非表示の行・列は<a href="../xlsx-gyoretsu/">行列の再表示・値消去ツール</a>、コメントの一覧は<a href="../xlsx-comment/">コメント一覧化ツール</a>、作成者名などの削除は<a href="../sakusha-kesu/">作成者名削除ツール</a>、外部リンクの調査は<a href="../xlsx-link/">外部リンク調査ツール</a>、名前定義の削除は<a href="../xlsx-namae/">名前定義点検ツール</a>）をご利用ください。</p>
     <h3>Q. 「非表示の行・列にある値」とは何ですか？</h3>
-    <p>A. 行や列を右クリックして「非表示」にした場合、Excelの画面上では消えて見えますが、セルの値自体は残ったままファイル内に保存されています。社外に送ったファイルで非表示の行・列を「再表示」されると、隠したはずの数値や文字列がそのまま見えてしまいます。このツールは非表示の行・列の範囲と、その中に実際に値が入っているセルの数を数えて知らせます（内容は一覧に出さず、件数とシート名だけを表示します）。</p>
+    <p>A. 行や列を右クリックして「非表示」にした場合、Excelの画面上では消えて見えますが、セルの値自体は残ったままファイル内に保存されています。社外に送ったファイルで非表示の行・列を「再表示」されると、隠したはずの数値や文字列がそのまま見えてしまいます。このツールは非表示の行・列の範囲と、その中に実際に値が入っているセルの数を数えて知らせます（内容は一覧に出さず、件数とシート名だけを表示します）。実際に戻す・消すには<a href="../xlsx-gyoretsu/">行列の再表示・値消去ツール</a>をご利用ください。</p>
     <h3>Q. 「白文字など背景と同化した書式のセル」はどうやって判定していますか？</h3>
     <p>A. セルの文字の色と背景（塗りつぶし）の色が、どちらも具体的な色として明示的に同じ値に設定されている場合だけを検出します（例：文字色を白、塗りつぶしも白、または文字色と塗りつぶしを同じ色に指定）。Excelのテーマの配色や「自動」設定の色までは解決していないため、見た目には同化していてもこのツールでは検出できないケースがあります。断定はせず、確認の目安としてご利用ください。</p>
     <h3>Q. Excel自体の「ドキュメント検査」（ファイル→情報→問題のチェック）と何が違いますか？</h3>
@@ -119,9 +119,9 @@ html[lang=en] .en-only{display:block}
       <li>Click "Export result as CSV" to save just the summary.</li>
     </ol>
     <h3>Q. Can this tool rewrite or bulk-remove anything?</h3>
-    <p>A. No. This is a read-only inspection tool — it never rewrites your file. To actually change something it finds, follow the link to the matching dedicated tool: <a href="../xlsx-saihyouji/">hidden-sheet tool</a> for sheet visibility, <a href="../xlsx-comment/">comment listing tool</a> for comments, <a href="../sakusha-kesu/">author-name scrubber</a> for creator/company metadata, <a href="../xlsx-link/">external-link finder</a> for external references, and <a href="../xlsx-namae/">defined-name tool</a> for defined names.</p>
+    <p>A. No. This is a read-only inspection tool — it never rewrites your file. To actually change something it finds, follow the link to the matching dedicated tool: <a href="../xlsx-saihyouji/">hidden-sheet tool</a> for sheet visibility, <a href="../xlsx-gyoretsu/">hidden row/column tool</a> for hidden rows/columns, <a href="../xlsx-comment/">comment listing tool</a> for comments, <a href="../sakusha-kesu/">author-name scrubber</a> for creator/company metadata, <a href="../xlsx-link/">external-link finder</a> for external references, and <a href="../xlsx-namae/">defined-name tool</a> for defined names.</p>
     <h3>Q. What does "hidden rows/columns with values" mean?</h3>
-    <p>A. Right-click-hiding a row or column only hides it on screen — the cell values stay saved inside the file. If someone unhides those rows/columns after you send the file, whatever you thought was hidden is visible again. This tool counts how many hidden rows/columns actually contain a value and which sheets they're in (it does not list the actual cell contents, only counts and sheet names).</p>
+    <p>A. Right-click-hiding a row or column only hides it on screen — the cell values stay saved inside the file. If someone unhides those rows/columns after you send the file, whatever you thought was hidden is visible again. This tool counts how many hidden rows/columns actually contain a value and which sheets they're in (it does not list the actual cell contents, only counts and sheet names). Use the <a href="../xlsx-gyoretsu/">hidden row/column tool</a> to actually re-display or clear them.</p>
     <h3>Q. How does it detect "invisible-looking text"?</h3>
     <p>A. Only cells where the font color and the cell's background (fill) color are both explicitly set to the same specific color (e.g. white text on a white fill, or any matching pair) are flagged. Excel's theme colors and "Automatic" color are not resolved, so some visually-hidden cases won't be caught. This is a conservative check, meant as a starting point, not a guarantee.</p>
     <h3>Q. How is this different from Excel's own "Document Inspector"?</h3>
@@ -490,6 +490,7 @@ var STATE_LABEL={ja:{visible:"表示",hidden:"非表示",veryHidden:"完全非�
 var RELATED=[
   {href:"../excel-trouble/",ja:"エクセルのトラブル解決ガイド",jaDesc:"「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全18ツールを探す。",en:"Excel Troubleshooting Guide",enDesc:"Find the right tool among all 18 by symptom: heavy, save errors, error values, links, printing."},
   {href:"../xlsx-saihyouji/",ja:"シートの「再表示」に出てこないときの対策",jaDesc:"非表示・完全非表示（veryHidden）シートを一覧化し、まとめて表示に戻す。",en:"Sheet missing from the Unhide dialog?",enDesc:"List every sheet's visibility (visible/hidden/very hidden) and bulk-change it."},
+  {href:"../xlsx-gyoretsu/",ja:"非表示の行・列をまとめて「再表示」、または値だけを消去",jaDesc:"非表示の行・列を全シート一覧化し、まとめて再表示、または位置を変えずに値だけ消去した新しいファイルを書き出す。",en:"Bulk re-display hidden rows/columns, or clear just their values",enDesc:"List every hidden row/column across all sheets and bulk re-display them, or blank out just their values in place."},
   {href:"../xlsx-comment/",ja:"シートのあちこちに散らばったコメント・メモを全部一覧に",jaDesc:"従来の「メモ」も最近の「スレッド形式」コメントも全シート横断で一覧化。",en:"List every cell comment and note across every sheet",enDesc:"Covers both the classic note and the newer threaded comment."},
   {href:"../sakusha-kesu/",ja:"社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す",jaDesc:"Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。",en:"Strip creator / last-modified-by / comment-author names before sharing",enDesc:"Clean up Excel, Word and PowerPoint files at once before sending them outside your company."},
   {href:"../xlsx-link/",ja:"Excelの「外部ソースへのリンク」発生源を探すツール",jaDesc:"外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。",en:"Find external-workbook link sources",enDesc:"List every external-workbook link and exactly where it's used."},
@@ -526,9 +527,8 @@ var T={
   cat4:"作成者・最終更新者・会社名", cat5:"外部リンク（別ファイルへの参照）", cat6:"名前定義",
   cat7:"白文字など背景と同化した書式のセル",
   none:"見つかりませんでした", sheetsLabel:"件のシート：", cellsLabel:"件のセル：",
-  link1:"→ シートの表示状態を変更する", link3:"→ 一覧で確認する（印刷・CSV対応）", link4:"→ まとめて消す",
+  link1:"→ シートの表示状態を変更する", link2:"→ 再表示する・値だけ消す", link3:"→ 一覧で確認する（印刷・CSV対応）", link4:"→ まとめて消す",
   link5:"→ 発生源を調べる", link6:"→ 点検・削除する",
-  noToolHint2:"行・列を選んでExcelの「再表示」から手動で戻すか、社内で確認してください。",
   noToolHint7:"Excel上でセルを選び、ホームタブのフォントの色を確認してください。"},
  en:{title:"Before sending outside your company: check an Excel file for “hidden” information",
   sub:"Excel's own Document Inspector is Windows-only and never shows every category on one screen. This checks for hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, and invisible-looking text — all at once, read-only, with a link to a dedicated tool wherever something is found. Nothing is uploaded.",
@@ -544,9 +544,8 @@ var T={
   cat4:"Creator / last-modified-by / company", cat5:"External links (other workbook references)", cat6:"Defined names",
   cat7:"Invisible-looking text (same font/background color)",
   none:"None found", sheetsLabel:"sheet(s): ", cellsLabel:"cell(s): ",
-  link1:"→ Change sheet visibility", link3:"→ View list (print/CSV)", link4:"→ Strip them",
+  link1:"→ Change sheet visibility", link2:"→ Re-display or clear values", link3:"→ View list (print/CSV)", link4:"→ Strip them",
   link5:"→ Find where they're used", link6:"→ Inspect / remove",
-  noToolHint2:"Select the rows/columns and use Excel's own Unhide, or check with your team.",
   noToolHint7:"Select the cell in Excel and check its font color on the Home tab."}
 };
 var lang="ja";
@@ -593,7 +592,7 @@ function renderResult(f){
   var hv=r.hiddenValueTotal>0;
   if(hv) issues++;
   var d2 = hv ? (r.hiddenValueTotal+esc(t.cellsLabel)+" "+r.hiddenValueBySheet.map(function(x){return escTrunc(x.sheet)+"："+x.count;}).join("、")) : esc(t.none);
-  h+=catBlock(t.cat2, hv, d2, hv?("<span class='catDetail'>"+esc(t.noToolHint2)+"</span>"):"");
+  h+=catBlock(t.cat2, hv, d2, hv?("<a href='../xlsx-gyoretsu/'>"+esc(t.link2)+"</a>"):"");
 
   // 3. comments
   var cm=r.commentTotal>0;
