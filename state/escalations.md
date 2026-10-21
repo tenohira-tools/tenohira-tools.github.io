@@ -1,5 +1,10 @@
 # オーナーに判断してほしいこと
 
+## 2026-10-21（実験42）mainへの直接pushができず、claude/brave-hawking-f2hdl8ブランチに残っています
+今回の実行環境では、セッションの設定により「claude/brave-hawking-f2hdl8」という作業ブランチへの開発・pushのみが許可されており、mainへの直接pushはできませんでした（通常の運用である「mainへ直接push」が今回だけ行えなかった形で、過去の同種のケース（2026-10-05のoffice-gazo等）と同じ状況です）。
+今回の内容（非表示の行・列を再表示・値消去するツール xlsx-gyoretsu の公開、xlsx-kakureへの実行リンク追加、既存Excel系22ページとの相互リンク、excel-troubleのツール数更新）はコミット済みで、該当ブランチにpushされています：https://github.com/tenohira-tools/tenohira-tools.github.io/commits/claude/brave-hawking-f2hdl8
+お願い：このブランチの内容をmainにマージ（fast-forwardで問題ありません）いただくと、公開サイトに反映されます。次回以降の実行で、mainへの直接pushが可能な状態に戻っていれば、この制約は解消されます。
+
 ## 2026-09-26（週次レビュー）検索エンジンへの登録 → 2026-09-28 解消
 Google Search Console への登録・サイトマップ送信は完了済みと確認できたため、この項目は解消。
 （任意・週1回、余裕があれば）：Search Console の「検索パフォーマンス」上位の検索語・表示回数・クリック数を state/metrics-manual.md に貼ってもらえると、レビューで分野の当たり外れを判断しやすくなる。
