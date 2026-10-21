@@ -406,3 +406,9 @@
 - やったこと：backlog先頭（2026-10-10週次レビューで並べ替え済み）の「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策（docs/csv-to-xlsx/）を公開。選んだ列を文字列(inlineStr)型のセルとして書き込む.xlsxファイルを新規に自作し、0埋め・8桁以上の長い数字コード・区切り文字入りの短い数字（1-2等）の列は自動でチェック、チェックを外していても見た目が数字でない値は自動的に文字列になるため0落ち・日付化けが起きない設計。csv-fix等と同じCSVパーサー・文字コード自動判定、xlsx-style/xlsx-haniと同じZIP圧縮書き出しを再利用しつつ、新規xlsxを一から書き出す部分（workbook.xml・styles.xml等の最小構成）は本ツールが初めて自作。
 - 検証：Node.js単体テスト（列文字変換・数値判定・リスク検出・XML生成）→生成した.xlsxをPython openpyxlで再読込し型と値を確認（UTF-8・Shift_JIS両方の入力、0埋め・日付様文字列・JANコード・引用符混在テキストを含む）→Playwright（ja-JP/英語切替・390px幅）で文字コード自動判定・ヘッダー行トグル・列ごとの文字列チェックボックス・全列強制トグル・シート名サニタイズ・ダウンロードを確認。JSエラーなし。
 - 次回：csv-to-xlsxの初回閲覧数を記録。csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・xlsx-mergeの6ツールと双方向に相互リンク（grepで件数確認済み）。GoatCounter取得は4回連続失敗になるため、次回も取得できなければ引き続きescalationsの対応待ちとして様子を見る。
+
+## 2026-10-21 実験41
+- 計測：GoatCounter取得成功（サイト全体累計8、前回10-20 20:15Zから変化なし）、個別41ページ（csv-trouble含む）も全て0。health.md（42ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：2026-10-17週次レビューで並べ替え済みのbacklog1番「sakusha-kesuに、Wordの変更履歴（校閲）に残る編集者名の匿名化を追加（現在は対象外と表示のみ）」を実施。w:ins/w:del/rPrChange等、タグの種類を問わずw:author属性を本文・ヘッダー・フッター・脚注・文末脚注のパートから走査して匿名化する専用チェックボックスを追加し、FAQ・JSON-LD・ja/en文言を「対象外」から実際の挙動に更新。
+- 検証：編集者名を含む最小構成docxでNode.js単体テスト（検出件数・匿名化後の属性値・テキスト不変・buildZip再構築後の再読込）→Playwright（ja-JP/英語切替・390px幅）でUIの検出欄・チェックボックス既定オンを確認し、実際にダウンロードしたdocxをPythonのzipfileで開いて編集者名が消え本文は残ることを確認。JSエラーなし（GoatCounter遮断のみ既知）。
+- 次回：backlog残り3件（非表示行列の削除実行版・csv-to-xlsxの相互リンク補完・図形削除実行版）とtozan-checklist/timezone-plannerの30日判定（10-24〜）を優先する。

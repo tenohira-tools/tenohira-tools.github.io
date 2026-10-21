@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
 <title>社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す | てのひらツール</title>
-<meta name="description" content="取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)に残っている「作成者」「最終更新者」「コメントの投稿者名（会社名・個人のメールアドレスを含む場合あり）」をまとめて消したい——というときに。複数ファイル・3つの形式を一括処理でき、ファイルはサーバーに送らずブラウザの中だけで書き換えます。Before sending files outside your company: strip the creator, last-modified-by and comment-author names from multiple Excel/Word/PowerPoint files at once, entirely in your browser.">
+<meta name="description" content="取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)に残っている「作成者」「最終更新者」「コメントの投稿者名（会社名・個人のメールアドレスを含む場合あり）」、Wordの「変更履歴（校閲）」に残る編集者名をまとめて消したい——というときに。複数ファイル・3つの形式を一括処理でき、ファイルはサーバーに送らずブラウザの中だけで書き換えます。Before sending files outside your company: strip the creator, last-modified-by, comment-author and Track Changes editor names from multiple Excel/Word/PowerPoint files at once, entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/sakusha-kesu/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
@@ -64,7 +64,7 @@ html[lang=en] .en-only{display:block}
 <header>
   <div>
     <h1 data-i="title">社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す</h1>
-    <p class="sub" data-i="sub">取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)のプロパティに残っている「作成者」「最終更新者」、コメントの「投稿者名」（社内のメールアドレスが入っている場合もあります）を消したい、というときに。複数のファイル・3つの形式をまとめて一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで書き換えます。元のファイルは変更しません。</p>
+    <p class="sub" data-i="sub">取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)のプロパティに残っている「作成者」「最終更新者」、コメントの「投稿者名」（社内のメールアドレスが入っている場合もあります）、Wordの「変更履歴（校閲）」に残る編集者名を消したい、というときに。複数のファイル・3つの形式をまとめて一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで書き換えます。元のファイルは変更しません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -97,7 +97,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. コメント本文や、数式・文章の内容は消えませんか？</h3>
     <p>A. 消えません。消すのは投稿者の「名前」だけで、コメント本文やセルの値・数式・文章・書式など、他のすべての内容はそのまま残ります。</p>
     <h3>Q. 100%完全に消えますか？</h3>
-    <p>A. 「作成者」「最終更新者」「会社名」「所属部門」は確実に消せます。コメントの投稿者名も、昔からある形式（レガシー形式）は確実に消せます。ただし、最近のExcel/Wordの「スレッド形式」コメント機能では、投稿者名の保存場所がファイルによって異なることがあり、このツールは主な保存場所（Wordのpeople.xml、Excelのpersons/person.xml）も分かる範囲で追加処理しますが、100%の除去は保証できません。社外に渡す前の最終確認として、Excel/Wordの「ドキュメント検査」機能も併用することをおすすめします。また、Wordの「変更履行の記録（校閲機能）」に残る編集者名は対象外です（対象外である旨、処理後も画面に表示します）。</p>
+    <p>A. 「作成者」「最終更新者」「会社名」「所属部門」は確実に消せます。コメントの投稿者名も、昔からある形式（レガシー形式）は確実に消せます。ただし、最近のExcel/Wordの「スレッド形式」コメント機能では、投稿者名の保存場所がファイルによって異なることがあり、このツールは主な保存場所（Wordのpeople.xml、Excelのpersons/person.xml）も分かる範囲で追加処理しますが、100%の除去は保証できません。社外に渡す前の最終確認として、Excel/Wordの「ドキュメント検査」機能も併用することをおすすめします。また、Wordの「変更履歴の記録（校閲機能）」に残る編集者名（挿入・削除・書式変更などに記録されるw:author属性）も、本文・ヘッダー・フッター・脚注・文末脚注を対象にベストエフォートで消去します（下の「変更履歴（校閲）の編集者名も消す」のチェックで切り替え可能。100%の網羅は保証できません）。</p>
     <h3>Q. 対応しているファイル形式は？</h3>
     <p>A. Excel(.xlsx/.xlsm)、Word(.docx)、PowerPoint(.pptx)です。古い.xls/.doc/.ppt形式や、パスワードで保護されたファイルは読み込めません。</p>
     <h3>Q. 元のファイルは変更されますか？</h3>
@@ -116,7 +116,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. Does it touch comment text, formulas, or document content?</h3>
     <p>A. No. Only the author's name is cleared. Comment bodies, cell values and formulas, document text, formatting — everything else is left exactly as it was.</p>
     <h3>Q. Is removal 100% guaranteed?</h3>
-    <p>A. The creator, last-modified-by, Company and Manager fields are reliably cleared. Legacy-style comment authors are reliably cleared too. However, recent Excel/Word "threaded" comment features can store the author's real name in a different internal location depending on the file's history, and while this tool also makes a best-effort pass at the two most likely such locations (Word's people.xml, Excel's persons/person.xml), 100% removal cannot be guaranteed there. Before sending a file outside your organization, we recommend also running Word/Excel's own "Document Inspector" as a final check. Author names left in Word's tracked-changes (Track Changes) history are out of scope and are not touched (this is stated on screen after processing too).</p>
+    <p>A. The creator, last-modified-by, Company and Manager fields are reliably cleared. Legacy-style comment authors are reliably cleared too. However, recent Excel/Word "threaded" comment features can store the author's real name in a different internal location depending on the file's history, and while this tool also makes a best-effort pass at the two most likely such locations (Word's people.xml, Excel's persons/person.xml), 100% removal cannot be guaranteed there. Before sending a file outside your organization, we recommend also running Word/Excel's own "Document Inspector" as a final check. Word's tracked-changes (Track Changes) editor names — the w:author attribute recorded on insertions, deletions and formatting changes — are also cleared on a best-effort basis, across the document body, headers, footers, footnotes and endnotes (toggle this with the "Also clear Track Changes editor names" checkbox below; full coverage is not guaranteed).</p>
     <h3>Q. Which file formats are supported?</h3>
     <p>A. Excel (.xlsx/.xlsm), Word (.docx) and PowerPoint (.pptx). The older .xls/.doc/.ppt formats and password-protected files are not supported.</p>
     <h3>Q. Is my original file modified?</h3>
@@ -199,7 +199,7 @@ html[lang=en] .en-only{display:block}
   "mainEntity": [
     {"@type":"Question","name":"具体的にどこを消しますか？","acceptedAnswer":{"@type":"Answer","text":"docProps/core.xmlの作成者・最終更新者、docProps/app.xmlの会社名・所属部門、Excel/Word/PowerPointのコメント投稿者一覧です。"}},
     {"@type":"Question","name":"コメント本文や文章の内容は消えませんか？","acceptedAnswer":{"@type":"Answer","text":"消えません。投稿者の名前だけを消し、コメント本文・セルの値・数式・文章・書式など他のすべての内容はそのまま残ります。"}},
-    {"@type":"Question","name":"100%完全に消えますか？","acceptedAnswer":{"@type":"Answer","text":"作成者・最終更新者・会社名・所属部門とレガシー形式のコメント投稿者名は確実に消せます。最近のスレッド形式コメントの投稿者名は分かる範囲で追加処理しますが100%は保証できず、変更履行（校閲）の編集者名は対象外です。"}},
+    {"@type":"Question","name":"100%完全に消えますか？","acceptedAnswer":{"@type":"Answer","text":"作成者・最終更新者・会社名・所属部門とレガシー形式のコメント投稿者名は確実に消せます。最近のスレッド形式コメントとWordの変更履歴（校閲）の編集者名は、本文・ヘッダー・フッター・脚注等を対象に分かる範囲で追加処理しますが100%は保証できません。"}},
     {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。変更後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}}
   ]
 }
@@ -433,6 +433,28 @@ function scrubAttrsInTags(xml,tagName,attrNames,placeholderFn){
   out.push(xml.slice(last));
   return {xml:out.join(""),found:found};
 }
+function attrEverywhereRegex(attrName){
+  var escName=attrName.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  return new RegExp("("+escName+"=)([\"'])((?:(?!\\2).)*)\\2","g");
+}
+function findAttrEverywhere(xml,attrName){
+  var re=attrEverywhereRegex(attrName), m, out=[];
+  while((m=re.exec(xml))){ out.push(decodeXmlEntities(m[3])); }
+  return out;
+}
+function scrubAttrEverywhere(xml,attrName,placeholderFn){
+  var re=attrEverywhereRegex(attrName);
+  return xml.replace(re,function(m,pfx,q,val){
+    var decoded=decodeXmlEntities(val);
+    var newVal=xmlEscapeAttr(placeholderFn(decoded));
+    return pfx+q+newVal+q;
+  });
+}
+function uniqueStrings(arr){
+  var seen={}, out=[];
+  arr.forEach(function(s){ if(!seen[s]){ seen[s]=true; out.push(s); } });
+  return out;
+}
 function scrubAttrsByPattern(xml,tagName,namePatterns,excludePatterns,placeholderFn){
   var out=[],last=0,found=[];
   var re=new RegExp("<"+tagName+"(?=[\\s/>])","g"),m;
@@ -471,6 +493,7 @@ function detectFormat(entryNames){
   if(has("ppt/presentation.xml")) return "pptx";
   return null;
 }
+var DOCX_REVISION_FILE_RE=/^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/i;
 function findCommentEntries(entryNames,fmt){
   if(fmt==="xlsx") return entryNames.filter(function(n){return /^xl\/comments(\d+\.xml|\/comment\d+\.xml)$/i.test(n)});
   if(fmt==="docx") return entryNames.filter(function(n){return n==="word/comments.xml"});
@@ -506,12 +529,20 @@ function inspect(entries){
       Object.keys(t.attrs).forEach(function(k){ if(/name|author/i.test(k)) peopleNames.push(t.attrs[k]); });
     });
   }
+  var revisionAuthors=[];
+  if(fmt==="docx"){
+    names.filter(function(n){return DOCX_REVISION_FILE_RE.test(n)}).forEach(function(n){
+      var rxml=dec.decode(byName[n].bytes);
+      revisionAuthors=revisionAuthors.concat(findAttrEverywhere(rxml,"w:author"));
+    });
+  }
   return {fmt:fmt,
     creator:creator?decodeXmlEntities(creator.inner||""):"",
     lastModifiedBy:lastMod?decodeXmlEntities(lastMod.inner||""):"",
     company:company?decodeXmlEntities(company.inner||""):"",
     manager:manager?decodeXmlEntities(manager.inner||""):"",
     commentAuthors:commentAuthors, peopleNames:peopleNames,
+    revisionAuthors:revisionAuthors,
     hasPerson:!!(personPath && byName[personPath])};
 }
 function scrub(entries,opts){
@@ -552,6 +583,12 @@ function scrub(entries,opts){
       patched[personPath]=pxml;
     }
   }
+  if(opts.clearTrackChanges && fmt==="docx"){
+    names.filter(function(n){return DOCX_REVISION_FILE_RE.test(n)}).forEach(function(n){
+      var rxml=patched[n]!==undefined?patched[n]:dec.decode(byName[n].bytes);
+      patched[n]=scrubAttrEverywhere(rxml,"w:author",function(){return opts.placeholder});
+    });
+  }
   return entries.map(function(e){
     if(patched[e.name]!==undefined) return {name:e.name, bytes:enc.encode(patched[e.name])};
     return e;
@@ -571,33 +608,33 @@ var FMT_LABEL={xlsx:"Excel",docx:"Word",pptx:"PowerPoint"};
 var T={
  ja:{
   title:"社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す",
-  sub:"取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)のプロパティに残っている「作成者」「最終更新者」、コメントの「投稿者名」（社内のメールアドレスが入っている場合もあります）を消したい、というときに。複数のファイル・3つの形式をまとめて一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで書き換えます。元のファイルは変更しません。",
+  sub:"取引先や社外にファイルを渡す前に、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)のプロパティに残っている「作成者」「最終更新者」、コメントの「投稿者名」（社内のメールアドレスが入っている場合もあります）、Wordの「変更履歴（校閲）」に残る編集者名を消したい、というときに。複数のファイル・3つの形式をまとめて一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで書き換えます。元のファイルは変更しません。",
   dropzoneStrong:"ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ",dropzoneRest:"、またはクリックして選択",
   dropzoneHint:".xlsx / .xlsm / .docx / .pptx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。",
   listHeading:"読み込んだファイル",
-  kCreator:"作成者",kLastMod:"最終更新者",kCompany:"会社名",kManager:"所属部門",kComments:"コメント投稿者",kPeople:"人物情報(people)",
+  kCreator:"作成者",kLastMod:"最終更新者",kCompany:"会社名",kManager:"所属部門",kComments:"コメント投稿者",kPeople:"人物情報(people)",kTrackChanges:"変更履歴の編集者",
   none:"（設定なし）",noneComments:"（コメントなし）",
-  optAuthor:"作成者・最終更新者を消す",optComments:"コメント投稿者名を消す",optCompany:"会社名・所属部門も消す",
+  optAuthor:"作成者・最終更新者を消す",optComments:"コメント投稿者名を消す",optCompany:"会社名・所属部門も消す",optTrackChanges:"変更履歴（校閲）の編集者名も消す",
   buildBtn:"消去したファイルを書き出す",buildBtnBusy:"書き出し中…",
   doneMsg:"ダウンロードしました：",
   errBad:"読み込めませんでした（.xlsx/.xlsm/.docx/.pptx以外の形式か、パスワード保護、または壊れたファイルの可能性があります）",
   loadingLabel:"読み込み中…",removeLabel:"削除",
-  bestEffortNote:"スレッド形式コメントの投稿者名は分かる範囲で追加処理（100%保証なし）。変更履行（校閲）の編集者名は対象外。",
+  bestEffortNote:"スレッド形式コメントの投稿者名は分かる範囲で追加処理（100%保証なし）。Wordの変更履歴（校閲）の編集者名も本文・ヘッダー・フッター・脚注等を対象にベストエフォートで消去します。",
   feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
  en:{
   title:"Before sending files outside your company: strip creator, last-modified-by and comment-author names from Excel/Word/PowerPoint",
-  sub:"Before you send a file to a client or anyone outside your organization, strip the \"creator\", \"last modified by\" and comment-author names (which can include an internal email address) left in Excel (.xlsx/.xlsm), Word (.docx) and PowerPoint (.pptx) files. Process multiple files across all three formats at once. Files are never uploaded — everything is rewritten inside this browser. Your originals are untouched.",
+  sub:"Before you send a file to a client or anyone outside your organization, strip the \"creator\", \"last modified by\" and comment-author names (which can include an internal email address), as well as Word's Track Changes editor names, left in Excel (.xlsx/.xlsm), Word (.docx) and PowerPoint (.pptx) files. Process multiple files across all three formats at once. Files are never uploaded — everything is rewritten inside this browser. Your originals are untouched.",
   dropzoneStrong:"Drag and drop Excel/Word/PowerPoint files here",dropzoneRest:", or click to choose",
   dropzoneHint:".xlsx / .xlsm / .docx / .pptx supported. Add multiple files at once. Everything happens on this device.",
   listHeading:"Loaded files",
-  kCreator:"Creator",kLastMod:"Last modified by",kCompany:"Company",kManager:"Manager",kComments:"Comment authors",kPeople:"Person info (people)",
+  kCreator:"Creator",kLastMod:"Last modified by",kCompany:"Company",kManager:"Manager",kComments:"Comment authors",kPeople:"Person info (people)",kTrackChanges:"Track Changes editors",
   none:"(not set)",noneComments:"(no comments)",
-  optAuthor:"Clear creator / last-modified-by",optComments:"Clear comment-author names",optCompany:"Also clear Company / Manager",
+  optAuthor:"Clear creator / last-modified-by",optComments:"Clear comment-author names",optCompany:"Also clear Company / Manager",optTrackChanges:"Also clear Track Changes editor names",
   buildBtn:"Build the cleaned file",buildBtnBusy:"Building…",
   doneMsg:"Downloaded: ",
   errBad:"Could not read this file (it may not be .xlsx/.xlsm/.docx/.pptx, may be password-protected, or may be corrupted)",
   loadingLabel:"Loading…",removeLabel:"Remove",
-  bestEffortNote:"Threaded-comment author names are cleared on a best-effort basis (not 100% guaranteed). Track Changes editor names are out of scope.",
+  bestEffortNote:"Threaded-comment author names are cleared on a best-effort basis (not 100% guaranteed). Word's Track Changes editor names are also cleared, on a best-effort basis, across the body, headers, footers and footnotes.",
   feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
 };
 var lang="ja";
@@ -610,7 +647,7 @@ function addFiles(fileList){
   Array.prototype.slice.call(fileList).forEach(function(file){
     var id=++seq;
     var rec={id:id,name:file.name,size:file.size,loading:true,error:"",info:null,entries:null,
-      opts:{clearAuthor:true,clearComments:true,clearCompany:false},outBytes:null,outName:"",building:false};
+      opts:{clearAuthor:true,clearComments:true,clearCompany:false,clearTrackChanges:true},outBytes:null,outName:"",building:false};
     files.push(rec);
     render();
     (async function(){
@@ -622,6 +659,7 @@ function addFiles(fileList){
         rec.loading=false; rec.entries=entries; rec.info=info;
         if(!(info.creator||info.lastModifiedBy)) rec.opts.clearAuthor=false;
         if(!(info.commentAuthors.length||info.peopleNames.length)) rec.opts.clearComments=false;
+        if(!(info.revisionAuthors && info.revisionAuthors.length)) rec.opts.clearTrackChanges=false;
       }catch(e){
         rec.loading=false; rec.error=T[lang].errBad;
       }
@@ -635,7 +673,8 @@ async function buildOne(rec){
   rec.building=true; render();
   try{
     var cleaned=scrub(rec.entries,{clearAuthor:rec.opts.clearAuthor,clearCompany:rec.opts.clearCompany,
-      clearComments:rec.opts.clearComments, placeholder: lang==="ja"?"匿名":"Anonymous"});
+      clearComments:rec.opts.clearComments, clearTrackChanges:rec.opts.clearTrackChanges,
+      placeholder: lang==="ja"?"匿名":"Anonymous"});
     var outBytes=await buildZip(cleaned);
     var dot=rec.name.lastIndexOf(".");
     var base=dot>0?rec.name.slice(0,dot):rec.name, ext=dot>0?rec.name.slice(dot):"";
@@ -666,6 +705,8 @@ function fileCardHtml(rec){
   var info=rec.info;
   var commentsLabel=info.commentAuthors.length? info.commentAuthors.map(esc).join(", ")+"（"+info.commentAuthors.length+"）" : "";
   var peopleLabel=info.peopleNames.length? info.peopleNames.map(esc).join(", ") : "";
+  var revisionNames=info.revisionAuthors? uniqueStrings(info.revisionAuthors) : [];
+  var revisionLabel=revisionNames.length? revisionNames.map(esc).join(", ")+"（"+info.revisionAuthors.length+"）" : "";
   var html='<div class="fileCard">'
     +'<div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="badge fmt">'+FMT_LABEL[info.fmt]+'</span>'
     +'<span class="fMeta">'+fmtBytes(rec.size)+'</span>'
@@ -677,11 +718,13 @@ function fileCardHtml(rec){
     +fieldRow(t.kManager,info.manager,t.none)
     +fieldRow(t.kComments,commentsLabel,t.noneComments)
     +(info.peopleNames.length?fieldRow(t.kPeople,peopleLabel,t.none):"")
+    +(info.fmt==="docx"?fieldRow(t.kTrackChanges,revisionLabel,t.none):"")
     +'</div>'
     +'<div class="optRow">'
     +'<label class="'+(info.creator||info.lastModifiedBy?'':'disabled')+'"><input type="checkbox" data-opt="clearAuthor" data-id="'+rec.id+'" '+(rec.opts.clearAuthor?'checked':'')+' '+((info.creator||info.lastModifiedBy)?'':'disabled')+'>'+t.optAuthor+'</label>'
     +'<label class="'+((info.commentAuthors.length||info.peopleNames.length)?'':'disabled')+'"><input type="checkbox" data-opt="clearComments" data-id="'+rec.id+'" '+(rec.opts.clearComments?'checked':'')+' '+((info.commentAuthors.length||info.peopleNames.length)?'':'disabled')+'>'+t.optComments+'</label>'
     +'<label class="'+((info.company||info.manager)?'':'disabled')+'"><input type="checkbox" data-opt="clearCompany" data-id="'+rec.id+'" '+(rec.opts.clearCompany?'checked':'')+' '+((info.company||info.manager)?'':'disabled')+'>'+t.optCompany+'</label>'
+    +(info.fmt==="docx"?('<label class="'+(revisionNames.length?'':'disabled')+'"><input type="checkbox" data-opt="clearTrackChanges" data-id="'+rec.id+'" '+(rec.opts.clearTrackChanges?'checked':'')+' '+(revisionNames.length?'':'disabled')+'>'+t.optTrackChanges+'</label>'):'')
     +'</div>'
     +'<p><button type="button" class="primary" data-build="'+rec.id+'" '+(rec.building?'disabled':'')+'>'+(rec.building?t.buildBtnBusy:t.buildBtn)+'</button></p>'
     +(rec.outName?'<p class="okBox">'+t.doneMsg+esc(rec.outName)+'</p>':'')

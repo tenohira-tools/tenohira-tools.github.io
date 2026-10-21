@@ -7,15 +7,16 @@
 
 並べ方の根拠：4週目も個別35ページは閲覧0・site:検索0件で、伸びたツールは無く分野の当否はまだ数字で判断できない。集中分野「Excelファイルのトラブル解決」と「社外に渡す前の処理」（ファイルをAIや外部に渡したくない理由が最も強い）を続け、既存のZIP/XML読み込みコードを流用できるものを上にした。1〜5は2026-10-17にWebSearchで確認済み（解決策はExcel内の手作業・シートごとの操作・VBA・有料アドインのみで、ブラウザ完結の無料ツールは見当たらない）。着手前の確認検索は2〜3件まで。xlsxを書き出すツールは必ずxlsx-style/xlsx-haniの圧縮付きbuildZipを使う。読み取り専用の「一覧化・診断」系は検証が軽いので、残り時間が少ない回はそちらを選ぶ。
 
-1. 改善：sakusha-kesuに、Wordの「変更履歴（校閲）」に残る編集者名（w:ins/w:del の w:author）の匿名化を追加（現在は対象外と表示しているだけ）。
-2. 新規：非表示の行・列を全シートまとめて「再表示」または「削除」した新しいファイルを書き出す（2026-10-17公開のxlsx-kakureの診断で見つかる項目の実行版）。
-3. 改善：csv-to-xlsxが公開当初の6ツール（csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・xlsx-merge）としか相互リンクしておらず、他のExcel系23ページ（xlsx-zukei公開時の全ペア突き合わせで再確認、xlsx-kakure・xlsx-comment・xlsx-diffのJS配列側も同じ欠落）との相互リンクが片方向のまま。既存ページの手入れが必要な回に、csv-to-xlsxへ23ページ分の双方向リンクを追加する。
-4. 新規：見えない図形・オブジェクトの一覧（2026-10-19公開のxlsx-zukeiで読み取り専用版は公開済み）を、選んだ図形を実際に削除した新しいファイルを書き出す実行版に拡張する。drawingのrels整合（画像パーツ・グループ内の子要素の参照保持）に注意。
-5. 撤退：2026-10-24以降、tozan-checklist（10-24）・timezone-planner（10-25）が30日判定で閲覧0のままなら、ページに「終了」を表示し一覧・sitemapから外す（STRATEGY.md「集中」に従い改善は試さない）。期日を過ぎた最初の回に、1〜5より優先して行う。
+1. 新規：非表示の行・列を全シートまとめて「再表示」または「削除」した新しいファイルを書き出す（2026-10-17公開のxlsx-kakureの診断で見つかる項目の実行版）。
+2. 改善：csv-to-xlsxが公開当初の6ツール（csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・xlsx-merge）としか相互リンクしておらず、他のExcel系23ページ（xlsx-zukei公開時の全ペア突き合わせで再確認、xlsx-kakure・xlsx-comment・xlsx-diffのJS配列側も同じ欠落）との相互リンクが片方向のまま。既存ページの手入れが必要な回に、csv-to-xlsxへ23ページ分の双方向リンクを追加する。
+3. 新規：見えない図形・オブジェクトの一覧（2026-10-19公開のxlsx-zukeiで読み取り専用版は公開済み）を、選んだ図形を実際に削除した新しいファイルを書き出す実行版に拡張する。drawingのrels整合（画像パーツ・グループ内の子要素の参照保持）に注意。
+4. 撤退：2026-10-24以降、tozan-checklist（10-24）・timezone-planner（10-25）が30日判定で閲覧0のままなら、ページに「終了」を表示し一覧・sitemapから外す（STRATEGY.md「集中」に従い改善は試さない）。期日を過ぎた最初の回に、1〜4より優先して行う。
 
 （条件未充足のため保留：日本の住所英語変換＝競合多数／文字数カウンター＝AI時代の選び方に抵触しやすい／SNS向け画像切り抜き＝競合多数。差別化角度が見つかるまで着手しない）
 
 ### 実施済みの記録
+
+（2026-10-21実施済み：改善：sakusha-kesuに、Wordの「変更履歴（校閲）」に残る編集者名（w:ins/w:del/rPrChange等のw:author）の匿名化を追加。backlog旧1番。本文・ヘッダー・フッター・脚注・文末脚注のパートを対象に、タグの種類を問わずw:author属性を走査して匿名化する専用チェックボックス（検出時のみ既定オン）を追加し、FAQ・JSON-LD・ja/en文言も「対象外」から実際の挙動に更新。Node.js単体テストとPlaywright（ja-JP/英語切替・390px幅、実際にdocxをダウンロードしてPythonのzipfileで内容確認）で検証済み。）
 
 （2026-10-20実施済み：CSVのトラブル解決まとめページ（csv-trouble）を公開。backlog旧1番。文字化け・列の表記ゆれ・結合できない・列の値ごとの分割・コード→名称変換・Excelで開くと0が消える・日付に化ける・和暦西暦混在日付の7症状に分類し、既存のCSV系7ツール（csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・csv-to-xlsx・wareki-toitsu）への案内ページを公開。excel-troubleと同じ構成（症状ジャンプ目次・ja/en切替・FAQPage）で作成し、ファイルは処理しない純粋な案内ページ。対象7ツール全ページの「関連ツール」欄の先頭に本ページへのリンクを追加（ja/en各1件、grepで7ファイル×2＝14件を確認）。excel-trouble側にも「CSVファイルのトラブルはありますか？」のFAQ（JSON-LD含む）を追加し双方向に案内。docs/index.htmlのCSV・Excel群にexcel-troubleの直後に追加。検証：Node.js（html.parser）でHTML構文、json.loadでJSON-LD構文、node --checkでインラインJS構文を確認した上で、Playwright（Chromiumヘッドレス、ja-JP/英語切替・390px/1280px幅）でcsv-trouble自身の表示・目次アンカー7件の存在・言語切替・横スクロール無しと、excel-trouble・対象7ツールページそれぞれに新しいリンクが実在することを確認。JSエラーなし（GoatCounter遮断のみ既知）。）
 
