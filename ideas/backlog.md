@@ -7,13 +7,14 @@
 
 並べ方の根拠：4週目も個別35ページは閲覧0・site:検索0件で、伸びたツールは無く分野の当否はまだ数字で判断できない。集中分野「Excelファイルのトラブル解決」と「社外に渡す前の処理」（ファイルをAIや外部に渡したくない理由が最も強い）を続け、既存のZIP/XML読み込みコードを流用できるものを上にした。1〜5は2026-10-17にWebSearchで確認済み（解決策はExcel内の手作業・シートごとの操作・VBA・有料アドインのみで、ブラウザ完結の無料ツールは見当たらない）。着手前の確認検索は2〜3件まで。xlsxを書き出すツールは必ずxlsx-style/xlsx-haniの圧縮付きbuildZipを使う。読み取り専用の「一覧化・診断」系は検証が軽いので、残り時間が少ない回はそちらを選ぶ。
 
-1. 改善：csv-to-xlsxが公開当初の6ツール（csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・xlsx-merge）としか相互リンクしておらず、他のExcel系24ページ（2026-10-22公開のxlsx-gyoretsu公開時の全ペア突き合わせで再確認、xlsx-kakure・xlsx-comment・xlsx-diffのJS配列側も同じ欠落）との相互リンクが片方向のまま。既存ページの手入れが必要な回に、csv-to-xlsxへ24ページ分の双方向リンクを追加する。
-2. 新規：見えない図形・オブジェクトの一覧（2026-10-19公開のxlsx-zukeiで読み取り専用版は公開済み）を、選んだ図形を実際に削除した新しいファイルを書き出す実行版に拡張する。drawingのrels整合（画像パーツ・グループ内の子要素の参照保持）に注意。
-3. 撤退：2026-10-24以降、tozan-checklist（10-24）・timezone-planner（10-25）が30日判定で閲覧0のままなら、ページに「終了」を表示し一覧・sitemapから外す（STRATEGY.md「集中」に従い改善は試さない）。期日を過ぎた最初の回に、1〜3より優先して行う。
+1. 新規：見えない図形・オブジェクトの一覧（2026-10-19公開のxlsx-zukeiで読み取り専用版は公開済み）を、選んだ図形を実際に削除した新しいファイルを書き出す実行版に拡張する。drawingのrels整合（画像パーツ・グループ内の子要素の参照保持）に注意。
+2. 撤退：2026-10-24以降、tozan-checklist（10-24）・timezone-planner（10-25）が30日判定で閲覧0のままなら、ページに「終了」を表示し一覧・sitemapから外す（STRATEGY.md「集中」に従い改善は試さない）。期日を過ぎた最初の回に、1〜2より優先して行う。
 
 （条件未充足のため保留：日本の住所英語変換＝競合多数／文字数カウンター＝AI時代の選び方に抵触しやすい／SNS向け画像切り抜き＝競合多数。差別化角度が見つかるまで着手しない）
 
 ### 実施済みの記録
+
+（2026-10-22実施済み：改善：csv-to-xlsxが公開当初の6ツールとしか相互リンクしておらず、他のExcel系24ページ（excel-trouble／xlsx-kakure・xlsx-saihyouji・xlsx-hani・xlsx-jouken・xlsx-namae・xlsx-link・xlsx-suushiki・xlsx-error・xlsx-junkan・xlsx-comment・xlsx-diff・xlsx-ketsugo・xlsx-omoi・xlsx-hyperlink・xlsx-style・xlsx-atai の17ページは双方向リンクが0件、残り7ページのみ既存）との相互リンクが片方向・一部欠落のままだったbacklog旧1番を実施。xlsx-gyoretsuの関連ツール一覧を正本として、17ページそれぞれにcsv-to-xlsxへのリンク（静的ulの14ページはja/en各1件、JS配列形式のxlsx-kakure・xlsx-comment・xlsx-diffはRELATED配列に1件、ページごとの既存フォーマットに合わせて追加）を追加し、csv-to-xlsx側にも17ページ分のリンクを追加。excel-troubleは「緑の三角」症状カテゴリに追加し案内数表記を23→24に更新（同じ表記を参照するxlsx-gyoretsuの説明文も24に更新）。Python（re.S）で機械的に全25ページ×24ページ＝600通りの相互リンクを突き合わせ、欠落0件を確認。全JSON-LDのjson.loadとJS配列3ページのnode構文チェック、Playwright（390px幅、csv-to-xlsx・xlsx-kakure・excel-troubleの表示とJSエラー無し、JS描画される関連リンクに新規追加分が実際に表示されることを含む）で検証。閲覧数0が続き改善対象ページが無い中での「既存ページの手入れ」として実施。）
 
 （2026-10-22実施済み：非表示の行・列を全シート一覧化し、シートごとに「再表示」（非表示フラグを外すだけ、値はそのまま）と「内容だけ削除」（非表示状態は変えず値・数式だけ消す、両方の組み合わせも可）を選んだ新しいファイルを書き出すツール（xlsx-gyoretsu）を公開。backlog旧1番。行・列そのものの削除（詰める操作）は数式参照・結合セルが崩れる恐れがあるため対象外とし、FAQに明記（xlsx-hani等と同じ安全側に絞る設計方針）。xlsx-kakureの「非表示の行・列にある値」診断のリンクを本ツールへ差し替え。既存Excel系24ページ全てと相互リンクし、excel-troubleの案内数表記を22→23に更新。docs/index.htmlにも追加。Node.js単体テスト（openpyxl製の2種のテストファイルで行・列・結合セル・数式・共有文字列を含むケースを検証）とPlaywright（実際のファイルでアップロード→一覧→チェックボックス選択→ダウンロード→openpyxlで再読込、言語切替、390px幅）で動作確認、関連ページ側（xlsx-kakure）もPlaywrightで新リンクの表示とJSエラー無しを確認。）
 

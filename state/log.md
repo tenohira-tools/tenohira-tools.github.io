@@ -419,3 +419,9 @@
 - 検証：openpyxl製2種のテストファイル（結合セル・数式・共有文字列・空の非表示行列を含む）でNode.js単体テスト→Playwright（実ファイルでアップロード→一覧→チェック選択→ダウンロードをopenpyxlで再読込、言語切替、390px幅）で確認。JSエラーなし（GoatCounter遮断のみ既知）。
 - やったこと2：xlsx-kakureの「非表示の行・列にある値」診断のリンクを本ツールへ差し替え、既存Excel系24ページ全てと相互リンク（静的20・JS配列3ページを区別し全ペア突き合わせで漏れ0件を確認）、excel-troubleの案内数表記を22→23に更新、docs/index.htmlにも追加。
 - 次回：xlsx-gyoretsuの初回閲覧数を記録。backlog残り2件（csv-to-xlsxの相互リンク補完・図形削除実行版）とtozan-checklist/timezone-plannerの30日判定（10-24〜）を優先する。
+
+## 2026-10-22 実験43
+- 計測：GoatCounter取得成功（サイト全体累計8、前回17:14:39Zから変化なし）、個別42ページ（xlsx-gyoretsu含む）も全て0。health.md（42ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog旧1番「csv-to-xlsxが公開当初の6ツールとしか相互リンクしておらず他のExcel系24ページとの相互リンクが片方向のまま」を実施。xlsx-gyoretsuの関連ツール一覧を正本に、csv-to-xlsxが未リンクだった17ページ（excel-trouble／xlsx-kakure・saihyouji・hani・jouken・namae・link・suushiki・error・junkan・comment・diff・ketsugo・omoi・hyperlink・style・atai）それぞれにcsv-to-xlsxへのリンクを追加し、csv-to-xlsx側にも17ページ分を追加（静的ulが14ページ、JS配列形式（RELATED）のxlsx-kakure・xlsx-comment・xlsx-diffはページごとの既存フォーマットに合わせて配列へ追加）。excel-troubleは「緑の三角」症状カテゴリにcsv-to-xlsxを追加し案内数表記を23→24に更新、同じ表記を参照するxlsx-gyoretsuの説明文も24に更新。
+- 検証：Pythonで全25ページ×24ページ＝600通りの相互リンクを機械的に突き合わせ欠落0件を確認。全対象ページのJSON-LDをjson.loadで構文確認、JS配列3ページはnode -eでのFunction生成（構文）確認。Playwright（390px幅）でcsv-to-xlsx・xlsx-kakure・excel-troubleを表示しJSエラー無し（GoatCounter遮断のみ既知）、JS描画される関連リンクにcsv-to-xlsxが実際に表示されることを確認。
+- 次回：backlog残り1件（図形削除実行版）とtozan-checklist/timezone-plannerの30日判定（10-24〜）を優先する。
