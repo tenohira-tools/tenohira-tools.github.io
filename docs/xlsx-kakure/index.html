@@ -510,7 +510,8 @@ var RELATED=[
 ,
   {href:"../xlsx-nyuryoku/",ja:"入力規則（プルダウン）がどこにあるか分からない：全シート一覧化",jaDesc:"セル範囲・種類・リスト元（他シート参照・名前定義経由も含む）を全シート横断で一覧化し、参照が壊れているものを検出してCSV出力。",en:"List every data-validation (dropdown) rule across all sheets",enDesc:"Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV."},
   {href:"../xlsx-insatsu/",ja:"シートごとに印刷範囲・印刷タイトル・改ページがバラバラなときの一覧・一括解除",jaDesc:"印刷範囲・印刷タイトル・手動の改ページの設定状況を全シート一覧化し、選んだシート・項目だけをまとめて解除した新しいファイルを書き出す。",en:"List every sheet's print area, print titles and page breaks — and clear the ones you choose",enDesc:"Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared."},
-  {href:"../xlsx-zukei/",ja:"図形が知らないうちに増えている・見えない図形が残っていないか一覧でチェック",jaDesc:"非表示設定の図形、サイズが実質ゼロの図形、同じ名前が繰り返し付いた図形（コピーで増えた可能性）を全シート横断で一覧表示（読み取り専用）。",en:"Check every sheet for invisible shapes, or ones that multiplied by copy-paste",enDesc:"Lists every shape, picture, chart frame and group across every sheet, flagging hidden ones, zero-size ones, and repeated names that suggest copy-paste growth (read-only)."}];
+  {href:"../xlsx-zukei/",ja:"図形が知らないうちに増えている・見えない図形が残っていないか一覧でチェック",jaDesc:"非表示設定の図形、サイズが実質ゼロの図形、同じ名前が繰り返し付いた図形（コピーで増えた可能性）を全シート横断で一覧表示（読み取り専用）。",en:"Check every sheet for invisible shapes, or ones that multiplied by copy-paste",enDesc:"Lists every shape, picture, chart frame and group across every sheet, flagging hidden ones, zero-size ones, and repeated names that suggest copy-paste growth (read-only)."},
+  {href:"../xlsx-gyoretsu/",ja:"非表示の行・列が全シートに散らばっている：まとめて「再表示」または内容だけ削除",jaDesc:"非表示の行・列の数と、そこに値が入っているセル数を全シート一覧表示し、選んだシートをまとめて再表示、または内容だけ削除した新しいファイルを書き出す。この診断の「非表示の行・列にある値」はこのツールで実際に再表示・内容削除できます。",en:"Hidden rows/columns scattered across every sheet: bulk unhide or clear just their contents",enDesc:"List every sheet's hidden rows/columns and how many cells inside them hold a value, then build a copy with the ones you choose either unhidden or cleared. This is the tool for the \"Hidden rows/columns with values\" item diagnosed above."}];
 var T={
  ja:{title:"社外に送る前に確認：Excelの「隠れた情報」一括チェック",
   sub:"Excel(.xlsx/.xlsm)ファイルを社外に送る前に、Windows版Excelの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセルを1画面で一覧化し、該当があれば専用ツールへ案内します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。",
@@ -526,9 +527,8 @@ var T={
   cat4:"作成者・最終更新者・会社名", cat5:"外部リンク（別ファイルへの参照）", cat6:"名前定義",
   cat7:"白文字など背景と同化した書式のセル",
   none:"見つかりませんでした", sheetsLabel:"件のシート：", cellsLabel:"件のセル：",
-  link1:"→ シートの表示状態を変更する", link3:"→ 一覧で確認する（印刷・CSV対応）", link4:"→ まとめて消す",
+  link1:"→ シートの表示状態を変更する", link2:"→ 再表示・内容削除する", link3:"→ 一覧で確認する（印刷・CSV対応）", link4:"→ まとめて消す",
   link5:"→ 発生源を調べる", link6:"→ 点検・削除する",
-  noToolHint2:"行・列を選んでExcelの「再表示」から手動で戻すか、社内で確認してください。",
   noToolHint7:"Excel上でセルを選び、ホームタブのフォントの色を確認してください。"},
  en:{title:"Before sending outside your company: check an Excel file for “hidden” information",
   sub:"Excel's own Document Inspector is Windows-only and never shows every category on one screen. This checks for hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, and invisible-looking text — all at once, read-only, with a link to a dedicated tool wherever something is found. Nothing is uploaded.",
@@ -544,9 +544,8 @@ var T={
   cat4:"Creator / last-modified-by / company", cat5:"External links (other workbook references)", cat6:"Defined names",
   cat7:"Invisible-looking text (same font/background color)",
   none:"None found", sheetsLabel:"sheet(s): ", cellsLabel:"cell(s): ",
-  link1:"→ Change sheet visibility", link3:"→ View list (print/CSV)", link4:"→ Strip them",
+  link1:"→ Change sheet visibility", link2:"→ Unhide / clear contents", link3:"→ View list (print/CSV)", link4:"→ Strip them",
   link5:"→ Find where they're used", link6:"→ Inspect / remove",
-  noToolHint2:"Select the rows/columns and use Excel's own Unhide, or check with your team.",
   noToolHint7:"Select the cell in Excel and check its font color on the Home tab."}
 };
 var lang="ja";
@@ -593,7 +592,7 @@ function renderResult(f){
   var hv=r.hiddenValueTotal>0;
   if(hv) issues++;
   var d2 = hv ? (r.hiddenValueTotal+esc(t.cellsLabel)+" "+r.hiddenValueBySheet.map(function(x){return escTrunc(x.sheet)+"："+x.count;}).join("、")) : esc(t.none);
-  h+=catBlock(t.cat2, hv, d2, hv?("<span class='catDetail'>"+esc(t.noToolHint2)+"</span>"):"");
+  h+=catBlock(t.cat2, hv, d2, hv?("<a href='../xlsx-gyoretsu/'>"+esc(t.link2)+"</a>"):"");
 
   // 3. comments
   var cm=r.commentTotal>0;
