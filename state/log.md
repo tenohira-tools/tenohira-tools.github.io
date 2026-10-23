@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-10-23 拡張：xlsx-zukeiに「選んだ図形を削除してダウンロード」を追加
+- 計測：GoatCounter累計9（前回8から+1、トップのみ）、個別43ページ全て0。health.md（43ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象の増加ページも無く、撤退判定（tozan-checklist 10-24・timezone-planner 10-25）も未到来のため、backlog最上位「xlsx-zukei（一覧のみ）を削除実行版に拡張する」を実施。
+- やったこと：読み取り専用だったxlsx-zukeiに、チェックボックスで選んだ図形・画像・グループを実際に削除した新しいxlsxを書き出す機能を追加。各図形を囲むアンカー要素（xdr:twoCellAnchor等）単位で削除し空アンカーによる破損を回避、グループ内の子図形は個別削除不可でグループ全体を1単位として削除することでrels整合と子要素の参照保持に対応。画像データやrelsの記録は安全側で残す設計。title/description/h1/subとFAQ・JSON-LDを更新し、参照する他23ページ＋docs/index.html＋excel-troubleの「読み取り専用」表記も更新。
+- 検証：Node.js単体テスト（findTagsのオフセット・ネスト判定・アンカー範囲解決・複数範囲削除のマージ）→ページに貼り付けたコードをそのまま抽出し、Pythonのzipfileで手組みした実ファイルでZIP round-trip統合テストを実施、openpyxl再読込・zip整合性を確認→Playwright（ja-JP/英語切替・390px/1280px幅）でアップロード→選択→削除してダウンロード→openpyxlで再読込し狙った図形のみ消えることを確認。途中、390px幅でCSS Gridの既知パターン（min-width:auto既定値）による横スクロールの不備を発見し.fileCardにmin-width:0を追加して解消。
+- 次回：xlsx-zukei削除機能の閲覧・反応に変化なし（公開以来未インデックス継続）。backlogはtozan-checklist/timezone-plannerの撤退判定（10-24〜）のみ。
+
 ## 2026-10-20 新規実験：CSVのトラブル解決まとめページ（csv-trouble）
 - 計測：GoatCounter累計8（前回10-20 17:17Zから変化なし）、個別41ページ全て0。health.md（41ページ・問題0件）・計測タグ・表記いずれも不備なし。改善対象の増加ページも無いため、backlog最上位のcsv-troubleを実施。
 - やったこと：文字化け・表記ゆれ・結合できない・分割・コード→名称変換・Excel変換時の0落ち・和暦西暦混在日付の7症状から、既存CSV系7ツール（csv-fix・csv-seiri・csv-merge・csv-group-split・csv-master-replace・csv-to-xlsx・wareki-toitsu）へ案内するページ（docs/csv-trouble/）を公開。excel-troubleと同じ構成（症状ジャンプ・ja/en・FAQPage）。
