@@ -52,5 +52,5 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ](https://tenohira-tools.github.io/xlsx-style/)
 - [「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換](https://tenohira-tools.github.io/xlsx-suuchika/)
 - [引き継いだExcelの数式を一覧に：棚卸し・エラーチェックツール](https://tenohira-tools.github.io/xlsx-suushiki/)
-- [図形が勝手に増えた・見えない図形が残っている：全シート横断の図形一覧ツール](https://tenohira-tools.github.io/xlsx-zukei/)
+- [図形が勝手に増えた・見えない図形が残っている：全シート一覧・選んだ図形だけ削除](https://tenohira-tools.github.io/xlsx-zukei/)
 <!-- tools:end -->
