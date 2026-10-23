@@ -173,7 +173,7 @@ html[lang=en] .en-only{display:block}
   <div class="ja-only">
     <h2>関連ツール</h2>
     <ul>
-      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全18ツールを探す。</li>
+      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全25ツールを探す。</li>
       <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
       <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
       <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
@@ -199,12 +199,13 @@ html[lang=en] .en-only{display:block}
           <li><a href="../xlsx-gyoretsu/">非表示の行・列が全シートに散らばっている：まとめて「再表示」または内容だけ削除</a> — 非表示の行・列の数と、そこに値が入っているセル数を全シート一覧表示し、選んだシートをまとめて「再表示」、または内容（値・数式）だけ削除した新しいファイルを書き出す。</li>
       <li><a href="../xlsx-gyoretsu/">Hidden rows/columns scattered across every sheet: bulk &quot;Unhide&quot; or clear just their contents</a> — List every sheet's hidden rows/columns and how many cells inside them hold a value, then build a copy with the ones you choose either unhidden or cleared of their contents.</li>
 
-      <li><a href="../csv-to-xlsx/">「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策</a> — 選んだ列を文字列として書き込む新しいxlsxファイルを作成。</li></ul>
+      <li><a href="../csv-to-xlsx/">「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策</a> — 選んだ列を文字列として書き込む新しいxlsxファイルを作成。</li><li><a href="../xlsx-ihan/">「無効なデータ」の丸印は1シートずつ：入力規則に違反した値を全シート一括で一覧化</a> — リスト（プルダウン）や数値・文字数の範囲に実際に違反している値が入ったセルだけを、全シート・複数ファイル横断で一覧化してCSV出力（読み取り専用）。カスタム数式や複雑な参照は安全のため対象外と表示。</li>
+</ul>
   </div>
   <div class="en-only">
     <h2>Related tools</h2>
     <ul>
-      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool among all 18 by symptom: heavy, save errors, error values, links, printing.</li>
+      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool among all 25 by symptom: heavy, save errors, error values, links, printing.</li>
       <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
       <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
       <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
@@ -228,7 +229,8 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-insatsu/">List every sheet's print area, print titles and page breaks — and clear the ones you choose</a> — Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared. Orientation, paper size and margins are untouched.</li>
       <li><a href="../xlsx-zukei/">Check every sheet for invisible shapes, or ones that multiplied by copy-paste</a> — Lists every shape, picture, chart frame and group across every sheet, flagging hidden ones, zero-size ones, and repeated names that suggest copy-paste growth, and can build a copy with the ones you choose removed.</li>
     
-      <li><a href="../csv-to-xlsx/">Fix the "leading zeros disappear / turn into a date" problem when opening a CSV in Excel</a> — Writes a new .xlsx that stores the chosen columns as text.</li></ul>
+      <li><a href="../csv-to-xlsx/">Fix the "leading zeros disappear / turn into a date" problem when opening a CSV in Excel</a> — Writes a new .xlsx that stores the chosen columns as text.</li><li><a href="../xlsx-ihan/">Excel's Circle Invalid Data only works one sheet at a time — list every rule-violating cell across all sheets at once</a> — Lists only the cells whose value actually violates its data-validation rule (list, numeric or text-length range) across every sheet and file, exportable as CSV (read-only). Custom-formula and complex-reference rules are safely excluded and flagged as not checked.</li>
+</ul>
   </div>
 </section>
 

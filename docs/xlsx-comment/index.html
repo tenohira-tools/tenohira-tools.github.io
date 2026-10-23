@@ -771,8 +771,8 @@ $("downloadBtn").addEventListener("click",function(){
 $("printBtn").addEventListener("click",function(){ window.print(); });
 
 var RELATED=[
- {href:"../excel-trouble/",ja:["エクセルのトラブル解決ガイド","「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全18ツールを探す。"],
-   en:["Excel Troubleshooting Guide","Find the right tool among all 18 by symptom: heavy, save errors, error values, links, printing."]},
+ {href:"../excel-trouble/",ja:["エクセルのトラブル解決ガイド","「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全25ツールを探す。"],
+   en:["Excel Troubleshooting Guide","Find the right tool among all 25 by symptom: heavy, save errors, error values, links, printing."]},
  {href:"../xlsx-diff/",ja:["2つのExcelファイルを比較","「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルを色付き表示。"],
    en:["Compare two Excel files","Compare a before/after pair of files across every sheet, with changes highlighted."]},
  {href:"../sakusha-kesu/",ja:["社外に渡す前に、作成者・コメント投稿者名を消す","コメント本文は残したまま、投稿者名・作成者・最終更新者だけを消去。"],
@@ -819,7 +819,8 @@ var RELATED=[
   {href:"../csv-to-xlsx/",ja:["「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策","選んだ列を文字列として書き込む新しいxlsxファイルを作成。"],
    en:["Fix the \"leading zeros disappear / turn into a date\" problem when opening a CSV in Excel","Writes a new .xlsx that stores the chosen columns as text."]},
  {href:"../xlsx-gyoretsu/",ja:["非表示の行・列が全シートに散らばっている：まとめて「再表示」または内容だけ削除","非表示の行・列の数と、そこに値が入っているセル数を全シート一覧表示し、選んだシートをまとめて再表示、または内容だけ削除した新しいファイルを書き出す。"],
-   en:["Hidden rows/columns scattered across every sheet: bulk unhide or clear just their contents","List every sheet's hidden rows/columns and how many cells inside them hold a value, then build a copy with the ones you choose either unhidden or cleared."]}];
+   en:["Hidden rows/columns scattered across every sheet: bulk unhide or clear just their contents","List every sheet's hidden rows/columns and how many cells inside them hold a value, then build a copy with the ones you choose either unhidden or cleared."]},
+  {href:"../xlsx-ihan/",ja:["「無効なデータ」の丸印は1シートずつ：入力規則に違反した値を全シート一括で一覧化","リスト（プルダウン）や数値・文字数の範囲に実際に違反している値が入ったセルだけを、全シート・複数ファイル横断で一覧化してCSV出力（読み取り専用）。カスタム数式や複雑な参照は安全のため対象外と表示。"],en:["Excel's Circle Invalid Data only works one sheet at a time — list every rule-violating cell across all sheets at once","Lists only the cells whose value actually violates its data-validation rule (list, numeric or text-length range) across every sheet and file, exportable as CSV (read-only). Custom-formula and complex-reference rules are safely excluded and flagged as not checked."]}];
 function renderRelated(){
   var ja="", en="";
   RELATED.forEach(function(r){

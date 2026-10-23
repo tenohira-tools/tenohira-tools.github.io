@@ -130,7 +130,7 @@ html[lang=en] .en-only{display:block}
   <div class="ja-only">
     <h2>関連ツール</h2>
     <ul>
-      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全18ツールを探す。</li>
+      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全25ツールを探す。</li>
       <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — 社外に渡す前にファイルを軽く・きれいにしたいときにも。</li>
       <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — 渡す前にファイルサイズの内訳を確認できます。</li>
       <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 渡す前に使用範囲を実データの範囲まで縮小。</li>
@@ -156,12 +156,13 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-zukei/">図形が知らないうちに増えている・見えない図形が残っていないか一覧でチェック</a> — 非表示設定の図形、サイズが実質ゼロの図形、同じ名前が繰り返し付いた図形（コピーで増えた可能性）を全シート横断で一覧表示。選んだ図形（グループは丸ごと単位）を削除した新しいファイルも書き出せる。</li>
           <li><a href="../xlsx-gyoretsu/">非表示の行・列が全シートに散らばっている：まとめて「再表示」または内容だけ削除</a> — 非表示の行・列の数と、そこに値が入っているセル数を全シート一覧表示し、選んだシートをまとめて「再表示」、または内容（値・数式）だけ削除した新しいファイルを書き出す。</li>
       <li><a href="../xlsx-gyoretsu/">Hidden rows/columns scattered across every sheet: bulk &quot;Unhide&quot; or clear just their contents</a> — List every sheet's hidden rows/columns and how many cells inside them hold a value, then build a copy with the ones you choose either unhidden or cleared of their contents.</li>
+<li><a href="../xlsx-ihan/">「無効なデータ」の丸印は1シートずつ：入力規則に違反した値を全シート一括で一覧化</a> — リスト（プルダウン）や数値・文字数の範囲に実際に違反している値が入ったセルだけを、全シート・複数ファイル横断で一覧化してCSV出力（読み取り専用）。カスタム数式や複雑な参照は安全のため対象外と表示。</li>
 </ul>
   </div>
   <div class="en-only">
     <h2>Related tools</h2>
     <ul>
-      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool among all 18 by symptom: heavy, save errors, error values, links, printing.</li>
+      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool among all 25 by symptom: heavy, save errors, error values, links, printing.</li>
       <li><a href="../xlsx-style/">Fix "too many different cell formats" / a heavy workbook</a> — also useful for making a file lighter and tidier before sharing it.</li>
       <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — check the size breakdown before you send a file out.</li>
       <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away</a> — shrink the used range before sending a file out.</li>
@@ -185,7 +186,8 @@ html[lang=en] .en-only{display:block}
 <li><a href="../xlsx-nyuryoku/">List every data-validation (dropdown) rule across all sheets</a> — Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV.</li>
       <li><a href="../xlsx-insatsu/">List every sheet's print area, print titles and page breaks — and clear the ones you choose</a> — Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared. Orientation, paper size and margins are untouched.</li>
       <li><a href="../xlsx-zukei/">Check every sheet for invisible shapes, or ones that multiplied by copy-paste</a> — Lists every shape, picture, chart frame and group across every sheet, flagging hidden ones, zero-size ones, and repeated names that suggest copy-paste growth, and can build a copy with the ones you choose removed.</li>
-    </ul>
+    <li><a href="../xlsx-ihan/">Excel's Circle Invalid Data only works one sheet at a time — list every rule-violating cell across all sheets at once</a> — Lists only the cells whose value actually violates its data-validation rule (list, numeric or text-length range) across every sheet and file, exportable as CSV (read-only). Custom-formula and complex-reference rules are safely excluded and flagged as not checked.</li>
+</ul>
   </div>
 </section>
 

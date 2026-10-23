@@ -188,7 +188,7 @@ html[lang=en] .en-only{display:block}
           <li><a href="../xlsx-gyoretsu/">非表示の行・列が全シートに散らばっている：まとめて「再表示」または内容だけ削除</a> — 非表示の行・列の数と、そこに値が入っているセル数を全シート一覧表示し、選んだシートをまとめて「再表示」、または内容（値・数式）だけ削除した新しいファイルを書き出す。</li>
       <li><a href="../xlsx-gyoretsu/">Hidden rows/columns scattered across every sheet: bulk &quot;Unhide&quot; or clear just their contents</a> — List every sheet's hidden rows/columns and how many cells inside them hold a value, then build a copy with the ones you choose either unhidden or cleared of their contents.</li>
 
-      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全24ツールを探す。</li>
+      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全25ツールを探す。</li>
       <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — 非表示シート・非表示行列の値・コメント・作成者名・外部リンク・名前定義・白文字セルを1画面で診断し、該当する専用ツールへ案内（読み取り専用）。非表示行・列はこのツールで実際に再表示・内容削除できます。</li>
       <li><a href="../xlsx-saihyouji/">シートの「再表示」に出てこないときの対策</a> — 非表示・完全非表示（veryHidden）シートを一覧化し、まとめて表示に戻す。シートそのものの表示状態はこちら、シート内の行・列はこのツールで扱います。</li>
       <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。</li>
@@ -204,7 +204,8 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
       <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
       <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除。見た目は変わらない。</li>
-      <li><a href="../xlsx-atai/">数式を値に変換：外部ファイルへのリンクが解除できないときに</a> — 外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。</li></ul>
+      <li><a href="../xlsx-atai/">数式を値に変換：外部ファイルへのリンクが解除できないときに</a> — 外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。</li><li><a href="../xlsx-ihan/">「無効なデータ」の丸印は1シートずつ：入力規則に違反した値を全シート一括で一覧化</a> — リスト（プルダウン）や数値・文字数の範囲に実際に違反している値が入ったセルだけを、全シート・複数ファイル横断で一覧化してCSV出力（読み取り専用）。カスタム数式や複雑な参照は安全のため対象外と表示。</li>
+</ul>
   </div>
   <div class="en-only">
     <h2>Related tools</h2>
@@ -222,7 +223,7 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-insatsu/">List every sheet's print area, print titles and page breaks — and clear the ones you choose</a> — Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared. Orientation, paper size and margins are untouched.</li>
       <li><a href="../xlsx-zukei/">Check every sheet for invisible shapes, or ones that multiplied by copy-paste</a> — Lists every shape, picture, chart frame and group across every sheet, flagging hidden ones, zero-size ones, and repeated names that suggest copy-paste growth, and can build a copy with the ones you choose removed.</li>
     
-      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool among all 24 by symptom: heavy, save errors, error values, links, printing.</li>
+      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool among all 25 by symptom: heavy, save errors, error values, links, printing.</li>
       <li><a href="../xlsx-kakure/">Check an Excel file for "hidden" information before sending it outside your company</a> — Checks hidden sheets, hidden-row/column values, comments, author metadata, external links, defined names and invisible text, all on one screen (read-only). This tool is where you actually unhide or clear those hidden rows/columns.</li>
       <li><a href="../xlsx-saihyouji/">Sheet missing from the Unhide dialog?</a> — List every sheet's visibility (visible/hidden/very hidden) and bulk-change it. That tool covers a sheet's own visibility; this one covers rows/columns inside a sheet.</li>
       <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away or printing spits out blank pages</a> — Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped).</li>
@@ -238,7 +239,8 @@ html[lang=en] .en-only{display:block}
       <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
       <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet and remove the broken ones.</li>
       <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop the ones no cell uses, without changing how anything looks.</li>
-      <li><a href="../xlsx-atai/">Convert formulas to values — when you can't break an external link</a> — Converts formula cells to their cached values, scoped to external references, and removes the link records too when it's safe.</li></ul>
+      <li><a href="../xlsx-atai/">Convert formulas to values — when you can't break an external link</a> — Converts formula cells to their cached values, scoped to external references, and removes the link records too when it's safe.</li><li><a href="../xlsx-ihan/">Excel's Circle Invalid Data only works one sheet at a time — list every rule-violating cell across all sheets at once</a> — Lists only the cells whose value actually violates its data-validation rule (list, numeric or text-length range) across every sheet and file, exportable as CSV (read-only). Custom-formula and complex-reference rules are safely excluded and flagged as not checked.</li>
+</ul>
   </div>
 </section>
 

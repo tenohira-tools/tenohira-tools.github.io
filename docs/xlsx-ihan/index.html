@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>「無効なデータ」の丸印は1シートずつ：入力規則に違反した値を全シート一括で一覧化 | てのひらツール</title>
+<meta name="description" content="Excelの「データの入力規則」→「無効なデータ」(丸で囲む)はシートごとに実行が必要で、一覧やCSVに書き出せません。Excel（.xlsx/.xlsm）の全シート・複数ファイルを横断して、入力規則（プルダウン・数値や文字数の範囲・日付など）に実際に違反している値が入ったセルだけを一覧表示してCSV出力します。カスタム数式や複雑な参照は安全のため対象外と表示。読み取り専用で、ファイルはサーバーに送信されません。Excel's Circle Invalid Data only works one sheet at a time with no export. Scan every sheet and file at once and list only the cells whose value actually violates its data-validation rule, exportable as CSV.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-ihan/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px;min-width:0}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select,input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileListBox{display:grid;gap:10px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;min-width:0}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:100px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.total .n{color:var(--accent)}
+.statBox.bad .n{color:var(--diff)}
+.filterRow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;margin-bottom:10px}
+.filterRow label{display:flex;align-items:center;gap:6px}
+.filterRow input[type=text]{min-width:200px}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.ref{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:nowrap}
+td.val{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;max-width:220px;word-break:break-all}
+td.cond{max-width:280px;word-break:break-all}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+details.skipped summary{cursor:pointer;color:var(--muted);font-size:.9rem}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">「無効なデータ」の丸印は1シートずつ：入力規則に違反した値を全シート一括で一覧化</h1>
+    <p class="sub" data-i="sub">Excelの「データの入力規則」→「無効なデータ」(丸で囲む)はシートごとに実行する必要があり、結果を一覧やCSVに書き出すこともできません。このツールはExcel（.xlsx/.xlsm）の全シート・複数ファイルを横断して、入力規則（リストのプルダウン・数値や文字数の範囲・日付など）に実際に違反している値が入ったセルだけを一覧表示し、CSVに出力します。カスタム数式や、セル参照・名前定義を使った複雑な条件は安全のため判定対象外とし、その旨を別途表示します。読み取り専用で、ファイルはサーバーに送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数可）</p>
+    <p class="hint" data-i="dropzoneHint">入力規則に実際に違反している値が入ったセルだけを抜き出します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">チェック結果の集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">「判定できないルール」は、カスタム数式や、セル参照・複雑な参照を使ったリストなど、安全に判定できないものです（下の折りたたみに一覧）。違反ではありません。</p>
+</section>
+
+<section class="card" id="filterCard" style="display:none">
+  <h2 data-i="filterHeading">絞り込み</h2>
+  <div class="filterRow">
+    <label id="fileFilterLabel" style="display:none"><span data-i="filterFile">ファイル：</span><select id="fileFilter"></select></label>
+    <label><span data-i="filterSheet">シート：</span><select id="sheetFilter"></select></label>
+    <label><span data-i="filterType">種類：</span><select id="typeFilter"></select></label>
+    <label><input type="text" id="searchBox" data-i-ph="searchPh"></label>
+  </div>
+</section>
+
+<section class="card" id="resultCard" style="display:none">
+  <h2 data-i="resultHeading">規則に違反しているセル</h2>
+  <p class="hint" id="resultCount"></p>
+  <div id="resultBox"></div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">この一覧をCSVでダウンロード</button></p>
+  <details class="skipped" id="skippedBox" style="margin-top:18px"></details>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイルも一度に追加できます）。</li>
+      <li>集計欄で、見つかった入力規則の総数・実際に判定できたルールの数・違反セルの数を確認します。</li>
+      <li>絞り込みで、ファイル・シート・種類を指定して違反セルの一覧を確認します。</li>
+      <li>必要な一覧を「CSVでダウンロード」で保存します（絞り込んだ内容がそのまま書き出されます）。</li>
+      <li>判定できなかったルールは、一覧の下の「判定できなかったルールを見る」から確認できます。</li>
+    </ol>
+    <h3>Q. Excel自体の「無効なデータを丸で囲む」機能と何が違いますか？</h3>
+    <p>A. Excelのこの機能は、今アクティブなシートに対してボタンを押すたびに実行する必要があり、全シート・複数ファイルを一度に調べることはできません。結果を一覧やCSVに書き出すこともできません。このツールは複数ファイル・複数シートを横断して一度に全件を判定し、見つかった違反セルを一覧化・CSV出力できます。</p>
+    <h3>Q. どの種類の入力規則を判定できますか？</h3>
+    <p>A. 次の場合だけ、安全に判定できると判断して実際の値をチェックします。①リスト（プルダウン）型のうち、項目が直接入力（例：「はい,いいえ」）か、同一シート・他シートの具体的なセル範囲を参照している場合（その範囲の実際の値を読み取って比較します）。②整数・小数・日付・時刻・文字数の各型のうち、条件の上限・下限が数値としてそのまま設定されている場合（セル参照や数式で指定されている場合は対象外）。それ以外（カスタム数式、名前定義経由のリスト、OFFSET/INDIRECTなどの動的なリスト、条件がセル参照になっているもの等）は、誤った判定をしないよう「判定できないルール」として除外し、違反としても安全としても扱いません。</p>
+    <h3>Q. 「違反している」とはどういう状態ですか？</h3>
+    <p>A. そのセルに実際に入っている値（数式の場合はファイルに保存されている計算結果）が、設定されている入力規則の条件を満たしていない状態です。たとえばリストに無い値が入力されている、数値の範囲外の値が入っている、整数のはずが小数になっている、文字数が条件外、などです。空欄のセルは常に対象外（違反として数えません）。エラー値（#REF!等）が入っているセルも、このツールでは判定対象外です。</p>
+    <h3>Q. 数式が入ったセルも判定されますか？</h3>
+    <p>A. はい。ただし再計算は行わず、ファイルに保存されている計算結果（キャッシュされた値）だけを使って判定します。ファイルを最後に保存したときの状態を確認するものだと考えてください。</p>
+    <h3>Q. このツールはファイルを書き換えたり、削除したりできますか？</h3>
+    <p>A. いいえ。読み取り専用の一覧化・CSV出力だけを行い、ファイルは一切書き換えません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Excel (.xlsx/.xlsm) files into the box above, or click it to choose one or more.</li>
+      <li>Check the summary panel for the total number of validation rules found, how many could actually be checked, and how many violating cells were found.</li>
+      <li>Use the filters to narrow the violation list down by file, sheet or rule type.</li>
+      <li>Click "Download as CSV" to save the list — exactly what the filters currently show.</li>
+      <li>Rules that couldn't be checked are listed under "View rules that couldn't be checked" below the main list.</li>
+    </ol>
+    <h3>Q. How is this different from Excel's own "Circle Invalid Data"?</h3>
+    <p>A. Excel's own command has to be run on the active sheet, one sheet at a time, with no way to scan every sheet and file at once or export the result as a list or CSV. This tool checks every file and sheet in one pass and lists the violating cells as a filterable table or CSV.</p>
+    <h3>Q. Which rule types can actually be checked?</h3>
+    <p>A. Only cases where a value comparison is safe to make: (1) List (dropdown) rules whose source is either a literal quoted list (e.g. "Yes,No") or a concrete cell range on the same or another sheet — the actual values in that range are read and compared against. (2) Whole number, decimal, date, time and text-length rules whose upper/lower bound is a plain literal number in the rule itself (not a cell reference or formula). Everything else — custom-formula rules, list sources that go through a defined name, dynamic sources built with OFFSET/INDIRECT, or bounds given as a cell reference — is excluded as "not checked" rather than guessed at, and is never counted as either a violation or as valid.</p>
+    <h3>Q. What counts as "violating"?</h3>
+    <p>A. The value actually stored in the cell (for a formula cell, its cached result) doesn't satisfy the rule that's set on it — e.g. a value not in the dropdown list, a number outside its allowed range, a decimal where a whole number is required, or text longer/shorter than the allowed length. Blank cells are always excluded (never counted as violating). Cells holding a cached error value (#REF! etc.) are also excluded from this check.</p>
+    <h3>Q. Are formula cells checked too?</h3>
+    <p>A. Yes, but nothing is recalculated — only the cached result already saved in the file is used. Think of it as a snapshot of the file as it was last saved.</p>
+    <h3>Q. Can this tool rewrite or remove anything?</h3>
+    <p>A. No. This is a read-only listing/CSV-export tool — it never rewrites your file.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and analyzed inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported; a failed file shows an error next to it.</p>
+  </div>
+</section>
+
+<section class="card related" id="relatedSection">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全25ツールを探す。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — 非表示シート・非表示行列の値・コメント・作成者名・外部リンク・名前定義・白文字セルを1画面で診断し、該当する専用ツールへ案内（読み取り専用）。非表示行・列はこのツールで実際に再表示・内容削除できます。</li>
+      <li><a href="../xlsx-saihyouji/">シートの「再表示」に出てこないときの対策</a> — 非表示・完全非表示（veryHidden）シートを一覧化し、まとめて表示に戻す。シートそのものの表示状態はこちら、シート内の行・列はこのツールで扱います。</li>
+      <li><a href="../xlsx-hani/">Ctrl+Endで遠くへ飛ぶ・印刷で白紙ページが大量に出るときの「使用範囲」リセット</a> — 実データ・結合セルの範囲だけに使用範囲を縮小した新しいファイルを書き出す（テーブル機能使用シートは対象外）。</li>
+      <li><a href="../xlsx-jouken/">条件付き書式が増えすぎて重い・消せないときの棚卸し削除ツール</a> — 条件付き書式ルールを全シート横断で一覧化し、範囲の重複・行列全体・書式参照切れを自動で見分けて削除。</li>
+      <li><a href="../xlsx-namae/">「名前は既に存在します」対策：名前定義の点検・削除ツール</a> — 名前定義（defined names）を全件一覧化し、非表示・エラー・組み込みの名前を見分けて削除。</li>
+      <li><a href="../xlsx-link/">Excelの「外部ソースへのリンク」発生源を探すツール</a> — 外部参照の参照先ファイルを一覧化し、数式・名前定義・入力規則・条件付き書式・グラフのどこで使われているかを列挙。</li>
+      <li><a href="../xlsx-suushiki/">引き継いだExcelの数式を一覧に</a> — 数式が入った全セルをファイルを開かず一覧化し、エラー・他シート参照・外部参照を検出。</li>
+      <li><a href="../xlsx-error/">#REF!・#N/A・#DIV/0!が残っているセルを全部一覧に</a> — 全シート・複数ファイルを横断してエラー値セルだけを一覧化し、種類ごとの件数と典型的な原因を表示してCSV出力。</li>
+      <li><a href="../xlsx-junkan/">循環参照の警告が消えない・どこにあるか分からないときの一覧化ツール</a> — 全シートの数式を解析し、循環参照になっているセルのグループを一度に全部一覧化してCSV出力。</li>
+      <li><a href="../xlsx-comment/">シートのあちこちに散らばったコメント・メモを全部一覧に</a> — 従来の「メモ」も最近の「スレッド形式」コメントも全シート横断で一覧化してCSV出力・印刷。</li>
+      <li><a href="../xlsx-diff/">2つのExcelファイルを比較：変更されたセルだけを全シート一括で色付け表示</a> — 「変更前」「変更後」の2つのファイルを全シート一括で比較し、追加・削除・変更されたセルを確認。</li>
+      <li><a href="../xlsx-ketsugo/">Excelの結合セルを解除して値を埋める→CSV出力</a> — 結合セルを解除してできる空欄を左上の値で自動的に埋め、並び替え・フィルター・ピボットができる表にしてCSV出力。</li>
+      <li><a href="../xlsx-merge/">Excelファイルを複数まとめて1つに</a> — 複数の.xlsxファイルをCSVに書き出す手間なくそのまま1つのCSVに結合。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — シート・画像・スタイル・共有文字列などパーツ別の容量を内訳表示し、原因になりやすい箇所を順に挙げる。</li>
+      <li><a href="../xlsx-hyperlink/">ハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — 全シートのクリック可能なハイパーリンクを一覧化し、ローカルファイルへのリンクや存在しないシートを指す社内リンクを自動検出して解除。</li>
+      <li><a href="../xlsx-style/">「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ</a> — セルの書式（cellXfs）を解析し、完全に同一な書式を1つにまとめ、どのセルからも使われていない書式を削除。見た目は変わらない。</li>
+      <li><a href="../xlsx-atai/">数式を値に変換：外部ファイルへのリンクが解除できないときに</a> — 外部ファイルを参照している数式だけを選んで値に変換し、条件を満たせば外部リンクの記録も削除。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。</li>
+      <li><a href="../xlsx-suuchika/">「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換</a> — テキストとして保存された数値らしいセルを列ごとに一覧化し、選んだ列だけ数値に変換。0始まりコード列は既定で対象外。</li>
+      <li><a href="../csv-to-xlsx/">「CSVをExcelで開くと先頭の0が消える・日付に化ける」対策</a> — 選んだ列を文字列として書き込む新しいxlsxファイルを作成。</li>
+      <li><a href="../xlsx-nyuryoku/">入力規則（プルダウン）がどこにあるか分からない：全シート一覧化</a> — セル範囲・種類・リスト元（他シート参照・名前定義経由も含む）を全シート横断で一覧化し、参照が壊れているものを検出してCSV出力。</li>
+      <li><a href="../xlsx-insatsu/">シートごとに印刷範囲・印刷タイトル・改ページがバラバラなときの一覧・一括解除</a> — 印刷範囲・印刷タイトル・手動の改ページの設定状況を全シート一覧化し、選んだシート・項目だけをまとめて解除した新しいファイルを書き出す。印刷の向き・用紙サイズ・余白は変更しない。</li>
+      <li><a href="../xlsx-zukei/">図形が知らないうちに増えている・見えない図形が残っていないか一覧でチェック</a> — 非表示設定の図形、サイズが実質ゼロの図形、同じ名前が繰り返し付いた図形（コピーで増えた可能性）を全シート横断で一覧表示。選んだ図形（グループは丸ごと単位）を削除した新しいファイルも書き出せる。</li>
+      <li><a href="../xlsx-gyoretsu/">非表示の行・列が全シートに散らばっている：まとめて「再表示」または内容だけ削除</a> — 非表示の行・列の数と、そこに値が入っているセル数を全シート一覧表示し、選んだシートをまとめて「再表示」、または内容（値・数式）だけ削除した新しいファイルを書き出す。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool among all 25 by symptom: heavy, save errors, error values, links, printing.</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for "hidden" information before sending it outside your company</a> — Checks hidden sheets, hidden-row/column values, comments, author metadata, external links, defined names and invisible text, all on one screen (read-only). This tool is where you actually unhide or clear those hidden rows/columns.</li>
+      <li><a href="../xlsx-saihyouji/">Sheet missing from the Unhide dialog?</a> — List every sheet's visibility (visible/hidden/very hidden) and bulk-change it. That tool covers a sheet's own visibility; this one covers rows/columns inside a sheet.</li>
+      <li><a href="../xlsx-hani/">Reset the used range when Ctrl+End jumps far away or printing spits out blank pages</a> — Shrink Excel's recorded used range back to your real data and merged-cell footprint (sheets using the Table feature are skipped).</li>
+      <li><a href="../xlsx-jouken/">Clean up conditional formatting rules that keep piling up</a> — List every rule across every sheet and remove the overlapping or unneeded ones.</li>
+      <li><a href="../xlsx-namae/">Fix "Name already exists"</a> — List every defined name in a workbook and remove the hidden/broken ones causing the collision.</li>
+      <li><a href="../xlsx-link/">Find external-workbook link sources</a> — List every external-workbook link and exactly where it's used.</li>
+      <li><a href="../xlsx-suushiki/">List formulas in an inherited Excel file</a> — List every formula cell in a workbook without opening it; flags errors, cross-sheet and external references.</li>
+      <li><a href="../xlsx-error/">Find every cell with a cached error value</a> — List every error-valued cell across every sheet and file, exportable as CSV.</li>
+      <li><a href="../xlsx-junkan/">Can't tell where a circular reference is?</a> — Scan every sheet's formulas and list every circular-reference group at once.</li>
+      <li><a href="../xlsx-comment/">List every cell comment and note across every sheet</a> — Covers both the classic note and the newer threaded comment, exportable as CSV or printed directly.</li>
+      <li><a href="../xlsx-diff/">Compare two Excel files: highlight only the cells that changed</a> — Compare a before/after pair of files across every sheet at once.</li>
+      <li><a href="../xlsx-ketsugo/">Unmerge cells and fill the blanks → CSV</a> — Fill the blanks left by unmerging with the top-left value, then export as CSV.</li>
+      <li><a href="../xlsx-merge/">Merge multiple Excel files into one</a> — Merge several .xlsx files directly into one CSV.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy?</a> — Breaks down file size by sheet, images, styles and shared strings, and ranks the likely causes.</li>
+      <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — List every clickable hyperlink across every sheet and remove the broken ones.</li>
+      <li><a href="../xlsx-style/">Fix "too many different cell formats"</a> — Merge byte-identical cell formats and drop the ones no cell uses, without changing how anything looks.</li>
+      <li><a href="../xlsx-atai/">Convert formulas to values — when you can't break an external link</a> — Converts formula cells to their cached values, scoped to external references, and removes the link records too when it's safe.</li>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up Excel, Word and PowerPoint files at once before sending them outside your company.</li>
+      <li><a href="../xlsx-suuchika/">Fix the green-triangle "Number Stored as Text" warning, column by column</a> — List cells whose text looks like a plain number, grouped by column, and convert only the columns you choose. Zero-padded or long digit-code columns are excluded by default.</li>
+      <li><a href="../csv-to-xlsx/">Fix the "leading zeros disappear / turn into a date" problem when opening a CSV in Excel</a> — Writes a new .xlsx that stores the chosen columns as text.</li>
+      <li><a href="../xlsx-nyuryoku/">List every data-validation (dropdown) rule across all sheets</a> — Lists range, type and list source (including cross-sheet ranges and named ranges) across every sheet, flags broken references, exportable as CSV.</li>
+      <li><a href="../xlsx-insatsu/">List every sheet's print area, print titles and page breaks — and clear the ones you choose</a> — Lists the print-area, print-titles and manual-page-break status across every sheet, and builds a copy with only the sheets and items you select cleared.</li>
+      <li><a href="../xlsx-zukei/">Check every sheet for invisible shapes, or ones that multiplied by copy-paste</a> — Lists every shape, picture, chart frame and group across every sheet, flagging hidden ones, zero-size ones, and repeated names that suggest copy-paste growth, and can build a copy with the ones you choose removed.</li>
+      <li><a href="../xlsx-gyoretsu/">Hidden rows/columns scattered across every sheet: bulk "Unhide" or clear just their contents</a> — List every sheet's hidden rows/columns and how many cells inside them hold a value, then build a copy with the ones you choose either unhidden or cleared of their contents.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Excel自体の「無効なデータを丸で囲む」機能と何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"Excelのこの機能はアクティブなシートに対して1つずつ実行する必要があり、全シート・複数ファイルの一括チェックや、結果の一覧・CSV出力はできません。このツールは複数ファイル・複数シートを横断して一度に判定し、違反セルを一覧化・CSV出力します。"}},
+    {"@type":"Question","name":"どの種類の入力規則を判定できますか？","acceptedAnswer":{"@type":"Answer","text":"リスト型は直接入力またはシート内の具体的なセル範囲を参照している場合、数値・日付・時刻・文字数の各型は条件の上限・下限が数値そのもので指定されている場合だけを判定します。カスタム数式・名前定義経由のリスト・動的な参照・セル参照の条件は安全のため判定対象外です。"}},
+    {"@type":"Question","name":"「違反している」とはどういう状態ですか？","acceptedAnswer":{"@type":"Answer","text":"セルに実際に入っている値（数式は保存済みの計算結果）が設定された入力規則の条件を満たしていない状態です。空欄セルとエラー値セルは常に対象外です。"}},
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-junkan/xlsx-hyperlink/xlsx-error/xlsx-style/xlsx-hani/
+   xlsx-atai/xlsx-saihyouji/xlsx-comment/xlsx-diff/sakusha-kesu/xlsx-kakure/
+   xlsx-suuchika/xlsx-nyuryoku/xlsx-insatsu/xlsx-zukei/xlsx-gyoretsu (no
+   external libraries; only standard browser APIs: DecompressionStream/
+   TextDecoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipToMap(bytes){
+  var entries=zipCentralDirectory(bytes), map={};
+  for(var i=0;i<entries.length;i++){ var en=entries[i]; if(en.name.charAt(en.name.length-1)!=="/") map[en.name]=en; }
+  var out={};
+  for(var name in map){ out[name]=new TextDecoder("utf-8").decode(await zipReadEntry(bytes,map[name])); }
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function parseDefinedNames(workbookXml){
+  var block=findTags(workbookXml,"definedNames")[0];
+  if(!block||block.selfClose) return [];
+  return findTags(block.inner,"definedName").map(function(d){
+    return {
+      name:d.attrs.name||"",
+      localSheetId:d.attrs.localSheetId!==undefined?parseInt(d.attrs.localSheetId,10):null,
+      formula:d.inner!==null?decodeXmlEntities(d.inner):""
+    };
+  });
+}
+function findDefinedName(definedNames,name,sheetIdx){
+  var lname=name.toLowerCase();
+  for(var i=0;i<definedNames.length;i++){
+    var d=definedNames[i];
+    if(d.localSheetId===sheetIdx && d.name.toLowerCase()===lname) return d;
+  }
+  for(var j=0;j<definedNames.length;j++){
+    var d2=definedNames[j];
+    if(d2.localSheetId===null && d2.name.toLowerCase()===lname) return d2;
+  }
+  return null;
+}
+function parseSharedStrings(xml){
+  if(!xml) return [];
+  return findTags(xml,"si").map(function(si){
+    var ts=findTags(si.inner||"","t");
+    return ts.map(function(t){ return decodeXmlEntities(t.inner||""); }).join("");
+  });
+}
+function colLetterToIndex(letters){
+  var idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.toUpperCase().charCodeAt(i)-64);
+  return idx-1;
+}
+function refToRowCol(ref){
+  var m=/^\$?([A-Za-z]{1,3})\$?([0-9]{1,7})$/.exec(ref);
+  if(!m) return null;
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+
+/* =====================================================================
+   Reference parsing shared by data-validation sources and sqref areas.
+   ===================================================================== */
+var RANGE_RE=/^\$?([A-Za-z]{1,3})\$?([0-9]{1,7})(?::\$?([A-Za-z]{1,3})\$?([0-9]{1,7}))?$/;
+var COLROW_RE=/^\$?([A-Za-z]{1,3}):\$?([A-Za-z]{1,3})$/;
+var ROWROW_RE=/^\$?([0-9]{1,7}):\$?([0-9]{1,7})$/;
+var SHEETREF_RE=/^(?:'([^']+)'|([^'!]+))!(.+)$/;
+var NAME_RE=/^[A-Za-z_¡-￿][A-Za-z0-9_.¡-￿]*$/;
+
+function parseArea(area){
+  area=(area||"").trim();
+  var m;
+  if((m=RANGE_RE.exec(area))){
+    var c1=colLetterToIndex(m[1]), r1=parseInt(m[2],10)-1;
+    var c2=m[3]?colLetterToIndex(m[3]):c1, r2=m[4]?parseInt(m[4],10)-1:r1;
+    return {c1:Math.min(c1,c2),c2:Math.max(c1,c2),r1:Math.min(r1,r2),r2:Math.max(r1,r2)};
+  }
+  if((m=COLROW_RE.exec(area))){
+    var ca=colLetterToIndex(m[1]), cb=colLetterToIndex(m[2]);
+    return {c1:Math.min(ca,cb),c2:Math.max(ca,cb),r1:0,r2:Infinity};
+  }
+  if((m=ROWROW_RE.exec(area))){
+    var ra=parseInt(m[1],10)-1, rb=parseInt(m[2],10)-1;
+    return {c1:0,c2:Infinity,r1:Math.min(ra,rb),r2:Math.max(ra,rb)};
+  }
+  return null;
+}
+function parseSqref(sqref){
+  return (sqref||"").split(/\s+/).map(parseArea).filter(Boolean);
+}
+function posInAreas(row,col,areas){
+  for(var i=0;i<areas.length;i++){
+    var a=areas[i];
+    if(col>=a.c1 && col<=a.c2 && row>=a.r1 && row<=a.r2) return true;
+  }
+  return false;
+}
+
+/* =====================================================================
+   List-source resolution for type="list" validations. Unlike a pure
+   lister (xlsx-nyuryoku), this also needs to know WHERE to actually
+   read the allowed values from, so it resolves straight to either a
+   literal item list or a concrete {sheetName, area} target. Named-range
+   sources, OFFSET/INDIRECT and other dynamic/complex formulas, and
+   broken references are intentionally left unresolved ("not checked") —
+   this tool only ever claims a violation when it can read real values.
+   ===================================================================== */
+function resolveListTarget(formula1,ownerSheet,sheetIdx,allSheetNames,definedNames){
+  var trimmed=(formula1||"").trim();
+  if(!trimmed) return {kind:"complex"};
+  if(trimmed.charAt(0)==='"' && trimmed.charAt(trimmed.length-1)==='"' && trimmed.length>=2){
+    var inner=trimmed.slice(1,-1);
+    var items=inner.split(",").map(function(s){return s.trim()}).filter(function(s){return s!==""});
+    return {kind:"literal",items:items};
+  }
+  var refSheetName=null, rest=trimmed;
+  var sm=SHEETREF_RE.exec(trimmed);
+  if(sm){ refSheetName=sm[1]!==undefined?sm[1]:sm[2]; rest=sm[3]; }
+  if(RANGE_RE.test(rest)||COLROW_RE.test(rest)){
+    if(refSheetName && allSheetNames.indexOf(refSheetName)===-1) return {kind:"range",broken:true};
+    return {kind:"range",broken:false,sheetName:refSheetName||ownerSheet,area:rest};
+  }
+  if(!refSheetName && NAME_RE.test(trimmed) && trimmed.indexOf("(")===-1){
+    var dn=findDefinedName(definedNames,trimmed,sheetIdx);
+    if(!dn || /#REF!/.test(dn.formula)) return {kind:"name",broken:true};
+    return {kind:"name",broken:false};
+  }
+  return {kind:"complex"};
+}
+
+/* =====================================================================
+   Cell value extraction (generalised: number / text / error / unknown).
+   ===================================================================== */
+function cellValueInfo(c,sharedStrings){
+  if(c.selfClose||c.inner===null) return null;
+  var t=c.attrs.t;
+  if(t==="e") return {kind:"error"};
+  if(t==="b"){
+    var vb=findTags(c.inner,"v")[0];
+    var bv=vb&&vb.inner!==null?decodeXmlEntities(vb.inner).trim():"";
+    return {kind:"text",text:bv==="1"?"TRUE":"FALSE"};
+  }
+  if(t==="str"){
+    var vs=findTags(c.inner,"v")[0];
+    if(!vs||vs.inner===null) return null;
+    return {kind:"text",text:decodeXmlEntities(vs.inner)};
+  }
+  if(t==="inlineStr"){
+    var isTag=findTags(c.inner,"is")[0];
+    if(!isTag) return null;
+    var tt=findTags(isTag.inner||"","t");
+    return {kind:"text",text:tt.map(function(x){return decodeXmlEntities(x.inner||"")}).join("")};
+  }
+  if(t==="s"){
+    var v2=findTags(c.inner,"v")[0];
+    if(!v2||v2.inner===null) return null;
+    var idx=parseInt(decodeXmlEntities(v2.inner),10);
+    return {kind:"text",text:sharedStrings[idx]!==undefined?sharedStrings[idx]:""};
+  }
+  var v3=findTags(c.inner,"v")[0];
+  if(!v3||v3.inner===null) return null;
+  var raw=decodeXmlEntities(v3.inner).trim();
+  var num=parseFloat(raw);
+  if(!isFinite(num)) return null;
+  return {kind:"number",number:num,raw:raw};
+}
+function buildCellIndex(sheetXml,sharedStrings){
+  var out=[];
+  findTags(sheetXml,"c").forEach(function(c){
+    var ref=c.attrs.r||"";
+    var pos=refToRowCol(ref);
+    if(!pos) return;
+    var info=cellValueInfo(c,sharedStrings);
+    if(!info) return;
+    out.push({ref:ref,row:pos.row,col:pos.col,kind:info.kind,text:info.text,number:info.number,raw:info.raw});
+  });
+  return out;
+}
+function displayValue(info){
+  if(info.kind==="text") return info.text;
+  if(info.kind==="number") return info.raw;
+  return "";
+}
+
+/* =====================================================================
+   Data-validation rules per sheet.
+   ===================================================================== */
+function extractRulesFromSheetXml(xml,sheetName,sheetIdx,allSheetNames,definedNames){
+  var out=[];
+  findTags(xml,"dataValidations").forEach(function(block){
+    if(block.selfClose) return;
+    findTags(block.inner,"dataValidation").forEach(function(dv){
+      var type=dv.attrs.type||"none";
+      var operator=dv.attrs.operator||"between";
+      var sqref=dv.attrs.sqref||"";
+      var f1tag=findTags(dv.inner||"","formula1")[0];
+      var f2tag=findTags(dv.inner||"","formula2")[0];
+      var formula1=f1tag&&f1tag.inner!==null?decodeXmlEntities(f1tag.inner):"";
+      var formula2=f2tag&&f2tag.inner!==null?decodeXmlEntities(f2tag.inner):"";
+      out.push({sheet:sheetName,sheetIdx:sheetIdx,sqref:sqref,areas:parseSqref(sqref),
+        type:type,operator:operator,formula1:formula1,formula2:formula2});
+    });
+  });
+  return out;
+}
+
+/* =====================================================================
+   Evaluator construction. Returns null when the rule cannot safely be
+   checked; otherwise {evaluate(info)->{violation,reason}|null, listPreview}.
+   skip reasons (when returning null): customFormula, none, boundNotLiteral,
+   listSourceBroken, listSourceName, listSourceComplex, listSourceEmpty.
+   ===================================================================== */
+var LITNUM_RE=/^[+-]?\d+(\.\d+)?$/;
+function literalNum(s){ s=(s||"").trim(); return LITNUM_RE.test(s)?parseFloat(s):null; }
+var NEEDS_F2={between:true,notBetween:true};
+
+function numericEvaluator(rule,isWhole,lenMode){
+  var f1=literalNum(rule.formula1);
+  if(f1===null) return {skip:"boundNotLiteral"};
+  var f2=null;
+  if(NEEDS_F2[rule.operator]){ f2=literalNum(rule.formula2); if(f2===null) return {skip:"boundNotLiteral"}; }
+  var lo=f2!==null?Math.min(f1,f2):f1, hi=f2!==null?Math.max(f1,f2):f1;
+  function inRange(v){
+    switch(rule.operator){
+      case "between": return v>=lo && v<=hi;
+      case "notBetween": return !(v>=lo && v<=hi);
+      case "equal": return v===f1;
+      case "notEqual": return v!==f1;
+      case "greaterThan": return v>f1;
+      case "lessThan": return v<f1;
+      case "greaterThanOrEqual": return v>=f1;
+      case "lessThanOrEqual": return v<=f1;
+      default: return true;
+    }
+  }
+  return {evaluate:function(info){
+    if(info.kind==="error") return null;
+    var v;
+    if(lenMode){
+      if(info.kind==="text") v=info.text.length;
+      else if(info.kind==="number") v=info.raw.length;
+      else return null;
+      if(!inRange(v)) return {violation:true,reason:"textLenOutOfRange"};
+      return {violation:false};
+    }
+    if(info.kind!=="number") return {violation:true,reason:"notNumber"};
+    if(isWhole && !Number.isInteger(info.number)) return {violation:true,reason:"notWhole"};
+    if(!inRange(info.number)) return {violation:true,reason:"outOfRange"};
+    return {violation:false};
+  }};
+}
+function listEvaluator(rule,sheetCells,allSheetNames,definedNames){
+  var res=resolveListTarget(rule.formula1,rule.sheet,rule.sheetIdx,allSheetNames,definedNames);
+  if(res.kind==="literal"){
+    if(!res.items.length) return {skip:"listSourceEmpty"};
+    return buildListEvaluatorFromItems(res.items.map(function(s){return {kind:"text",text:s}}), res.items.slice(0,8).join(", "));
+  }
+  if(res.kind==="range"){
+    if(res.broken) return {skip:"listSourceBroken"};
+    var area=parseArea(res.area);
+    if(!area) return {skip:"listSourceEmpty"};
+    var cells=sheetCells[res.sheetName];
+    if(!cells) return {skip:"listSourceEmpty"};
+    var collected=[];
+    cells.forEach(function(c){
+      if(c.kind==="error") return;
+      if(posInAreas(c.row,c.col,[area])) collected.push(c);
+    });
+    if(!collected.length) return {skip:"listSourceEmpty"};
+    var preview=collected.slice(0,8).map(displayValue).join(", ");
+    return buildListEvaluatorFromItems(collected,preview);
+  }
+  if(res.kind==="name") return {skip:"listSourceName"};
+  return {skip:"listSourceComplex"};
+}
+function buildListEvaluatorFromItems(items,preview){
+  var allowed=new Set();
+  items.forEach(function(it){
+    if(it.kind==="number") allowed.add(String(it.number));
+    else allowed.add(String(it.text).trim().toLowerCase());
+  });
+  return {listPreview:preview,evaluate:function(info){
+    if(info.kind==="error") return null;
+    var key = info.kind==="number"?String(info.number):String(info.text).trim().toLowerCase();
+    if(allowed.has(key)) return {violation:false};
+    return {violation:true,reason:"notInList"};
+  }};
+}
+function buildEvaluator(rule,sheetCells,allSheetNames,definedNames){
+  if(rule.type==="whole") return numericEvaluator(rule,true,false);
+  if(rule.type==="decimal"||rule.type==="date"||rule.type==="time") return numericEvaluator(rule,false,false);
+  if(rule.type==="textLength") return numericEvaluator(rule,false,true);
+  if(rule.type==="list") return listEvaluator(rule,sheetCells,allSheetNames,definedNames);
+  if(rule.type==="custom") return {skip:"customFormula"};
+  return {skip:"none"};
+}
+
+/* =====================================================================
+   Whole-file parse: rules + violations + skipped rules.
+   ===================================================================== */
+async function parseXlsxViolations(bytes){
+  var files=await unzipToMap(bytes);
+  var workbookXml=files["xl/workbook.xml"], relsXml=files["xl/_rels/workbook.xml.rels"];
+  if(!workbookXml||!relsXml) throw new Error("NOT_XLSX");
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  if(!sheetList.length) throw new Error("NOT_XLSX");
+  var allSheetNames=sheetList.map(function(s){return s.name});
+  var definedNames=parseDefinedNames(workbookXml);
+  var sharedStrings=parseSharedStrings(files["xl/sharedStrings.xml"]||"");
+  var sheetCells={};
+  sheetList.forEach(function(s){
+    var xml=files[s.path];
+    sheetCells[s.name]=xml?buildCellIndex(xml,sharedStrings):[];
+  });
+  var rules=[];
+  sheetList.forEach(function(s,idx){
+    var xml=files[s.path];
+    if(!xml) return;
+    rules=rules.concat(extractRulesFromSheetXml(xml,s.name,idx,allSheetNames,definedNames));
+  });
+  var violations=[], skipped=[], totalRules=rules.length, checkedRules=0;
+  rules.forEach(function(rule){
+    var ev=buildEvaluator(rule,sheetCells,allSheetNames,definedNames);
+    if(!ev||ev.skip){
+      skipped.push({sheet:rule.sheet,sqref:rule.sqref,type:rule.type,reason:(ev&&ev.skip)||"none"});
+      return;
+    }
+    checkedRules++;
+    var cells=sheetCells[rule.sheet]||[];
+    cells.forEach(function(c){
+      if(c.kind==="error") return;
+      if(!posInAreas(c.row,c.col,rule.areas)) return;
+      var r=ev.evaluate(c);
+      if(r && r.violation){
+        violations.push({sheet:rule.sheet,ref:c.ref,type:rule.type,reason:r.reason,
+          value:displayValue(c),condition:conditionTextFor(rule,ev)});
+      }
+    });
+  });
+  return {sheetNames:allSheetNames,totalRules:totalRules,checkedRules:checkedRules,
+    skippedCount:skipped.length,skipped:skipped,violations:violations};
+}
+
+function conditionTextFor(rule,ev){
+  if(rule.type==="list") return {kind:"list",preview:ev.listPreview};
+  var f1=rule.formula1, f2=rule.formula2;
+  return {kind:"numeric",type:rule.type,operator:rule.operator,f1:f1,f2:f2};
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var TYPE_LABEL={
+ ja:{list:"リスト（プルダウン）",whole:"整数",decimal:"小数",date:"日付",time:"時刻",textLength:"文字数",custom:"カスタム数式",none:"制限なし"},
+ en:{list:"List (dropdown)",whole:"Whole number",decimal:"Decimal",date:"Date",time:"Time",textLength:"Text length",custom:"Custom formula",none:"None"}
+};
+var OPERATOR_LABEL={
+ ja:{between:"の範囲内",notBetween:"の範囲外",equal:"と等しい",notEqual:"と異なる",greaterThan:"より大きい",lessThan:"より小さい",greaterThanOrEqual:"以上",lessThanOrEqual:"以下"},
+ en:{between:"within",notBetween:"outside",equal:"equal to",notEqual:"not equal to",greaterThan:"greater than",lessThan:"less than",greaterThanOrEqual:"at least",lessThanOrEqual:"at most"}
+};
+var REASON_LABEL={
+ ja:{notInList:"リストに無い値",notNumber:"数値ではない",notWhole:"整数ではない",outOfRange:"条件の範囲外",textLenOutOfRange:"文字数が条件外"},
+ en:{notInList:"Not in the list",notNumber:"Not a number",notWhole:"Not a whole number",outOfRange:"Outside the allowed range",textLenOutOfRange:"Text length outside the allowed range"}
+};
+var SKIP_REASON_LABEL={
+ ja:{customFormula:"カスタム数式",none:"制限なし（判定の必要なし）",boundNotLiteral:"条件がセル参照・数式（数値で直接指定されていない）",listSourceBroken:"参照先シートが見つからない",listSourceName:"名前定義経由のリスト（対象外）",listSourceComplex:"数式・複数範囲など複雑な参照によるリスト",listSourceEmpty:"参照先に実際の値が無い"},
+ en:{customFormula:"Custom formula",none:"No restriction (nothing to check)",boundNotLiteral:"Bound is a cell reference/formula, not a literal number",listSourceBroken:"Referenced sheet not found",listSourceName:"List via a defined name (out of scope)",listSourceComplex:"Complex/dynamic list source (formula or multi-area)",listSourceEmpty:"Referenced range has no actual values"}
+};
+
+function conditionDisplay(cond,lang){
+  if(!cond) return "-";
+  if(cond.kind==="list") return (lang==="ja"?"リスト: ":"List: ")+cond.preview;
+  var opLabel=OPERATOR_LABEL[lang][cond.operator]||cond.operator;
+  var bound=cond.f2!==undefined&&cond.f2!==""&&NEEDS_F2[cond.operator]?(cond.f1+" ~ "+cond.f2):cond.f1;
+  var noun=cond.type==="textLength"?(lang==="ja"?"文字数":"Length"):(lang==="ja"?"値":"Value");
+  return noun+" "+bound+" "+opLabel;
+}
+
+var T={
+ ja:{title:"「無効なデータ」の丸印は1シートずつ：入力規則に違反した値を全シート一括で一覧化",
+  sub:"Excelの「データの入力規則」→「無効なデータ」(丸で囲む)はシートごとに実行する必要があり、結果を一覧やCSVに書き出すこともできません。このツールはExcel（.xlsx/.xlsm）の全シート・複数ファイルを横断して、入力規則（リストのプルダウン・数値や文字数の範囲・日付など）に実際に違反している値が入ったセルだけを一覧表示し、CSVに出力します。カスタム数式や、セル参照・名前定義を使った複雑な条件は安全のため判定対象外とし、その旨を別途表示します。読み取り専用で、ファイルはサーバーに送信されません。",
+  dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
+  dropzoneHint:"入力規則に実際に違反している値が入ったセルだけを抜き出します。ファイルは選択した端末の中だけで処理されます。",
+  fileListHeading:"追加したファイル",
+  statsHeading:"チェック結果の集計",
+  statsHint:"「判定できないルール」は、カスタム数式や、セル参照・複雑な参照を使ったリストなど、安全に判定できないものです（下の折りたたみに一覧）。違反ではありません。",
+  statTotal:"見つかったルール",statChecked:"判定できたルール",statSkipped:"判定できないルール",statViolations:"違反セル",
+  filterHeading:"絞り込み",
+  filterFile:"ファイル：",filterSheet:"シート：",filterType:"種類：",
+  searchPh:"セル番地・値を検索",
+  allOption:"すべて",
+  resultHeading:"規則に違反しているセル",
+  downloadBtn:"この一覧をCSVでダウンロード",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  colFile:"ファイル",colSheet:"シート",colCell:"セル",colValue:"現在の値",colType:"種類",colCondition:"条件",colReason:"理由",
+  errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  errNone:"違反しているセルは見つかりませんでした",
+  moreNote:"件まで表示しています（ダウンロードには絞り込み後の全件が含まれます）。",
+  skippedSummary:"件の判定できなかったルールを見る",
+  skippedNone:"判定できなかったルールはありません。",
+  colSkipSheet:"シート",colSkipRange:"セル範囲",colSkipType:"種類",colSkipReason:"判定できない理由",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Excel's Circle Invalid Data only works one sheet at a time — list every rule-violating cell across all sheets at once",
+  sub:"Excel's Data Validation → Circle Invalid Data has to be run on each sheet separately, and there's no way to export the result as a list or CSV. This tool scans every sheet and file in an Excel (.xlsx/.xlsm) workbook at once and lists only the cells whose value actually violates its data-validation rule (dropdown list, numeric/date/text-length range), exportable as CSV. For safety, rules that use a custom formula, cell-reference bounds, or a defined-name list source are excluded from the check and flagged separately as \"not checked\" rather than guessed at. Read-only; nothing is uploaded.",
+  dropzoneText:"Drag and drop Excel (.xlsx) file(s) here, or click to choose (multiple allowed)",
+  dropzoneHint:"Only cells that actually violate a data-validation rule are extracted. Everything happens on this device.",
+  fileListHeading:"Added files",
+  statsHeading:"Check summary",
+  statsHint:"\"Rules not checked\" are ones that can't safely be evaluated — custom formulas, or lists via a cell reference / complex formula (listed below). They are not violations.",
+  statTotal:"Rules found",statChecked:"Rules checked",statSkipped:"Rules not checked",statViolations:"Violating cells",
+  filterHeading:"Filters",
+  filterFile:"File:",filterSheet:"Sheet:",filterType:"Type:",
+  searchPh:"Search cell / value",
+  allOption:"All",
+  resultHeading:"Cells violating their rule",
+  downloadBtn:"Download this list as CSV",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  colFile:"File",colSheet:"Sheet",colCell:"Cell",colValue:"Current value",colType:"Type",colCondition:"Condition",colReason:"Reason",
+  errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  errNone:"No cells violating their rule were found",
+  moreNote:" rows shown (the download includes every filtered row).",
+  skippedSummary:" rules could not be checked — view them",
+  skippedNone:"No rules were excluded from checking.",
+  colSkipSheet:"Sheet",colSkipRange:"Range",colSkipType:"Type",colSkipReason:"Why it can't be checked",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1, fileFilter:"", sheetFilter:"", typeFilter:"", search:""};
+var MAX_RENDER=1000;
+function escTrunc(s,max){ s=String(s); max=max||160; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", violations:[], skipped:[], totalRules:0, checkedRules:0};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxViolations(new Uint8Array(buf)); })
+    .then(function(result){
+      f.violations=result.violations; f.skipped=result.skipped;
+      f.totalRules=result.totalRules; f.checkedRules=result.checkedRules;
+      f.loading=false; render();
+    }).catch(function(){
+      f.loading=false; f.error=T[lang].errBad; f.loading=false; render();
+    });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function allViolations(){
+  var out=[];
+  state.files.forEach(function(f){
+    if(f.loading||f.error) return;
+    f.violations.forEach(function(v){ out.push(Object.assign({file:f.name,fileId:f.id},v)); });
+  });
+  return out;
+}
+function allSkipped(){
+  var out=[];
+  state.files.forEach(function(f){
+    if(f.loading||f.error) return;
+    f.skipped.forEach(function(s){ out.push(Object.assign({file:f.name,fileId:f.id},s)); });
+  });
+  return out;
+}
+function filteredViolations(){
+  var rows=allViolations(), s=state;
+  var needle=s.search.trim().toLowerCase();
+  return rows.filter(function(r){
+    if(s.fileFilter && String(r.fileId)!==s.fileFilter) return false;
+    if(s.sheetFilter && r.sheet!==s.sheetFilter) return false;
+    if(s.typeFilter && r.type!==s.typeFilter) return false;
+    if(needle){
+      var hay=(r.ref+" "+r.value).toLowerCase();
+      if(hay.indexOf(needle)===-1) return false;
+    }
+    return true;
+  });
+}
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+    else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+    else { h+="<span class='fMeta'>"+f.checkedRules+"/"+f.totalRules+" → "+f.violations.length+"</span>"; }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+  });
+  box.innerHTML=h;
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function renderStats(){
+  var ready=state.files.filter(function(f){return !f.loading&&!f.error});
+  var totalRules=0, checkedRules=0, skippedCount=0, violCount=0;
+  ready.forEach(function(f){ totalRules+=f.totalRules; checkedRules+=f.checkedRules; skippedCount+=f.skipped.length; violCount+=f.violations.length; });
+  var h="";
+  h+="<div class='statBox total'><div class='n'>"+totalRules+"</div><div class='l'>"+esc(T[lang].statTotal)+"</div></div>";
+  h+="<div class='statBox'><div class='n'>"+checkedRules+"</div><div class='l'>"+esc(T[lang].statChecked)+"</div></div>";
+  h+="<div class='statBox'><div class='n'>"+skippedCount+"</div><div class='l'>"+esc(T[lang].statSkipped)+"</div></div>";
+  h+="<div class='statBox bad'><div class='n'>"+violCount+"</div><div class='l'>"+esc(T[lang].statViolations)+"</div></div>";
+  $("statGrid").innerHTML=h;
+}
+
+function renderFilterOptions(){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  $("fileFilterLabel").style.display=multiFile?"":"none";
+  if(multiFile){
+    var curFile=$("fileFilter").value;
+    var h="<option value=''>"+esc(T[lang].allOption)+"</option>";
+    state.files.forEach(function(f){ if(!f.loading&&!f.error) h+="<option value='"+f.id+"'>"+esc(f.name)+"</option>"; });
+    $("fileFilter").innerHTML=h;
+    $("fileFilter").value=curFile&&state.files.some(function(f){return String(f.id)===curFile})?curFile:"";
+    state.fileFilter=$("fileFilter").value;
+  } else { state.fileFilter=""; }
+  var all=allViolations();
+  var sheetSet=[], seenSheet={};
+  all.forEach(function(r){ if(!state.fileFilter||String(r.fileId)===state.fileFilter){ if(!seenSheet[r.sheet]){seenSheet[r.sheet]=true; sheetSet.push(r.sheet);} } });
+  var curSheet=$("sheetFilter").value;
+  var sh="<option value=''>"+esc(T[lang].allOption)+"</option>";
+  sheetSet.forEach(function(s){ sh+="<option value='"+esc(s)+"'>"+esc(s)+"</option>"; });
+  $("sheetFilter").innerHTML=sh;
+  $("sheetFilter").value=sheetSet.indexOf(curSheet)!==-1?curSheet:"";
+  state.sheetFilter=$("sheetFilter").value;
+
+  var typeSet=[], seenType={};
+  all.forEach(function(r){ if(!seenType[r.type]){seenType[r.type]=true; typeSet.push(r.type);} });
+  var curType=$("typeFilter").value;
+  var th="<option value=''>"+esc(T[lang].allOption)+"</option>";
+  typeSet.forEach(function(t){ th+="<option value='"+esc(t)+"'>"+esc(TYPE_LABEL[lang][t]||t)+"</option>"; });
+  $("typeFilter").innerHTML=th;
+  $("typeFilter").value=typeSet.indexOf(curType)!==-1?curType:"";
+  state.typeFilter=$("typeFilter").value;
+}
+
+function renderResult(rows){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  $("resultCount").textContent=rows.length;
+  if(!rows.length){ $("resultBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>"; $("downloadBtn").disabled=true; }
+  else {
+    var shown=rows.slice(0,MAX_RENDER);
+    var h="<div class='scroll'><table><thead><tr>";
+    if(multiFile) h+="<th>"+esc(T[lang].colFile)+"</th>";
+    h+="<th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colCell)+"</th><th>"+esc(T[lang].colValue)+"</th>"+
+       "<th>"+esc(T[lang].colType)+"</th><th>"+esc(T[lang].colCondition)+"</th><th>"+esc(T[lang].colReason)+"</th></tr></thead><tbody>";
+    shown.forEach(function(r){
+      h+="<tr>";
+      if(multiFile) h+="<td>"+escTrunc(r.file,40)+"</td>";
+      h+="<td>"+escTrunc(r.sheet,30)+"</td>";
+      h+="<td class='ref'>"+esc(r.ref)+"</td>";
+      h+="<td class='val'>"+escTrunc(r.value,80)+"</td>";
+      h+="<td>"+esc(TYPE_LABEL[lang][r.type]||r.type)+"</td>";
+      h+="<td class='cond'>"+escTrunc(conditionDisplay(r.condition,lang),200)+"</td>";
+      h+="<td><span class='badge diff'>"+esc(REASON_LABEL[lang][r.reason]||r.reason)+"</span></td>";
+      h+="</tr>";
+    });
+    h+="</tbody></table></div>";
+    if(rows.length>MAX_RENDER) h+="<p class='hint'>"+MAX_RENDER+T[lang].moreNote+"</p>";
+    $("resultBox").innerHTML=h;
+    $("downloadBtn").disabled=false;
+  }
+  renderSkipped();
+}
+
+function renderSkipped(){
+  var rows=allSkipped();
+  var box=$("skippedBox");
+  if(!rows.length){ box.innerHTML="<p class='hint'>"+esc(T[lang].skippedNone)+"</p>"; return; }
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  var h="<summary>"+rows.length+esc(T[lang].skippedSummary)+"</summary>";
+  h+="<div class='scroll' style='margin-top:10px'><table><thead><tr>";
+  if(multiFile) h+="<th>"+esc(T[lang].colFile)+"</th>";
+  h+="<th>"+esc(T[lang].colSkipSheet)+"</th><th>"+esc(T[lang].colSkipRange)+"</th><th>"+esc(T[lang].colSkipType)+"</th><th>"+esc(T[lang].colSkipReason)+"</th></tr></thead><tbody>";
+  rows.slice(0,MAX_RENDER).forEach(function(r){
+    h+="<tr>";
+    if(multiFile) h+="<td>"+escTrunc(r.file,40)+"</td>";
+    h+="<td>"+escTrunc(r.sheet,30)+"</td><td class='ref'>"+escTrunc(r.sqref,60)+"</td>"+
+       "<td>"+esc(TYPE_LABEL[lang][r.type]||r.type)+"</td>"+
+       "<td><span class='badge warn'>"+esc(SKIP_REASON_LABEL[lang][r.reason]||r.reason)+"</span></td>";
+    h+="</tr>";
+  });
+  h+="</tbody></table></div>";
+  box.innerHTML=h;
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+  if(!has){
+    $("statsCard").style.display="none"; $("filterCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  var ready=state.files.some(function(f){return !f.loading&&!f.error});
+  if(!ready){
+    $("statsCard").style.display="none"; $("filterCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  renderFilterOptions();
+  $("statsCard").style.display=""; $("filterCard").style.display=""; $("resultCard").style.display="";
+  renderStats();
+  renderResult(filteredViolations());
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+$("fileFilter").addEventListener("change",function(){ state.fileFilter=this.value; renderFilterOptions(); renderResult(filteredViolations()); });
+$("sheetFilter").addEventListener("change",function(){ state.sheetFilter=this.value; renderResult(filteredViolations()); });
+$("typeFilter").addEventListener("change",function(){ state.typeFilter=this.value; renderResult(filteredViolations()); });
+$("searchBox").addEventListener("input",function(){ state.search=this.value; renderResult(filteredViolations()); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var rows=filteredViolations();
+  if(!rows.length) return;
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  var header=[];
+  if(multiFile) header.push(T[lang].colFile);
+  header=header.concat([T[lang].colSheet,T[lang].colCell,T[lang].colValue,T[lang].colType,T[lang].colCondition,T[lang].colReason]);
+  var out=[header];
+  rows.forEach(function(r){
+    var row=[];
+    if(multiFile) row.push(r.file);
+    row=row.concat([r.sheet,r.ref,r.value,TYPE_LABEL[lang][r.type]||r.type,conditionDisplay(r.condition,lang),REASON_LABEL[lang][r.reason]||r.reason]);
+    out.push(row);
+  });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="data-validation-violations.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var phs=document.querySelectorAll("[data-i-ph]");
+  for(var p=0;p<phs.length;p++){var k2=phs[p].getAttribute("data-i-ph");if(T[lang][k2]!==undefined)phs[p].setAttribute("placeholder",T[lang][k2])}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
