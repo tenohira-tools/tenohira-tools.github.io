@@ -9,7 +9,7 @@
   <url><loc>https://tenohira-tools.github.io/csv-seiri/</loc><lastmod>2026-10-20</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/csv-to-xlsx/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/csv-trouble/</loc><lastmod>2026-10-20</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/excel-trouble/</loc><lastmod>2026-10-23</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/excel-trouble/</loc><lastmod>2026-10-24</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/hyoki-yure/</loc><lastmod>2026-10-17</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/kotsuhi-seisan/</loc><lastmod>2026-10-17</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/receipt-sheet/</loc><lastmod>2026-10-17</lastmod></url>
@@ -22,8 +22,8 @@
   <url><loc>https://tenohira-tools.github.io/wareki/</loc><lastmod>2026-10-17</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-atai/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-comment/</loc><lastmod>2026-10-23</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-diff/</loc><lastmod>2026-10-23</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-error/</loc><lastmod>2026-10-23</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-diff/</loc><lastmod>2026-10-24</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-error/</loc><lastmod>2026-10-24</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-gyoretsu/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-hani/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-hyperlink/</loc><lastmod>2026-10-23</lastmod></url>
@@ -32,15 +32,16 @@
   <url><loc>https://tenohira-tools.github.io/xlsx-jouken/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-junkan/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-kakure/</loc><lastmod>2026-10-23</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-kensaku/</loc><lastmod>2026-10-24</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-ketsugo/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-link/</loc><lastmod>2026-10-23</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-merge/</loc><lastmod>2026-10-23</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-merge/</loc><lastmod>2026-10-24</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-namae/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-nyuryoku/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-omoi/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-saihyouji/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-style/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-suuchika/</loc><lastmod>2026-10-23</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-suushiki/</loc><lastmod>2026-10-23</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-suushiki/</loc><lastmod>2026-10-24</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-zukei/</loc><lastmod>2026-10-23</lastmod></url>
 </urlset>
