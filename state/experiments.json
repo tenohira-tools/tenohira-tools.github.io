@@ -1908,6 +1908,26 @@
           "class": "継続（今週公開・閲覧0。未インデックスのため評価対象外。30日判定は公開30日後の11-16〜11-22）"
         }
       ]
+    },
+    {
+      "slug": "xlsx-kensaku",
+      "title": "Excelの検索は開いているファイルだけ：複数のエクセルファイルから文字列を一括検索",
+      "url": "https://tenohira-tools.github.io/xlsx-kensaku/",
+      "published": "2026-10-24",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog-ordered",
+      "why": "backlogが条件未充足の保留3件のみで空のため、STRATEGY.mdの並べ替え済みbacklog2番を選択。Excelの検索（Ctrl+F）は開いているブックしか対象にできず、複数ファイルを横断して探す無料ブラウザ完結ツールは見当たらないため着手。セルの値（共有文字列・インラインStr・数値等）と数式の文字列（共有数式はxlsx-suushiki同様に復元）を個別にオン/オフでき、大文字小文字無視・完全一致も選べる検索ツール（docs/xlsx-kensaku/）を公開。読み取り専用。xlsx-ihan/xlsx-suushikiのZIP+XML読み込み・共有文字列・共有数式復元ロジックを再利用し、新規実装は検索マッチングとフィルタUIのみ。",
+      "metrics": [
+        {
+          "date": "2026-10-24T20:15:36Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {

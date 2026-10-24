@@ -451,3 +451,10 @@
 - やったこと：backlog旧1番「csv-to-xlsxが公開当初の6ツールとしか相互リンクしておらず他のExcel系24ページとの相互リンクが片方向のまま」を実施。xlsx-gyoretsuの関連ツール一覧を正本に、csv-to-xlsxが未リンクだった17ページ（excel-trouble／xlsx-kakure・saihyouji・hani・jouken・namae・link・suushiki・error・junkan・comment・diff・ketsugo・omoi・hyperlink・style・atai）それぞれにcsv-to-xlsxへのリンクを追加し、csv-to-xlsx側にも17ページ分を追加（静的ulが14ページ、JS配列形式（RELATED）のxlsx-kakure・xlsx-comment・xlsx-diffはページごとの既存フォーマットに合わせて配列へ追加）。excel-troubleは「緑の三角」症状カテゴリにcsv-to-xlsxを追加し案内数表記を23→24に更新、同じ表記を参照するxlsx-gyoretsuの説明文も24に更新。
 - 検証：Pythonで全25ページ×24ページ＝600通りの相互リンクを機械的に突き合わせ欠落0件を確認。全対象ページのJSON-LDをjson.loadで構文確認、JS配列3ページはnode -eでのFunction生成（構文）確認。Playwright（390px幅）でcsv-to-xlsx・xlsx-kakure・excel-troubleを表示しJSエラー無し（GoatCounter遮断のみ既知）、JS描画される関連リンクにcsv-to-xlsxが実際に表示されることを確認。
 - 次回：backlog残り1件（図形削除実行版）とtozan-checklist/timezone-plannerの30日判定（10-24〜）を優先する。
+
+## 2026-10-24 実験44
+- 計測：GoatCounter取得成功（サイト全体累計9、個別42ページ全て0、同日週次レビューから変化なし）。health.md（44ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog2番「複数Excelファイル横断の文字列検索」を実施。値（共有文字列・インラインStr等）と数式の文字列（共有数式も復元）を個別に検索でき、大文字小文字無視・完全一致も選べる読み取り専用ツール（docs/xlsx-kensaku/）を公開。
+- 検証：Node.js単体テスト11件＋ZIPを自前構築した統合テスト（共有数式の復元・値/数式マッチングを確認）、Playwright（ja/en・390/1280px）で実ファイル2つの検索・絞り込み・CSV・言語切替・横スクロール無しを確認。JSエラーなし（GoatCounter遮断のみ既知）。
+- 相互リンクはexcel-trouble＋強い関連4ページ（xlsx-suushiki・xlsx-error・xlsx-diff・xlsx-merge）に絞り、双方向をgrepで確認。docs/index.htmlにも追加。
+- 次回：xlsx-kensakuの初回閲覧数を記録。backlogは保留3件のみのため、timezone-plannerの30日判定（10-25〜）を優先する。
