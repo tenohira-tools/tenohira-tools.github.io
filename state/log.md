@@ -458,3 +458,9 @@
 - 検証：Node.js単体テスト11件＋ZIPを自前構築した統合テスト（共有数式の復元・値/数式マッチングを確認）、Playwright（ja/en・390/1280px）で実ファイル2つの検索・絞り込み・CSV・言語切替・横スクロール無しを確認。JSエラーなし（GoatCounter遮断のみ既知）。
 - 相互リンクはexcel-trouble＋強い関連4ページ（xlsx-suushiki・xlsx-error・xlsx-diff・xlsx-merge）に絞り、双方向をgrepで確認。docs/index.htmlにも追加。
 - 次回：xlsx-kensakuの初回閲覧数を記録。backlogは保留3件のみのため、timezone-plannerの30日判定（10-25〜）を優先する。
+
+## 2026-10-25 実験45
+- 計測：GoatCounter取得成功（サイト全体累計9、個別43ページ全て0、前回10-24 20:15Zから変化なし）。health.md（44ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog旧1番「timezone-plannerの30日判定（10-25〜）」を実施。公開から30日間、サイト全体累計が0→9まで動いた中でも個別閲覧は一度も発生しなかったため、RULES.mdの撤退ルールとtozan-checklistの先例に従いアーカイブ。titleに【終了】・終了notice（ja/en）・meta robots noindexを追加し、docs/index.htmlの一覧（「暦・時間」グループ）とwareki/の関連ツール欄から削除。ツール自体はページ上にそのまま残した。
+- 検証：本番URL（https://tenohira-tools.github.io/timezone-planner/ と /）に反映されるまで1〜2分待ってcurlで確認し、titleの【終了】表示・一覧からの削除・ツール自体の動作（グリッド表示）を確認。
+- 次回：backlogは残り8件（複数ファイル横断置換・目次シート追加等）。tozan-checklist・timezone-plannerの撤退で判定待ちの実験は無くなったため、次回は分野内の新規開拓か既存ページの手入れを選ぶ。

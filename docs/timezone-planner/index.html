@@ -4,9 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
-<title>海外との会議 時差計算プランナー（複数タイムゾーン比較）| てのひらツール</title>
+<title>【終了】海外との会議 時差計算プランナー（複数タイムゾーン比較）| てのひらツール</title>
 <meta name="description" content="日本と海外拠点の現地時間をグリッドで並べて比較し、クリックした時間をまとめてコピーできる時差計算ツール。24時間分の営業時間・起床時間・深夜帯を色分け表示。ブラウザ内だけで動作し、入力はサーバーに送信されません。Compare local times across multiple timezones on one grid and copy the result — runs entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/timezone-planner/">
+<meta name="robots" content="noindex">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--sleep:#e3e3de;--sleepfg:#6b6b66}
 @media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--sleep:#2a2a27;--sleepfg:#8f8f88}}
@@ -17,6 +18,7 @@ header{display:flex;justify-content:space-between;align-items:flex-start;gap:12p
 h1{font-size:1.35rem;line-height:1.4;margin:0}
 .sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
 .top a{color:var(--muted);font-size:.9rem}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
 .lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
 .lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
@@ -76,6 +78,10 @@ html[lang=en] .en-only{display:block}
 <body>
 <main>
 <p class="top"><a href="../">← てのひらツール</a></p>
+<p class="note" style="margin-top:0">
+<span class="ja-only">このツールは終了しました。公開から30日間、利用状況の確認ができなかったため、公開を取りやめています。ツール自体はこのページでそのまま使えますが、一覧やサイトマップからは外しています。</span>
+<span class="en-only">This tool has ended. After 30 days with no measurable usage, it has been removed from the tool list and sitemap. The tool itself still works on this page, but it is no longer listed.</span>
+</p>
 <header>
   <div>
     <h1 data-i="title">海外との会議 時差計算プランナー</h1>
