@@ -27,7 +27,6 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す](https://tenohira-tools.github.io/sakusha-kesu/)
 - [証憑ファイル名整理ツール｜領収書・請求書のファイル名を一括作成](https://tenohira-tools.github.io/shohyo-rename/)
 - [書類写真のスキャン風補正｜四隅をドラッグして台形補正・白黒くっきり化](https://tenohira-tools.github.io/shorui-scan/)
-- [海外との会議 時差計算プランナー（複数タイムゾーン比較）](https://tenohira-tools.github.io/timezone-planner/)
 - [和暦・西暦 混在日付の一括統一（文章・CSV対応）](https://tenohira-tools.github.io/wareki-toitsu/)
 - [和暦・西暦・年齢 変換と早見表（令和・平成・昭和・大正・明治）｜入学・卒業年も](https://tenohira-tools.github.io/wareki/)
 - [Excelの数式を値に変換：外部ファイルへのリンクが解除できないときに](https://tenohira-tools.github.io/xlsx-atai/)
