@@ -1938,6 +1938,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "xlsx-okikae",
+      "title": "Excelの置換（Ctrl+H）も開いているファイルだけ：複数のエクセルファイルの文字列を一括置換",
+      "url": "https://tenohira-tools.github.io/xlsx-okikae/",
+      "published": "2026-10-25",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog-ordered",
+      "why": "backlog旧1番。xlsx-kensaku（検索専用）の書き出し版として、同じ検索語・置換語を複数ファイルに一括適用し、共有文字列・インライン文字列（セルの値）だけを対象に新しいファイルとしてダウンロードするツール。数式そのものの文字列・ふりがな（rPh）は対象外とし、共有文字列の置換が参照する全セルに一括で反映される点をプレビューの「影響するセル数」で明示。xlsx-kensaku・xlsx-styleのZIP+XML読み込み・圧縮書き出しロジックを再利用。",
+      "metrics": [
+        {
+          "date": "2026-10-25T17:18:44Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {

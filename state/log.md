@@ -464,3 +464,10 @@
 - やったこと：backlog旧1番「timezone-plannerの30日判定（10-25〜）」を実施。公開から30日間、サイト全体累計が0→9まで動いた中でも個別閲覧は一度も発生しなかったため、RULES.mdの撤退ルールとtozan-checklistの先例に従いアーカイブ。titleに【終了】・終了notice（ja/en）・meta robots noindexを追加し、docs/index.htmlの一覧（「暦・時間」グループ）とwareki/の関連ツール欄から削除。ツール自体はページ上にそのまま残した。
 - 検証：本番URL（https://tenohira-tools.github.io/timezone-planner/ と /）に反映されるまで1〜2分待ってcurlで確認し、titleの【終了】表示・一覧からの削除・ツール自体の動作（グリッド表示）を確認。
 - 次回：backlogは残り8件（複数ファイル横断置換・目次シート追加等）。tozan-checklist・timezone-plannerの撤退で判定待ちの実験は無くなったため、次回は分野内の新規開拓か既存ページの手入れを選ぶ。
+
+## 2026-10-25 実験46
+- 計測：GoatCounter取得成功（サイト全体累計9、個別43ページ全て0、前回17:18Zから変化なし）。health.md（44ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog旧1番「複数のExcelファイルの文字列を一括置換」を実施。xlsx-kensaku（検索専用）の書き出し版として、共有文字列・インライン文字列（セルの値）だけを対象に同じ置換を複数ファイルへ一括適用し、ファイルごとに新しいファイルとしてダウンロードするツール（docs/xlsx-okikae/）を公開。数式そのものの文字列・ふりがな（rPh）は対象外、共有文字列は影響するセル数をプレビュー表示。
+- 検証：Node.js単体テスト12件、openpyxl+zipfileで手組みした実ファイル（共有文字列・インライン文字列・数式リテラル・furiganaデコイを含む）での統合テスト、Playwright（ja/en・390/1280px）でアップロード→プレビュー→ダウンロード→内容確認。390px幅での横スクロールバグを1件発見・修正。
+- 相互リンクはexcel-trouble＋xlsx-kensaku・csv-master-replace・xlsx-mergeの3ページに絞り双方向をgrepで確認。docs/index.htmlにも追加、excel-troubleの案内数表記を26→27に更新。
+- 次回：xlsx-okikaeの初回閲覧数を記録。backlogは残り7件。
