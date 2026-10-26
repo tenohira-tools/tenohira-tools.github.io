@@ -1958,6 +1958,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "xlsx-mokuji",
+      "title": "シートが多すぎて目的のシートまで移動しづらいときの「目次」シート自動作成",
+      "url": "https://tenohira-tools.github.io/xlsx-mokuji/",
+      "published": "2026-10-26",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog-ordered",
+      "why": "backlog1番。既存はHYPERLINK関数・VBA・手作業の解説のみで、ブラウザ完結の無料ツールは見当たらない。全シート名と表示状態を解析し、クリックで各シートへ移動できるハイパーリンク付きの「目次」シートを先頭に追加した新しいファイルを書き出す（非表示・完全非表示はExcel仕様上リンク不可のため文字のみ表示）。bookViewのactiveTab・definedNamesのlocalSheetIdもシート挿入分だけ調整し既存シートの開き方・名前付き範囲を壊さない。",
+      "metrics": [
+        {
+          "date": "2026-10-26T17:17:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {

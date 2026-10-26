@@ -471,3 +471,10 @@
 - 検証：Node.js単体テスト12件、openpyxl+zipfileで手組みした実ファイル（共有文字列・インライン文字列・数式リテラル・furiganaデコイを含む）での統合テスト、Playwright（ja/en・390/1280px）でアップロード→プレビュー→ダウンロード→内容確認。390px幅での横スクロールバグを1件発見・修正。
 - 相互リンクはexcel-trouble＋xlsx-kensaku・csv-master-replace・xlsx-mergeの3ページに絞り双方向をgrepで確認。docs/index.htmlにも追加、excel-troubleの案内数表記を26→27に更新。
 - 次回：xlsx-okikaeの初回閲覧数を記録。backlogは残り7件。
+
+## 2026-10-26 実験47
+- 計測：GoatCounter取得成功（サイト全体累計9、個別43ページ全て0、前回から変化なし）。health.md（44ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog1番「シート名の一覧とハイパーリンク付き目次シートの追加」を実施。全シート名・表示状態を解析し、クリックで各シートへ移動できる目次シートを先頭に追加した新しいファイル（docs/xlsx-mokuji/）を公開。workbook.xml/rels/Content_Typesへのシート追加に加え、bookViewのactiveTab・definedNamesのlocalSheetIdもずれないよう調整。非表示・完全非表示はリンクなしで一覧表示、シート名一覧のCSV出力・コピーにも対応。
+- 検証：openpyxlで結合セル・非表示/完全非表示シート・シートローカルな名前定義・シングルクォート入りシート名を含む実ファイルを作成しNode.js単体テスト（通常・目次名衝突・最小構成の3パターン）→openpyxlで再読込し表示シート・名前・ハイパーリンク先・活性シート・名前定義のlocalSheetIdがすべて正しくずれていることを確認。Playwright（ja/en・390/1280px）でアップロード→一覧表示→ダウンロード→CSV→コピーを確認、JSエラーなし（GoatCounter遮断のみ既知）。
+- 相互リンクはexcel-trouble・xlsx-saihyouji・xlsx-gyoretsuの3ページに絞り双方向を確認。docs/index.htmlにも追加、excel-troubleの案内数表記を27→28に更新。
+- 次回：xlsx-mokujiの初回閲覧数を記録。backlogは残り6件。
