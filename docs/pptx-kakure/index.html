@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除 | てのひらツール</title>
+<meta name="description" content="PowerPoint(.pptx)を社外に渡す前に、各スライドの「ノート（発表者メモ）」「非表示スライド」「コメント」をスライドごとに一覧表示し、ノートだけをまとめて削除した新しいファイルを書き出すツール。Windows版の「ドキュメント検査」はノートの一覧表示に対応せず、Mac版は検査機能自体が弱くVBAマクロが必要になりがちです。複数ファイルを一括処理でき、ファイルはサーバーに送らずブラウザの中だけで処理します。Before sharing a PowerPoint file outside your company: list every slide's speaker notes, hidden status and comments at once, then bulk-clear just the notes — entirely in your browser, across multiple files.">
+<link rel="canonical" href="https://tenohira-tools.github.io/pptx-kakure/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px;min-width:0}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;min-width:0}
+.fileCard .fTop{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCard .fName{font-weight:700;word-break:break-all}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.hidden{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.notes{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.comments{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.summary{font-size:.9rem;color:var(--muted);margin:0 0 10px}
+.slideTable{width:100%;border-collapse:collapse;font-size:.88rem;margin:6px 0 10px}
+.slideTable th,.slideTable td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:top}
+.slideTable th{color:var(--muted);font-weight:600;font-size:.8rem}
+.slideTable td.num{color:var(--muted);white-space:nowrap}
+.slideTable td.preview{color:var(--fg);word-break:break-word;max-width:28em}
+.slideTable td.preview.empty{color:var(--muted)}
+.tableWrap{overflow-x:auto}
+.optRow{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0}
+.optRow label{display:flex;align-items:center;gap:6px}
+.optRow label.disabled{color:var(--muted)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;min-height:40px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.errBox{border:1px solid var(--diff);background:var(--diff-bg);color:var(--diff);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除</h1>
+    <p class="sub" data-i="sub">取引先や社外にPowerPoint(.pptx)ファイルを渡す前に、各スライドの「ノート（発表者メモ）」「非表示スライド」「コメント」が残っていないか一覧で確認したい、というときに。見つかったノートだけをまとめて削除した新しいファイルを書き出せます（非表示スライド・コメントは一覧表示のみ、削除はしません）。複数ファイルを一括処理でき、ファイルはサーバーに送らずこのブラウザの中だけで処理します。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p><strong data-i="dropzoneStrong">ここにPowerPointファイルをドラッグ＆ドロップ</strong><span data-i="dropzoneRest">、またはクリックして選択</span></p>
+    <p class="hint" data-i="dropzoneHint">.pptx に対応（.pptは読み込めません）。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".pptx" multiple style="display:none">
+</section>
+
+<section class="card" id="listSec" style="display:none">
+  <h2 data-i="listHeading">読み込んだファイル</h2>
+  <div id="fileList"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にPowerPoint(.pptx)ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル可）。</li>
+      <li>スライドごとに「非表示」「ノートの文字数・先頭部分」「コメント件数」が一覧表示されます。ノートが見つかった場合は既定でチェックが入り、「ノートを削除したファイルを書き出す」を押すとノートだけを消した新しいファイルがダウンロードされます。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. ノート以外（非表示スライド・コメント）も削除できますか？</h3>
+    <p>A. このツールでは一覧表示のみです。非表示スライドは発表時にわざと飛ばしている場合があり、コメントは共同作業中のやり取りそのものであることが多いため、意図せず消えると困る可能性が高いと判断し、安全のため削除機能は付けていません。確認した上で、PowerPoint側の「スライドの非表示」解除や、コメントの削除を行ってください。</p>
+    <h3>Q. 具体的に何を「ノート」の削除対象にしていますか？</h3>
+    <p>A. 各スライドのノートページにある「本文（ノート）」のプレースホルダー内の文字だけです。スライド番号・日付など他のプレースホルダーや、ノートページ自体の存在（部品）はそのまま残り、本文の文字だけが空になります。スライドの画像・レイアウト・書式は変更しません。</p>
+    <h3>Q. コメントは何件・誰が書いたかまで分かりますか？</h3>
+    <p>A. 昔からある形式（レガシー形式）のコメントは件数と投稿者名が分かります。ただし、近年のPowerPoint（Microsoft 365）が使う「スレッド形式」の新しいコメント機能は保存場所の仕様が公開されておらず、このツールでは検出できません。コメント欄に0件と表示されても、実際にはスレッド形式のコメントが残っている可能性があります。最終確認はPowerPoint本体の「コメント」ペインも併用してください。</p>
+    <h3>Q. 非表示スライドの判定はどこを見ていますか？</h3>
+    <p>A. 各スライドのXMLに記録されている「非表示」フラグ（PowerPointの「スライドの非表示」機能でオン・オフされる設定）です。アニメーションでスキップされるだけのスライドなど、この設定を使わない形の「見せない」工夫までは検出できません。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. PowerPoint 2007以降の.pptx形式です。古い.ppt形式や、パスワードで保護されたファイルは読み込めません。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、ノートを削除した内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_ノート削除済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop PowerPoint (.pptx) files into the box above, or click it to choose (multiple files are fine).</li>
+      <li>Each slide's hidden status, speaker-notes length/preview and comment count are listed. Slides with notes are checked by default; click "Build the file with notes removed" to download a copy with just the notes cleared. Your original file is untouched.</li>
+    </ol>
+    <h3>Q. Can it also remove hidden slides or comments?</h3>
+    <p>A. This tool only lists them. A hidden slide is often hidden on purpose for a specific presentation, and comments are usually an active discussion thread — both are too likely to be removed by accident, so deleting them is left out by design. Review the list, then use PowerPoint's own "Unhide" or comment-deletion features as needed.</p>
+    <h3>Q. Exactly what counts as "notes" to remove?</h3>
+    <p>A. Only the text inside each notes page's body placeholder (the speaker-notes text box). Other placeholders (slide number, date), the notes page itself, and the slide's image, layout and formatting are all left untouched — only the body text is cleared.</p>
+    <h3>Q. Can I see how many comments and who wrote them?</h3>
+    <p>A. Legacy-format comments show a count and the author names. However, the newer "threaded" comment feature in recent PowerPoint (Microsoft 365) stores data in an undocumented location this tool cannot detect — a count of 0 does not guarantee there are no threaded comments. Double-check with PowerPoint's own Comments pane before sending a file out.</p>
+    <h3>Q. How is "hidden slide" detected?</h3>
+    <p>A. The hidden flag recorded in each slide's XML (the same setting PowerPoint's own "Hide Slide" toggles). A slide that's merely skipped by a presenter without using that setting won't be flagged.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. PowerPoint 2007+ (.pptx). The older .ppt format and password-protected files are not supported.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_notes-removed" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す</a> — 作成者名やコメントの投稿者名そのものを消したいときはこちら。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — Excelファイルの非表示シート・コメント・外部リンクなどの一括診断。</li>
+      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」などExcel系ツールを症状から探す。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../sakusha-kesu/">Before sending files outside your company: strip creator, last-modified-by and comment-author names</a> — for clearing the author identity itself, across Excel/Word/PowerPoint.</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for &quot;hidden&quot; information before sending it outside your company</a> — the Excel equivalent: hidden sheets, comments, external links and more, all at once.</li>
+      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right Excel tool by symptom: heavy files, save errors, error values, links, printing.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"ノート以外（非表示スライド・コメント）も削除できますか？","acceptedAnswer":{"@type":"Answer","text":"一覧表示のみです。意図せず消えると困る可能性が高いため、削除機能は安全のためノートだけに絞っています。"}},
+    {"@type":"Question","name":"具体的に何を「ノート」の削除対象にしていますか？","acceptedAnswer":{"@type":"Answer","text":"各スライドのノートページの本文プレースホルダー内の文字だけです。スライド番号・日付などの他のプレースホルダーやスライドの画像・レイアウトは変更しません。"}},
+    {"@type":"Question","name":"コメントは何件・誰が書いたかまで分かりますか？","acceptedAnswer":{"@type":"Answer","text":"レガシー形式のコメントは件数・投稿者名が分かりますが、近年のスレッド形式コメントは保存場所が非公開のため検出できません。0件表示でも最終確認はPowerPoint本体でも行ってください。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。変更後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =====================================================================
+   ZIP read/write — same hand-rolled approach already shipped across
+   xlsx-merge/xlsx-suushiki/.../xlsx-style/xlsx-hani/sakusha-kesu (no
+   external libraries; only standard browser APIs: DecompressionStream /
+   CompressionStream / TextDecoder / TextEncoder). Works for any OOXML
+   zip container (xlsx/docx/pptx all share the same ZIP structure).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =====================================================================
+   Minimal XML tag parser (shared across this site's xlsx-* tools and
+   sakusha-kesu).
+   ===================================================================== */
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function xmlEscapeText(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]}); }
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function setTagsInnerText(xml,tagName,placeholderFn){
+  var tags=findTags(xml,tagName);
+  if(!tags.length) return {xml:xml,values:[]};
+  var out=[],last=0,values=[];
+  tags.forEach(function(t,idx){
+    var oldVal=t.inner===null?"":t.inner;
+    values.push(decodeXmlEntities(oldVal));
+    out.push(xml.slice(last,t.start));
+    if(t.selfClose){ out.push(t.openText); }
+    else{
+      var newVal=placeholderFn(decodeXmlEntities(oldVal),idx);
+      out.push(t.openText,xmlEscapeText(newVal),"</"+tagName+">");
+    }
+    last=t.end;
+  });
+  out.push(xml.slice(last));
+  return {xml:out.join(""),values:values};
+}
+function uniqueStrings(arr){
+  var seen={}, out=[];
+  arr.forEach(function(s){ if(!seen[s]){ seen[s]=true; out.push(s); } });
+  return out;
+}
+function dirName(path){ var i=path.lastIndexOf("/"); return i===-1?"":path.slice(0,i); }
+function baseName(path){ var i=path.lastIndexOf("/"); return i===-1?path:path.slice(i+1); }
+function relsPathFor(path){ var d=dirName(path); return (d?d+"/":"")+"_rels/"+baseName(path)+".rels"; }
+function resolveRelPath(baseDir,target){
+  if(/^\//.test(target)) return target.replace(/^\/+/,"");
+  var baseParts=baseDir?baseDir.split("/"):[];
+  target.split("/").forEach(function(p){
+    if(p===""||p===".") return;
+    if(p==="..") baseParts.pop(); else baseParts.push(p);
+  });
+  return baseParts.join("/");
+}
+function parseRels(xml){
+  return findTags(xml,"Relationship").map(function(t){return {id:t.attrs.Id,type:t.attrs.Type||"",target:t.attrs.Target||""};});
+}
+function getOpenAttrs(xml,tagName){
+  var re=new RegExp("<"+tagName+"(?=[\\s/>])");
+  var m=re.exec(xml);
+  if(!m) return null;
+  return parseOpenTag(xml,m.index+1+tagName.length).attrs;
+}
+function byNameMap(entries){ var m={}; entries.forEach(function(e){m[e.name]=e}); return m; }
+
+/* =====================================================================
+   PowerPoint (.pptx) inspection + notes-clearing (business logic; this
+   tool's Node.js unit + fixture tests cover these before publishing —
+   see state/log.md).
+   ===================================================================== */
+function extractNotesShapeAndText(notesXml){
+  var sps=findTags(notesXml,"p:sp");
+  for(var i=0;i<sps.length;i++){
+    var ph=findTags(sps[i].inner,"p:ph")[0];
+    if(ph && ph.attrs.type==="body"){
+      var paras=findTags(sps[i].inner,"a:p");
+      var text=paras.map(function(p){
+        return findTags(p.inner,"a:t").map(function(t){return t.inner===null?"":decodeXmlEntities(t.inner)}).join("");
+      }).join("\n").trim();
+      return {sp:sps[i],text:text};
+    }
+  }
+  return {sp:null,text:""};
+}
+function clearNotesInXml(notesXml){
+  var ex=extractNotesShapeAndText(notesXml);
+  if(!ex.sp) return notesXml;
+  var newInner=setTagsInnerText(ex.sp.inner,"a:t",function(){return ""}).xml;
+  return notesXml.slice(0,ex.sp.start)+ex.sp.openText+newInner+"</p:sp>"+notesXml.slice(ex.sp.end);
+}
+function analyzePptx(entries){
+  var byName=byNameMap(entries);
+  if(!byName["ppt/presentation.xml"]) return null;
+  var dec=new TextDecoder("utf-8");
+  var presXml=dec.decode(byName["ppt/presentation.xml"].bytes);
+  var presRelsName=relsPathFor("ppt/presentation.xml");
+  var presRels=byName[presRelsName]?parseRels(dec.decode(byName[presRelsName].bytes)):[];
+  var relById={}; presRels.forEach(function(r){relById[r.id]=r});
+  var slidePaths=findTags(presXml,"p:sldId").map(function(t){
+    var rel=relById[t.attrs["r:id"]];
+    return rel?resolveRelPath(dirName("ppt/presentation.xml"),rel.target):null;
+  }).filter(Boolean);
+
+  var authorById={};
+  if(byName["ppt/commentAuthors.xml"]){
+    var caXml=dec.decode(byName["ppt/commentAuthors.xml"].bytes);
+    findTags(caXml,"p:cmAuthor").forEach(function(t){ authorById[t.attrs.id]=decodeXmlEntities(t.attrs.name||""); });
+  }
+
+  var slides=[];
+  slidePaths.forEach(function(slidePath,i){
+    if(!byName[slidePath]) return;
+    var slideXml=dec.decode(byName[slidePath].bytes);
+    var rootAttrs=getOpenAttrs(slideXml,"p:sld")||{};
+    var hidden=rootAttrs.show==="0";
+    var slideRelsName=relsPathFor(slidePath);
+    var slideRels=byName[slideRelsName]?parseRels(dec.decode(byName[slideRelsName].bytes)):[];
+    var notesRel=slideRels.filter(function(r){return /\/notesSlide$/.test(r.type)})[0];
+    var commentsRel=slideRels.filter(function(r){return /\/comments$/.test(r.type)})[0];
+
+    var notesPath=null, notesText="";
+    if(notesRel){
+      var np=resolveRelPath(dirName(slidePath),notesRel.target);
+      if(byName[np]){ notesPath=np; notesText=extractNotesShapeAndText(dec.decode(byName[np].bytes)).text; }
+    }
+    var commentCount=0, commentAuthorNames=[];
+    if(commentsRel){
+      var cp=resolveRelPath(dirName(slidePath),commentsRel.target);
+      if(byName[cp]){
+        var cXml=dec.decode(byName[cp].bytes);
+        var cms=findTags(cXml,"p:cm");
+        commentCount=cms.length;
+        commentAuthorNames=uniqueStrings(cms.map(function(c){return authorById[c.attrs.authorId]||""}).filter(Boolean));
+      }
+    }
+    slides.push({index:i+1,path:slidePath,hidden:hidden,notesPath:notesPath,notesText:notesText,
+      hasNotes:notesText.length>0,commentCount:commentCount,commentAuthorNames:commentAuthorNames});
+  });
+  return {slides:slides,
+    hiddenCount:slides.filter(function(s){return s.hidden}).length,
+    notesCount:slides.filter(function(s){return s.hasNotes}).length,
+    commentTotal:slides.reduce(function(a,s){return a+s.commentCount},0)};
+}
+function clearAllNotes(entries,info){
+  var byName=byNameMap(entries);
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var patched={};
+  info.slides.forEach(function(s){
+    if(s.hasNotes && s.notesPath && byName[s.notesPath]){
+      patched[s.notesPath]=clearNotesInXml(dec.decode(byName[s.notesPath].bytes));
+    }
+  });
+  return entries.map(function(e){
+    if(patched[e.name]!==undefined) return {name:e.name,bytes:enc.encode(patched[e.name])};
+    return e;
+  });
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+var T={
+ ja:{
+  title:"社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除",
+  sub:"取引先や社外にPowerPoint(.pptx)ファイルを渡す前に、各スライドの「ノート（発表者メモ）」「非表示スライド」「コメント」が残っていないか一覧で確認したい、というときに。見つかったノートだけをまとめて削除した新しいファイルを書き出せます（非表示スライド・コメントは一覧表示のみ、削除はしません）。複数ファイルを一括処理でき、ファイルはサーバーに送らずこのブラウザの中だけで処理します。元のファイルは変更しません。",
+  dropzoneStrong:"ここにPowerPointファイルをドラッグ＆ドロップ",dropzoneRest:"、またはクリックして選択",
+  dropzoneHint:".pptx に対応（.pptは読み込めません）。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。",
+  listHeading:"読み込んだファイル",
+  thSlide:"スライド",thHidden:"非表示",thNotes:"ノート",thComments:"コメント",
+  hiddenYes:"非表示",hiddenNo:"表示",noneNotes:"（ノートなし）",noneComments:"—",
+  summaryFmt:function(n,slides,hidden,notes,comments){
+    return "全"+slides+"スライド中、非表示"+hidden+"件・ノートあり"+notes+"件・コメント合計"+comments+"件（レガシー形式のみ検出）。";
+  },
+  optClearNotes:"見つかったノートを削除する",
+  buildBtn:"ノートを削除したファイルを書き出す",buildBtnBusy:"書き出し中…",
+  doneMsg:"ダウンロードしました：",
+  errBad:"読み込めませんでした（.pptx以外の形式か、パスワード保護、または壊れたファイルの可能性があります）",
+  loadingLabel:"読み込み中…",removeLabel:"削除",
+  noNotesMsg:"ノートは見つかりませんでした。削除できる項目はありません。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{
+  title:"Before sharing a PowerPoint file: list every slide's notes, hidden status and comments, and bulk-clear just the notes",
+  sub:"Before sending a PowerPoint (.pptx) file to a client or anyone outside your organization, check whether each slide has speaker notes, is hidden, or has comments — all at once. Build a copy with just the notes cleared (hidden slides and comments are listed only, never removed). Process multiple files at once; nothing is uploaded, everything runs inside this browser. Your originals are untouched.",
+  dropzoneStrong:"Drag and drop PowerPoint files here",dropzoneRest:", or click to choose",
+  dropzoneHint:".pptx supported (.ppt cannot be read). Add multiple files at once. Everything happens on this device.",
+  listHeading:"Loaded files",
+  thSlide:"Slide",thHidden:"Hidden",thNotes:"Notes",thComments:"Comments",
+  hiddenYes:"Hidden",hiddenNo:"Visible",noneNotes:"(no notes)",noneComments:"—",
+  summaryFmt:function(n,slides,hidden,notes,comments){
+    return "Of "+slides+" slide(s): "+hidden+" hidden, "+notes+" with notes, "+comments+" comment(s) total (legacy format only).";
+  },
+  optClearNotes:"Clear the notes that were found",
+  buildBtn:"Build the file with notes removed",buildBtnBusy:"Building…",
+  doneMsg:"Downloaded: ",
+  errBad:"Could not read this file (it may not be .pptx, may be password-protected, or may be corrupted)",
+  loadingLabel:"Loading…",removeLabel:"Remove",
+  noNotesMsg:"No notes were found. There is nothing to clear.",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var files=[]; // {id,name,size,loading,error,info,entries,clearNotes,outBytes,outName,building}
+var seq=0;
+
+function addFiles(fileList){
+  Array.prototype.slice.call(fileList).forEach(function(file){
+    var id=++seq;
+    var rec={id:id,name:file.name,size:file.size,loading:true,error:"",info:null,entries:null,
+      clearNotes:true,outName:"",building:false};
+    files.push(rec);
+    render();
+    (async function(){
+      try{
+        var buf=await file.arrayBuffer();
+        var entries=await unzipAllEntries(new Uint8Array(buf));
+        var info=analyzePptx(entries);
+        if(!info) throw new Error("NOT_SUPPORTED");
+        rec.loading=false; rec.entries=entries; rec.info=info;
+        rec.clearNotes=info.notesCount>0;
+      }catch(e){
+        rec.loading=false; rec.error=T[lang].errBad;
+      }
+      render();
+    })();
+  });
+}
+function removeFile(id){ files=files.filter(function(r){return r.id!==id}); render(); }
+
+async function buildOne(rec){
+  rec.building=true; render();
+  try{
+    var outEntries=rec.clearNotes?clearAllNotes(rec.entries,rec.info):rec.entries;
+    var outBytes=await buildZip(outEntries);
+    var dot=rec.name.lastIndexOf(".");
+    var base=dot>0?rec.name.slice(0,dot):rec.name, ext=dot>0?rec.name.slice(dot):"";
+    var outName=base+"_ノート削除済み"+ext;
+    var blob=new Blob([outBytes],{type:"application/octet-stream"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=outName; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },1000);
+    rec.outName=outName;
+  }catch(e){
+    rec.error=T[lang].errBad;
+  }
+  rec.building=false; render();
+}
+
+function notesPreview(text){
+  if(!text) return "";
+  var oneLine=text.replace(/\n+/g," / ");
+  return oneLine.length>60?oneLine.slice(0,60)+"…":oneLine;
+}
+
+function slideRowHtml(s,t){
+  var notesCell=s.hasNotes
+    ? (s.notesText.length+"字：<span class=\"preview\">"+esc(notesPreview(s.notesText))+"</span>")
+    : t.noneNotes;
+  var commentsCell=s.commentCount
+    ? (s.commentCount+"件"+(s.commentAuthorNames.length?"（"+s.commentAuthorNames.map(esc).join("・")+"）":""))
+    : t.noneComments;
+  return "<tr>"
+    +"<td class=\"num\">"+s.index+"</td>"
+    +"<td>"+(s.hidden?"<span class=\"badge hidden\">"+t.hiddenYes+"</span>":t.hiddenNo)+"</td>"
+    +"<td class=\"preview"+(s.hasNotes?"":" empty")+"\">"+notesCell+"</td>"
+    +"<td>"+commentsCell+"</td>"
+    +"</tr>";
+}
+
+function fileCardHtml(rec){
+  var t=T[lang];
+  if(rec.loading) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+t.loadingLabel+'</span></div></div>';
+  if(rec.error) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div><p class="errBox">'+t.errBad+'</p></div>';
+  var info=rec.info;
+  var rows=info.slides.map(function(s){return slideRowHtml(s,t)}).join("");
+  var html='<div class="fileCard">'
+    +'<div class="fTop"><span class="fName">'+esc(rec.name)+'</span>'
+    +'<span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div>'
+    +'<p class="summary">'+t.summaryFmt(info.slides.length,info.slides.length,info.hiddenCount,info.notesCount,info.commentTotal)+'</p>'
+    +'<div class="tableWrap"><table class="slideTable"><thead><tr>'
+    +'<th>'+t.thSlide+'</th><th>'+t.thHidden+'</th><th>'+t.thNotes+'</th><th>'+t.thComments+'</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +(info.notesCount
+      ? '<div class="optRow"><label><input type="checkbox" data-opt="clearNotes" data-id="'+rec.id+'" '+(rec.clearNotes?'checked':'')+'>'+t.optClearNotes+'</label></div>'
+        +'<p><button type="button" class="primary" data-build="'+rec.id+'" '+(rec.building?'disabled':'')+'>'+(rec.building?t.buildBtnBusy:t.buildBtn)+'</button></p>'
+      : '<p class="hint">'+t.noNotesMsg+'</p>')
+    +(rec.outName?'<p class="okBox">'+t.doneMsg+esc(rec.outName)+'</p>':'')
+    +'</div>';
+  return html;
+}
+
+function render(){
+  var t=T[lang];
+  document.documentElement.lang=lang;
+  $("listSec").style.display=files.length?"block":"none";
+  $("fileList").innerHTML=files.map(fileCardHtml).join("");
+  document.querySelectorAll("[data-i]").forEach(function(el){
+    var k=el.getAttribute("data-i"); if(t[k]!==undefined) el.textContent=t[k];
+  });
+}
+
+document.addEventListener("click",function(e){
+  var rm=e.target.getAttribute && e.target.getAttribute("data-remove");
+  if(rm){ removeFile(parseInt(rm,10)); return; }
+  var bd=e.target.getAttribute && e.target.getAttribute("data-build");
+  if(bd){ var rec=files.filter(function(r){return r.id===parseInt(bd,10)})[0]; if(rec) buildOne(rec); return; }
+});
+document.addEventListener("change",function(e){
+  var optName=e.target.getAttribute && e.target.getAttribute("data-opt");
+  if(optName==="clearNotes"){
+    var id=parseInt(e.target.getAttribute("data-id"),10);
+    var rec=files.filter(function(r){return r.id===id})[0];
+    if(rec){ rec.clearNotes=e.target.checked; }
+  }
+});
+
+var dz=$("dropzone"), fi=$("fileInput");
+dz.addEventListener("click",function(){ fi.click(); });
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fi.click(); } });
+fi.addEventListener("change",function(){ if(fi.files.length) addFiles(fi.files); fi.value=""; });
+["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add("drag"); }); });
+["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove("drag"); }); });
+dz.addEventListener("drop",function(e){ if(e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+document.querySelectorAll(".lang button").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    lang=btn.getAttribute("data-lang");
+    document.querySelectorAll(".lang button").forEach(function(b){ b.setAttribute("aria-pressed", b===btn?"true":"false"); });
+    render();
+  });
+});
+
+render();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

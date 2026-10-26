@@ -1978,6 +1978,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "pptx-kakure",
+      "title": "社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除",
+      "url": "https://tenohira-tools.github.io/pptx-kakure/",
+      "published": "2026-10-26",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog-ordered",
+      "why": "backlog1番。WebSearchで確認し、ブラウザ完結・無料でノート一括削除ができるツールは見当たらず（SlideSpeakはサーバーアップロード型でβ待機中、他はVBA/Windows専用デスクトップソフトのみ）。ppt/presentation.xmlのp:sldIdLstから各slideの rels を辿ってnotesSlide・legacyコメントのパートを解決し、スライドごとに非表示・ノート文字数/プレビュー・コメント件数（投稿者名含む）を一覧化。削除は安全側に絞り、ノート本文プレースホルダーのテキストだけを空にする機能のみ実装（非表示スライド・コメントは一覧表示のみで削除しない）。近年の「スレッド形式」コメントは保存場所が非公開のため検出対象外とFAQに明記。sakusha-kesuのZIP+XML読み込み・圧縮書き出しコードを再利用。",
+      "metrics": [
+        {
+          "date": "2026-10-26T20:16:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {

@@ -478,3 +478,10 @@
 - 検証：openpyxlで結合セル・非表示/完全非表示シート・シートローカルな名前定義・シングルクォート入りシート名を含む実ファイルを作成しNode.js単体テスト（通常・目次名衝突・最小構成の3パターン）→openpyxlで再読込し表示シート・名前・ハイパーリンク先・活性シート・名前定義のlocalSheetIdがすべて正しくずれていることを確認。Playwright（ja/en・390/1280px）でアップロード→一覧表示→ダウンロード→CSV→コピーを確認、JSエラーなし（GoatCounter遮断のみ既知）。
 - 相互リンクはexcel-trouble・xlsx-saihyouji・xlsx-gyoretsuの3ページに絞り双方向を確認。docs/index.htmlにも追加、excel-troubleの案内数表記を27→28に更新。
 - 次回：xlsx-mokujiの初回閲覧数を記録。backlogは残り6件。
+
+## 2026-10-26 実験48
+- 計測：GoatCounter取得成功（サイト全体累計9、個別44ページ全て0、前回20:16Zから変化なし）。health.md（44ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog1番「PowerPointのノート・非表示スライド・コメントの一覧化＋ノート一括削除」を実施。WebSearch2件で無料ブラウザ完結の既存ツールが無いことを確認（SlideSpeakはサーバー送信型でβ待機中のみ）。各スライドのrelsを辿ってnotesSlide・legacyコメントを解決し、非表示・ノート文字数/プレビュー・コメント件数（投稿者名）を一覧表示。削除は安全側にノート本文だけに絞り、非表示スライド・コメントは一覧表示のみ（docs/pptx-kakure/）。
+- 検証：Node.js単体テスト（パス解決・ノート抽出/クリアの基本・安全側ケース）＋python-pptxで作った4スライド構成に手組みのlegacyコメントを加えた実ファイルで統合テスト（検出件数一致、削除後の再読込で本文空・非表示/コメント不変をpython-pptxで確認）。Playwright（ja/en・390/1280px）でアップロード→一覧→削除→ダウンロードしたファイルをpython-pptxで再読込して検証、ノートなしファイルでは削除ボタン非表示も確認。JSエラーなし（GoatCounter遮断のみ既知）。
+- sakusha-kesuと相互リンクし、docs/index.htmlにも追加（Excel専用ではないためexcel-troubleの案内数表記は更新不要）。
+- 次回：pptx-kakureの初回閲覧数を記録。backlogは残り5件。
