@@ -52,7 +52,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [Excelの置換（Ctrl+H）も開いているファイルだけ：複数のエクセルファイルの文字列を一括置換](https://tenohira-tools.github.io/xlsx-okikae/)
 - [「エクセルが重い」原因を診断：ファイル内訳チェッカー](https://tenohira-tools.github.io/xlsx-omoi/)
 - [シートの「再表示」に出てこない・一覧に無いときの対策：非表示・完全非表示（veryHidden）の一覧・一括変更](https://tenohira-tools.github.io/xlsx-saihyouji/)
-- [「異なるセルの書式の数が多すぎます」エラー対策：重複・未使用セル書式のクリーンアップ](https://tenohira-tools.github.io/xlsx-style/)
+- [「異なるセルの書式の数が多すぎます」エラー・セルのスタイルが大量に増えたときの書式クリーンアップ](https://tenohira-tools.github.io/xlsx-style/)
 - [「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換](https://tenohira-tools.github.io/xlsx-suuchika/)
 - [引き継いだExcelの数式を一覧に：棚卸し・エラーチェックツール](https://tenohira-tools.github.io/xlsx-suushiki/)
 - [図形が勝手に増えた・見えない図形が残っている：全シート一覧・選んだ図形だけ削除](https://tenohira-tools.github.io/xlsx-zukei/)
