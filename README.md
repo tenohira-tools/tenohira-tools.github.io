@@ -19,6 +19,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール](https://tenohira-tools.github.io/csv-seiri/)
 - [CSVをExcelで開くと0が消える・日付になるときの変換ツール（.xlsx書き出し）](https://tenohira-tools.github.io/csv-to-xlsx/)
 - [CSVが文字化けする・結合できない・表記ゆれがあるときの対策まとめ｜症状から探す7ツール](https://tenohira-tools.github.io/csv-trouble/)
+- [社外に渡す前に確認：Wordの「隠れた情報」一括チェック（変更履歴・コメント・隠し文字・ヘッダーフッター）](https://tenohira-tools.github.io/docx-kakure/)
 - [エクセルが重い・保存できない・エラーが出るときの対策まとめ｜症状から探す28ツール](https://tenohira-tools.github.io/excel-trouble/)
 - [表記ゆれ・全角半角チェッカー（サーバ/サーバーなどを検出して統一）](https://tenohira-tools.github.io/hyoki-yure/)
 - [交通費精算書メーカー｜区間・金額を入力してその場で集計・印刷](https://tenohira-tools.github.io/kotsuhi-seisan/)
