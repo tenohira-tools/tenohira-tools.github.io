@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>社外に渡す前に確認：Wordの「隠れた情報」一括チェック（変更履歴・コメント・隠し文字・ヘッダーフッター） | てのひらツール</title>
+<meta name="description" content="取引先や社外にWord(.docx)ファイルを送る前に、「ドキュメント検査」がWindows版のみで結果が一覧で見えない——と困っていませんか。変更履歴（校閲）に残る編集者名、コメントの投稿者名、隠し文字（表示されないテキスト）、作成者・最終更新者・会社名、ヘッダー・フッターの文字を1画面で一覧化します（読み取り専用、ファイルは書き換えません）。ファイルはサーバーに送信されません。Before sending a Word file outside your company: check for Track Changes editor names, comment authors, hidden text, author metadata and header/footer text, all on one screen — entirely in your browser, read-only.">
+<link rel="canonical" href="https://tenohira-tools.github.io/docx-kakure/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+#fileListBox{display:grid;gap:14px;margin-top:12px;min-width:0}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}
+.fileCard .fRow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.78rem;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.summaryBanner{border-radius:10px;padding:10px 12px;font-size:.92rem;margin-top:10px;font-weight:700}
+.summaryBanner.ok{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent)}
+.summaryBanner.warn{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn)}
+.catList{margin-top:12px}
+.catBlock{border-top:1px solid var(--line);padding:10px 0}
+.catBlock:first-child{border-top:0}
+.catHead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.catName{font-weight:700;font-size:.95rem}
+.catDetail{color:var(--muted);font-size:.86rem;margin-top:4px;word-break:break-word}
+.catLink{margin-top:6px;font-size:.88rem}
+.catLink a{color:var(--accent)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:9px 16px;cursor:pointer;min-height:40px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">社外に渡す前に確認：Wordの「隠れた情報」一括チェック</h1>
+    <p class="sub" data-i="sub">Word(.docx)ファイルを社外に送る前に、Windows版Wordの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。本文・ヘッダー・フッター・脚注・文末脚注に残る変更履歴（校閲）の編集者名、コメントの投稿者名、隠し文字（フォントの「隠し文字」設定で表示されないテキスト）、作成者・最終更新者・会社名、ヘッダー・フッターの文字を1画面で一覧化します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにWord(.docx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">複数ファイルを一度に追加できます。どこにも送信されません。ファイルは書き換えません（診断のみ）。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".docx" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にWord（.docx）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイルも一度に追加できます）。</li>
+      <li>5つの項目（変更履歴の編集者名／コメントの投稿者／隠し文字／作成者・最終更新者・会社名・所属部門／ヘッダー・フッターの文字）ごとに、見つかった件数と内訳が表示されます。</li>
+      <li>該当がある項目には、実際に消去できる専用ツールへのリンクが付きます（専用ツールが無い項目はWord本体での確認方法を表示します）。</li>
+    </ol>
+    <h3>Q. このツールはファイルを書き換えたり、削除したりできますか？</h3>
+    <p>A. いいえ。このツールは読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。変更履歴の編集者名・コメントの投稿者名・作成者などのプロパティを実際に消したい場合は、<a href="../sakusha-kesu/">作成者・コメント投稿者名などを消すツール</a>をご利用ください。</p>
+    <h3>Q. 「隠し文字」とは何ですか？</h3>
+    <p>A. Wordのフォント設定にある「隠し文字」チェックボックスを付けた文字のことです。通常の画面表示や印刷・PDF変換では見えませんが、ファイルの中にはそのまま文字が残っています。送った相手が「ホーム」タブの編集記号の表示（Ctrl+Shift+8）をONにすると見えてしまいます。このツールは本文・ヘッダー・フッター・脚注・文末脚注を対象に、隠し文字に設定された文字数をパーツごとに数えます（内容そのものは一覧に表示しません）。</p>
+    <h3>Q. 「ヘッダー・フッターの文字」はなぜチェックしますか？</h3>
+    <p>A. Wordの画面は本文の編集が中心で、ヘッダー・フッターは上下の余白部分をダブルクリックしないと編集モードに入らないため、古いテンプレートからコピーした社名や「社外秘」「ドラフト」といった文字が残っていることに気づきにくい場所です。このツールはファイル内部に保存されている全てのヘッダー・フッター部品（現在のセクションで使われていない部品も含みます）の文字をそのまま一覧表示します。</p>
+    <h3>Q. 変更履歴やコメントの投稿者名は確実に検出できますか？</h3>
+    <p>A. 本文・ヘッダー・フッター・脚注・文末脚注にあるw:author属性（挿入・削除・書式変更の記録や、従来形式のコメントに付く投稿者名）は確実に検出します。最近の「スレッド形式」コメントは投稿者名の保存場所がファイルの履歴によって異なることがあり、消去する側のツールでも100%の除去は保証していません。詳しくは<a href="../sakusha-kesu/">作成者名などを消すツール</a>のFAQをご覧ください。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Word 2007以降の.docx形式に対応しています。古い.doc形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop a Word (.docx) file into the box above, or click it to choose one (several files at once are fine too).</li>
+      <li>Five checks are run (Track Changes editor names, comment authors, hidden text, creator/last-modified-by/company/manager, header/footer text), each showing a count and a breakdown.</li>
+      <li>Any check with a hit shows a link to the dedicated tool that can remove it (checks with no dedicated tool show how to check it inside Word itself).</li>
+    </ol>
+    <h3>Q. Can this tool rewrite or remove anything?</h3>
+    <p>A. No. This is a read-only inspection tool — it never rewrites your file. To actually clear Track Changes editor names, comment authors or author metadata, use the <a href="../sakusha-kesu/">author/comment-author scrubber</a>.</p>
+    <h3>Q. What is "hidden text"?</h3>
+    <p>A. Text with Word's "Hidden" font attribute checked. It doesn't show on screen, in print, or in a PDF export by default, but the characters stay inside the file. Anyone who turns on "Show/Hide ¶" (Ctrl+Shift+8) can see it. This tool counts how many characters are marked hidden in each part of the document — body, headers, footers, footnotes and endnotes — without showing the text itself.</p>
+    <h3>Q. Why check header/footer text?</h3>
+    <p>A. Word's editing view is centered on the body text; headers and footers only open for editing when you double-click the top/bottom margin, so it's easy to forget a leftover company name, "Confidential" or "Draft" label copied from an old template. This tool lists the text of every header/footer part actually stored inside the file, including ones not used by the current section.</p>
+    <h3>Q. Are Track Changes editors and comment authors reliably detected?</h3>
+    <p>A. The w:author attribute recorded in the document body, headers, footers, footnotes and endnotes (insertions, deletions, formatting changes, and classic-style comments) is reliably detected. Recent "threaded" comments can store the author's name in a location that varies by the file's history, and even the scrubbing tool can't guarantee 100% removal there — see the <a href="../sakusha-kesu/">author scrubber's</a> FAQ for details.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Word 2007+ .docx files. The older .doc format and password-protected files are not supported — if a file fails to load, an error is shown next to it.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — このツールで見つかった変更履歴の編集者名・コメント投稿者・作成者などのプロパティを実際に消去。Excel・PowerPointにも対応。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — Excel版の同種のチェック。非表示シート・コメント・外部リンク・名前定義などを1画面で診断（読み取り専用）。</li>
+      <li><a href="../pptx-kakure/">社外に渡す前に：PowerPointのノート・非表示スライド・コメントを一覧化、ノートはまとめて削除</a> — PowerPoint版。発表者用ノート・非表示スライド・コメントを一覧化し、ノートはまとめて削除できます。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Actually clears the Track Changes editors, comment authors and properties this tool finds. Also covers Excel and PowerPoint.</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for "hidden" information before sending it outside your company</a> — The Excel version of the same kind of check: hidden sheets, comments, external links and defined names, all on one screen (read-only).</li>
+      <li><a href="../pptx-kakure/">Before sharing a PowerPoint file: list every slide's notes, hidden status and comments, and bulk-clear just the notes</a> — The PowerPoint version: list speaker notes, hidden slides and comments, and bulk-clear just the notes.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールはファイルを書き換えたり、削除したりできますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。実際に消去したい場合は作成者・コメント投稿者名などを消すツールを利用します。"}},
+    {"@type":"Question","name":"「隠し文字」とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"Wordのフォント設定の「隠し文字」チェックで指定した、通常の画面表示や印刷では見えないがファイル内には残っている文字です。本文・ヘッダー・フッター・脚注・文末脚注を対象に文字数を数えます。"}},
+    {"@type":"Question","name":"「ヘッダー・フッターの文字」はなぜチェックしますか？","acceptedAnswer":{"@type":"Answer","text":"ヘッダー・フッターは編集モードに入りにくく、古いテンプレートの社名や社外秘表記が残っていても気づきにくいためです。現在使われていない部品も含めて一覧表示します。"}},
+    {"@type":"Question","name":"変更履歴やコメントの投稿者名は確実に検出できますか？","acceptedAnswer":{"@type":"Answer","text":"本文・ヘッダー・フッター・脚注・文末脚注のw:author属性は確実に検出します。最近のスレッド形式コメントは保存場所が異なる場合があり100%の網羅は保証できません。"}},
+    {"@type":"Question","name":"対応しているファイル形式は？","acceptedAnswer":{"@type":"Answer","text":"Word 2007以降の.docx形式に対応しています。古い.doc形式やパスワード保護されたファイルは読み込めません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   DOCX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-kakure/xlsx-merge/xlsx-suushiki/.../sakusha-kesu/pptx-kakure
+   (no external libraries; only standard browser APIs:
+   DecompressionStream/TextDecoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipToMap(bytes){
+  var entries=zipCentralDirectory(bytes), map={};
+  for(var i=0;i<entries.length;i++){ var en=entries[i]; if(en.name.charAt(en.name.length-1)!=="/") map[en.name]=en; }
+  var out={};
+  for(var name in map){ out[name]=new TextDecoder("utf-8").decode(await zipReadEntry(bytes,map[name])); }
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function attrEverywhereRegex(attrName){
+  var escName=attrName.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  return new RegExp("("+escName+"=)([\"'])((?:(?!\\2).)*)\\2","g");
+}
+function findAttrEverywhere(xml,attrName){
+  var re=attrEverywhereRegex(attrName), m, out=[];
+  while((m=re.exec(xml))){ out.push(decodeXmlEntities(m[3])); }
+  return out;
+}
+function uniqueStrings(arr){
+  var seen={}, out=[];
+  arr.forEach(function(s){ if(!seen[s]){ seen[s]=true; out.push(s); } });
+  return out;
+}
+function tagText(xml,tagName){
+  var t=findTags(xml,tagName)[0];
+  return t&&t.inner!==null?decodeXmlEntities(t.inner):"";
+}
+
+/* =====================================================================
+   Hidden text (w:vanish): count characters inside a run whose run
+   properties (w:rPr) carry an "on" w:vanish, across any part. A bare
+   <w:vanish/> means on; w:val="0"/"false" explicitly turns it back off.
+   Only real text runs are counted (not the paragraph-mark-only vanish
+   that can sit directly under w:pPr).
+   ===================================================================== */
+function isVanishOn(tag){
+  var v=tag.attrs["w:val"];
+  if(v===undefined) return true;
+  return !(v==="0"||v==="false");
+}
+function countHiddenTextChars(xml){
+  var total=0;
+  findTags(xml,"w:r").forEach(function(run){
+    if(run.inner===null) return;
+    var rPr=findTags(run.inner,"w:rPr")[0];
+    if(!rPr || rPr.inner===null) return;
+    var vanish=findTags(rPr.inner,"w:vanish")[0];
+    if(!vanish || !isVanishOn(vanish)) return;
+    findTags(run.inner,"w:t").forEach(function(t){ total+=(t.inner||"").length; });
+  });
+  return total;
+}
+
+/* =====================================================================
+   Main per-file scan.
+   ===================================================================== */
+var REVISION_HIDDEN_RE=/^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/i;
+function partLabel(name){
+  var m=/^word\/(document|header(\d+)|footer(\d+)|footnotes|endnotes)\.xml$/i.exec(name);
+  if(!m) return name;
+  if(m[1]==="document") return {ja:"本文",en:"Body"};
+  if(m[2]) return {ja:"ヘッダー"+m[2],en:"Header "+m[2]};
+  if(m[3]) return {ja:"フッター"+m[3],en:"Footer "+m[3]};
+  if(/^footnotes/i.test(m[1])) return {ja:"脚注",en:"Footnotes"};
+  return {ja:"文末脚注",en:"Endnotes"};
+}
+async function parseDocxKakure(bytes){
+  var files=await unzipToMap(bytes);
+  if(!files["word/document.xml"]) throw new Error("NOT_DOCX");
+  var names=Object.keys(files);
+
+  var revisionAuthors=[];
+  var hiddenTotal=0, hiddenByPart=[];
+  names.filter(function(n){return REVISION_HIDDEN_RE.test(n)}).forEach(function(n){
+    var xml=files[n];
+    revisionAuthors=revisionAuthors.concat(findAttrEverywhere(xml,"w:author"));
+    var c=countHiddenTextChars(xml);
+    if(c>0){ hiddenTotal+=c; hiddenByPart.push({part:partLabel(n),count:c}); }
+  });
+
+  var commentCount=0, commentAuthors=[];
+  if(files["word/comments.xml"]){
+    var comments=findTags(files["word/comments.xml"],"w:comment");
+    commentCount=comments.length;
+    comments.forEach(function(c){ if(c.attrs["w:author"]) commentAuthors.push(c.attrs["w:author"]); });
+  }
+
+  var core=files["docProps/core.xml"]||"", app=files["docProps/app.xml"]||"";
+  var creator=tagText(core,"dc:creator"), lastModifiedBy=tagText(core,"cp:lastModifiedBy");
+  var company=tagText(app,"Company"), manager=tagText(app,"Manager");
+
+  var headerFooter=[];
+  names.filter(function(n){return /^word\/(header|footer)\d+\.xml$/i.test(n)}).sort().forEach(function(n){
+    var text=findTags(files[n],"w:t").map(function(t){return decodeXmlEntities(t.inner||"")}).join("");
+    text=text.replace(/\s+/g," ").trim();
+    if(text) headerFooter.push({part:partLabel(n), text:text});
+  });
+
+  return {
+    revisionCount:revisionAuthors.length, revisionAuthors:uniqueStrings(revisionAuthors),
+    commentCount:commentCount, commentAuthors:uniqueStrings(commentAuthors),
+    hiddenTotal:hiddenTotal, hiddenByPart:hiddenByPart,
+    creator:creator, lastModifiedBy:lastModifiedBy, company:company, manager:manager,
+    headerFooter:headerFooter
+  };
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"社外に渡す前に確認：Wordの「隠れた情報」一括チェック",
+  sub:"Word(.docx)ファイルを社外に送る前に、Windows版Wordの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。本文・ヘッダー・フッター・脚注・文末脚注に残る変更履歴（校閲）の編集者名、コメントの投稿者名、隠し文字、作成者・最終更新者・会社名、ヘッダー・フッターの文字を1画面で一覧化します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。",
+  dropzoneText:"ここにWord(.docx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"複数ファイルを一度に追加できます。どこにも送信されません。ファイルは書き換えません（診断のみ）。",
+  fileListHeading:"追加したファイル",
+  removeBtn:"削除", loadingLabel:"読み込み中…",
+  errBad:"読み込めませんでした（.docx以外の形式か、パスワード保護の可能性があります）",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。",
+  bannerOk:"5項目とも、特に気になる点は見つかりませんでした。",
+  bannerWarn:function(n){return "5項目中 "+n+"項目で、確認をおすすめする内容が見つかりました。"},
+  cat1:"変更履歴（校閲）に残る編集者名", cat2:"コメントの投稿者", cat3:"隠し文字（表示されないテキスト）",
+  cat4:"作成者・最終更新者・会社名・所属部門", cat5:"ヘッダー・フッターの文字",
+  none:"見つかりませんでした", revisionsLabel:"件（変更履歴）", commentsLabel:"件のコメント", charsLabel:"文字",
+  link14:"→ 消す（作成者名などを消すツール）",
+  noToolHint3:"Wordの「ホーム」タブで編集記号の表示（Ctrl+Shift+8）、またはフォントの「隠し文字」チェックで確認できます。",
+  noToolHint5:"Wordの「挿入」タブ→「ヘッダーとフッター」から内容を確認・編集できます。"},
+ en:{title:"Before sending outside your company: check a Word file for “hidden” information",
+  sub:"Word's own Document Inspector is Windows-only and never shows every category on one screen. This checks the Track Changes editor names, comment authors, hidden text, creator/last-modified-by/company/manager and header/footer text found across the body, headers, footers, footnotes and endnotes — all at once, read-only. Nothing is uploaded.",
+  dropzoneText:"Drag and drop a Word (.docx) file here, or click to choose one",
+  dropzoneHint:"You can add several files at once. Nothing is ever uploaded. Read-only — files are never rewritten.",
+  fileListHeading:"Added files",
+  removeBtn:"Remove", loadingLabel:"Loading…",
+  errBad:"Could not read this file (it may not be .docx, or it's password-protected)",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser.",
+  bannerOk:"Nothing stood out across all 5 checks.",
+  bannerWarn:function(n){return n+" of 5 checks found something worth a look.";},
+  cat1:"Track Changes editor names", cat2:"Comment authors", cat3:"Hidden text",
+  cat4:"Creator / last-modified-by / company / manager", cat5:"Header / footer text",
+  none:"None found", revisionsLabel:" revision(s)", commentsLabel:" comment(s)", charsLabel:" character(s)",
+  link14:"→ Clear it (author-name scrubber)",
+  noToolHint3:"Turn on Show/Hide ¶ (Ctrl+Shift+8) in Word's Home tab, or check a run's Font dialog for “Hidden”.",
+  noToolHint5:"Check and edit it from Word's Insert tab → Header &amp; Footer."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1};
+
+function escTrunc(s,n){ s=String(s); n=n||60; var t=s.length>n?s.slice(0,n)+"…":s; return esc(t); }
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", result:null};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){
+    return parseDocxKakure(new Uint8Array(buf));
+  }).then(function(result){
+    f.result=result; f.loading=false; render();
+  }).catch(function(){
+    f.loading=false; f.error=T[lang].errBad; render();
+  });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function catBlock(name,hit,detailHtml,linkHtml){
+  var cls=hit?"warn":"ok";
+  var badgeHtml="<span class='badge "+cls+"'>"+(hit?"!":"OK")+"</span>";
+  var h="<div class='catBlock'><div class='catHead'><span class='catName'>"+esc(name)+"</span>"+badgeHtml+"</div>";
+  h+="<div class='catDetail'>"+detailHtml+"</div>";
+  if(linkHtml) h+="<div class='catLink'>"+linkHtml+"</div>";
+  h+="</div>";
+  return h;
+}
+
+function renderResult(f){
+  var r=f.result, t=T[lang], issues=0, h="";
+
+  // 1. revision authors
+  var rv=r.revisionCount>0;
+  if(rv) issues++;
+  var d1=rv ? (r.revisionAuthors.map(function(n){return escTrunc(n,30)}).join("、")+"（"+r.revisionCount+t.revisionsLabel+"）") : esc(t.none);
+  h+=catBlock(t.cat1, rv, d1, rv?("<a href='../sakusha-kesu/'>"+esc(t.link14)+"</a>"):"");
+
+  // 2. comments
+  var cm=r.commentCount>0;
+  if(cm) issues++;
+  var d2=cm ? (r.commentAuthors.map(function(n){return escTrunc(n,30)}).join("、")+"（"+r.commentCount+t.commentsLabel+"）") : esc(t.none);
+  h+=catBlock(t.cat2, cm, d2, cm?("<a href='../sakusha-kesu/'>"+esc(t.link14)+"</a>"):"");
+
+  // 3. hidden text
+  var hv=r.hiddenTotal>0;
+  if(hv) issues++;
+  var d3=hv ? (r.hiddenTotal+t.charsLabel+"："+r.hiddenByPart.map(function(x){return esc(x.part[lang])+" "+x.count;}).join("、")) : esc(t.none);
+  h+=catBlock(t.cat3, hv, d3, hv?("<span class='catDetail'>"+esc(t.noToolHint3)+"</span>"):"");
+
+  // 4. author metadata
+  var authorFields=[];
+  if(r.creator) authorFields.push((lang==="ja"?"作成者：":"Creator: ")+esc(r.creator));
+  if(r.lastModifiedBy) authorFields.push((lang==="ja"?"最終更新者：":"Last modified by: ")+esc(r.lastModifiedBy));
+  if(r.company) authorFields.push((lang==="ja"?"会社名：":"Company: ")+esc(r.company));
+  if(r.manager) authorFields.push((lang==="ja"?"所属部門：":"Manager: ")+esc(r.manager));
+  var am=authorFields.length>0;
+  if(am) issues++;
+  var d4=am ? authorFields.join("　") : esc(t.none);
+  h+=catBlock(t.cat4, am, d4, am?("<a href='../sakusha-kesu/'>"+esc(t.link14)+"</a>"):"");
+
+  // 5. header/footer text
+  var hf=r.headerFooter.length>0;
+  if(hf) issues++;
+  var d5=hf ? r.headerFooter.map(function(x){return "<strong>"+esc(x.part[lang])+"</strong>："+escTrunc(x.text,40);}).join("<br>") : esc(t.none);
+  h+=catBlock(t.cat5, hf, d5, hf?("<span class='catDetail'>"+esc(t.noToolHint5)+"</span>"):"");
+
+  var bannerCls=issues>0?"warn":"ok";
+  var bannerText=issues>0?t.bannerWarn(issues):t.bannerOk;
+  var out="<div class='summaryBanner "+bannerCls+"'>"+esc(bannerText)+"</div>";
+  out+="<div class='catList'>"+h+"</div>";
+  return out;
+}
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<div class='fRow'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+    else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+    if(!f.loading && !f.error){ h+=renderResult(f); }
+    h+="</div>";
+  });
+  box.innerHTML=h;
+
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

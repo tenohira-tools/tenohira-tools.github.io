@@ -492,3 +492,10 @@
 - 設計：cellStyles（名前登録）だけを書き換え、cellXfs・cellStyleXfs・シートデータは一切変更しない安全設計。
 - 検証：Node.js単体テスト3種、openpyxl製の実ファイルに重複スタイルを注入した統合テスト、Playwright（ja/en・390/1280px）で統計・一覧・ダウンロード後の再読込を確認。JSエラーなし。
 - 次回：backlogは残り4件。
+
+## 2026-10-27 実験50
+- 計測：GoatCounter取得成功（累計9、個別45ページ全て0、前回から変化なし）。health.md（46ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog旧1番「Wordの隠れた情報一括チェック」を実施。xlsx-kakureのWord版（docx-kakure）を公開。変更履歴の編集者名・コメント投稿者・隠し文字（文字数）・作成者等のプロパティ・ヘッダーフッターの文字を1画面で診断する読み取り専用ツール。
+- 検証：Node.js単体テスト12件、python-docx製の実ファイルに変更履歴・コメント・隠し文字・ヘッダーフッターを注入した統合テスト（Node.jsのzlibでZIP解凍）、Playwright（ja/en・390/1280px）で警告表示・OKバナー・横スクロール無し・JSエラー無しを確認。
+- 相互リンクはsakusha-kesu・xlsx-kakure・pptx-kakureの3ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
+- 次回：docx-kakureの初回閲覧数を記録。backlogは残り3件（xlsx-kakureのヘッダーフッター検出等）。

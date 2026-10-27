@@ -2002,6 +2002,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "docx-kakure",
+      "title": "社外に渡す前に確認：Wordの「隠れた情報」一括チェック（変更履歴・コメント・隠し文字・ヘッダーフッター）",
+      "url": "https://tenohira-tools.github.io/docx-kakure/",
+      "published": "2026-10-27",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog-ordered",
+      "why": "backlog旧1番。xlsx-kakureのWord版。本文・ヘッダー・フッター・脚注・文末脚注を対象に、変更履歴(w:author)・コメント投稿者(word/comments.xml)・隠し文字(w:vanish)の文字数・作成者等のプロパティ(docProps)・ヘッダーフッターの実際の文字(未使用部品も含む)を1画面で診断する読み取り専用ツール。削除できる項目はsakusha-kesuへ案内。",
+      "metrics": [
+        {
+          "date": "2026-10-27T20:26:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {
