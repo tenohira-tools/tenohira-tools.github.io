@@ -259,3 +259,6 @@
 ## 2026-10-27（新規実験：docx-kakure）
 - 気づいた点：python-docxで新規作成したDocument()はcore_properties.authorが既定で"python-docx"になっており、検証用の「クリーンな（何も検出されないはずの）」フィクスチャを作るときは明示的に空文字を設定しないと、作成者プロパティの検出が意図せず「ヒットあり」になる。xlsx系でopenpyxlのデフォルト値に注意する既存の気づきと同種で、docx系でも同じ注意が必要。
 - 気づいた点：Playwrightで2つ目のファイルを追加した直後に`.fileCard`の件数だけで完了を判定すると、addFile()がファイルを即時pushしてrender()するため「カード数2件」は読み込み中の時点で既に満たされてしまい、パース完了より前にアサーションが走る。ファイル追加後の待機は件数だけでなく「読み込み中…/Loading」の文字列が無いことも条件に加える必要がある。
+
+## 2026-10-28（改善：xlsx-kakureにヘッダー・フッター・ピボットキャッシュ検出を追加）
+- 気づいた点：ピボットテーブルのXML側にはopenpyxlの書き込みサポートが乏しく、pivotCacheDefinition・pivotCacheRecords・workbook.xmlのpivotCaches/relsをPythonのzipfileで直接手組みする必要があった。Excelのヘッダー/フッターの差し込みコード（&L/&C/&R/&P/&K色指定等）は三項演算子を伴う文字列結合で書くと括弧の対応を崩しやすく、node --checkでの構文確認を書き換え直後に毎回挟むと早期に発見できた。

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
 <title>社外に送る前に確認：Excelの「隠れた情報」一括チェック（非表示シート・コメント・作成者名・外部リンクなど） | てのひらツール</title>
-<meta name="description" content="取引先や社外にExcel(.xlsx/.xlsm)ファイルを送る前に、「ドキュメント検査」がWindows版しかない・結果が一覧で見えない——と困っていませんか。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセルを1画面で一覧化し、該当があれば専用ツールへ案内します（読み取り専用、ファイルは書き換えません）。ファイルはサーバーに送信されません。Before sending an Excel file outside your company: check for hidden sheets, hidden rows/columns with values, comments, author metadata, external links, defined names and invisible-looking text, all on one screen — entirely in your browser, read-only.">
+<meta name="description" content="取引先や社外にExcel(.xlsx/.xlsm)ファイルを送る前に、「ドキュメント検査」がWindows版しかない・結果が一覧で見えない——と困っていませんか。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセル、ヘッダー・フッターの文字、ピボットテーブルのキャッシュ（元データを消しても残る値）を1画面で一覧化し、該当があれば専用ツールへ案内します（読み取り専用、ファイルは書き換えません）。ファイルはサーバーに送信されません。Before sending an Excel file outside your company: check for hidden sheets, hidden rows/columns with values, comments, author metadata, external links, defined names, invisible-looking text, header/footer text and leftover PivotTable cache data, all on one screen — entirely in your browser, read-only.">
 <link rel="canonical" href="https://tenohira-tools.github.io/xlsx-kakure/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
@@ -67,7 +67,7 @@ html[lang=en] .en-only{display:block}
 <header>
   <div>
     <h1 data-i="title">社外に送る前に確認：Excelの「隠れた情報」一括チェック</h1>
-    <p class="sub" data-i="sub">Excel(.xlsx/.xlsm)ファイルを社外に送る前に、Windows版Excelの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセルを1画面で一覧化し、該当があれば専用ツールへ案内します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。</p>
+    <p class="sub" data-i="sub">Excel(.xlsx/.xlsm)ファイルを社外に送る前に、Windows版Excelの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセル、ヘッダー・フッターの文字、ピボットテーブルのキャッシュ（元データを消しても残る値）を1画面で一覧化し、該当があれば専用ツールへ案内します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -93,7 +93,7 @@ html[lang=en] .en-only{display:block}
     <h2>使い方とよくある質問</h2>
     <ol>
       <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイルも一度に追加できます）。</li>
-      <li>7つの項目（非表示・完全非表示シート／非表示の行・列にある値／コメント・メモ／作成者・最終更新者・会社名／外部リンク／名前定義／白文字など背景と同化した書式のセル）ごとに、見つかった件数と内訳が表示されます。</li>
+      <li>9つの項目（非表示・完全非表示シート／非表示の行・列にある値／コメント・メモ／作成者・最終更新者・会社名／外部リンク／名前定義／白文字など背景と同化した書式のセル／ヘッダー・フッターの文字／ピボットテーブルのキャッシュ）ごとに、見つかった件数と内訳が表示されます。</li>
       <li>該当がある項目には、その内容を詳しく確認したり削除したりできる専用ツールへのリンクが付きます。</li>
       <li>一覧だけCSVで保存したい場合は「結果をCSV出力」を押します。</li>
     </ol>
@@ -103,8 +103,12 @@ html[lang=en] .en-only{display:block}
     <p>A. 行や列を右クリックして「非表示」にした場合、Excelの画面上では消えて見えますが、セルの値自体は残ったままファイル内に保存されています。社外に送ったファイルで非表示の行・列を「再表示」されると、隠したはずの数値や文字列がそのまま見えてしまいます。このツールは非表示の行・列の範囲と、その中に実際に値が入っているセルの数を数えて知らせます（内容は一覧に出さず、件数とシート名だけを表示します）。</p>
     <h3>Q. 「白文字など背景と同化した書式のセル」はどうやって判定していますか？</h3>
     <p>A. セルの文字の色と背景（塗りつぶし）の色が、どちらも具体的な色として明示的に同じ値に設定されている場合だけを検出します（例：文字色を白、塗りつぶしも白、または文字色と塗りつぶしを同じ色に指定）。Excelのテーマの配色や「自動」設定の色までは解決していないため、見た目には同化していてもこのツールでは検出できないケースがあります。断定はせず、確認の目安としてご利用ください。</p>
+    <h3>Q. 「ヘッダー・フッターの文字」はどうやって調べていますか？</h3>
+    <p>A. 各シートに保存されているヘッダー・フッターの文字（ページ番号や日付などの差し込みコードを除いた実際の文字部分）を取り出して表示します。現在使われていない奇数・偶数・先頭ページ用の設定も含めて保存されたまま残っていることがあるため、社名や「社外秘」などの文字が古い設定に残っていないか確認する目安にしてください。</p>
+    <h3>Q. 「ピボットテーブルのキャッシュ」とは何ですか？</h3>
+    <p>A. ピボットテーブルは、元になった表のデータを「キャッシュ」としてファイル内部に複製して保存します。このキャッシュは、元の表の行を削除したり、元の表自体を削除したりしても、ピボットテーブルを更新しない限りファイルの中に残り続けます。このツールはキャッシュの件数（レコード数）とその元データの範囲を表示します。件数が0より大きい場合、元データを削除したつもりでもファイル内に値が残っている可能性があります。</p>
     <h3>Q. Excel自体の「ドキュメント検査」（ファイル→情報→問題のチェック）と何が違いますか？</h3>
-    <p>A. Excelの「ドキュメント検査」はWindows版のみの機能で、検査結果は項目ごとに別々のダイアログで表示され、削除も検査の流れの中でしかできません。このツールはブラウザだけで完結し（Mac・Windows・Chromebookを問わず使えます）、7項目を1画面で一覧表示し、該当があれば実際に変更できる専用ツールへ直接進めます。削除自体はこのツールでは行わず、各専用ツールに任せる設計です。</p>
+    <p>A. Excelの「ドキュメント検査」はWindows版のみの機能で、検査結果は項目ごとに別々のダイアログで表示され、削除も検査の流れの中でしかできません。このツールはブラウザだけで完結し（Mac・Windows・Chromebookを問わず使えます）、9項目を1画面で一覧表示し、該当があれば実際に変更できる専用ツールへ直接進めます。削除自体はこのツールでは行わず、各専用ツールに任せる設計です。</p>
     <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
     <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
     <h3>Q. 対応しているファイル形式は？</h3>
@@ -114,7 +118,7 @@ html[lang=en] .en-only{display:block}
     <h2>How to use &amp; FAQ</h2>
     <ol>
       <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one (several files at once are fine too).</li>
-      <li>Seven checks are run (hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, invisible-looking text), each showing a count and a breakdown.</li>
+      <li>Nine checks are run (hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, invisible-looking text, header/footer text, leftover PivotTable cache data), each showing a count and a breakdown.</li>
       <li>Any check with a hit shows a link to the dedicated tool that can inspect or remove it.</li>
       <li>Click "Export result as CSV" to save just the summary.</li>
     </ol>
@@ -124,8 +128,12 @@ html[lang=en] .en-only{display:block}
     <p>A. Right-click-hiding a row or column only hides it on screen — the cell values stay saved inside the file. If someone unhides those rows/columns after you send the file, whatever you thought was hidden is visible again. This tool counts how many hidden rows/columns actually contain a value and which sheets they're in (it does not list the actual cell contents, only counts and sheet names).</p>
     <h3>Q. How does it detect "invisible-looking text"?</h3>
     <p>A. Only cells where the font color and the cell's background (fill) color are both explicitly set to the same specific color (e.g. white text on a white fill, or any matching pair) are flagged. Excel's theme colors and "Automatic" color are not resolved, so some visually-hidden cases won't be caught. This is a conservative check, meant as a starting point, not a guarantee.</p>
+    <h3>Q. How does it check "header/footer text"?</h3>
+    <p>A. It extracts the literal text stored in each sheet's header/footer (leaving out insert codes like page number or date), including the odd/even/first-page variants that aren't currently in use. Leftover company names or "Confidential" labels from an old template can sit there unnoticed, since this is easy to miss in Excel's own editing view.</p>
+    <h3>Q. What is "leftover PivotTable cache data"?</h3>
+    <p>A. A PivotTable keeps its own copy of the source data inside the file, called a cache. That cache stays in the file — even after you delete rows from, or entirely delete, the original source table — until the PivotTable is refreshed. This check reports the cached record count and the source range for each cache; a count above zero means the file may still hold values you thought were deleted.</p>
     <h3>Q. How is this different from Excel's own "Document Inspector"?</h3>
-    <p>A. Excel's Document Inspector is Windows-only, shows each category in its own separate dialog, and only lets you remove things from inside that same flow. This tool works in any browser (Mac, Windows, Chromebook), lists all seven checks on one screen, and links straight to a dedicated tool when you want to actually change something — it does not remove anything itself.</p>
+    <p>A. Excel's Document Inspector is Windows-only, shows each category in its own separate dialog, and only lets you remove things from inside that same flow. This tool works in any browser (Mac, Windows, Chromebook), lists all nine checks on one screen, and links straight to a dedicated tool when you want to actually change something — it does not remove anything itself.</p>
     <h3>Q. Is it safe to use this on my files?</h3>
     <p>A. Yes. Files are never uploaded to a server — everything is read inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
     <h3>Q. Which file formats are supported?</h3>
@@ -157,7 +165,9 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"このツールはファイルを書き換えたり、まとめて削除したりできますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。実際に変更したい場合は各項目のリンク先の専用ツールを利用します。"}},
     {"@type":"Question","name":"「非表示の行・列にある値」とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"行・列を非表示にしても値自体は保存されたまま残っています。このツールは非表示の行・列の中に実際に値が入っているセルの数とシート名を数えて知らせます。"}},
     {"@type":"Question","name":"「白文字など背景と同化した書式のセル」はどうやって判定していますか？","acceptedAnswer":{"@type":"Answer","text":"文字の色と背景色がどちらも具体的な色として明示的に同じ値に設定されている場合だけを検出します。テーマ色や自動設定色までは解決しないため、確認の目安としてご利用ください。"}},
-    {"@type":"Question","name":"Excelの「ドキュメント検査」と何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"ドキュメント検査はWindows版のみの機能で結果が別々のダイアログに分かれます。このツールはブラウザだけで完結し、7項目を1画面で一覧表示して該当する専用ツールへ案内します。"}},
+    {"@type":"Question","name":"「ヘッダー・フッターの文字」はどうやって調べていますか？","acceptedAnswer":{"@type":"Answer","text":"各シートに保存されているヘッダー・フッターの実際の文字（ページ番号などの差し込みコードを除く）を取り出します。現在使われていない設定も含めて残っていることがあるため、社名などの文字が古い設定に残っていないか確認する目安にできます。"}},
+    {"@type":"Question","name":"「ピボットテーブルのキャッシュ」とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"ピボットテーブルは元データをキャッシュとしてファイル内に複製して保存します。このキャッシュは、元データを削除してもピボットテーブルを更新しない限り残り続けます。このツールはキャッシュの件数と元データの範囲を表示します。"}},
+    {"@type":"Question","name":"Excelの「ドキュメント検査」と何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"ドキュメント検査はWindows版のみの機能で結果が別々のダイアログに分かれます。このツールはブラウザだけで完結し、9項目を1画面で一覧表示して該当する専用ツールへ案内します。"}},
     {"@type":"Question","name":"対応しているファイル形式は？","acceptedAnswer":{"@type":"Answer","text":"Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式やパスワード保護されたファイルは読み込めません。"}}
   ]
 }
@@ -355,6 +365,61 @@ function parseInvisibleStyleSet(stylesXml){
 }
 
 /* =====================================================================
+   headerFooter text: strip Excel's &L/&C/&R section markers and insert
+   codes (page number, date, font, color, ...), keeping only the literal
+   text actually typed into the header/footer.
+   ===================================================================== */
+function stripHeaderFooterCodes(raw){
+  if(!raw) return "";
+  var s=raw;
+  s=s.replace(/&&/g,"\u0001AMP\u0001");
+  s=s.replace(/&K[0-9A-Fa-f]{6}/g,"");
+  s=s.replace(/&"[^"]*"/g,"");
+  s=s.replace(/&\d+/g,"");
+  s=s.replace(/&[LCRPNDTFAZGBIUESOXYH]/g,"");
+  s=s.replace(/\u0001AMP\u0001/g,"&");
+  return s;
+}
+function splitHeaderFooterSections(raw){
+  var parts={L:"",C:"",R:""};
+  var markers=[], re=/&[LCR]/g, mm;
+  while((mm=re.exec(raw))){ markers.push({idx:mm.index, key:mm[0][1]}); }
+  if(!markers.length){ parts.C=raw; }
+  else {
+    if(markers[0].idx>0) parts.L+=raw.slice(0,markers[0].idx);
+    for(var i=0;i<markers.length;i++){
+      var start=markers[i].idx+2;
+      var end=i+1<markers.length?markers[i+1].idx:raw.length;
+      parts[markers[i].key]+=raw.slice(start,end);
+    }
+  }
+  parts.L=stripHeaderFooterCodes(parts.L).trim();
+  parts.C=stripHeaderFooterCodes(parts.C).trim();
+  parts.R=stripHeaderFooterCodes(parts.R).trim();
+  return parts;
+}
+function joinHeaderFooterText(parts){
+  var out=[];
+  if(parts.L) out.push(parts.L);
+  if(parts.C) out.push(parts.C);
+  if(parts.R) out.push(parts.R);
+  return out.join(" / ");
+}
+var HF_PARTS=[
+  {tag:"oddHeader", ja:"ヘッダー", en:"Header"},
+  {tag:"oddFooter", ja:"フッター", en:"Footer"},
+  {tag:"evenHeader", ja:"偶数ページのヘッダー", en:"Header (even pages)"},
+  {tag:"evenFooter", ja:"偶数ページのフッター", en:"Footer (even pages)"},
+  {tag:"firstHeader", ja:"先頭ページのヘッダー", en:"Header (first page)"},
+  {tag:"firstFooter", ja:"先頭ページのフッター", en:"Footer (first page)"}
+];
+var PIVOT_SRC_LABEL={
+  external:{ja:"外部データ接続",en:"External data connection"},
+  consolidation:{ja:"複数範囲の統合",en:"Multiple consolidation ranges"},
+  scenario:{ja:"シナリオ",en:"Scenario"}
+};
+
+/* =====================================================================
    Main per-file scan.
    ===================================================================== */
 async function parseXlsxKakure(bytes){
@@ -380,6 +445,7 @@ async function parseXlsxKakure(bytes){
   var hiddenValueTotal=0, hiddenValueBySheet=[];
   var invisTotal=0, invisBySheet=[];
   var commentTotal=0, commentBySheet=[];
+  var headerFooterList=[];
 
   sheets.forEach(function(sh){
     var xml=files[sh.path];
@@ -449,6 +515,17 @@ async function parseXlsxKakure(bytes){
     var cCount=Object.keys(refsWithComments).length;
     commentTotal+=cCount;
     if(cCount>0) commentBySheet.push({sheet:sh.name,count:cCount});
+
+    var hfBlock=findTags(xml,"headerFooter")[0];
+    if(hfBlock && !hfBlock.selfClose){
+      HF_PARTS.forEach(function(p){
+        var tags=findTags(hfBlock.inner,p.tag);
+        if(!tags.length) return;
+        var raw=decodeXmlEntities(tags[0].inner||"");
+        var text=joinHeaderFooterText(splitHeaderFooterSections(raw));
+        if(text) headerFooterList.push({sheet:sh.name, part:p, text:text});
+      });
+    }
   });
 
   var dnBlock=findTags(workbookXml,"definedNames")[0];
@@ -458,6 +535,39 @@ async function parseXlsxKakure(bytes){
 
   var extBlock=findTags(workbookXml,"externalReferences")[0];
   var extCount=extBlock&&!extBlock.selfClose?findTags(extBlock.inner,"externalReference").length:0;
+
+  var pivotCachesList=[];
+  var pivotCachesBlock=findTags(workbookXml,"pivotCaches")[0];
+  var pivotCacheEntries=pivotCachesBlock&&!pivotCachesBlock.selfClose?findTags(pivotCachesBlock.inner,"pivotCache"):[];
+  pivotCacheEntries.forEach(function(pc){
+    var rid=pc.attrs["r:id"]||pc.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    var defPath=/^pivotCache\//.test(target)?("xl/"+target):("xl/pivotCache/"+target.replace(/^.*pivotCache\//,""));
+    var defXml=files[defPath];
+    if(!defXml) return;
+    var srcBlock=findTags(defXml,"cacheSource")[0];
+    var srcType=srcBlock?(srcBlock.attrs.type||"worksheet"):"worksheet";
+    var srcLabel="";
+    if(srcBlock && !srcBlock.selfClose){
+      var wsSrc=findTags(srcBlock.inner,"worksheetSource")[0];
+      if(wsSrc){ srcLabel=wsSrc.attrs.sheet?(wsSrc.attrs.sheet+"!"+(wsSrc.attrs.ref||"")):(wsSrc.attrs.name||""); }
+    }
+    var defRels=files[relsPathFor(defPath)]||"";
+    var recordsPath=null;
+    findTags(defRels,"Relationship").forEach(function(r){
+      if(/\/pivotCacheRecords$/.test(r.attrs.Type||"")) recordsPath=resolveRelPath(defPath,r.attrs.Target||"");
+    });
+    var recordCount=0;
+    if(recordsPath && files[recordsPath]){
+      var recBlock=findTags(files[recordsPath],"pivotCacheRecords")[0];
+      if(recBlock){
+        var cnt=parseInt(recBlock.attrs.count,10);
+        recordCount=!isNaN(cnt)?cnt:(recBlock.selfClose?0:findTags(recBlock.inner,"r").length);
+      }
+    }
+    pivotCachesList.push({srcType:srcType, srcLabel:srcLabel, recordCount:recordCount});
+  });
+  var pivotRecordTotal=pivotCachesList.reduce(function(s,p){return s+p.recordCount;},0);
 
   var core=files["docProps/core.xml"]||"", app=files["docProps/app.xml"]||"";
   var creatorTag=findTags(core,"dc:creator")[0], lastModTag=findTags(core,"cp:lastModifiedBy")[0], companyTag=findTags(app,"Company")[0];
@@ -473,7 +583,9 @@ async function parseXlsxKakure(bytes){
     commentTotal:commentTotal, commentBySheet:commentBySheet,
     dnUserCount:dnUser.length, dnHiddenCount:dnHidden.length,
     extCount:extCount,
-    creator:creator, lastModifiedBy:lastModifiedBy, company:company
+    creator:creator, lastModifiedBy:lastModifiedBy, company:company,
+    headerFooterList:headerFooterList,
+    pivotCaches:pivotCachesList, pivotRecordTotal:pivotRecordTotal
   };
 }
 
@@ -518,39 +630,47 @@ var RELATED=[
   {href:"../xlsx-ihan/",ja:"「無効なデータ」の丸印は1シートずつ：入力規則に違反した値を全シート一括で一覧化",jaDesc:"リスト（プルダウン）や数値・文字数の範囲に実際に違反している値が入ったセルだけを、全シート・複数ファイル横断で一覧化してCSV出力（読み取り専用）。カスタム数式や複雑な参照は安全のため対象外と表示。",en:"Excel's Circle Invalid Data only works one sheet at a time — list every rule-violating cell across all sheets at once",enDesc:"Lists only the cells whose value actually violates its data-validation rule (list, numeric or text-length range) across every sheet and file, exportable as CSV (read-only). Custom-formula and complex-reference rules are safely excluded and flagged as not checked."}];
 var T={
  ja:{title:"社外に送る前に確認：Excelの「隠れた情報」一括チェック",
-  sub:"Excel(.xlsx/.xlsm)ファイルを社外に送る前に、Windows版Excelの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセルを1画面で一覧化し、該当があれば専用ツールへ案内します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。",
+  sub:"Excel(.xlsx/.xlsm)ファイルを社外に送る前に、Windows版Excelの「ドキュメント検査」は結果を一覧でまとめて見せてくれません。非表示・完全非表示シート、非表示の行や列に残った値、コメント・メモ、作成者・最終更新者・会社名、外部ファイルへのリンク、名前定義、白文字など背景と同化した書式のセル、ヘッダー・フッターの文字、ピボットテーブルのキャッシュ（元データを消しても残る値）を1画面で一覧化し、該当があれば専用ツールへ案内します。読み取り専用で、ファイルは書き換えません。サーバーには送信されません。",
   dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
   dropzoneHint:"複数ファイルを一度に追加できます。どこにも送信されません。ファイルは書き換えません（診断のみ）。",
   fileListHeading:"追加したファイル",
   removeBtn:"削除", csvBtn:"結果をCSV出力", loadingLabel:"読み込み中…",
   errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
   feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。",
-  bannerOk:"7項目とも、特に気になる点は見つかりませんでした。",
-  bannerWarn:function(n){return "7項目中 "+n+"項目で、確認をおすすめする内容が見つかりました。"},
+  bannerOk:"9項目とも、特に気になる点は見つかりませんでした。",
+  bannerWarn:function(n){return "9項目中 "+n+"項目で、確認をおすすめする内容が見つかりました。"},
   cat1:"非表示・完全非表示シート", cat2:"非表示の行・列にある値", cat3:"コメント・メモ",
   cat4:"作成者・最終更新者・会社名", cat5:"外部リンク（別ファイルへの参照）", cat6:"名前定義",
   cat7:"白文字など背景と同化した書式のセル",
-  none:"見つかりませんでした", sheetsLabel:"件のシート：", cellsLabel:"件のセル：",
+  cat8:"ヘッダー・フッターの文字", cat9:"ピボットテーブルのキャッシュ（元データを消しても残る値）",
+  none:"見つかりませんでした", sheetsLabel:"件のシート：", cellsLabel:"件のセル：", recordsLabel:"件",
   link1:"→ シートの表示状態を変更する", link2:"→ 再表示・内容削除する", link3:"→ 一覧で確認する（印刷・CSV対応）", link4:"→ まとめて消す",
   link5:"→ 発生源を調べる", link6:"→ 点検・削除する",
-  noToolHint7:"Excel上でセルを選び、ホームタブのフォントの色を確認してください。"},
+  noToolHint7:"Excel上でセルを選び、ホームタブのフォントの色を確認してください。",
+  noToolHint8:"Excelの［挿入］タブ→［ヘッダーとフッター］から確認・編集してください。",
+  noToolHint9:"ピボットテーブルを選び、［ピボットテーブル分析］タブ→［更新］で最新の状態に更新してください（更新後も設定によりキャッシュが残る場合があります）。",
+  unknownRange:"（範囲不明）"},
  en:{title:"Before sending outside your company: check an Excel file for “hidden” information",
-  sub:"Excel's own Document Inspector is Windows-only and never shows every category on one screen. This checks for hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, and invisible-looking text — all at once, read-only, with a link to a dedicated tool wherever something is found. Nothing is uploaded.",
+  sub:"Excel's own Document Inspector is Windows-only and never shows every category on one screen. This checks for hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, invisible-looking text, header/footer text and leftover PivotTable cache data — all at once, read-only, with a link to a dedicated tool wherever something is found. Nothing is uploaded.",
   dropzoneText:"Drag and drop an Excel (.xlsx) file here, or click to choose one",
   dropzoneHint:"You can add several files at once. Nothing is ever uploaded. Read-only — files are never rewritten.",
   fileListHeading:"Added files",
   removeBtn:"Remove", csvBtn:"Export result as CSV", loadingLabel:"Loading…",
   errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
   feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser.",
-  bannerOk:"Nothing stood out across all 7 checks.",
-  bannerWarn:function(n){return n+" of 7 checks found something worth a look.";},
+  bannerOk:"Nothing stood out across all 9 checks.",
+  bannerWarn:function(n){return n+" of 9 checks found something worth a look.";},
   cat1:"Hidden / very-hidden sheets", cat2:"Hidden rows/columns with values", cat3:"Comments / notes",
   cat4:"Creator / last-modified-by / company", cat5:"External links (other workbook references)", cat6:"Defined names",
   cat7:"Invisible-looking text (same font/background color)",
-  none:"None found", sheetsLabel:"sheet(s): ", cellsLabel:"cell(s): ",
+  cat8:"Header / footer text", cat9:"Leftover PivotTable cache data",
+  none:"None found", sheetsLabel:"sheet(s): ", cellsLabel:"cell(s): ", recordsLabel:" record(s)",
   link1:"→ Change sheet visibility", link2:"→ Unhide / clear contents", link3:"→ View list (print/CSV)", link4:"→ Strip them",
   link5:"→ Find where they're used", link6:"→ Inspect / remove",
-  noToolHint7:"Select the cell in Excel and check its font color on the Home tab."}
+  noToolHint7:"Select the cell in Excel and check its font color on the Home tab.",
+  noToolHint8:"Check and edit it from Excel's Insert tab → Header & Footer.",
+  noToolHint9:"Select the PivotTable, then PivotTable Analyze → Refresh (the cache may still remain afterward, depending on its settings).",
+  unknownRange:"(unknown range)"}
 };
 var lang="ja";
 try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
@@ -632,6 +752,25 @@ function renderResult(f){
   var d7 = iv ? (r.invisTotal+esc(t.cellsLabel)+" "+r.invisBySheet.map(function(x){return escTrunc(x.sheet)+"："+x.count;}).join("、")) : esc(t.none);
   h+=catBlock(t.cat7, iv, d7, iv?("<span class='catDetail'>"+esc(t.noToolHint7)+"</span>"):"");
 
+  // 8. header/footer text
+  var hf=r.headerFooterList.length>0;
+  if(hf) issues++;
+  var d8 = hf ? r.headerFooterList.map(function(x){
+    var partLabel=lang==="ja"?x.part.ja:x.part.en;
+    return "<strong>"+escTrunc(x.sheet)+" - "+esc(partLabel)+"</strong>："+escTrunc(x.text,60);
+  }).join("<br>") : esc(t.none);
+  h+=catBlock(t.cat8, hf, d8, hf?("<span class='catDetail'>"+esc(t.noToolHint8)+"</span>"):"");
+
+  // 9. pivot cache
+  var pv=r.pivotRecordTotal>0;
+  if(pv) issues++;
+  var pvPrefix = r.pivotRecordTotal+esc(t.recordsLabel)+(lang==="ja"?"（"+r.pivotCaches.length+"個のキャッシュ）：":" ("+r.pivotCaches.length+" cache(s)): ");
+  var d9 = pv ? pvPrefix+r.pivotCaches.map(function(x){
+    var label=x.srcType==="worksheet"?(x.srcLabel||t.unknownRange):((PIVOT_SRC_LABEL[x.srcType]||{})[lang]||x.srcType);
+    return escTrunc(label)+"："+x.recordCount+esc(t.recordsLabel);
+  }).join("、") : esc(t.none);
+  h+=catBlock(t.cat9, pv, d9, pv?("<span class='catDetail'>"+esc(t.noToolHint9)+"</span>"):"");
+
   var bannerCls=issues>0?"warn":"ok";
   var bannerText=issues>0?t.bannerWarn(issues):t.bannerOk;
   var out="<div class='summaryBanner "+bannerCls+"'>"+esc(bannerText)+"</div>";
@@ -681,6 +820,8 @@ function downloadCsv(id){
   rows.push([t.cat5, r.extCount, ""]);
   rows.push([t.cat6, r.dnUserCount, (lang==="ja"?"うち非表示:":"hidden:")+r.dnHiddenCount]);
   rows.push([t.cat7, r.invisTotal, r.invisBySheet.map(function(x){return x.sheet+":"+x.count;}).join(" / ")]);
+  rows.push([t.cat8, r.headerFooterList.length, r.headerFooterList.map(function(x){return x.sheet+"/"+(lang==="ja"?x.part.ja:x.part.en)+":"+x.text;}).join(" / ")]);
+  rows.push([t.cat9, r.pivotRecordTotal, r.pivotCaches.map(function(x){return (x.srcLabel||x.srcType)+":"+x.recordCount;}).join(" / ")]);
   var csvText=serializeCSV(rows);
   var encoded=new TextEncoder().encode(csvText);
   var bytes=new Uint8Array(encoded.length+3);
