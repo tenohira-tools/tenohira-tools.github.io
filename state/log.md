@@ -506,3 +506,11 @@
 - 設計：ヘッダー/フッターは&L&C&R等の差し込みコードを除いた文字だけ抽出。ピボットは元データ削除後も残るキャッシュの件数・範囲を表示（読み取り専用）。
 - 検証：Node.js単体テスト、Pythonで手組みしたpivotCache付き実ファイルでの統合テスト、Playwright（ja/en・390/1280px）で警告・OKバナー・CSV出力・横スクロール無し・JSエラー無しを確認。
 - 次回：backlog残り2件（ピボットキャッシュ削除・CSV改行対策）。
+
+## 2026-10-28 実験52
+- 計測：GoatCounter取得成功（累計9、個別46ページ全て0、前回から変化なし）。health.md（47ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog旧1番「ピボットキャッシュの一覧・削除」を実施。フィルターに古い項目が残る症状を訴求に、xlsx-pivot-kesuを公開。
+- 設計：選んだキャッシュのレコード・sharedItemsだけを空にし、missingItemsLimit=0（保持項目なし）も設定可能。他の全パートは不変。
+- 検証：Node.js単体テスト、Pythonで手組みした実ファイルでparse→build→他パートのバイト一致をopenpyxlで確認、Playwright（ja/en・390/1280px）で選択・書き出し・CSV・JSエラー無しを確認。
+- 相互リンクはexcel-trouble・xlsx-kakure・xlsx-omoiの3ページに絞り双方向を確認。docs/index.htmlにも追加、excel-troubleの案内数を28→29に更新。
+- 次回：xlsx-pivot-kesuの初回閲覧数を記録。backlogは残り1件（CSV改行対策、着手前確認検索が必要）。

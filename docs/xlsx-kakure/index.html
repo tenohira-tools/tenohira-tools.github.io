@@ -98,7 +98,7 @@ html[lang=en] .en-only{display:block}
       <li>一覧だけCSVで保存したい場合は「結果をCSV出力」を押します。</li>
     </ol>
     <h3>Q. このツールはファイルを書き換えたり、まとめて削除したりできますか？</h3>
-    <p>A. いいえ。このツールは読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。見つかった項目を実際に変更したい場合は、各項目に表示されるリンク先の専用ツール（非表示シートの変更は<a href="../xlsx-saihyouji/">シート再表示ツール</a>、コメントの一覧は<a href="../xlsx-comment/">コメント一覧化ツール</a>、作成者名などの削除は<a href="../sakusha-kesu/">作成者名削除ツール</a>、外部リンクの調査は<a href="../xlsx-link/">外部リンク調査ツール</a>、名前定義の削除は<a href="../xlsx-namae/">名前定義点検ツール</a>）をご利用ください。</p>
+    <p>A. いいえ。このツールは読み取り専用の一覧化・診断だけを行い、ファイルは一切書き換えません。見つかった項目を実際に変更したい場合は、各項目に表示されるリンク先の専用ツール（非表示シートの変更は<a href="../xlsx-saihyouji/">シート再表示ツール</a>、コメントの一覧は<a href="../xlsx-comment/">コメント一覧化ツール</a>、作成者名などの削除は<a href="../sakusha-kesu/">作成者名削除ツール</a>、外部リンクの調査は<a href="../xlsx-link/">外部リンク調査ツール</a>、名前定義の削除は<a href="../xlsx-namae/">名前定義点検ツール</a>、ピボットキャッシュを空にするのは<a href="../xlsx-pivot-kesu/">ピボットキャッシュ削除ツール</a>）をご利用ください。</p>
     <h3>Q. 「非表示の行・列にある値」とは何ですか？</h3>
     <p>A. 行や列を右クリックして「非表示」にした場合、Excelの画面上では消えて見えますが、セルの値自体は残ったままファイル内に保存されています。社外に送ったファイルで非表示の行・列を「再表示」されると、隠したはずの数値や文字列がそのまま見えてしまいます。このツールは非表示の行・列の範囲と、その中に実際に値が入っているセルの数を数えて知らせます（内容は一覧に出さず、件数とシート名だけを表示します）。</p>
     <h3>Q. 「白文字など背景と同化した書式のセル」はどうやって判定していますか？</h3>
@@ -123,7 +123,7 @@ html[lang=en] .en-only{display:block}
       <li>Click "Export result as CSV" to save just the summary.</li>
     </ol>
     <h3>Q. Can this tool rewrite or bulk-remove anything?</h3>
-    <p>A. No. This is a read-only inspection tool — it never rewrites your file. To actually change something it finds, follow the link to the matching dedicated tool: <a href="../xlsx-saihyouji/">hidden-sheet tool</a> for sheet visibility, <a href="../xlsx-comment/">comment listing tool</a> for comments, <a href="../sakusha-kesu/">author-name scrubber</a> for creator/company metadata, <a href="../xlsx-link/">external-link finder</a> for external references, and <a href="../xlsx-namae/">defined-name tool</a> for defined names.</p>
+    <p>A. No. This is a read-only inspection tool — it never rewrites your file. To actually change something it finds, follow the link to the matching dedicated tool: <a href="../xlsx-saihyouji/">hidden-sheet tool</a> for sheet visibility, <a href="../xlsx-comment/">comment listing tool</a> for comments, <a href="../sakusha-kesu/">author-name scrubber</a> for creator/company metadata, <a href="../xlsx-link/">external-link finder</a> for external references, and <a href="../xlsx-namae/">defined-name tool</a> for defined names, and <a href="../xlsx-pivot-kesu/">PivotCache cleanup tool</a> for leftover PivotTable cache data.</p>
     <h3>Q. What does "hidden rows/columns with values" mean?</h3>
     <p>A. Right-click-hiding a row or column only hides it on screen — the cell values stay saved inside the file. If someone unhides those rows/columns after you send the file, whatever you thought was hidden is visible again. This tool counts how many hidden rows/columns actually contain a value and which sheets they're in (it does not list the actual cell contents, only counts and sheet names).</p>
     <h3>Q. How does it detect "invisible-looking text"?</h3>
@@ -601,6 +601,7 @@ function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).
 var STATE_LABEL={ja:{visible:"表示",hidden:"非表示",veryHidden:"完全非表示"},en:{visible:"Visible",hidden:"Hidden",veryHidden:"Very hidden"}};
 var RELATED=[
   {href:"../excel-trouble/",ja:"エクセルのトラブル解決ガイド",jaDesc:"「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全25ツールを探す。",en:"Excel Troubleshooting Guide",enDesc:"Find the right tool among all 25 by symptom: heavy, save errors, error values, links, printing."},
+  {href:"../xlsx-pivot-kesu/",ja:"ピボットテーブルのフィルターに古い項目が残るときの、キャッシュ削除ツール",jaDesc:"ファイル内の全ピボットキャッシュを解析し、残っているレコード数・ユニーク項目数を一覧表示。選んだキャッシュを空にした新しいファイルを書き出す。",en:"PivotTable filter showing deleted items? Clear the leftover PivotCache",enDesc:"List every PivotCache's leftover record and unique-item counts, and build a copy with the ones you choose emptied out."},
   {href:"../xlsx-saihyouji/",ja:"シートの「再表示」に出てこないときの対策",jaDesc:"非表示・完全非表示（veryHidden）シートを一覧化し、まとめて表示に戻す。",en:"Sheet missing from the Unhide dialog?",enDesc:"List every sheet's visibility (visible/hidden/very hidden) and bulk-change it."},
   {href:"../xlsx-comment/",ja:"シートのあちこちに散らばったコメント・メモを全部一覧に",jaDesc:"従来の「メモ」も最近の「スレッド形式」コメントも全シート横断で一覧化。",en:"List every cell comment and note across every sheet",enDesc:"Covers both the classic note and the newer threaded comment."},
   {href:"../sakusha-kesu/",ja:"社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す",jaDesc:"Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。",en:"Strip creator / last-modified-by / comment-author names before sharing",enDesc:"Clean up Excel, Word and PowerPoint files at once before sending them outside your company."},
@@ -645,10 +646,9 @@ var T={
   cat8:"ヘッダー・フッターの文字", cat9:"ピボットテーブルのキャッシュ（元データを消しても残る値）",
   none:"見つかりませんでした", sheetsLabel:"件のシート：", cellsLabel:"件のセル：", recordsLabel:"件",
   link1:"→ シートの表示状態を変更する", link2:"→ 再表示・内容削除する", link3:"→ 一覧で確認する（印刷・CSV対応）", link4:"→ まとめて消す",
-  link5:"→ 発生源を調べる", link6:"→ 点検・削除する",
+  link5:"→ 発生源を調べる", link6:"→ 点検・削除する", link9:"→ キャッシュを空にする",
   noToolHint7:"Excel上でセルを選び、ホームタブのフォントの色を確認してください。",
   noToolHint8:"Excelの［挿入］タブ→［ヘッダーとフッター］から確認・編集してください。",
-  noToolHint9:"ピボットテーブルを選び、［ピボットテーブル分析］タブ→［更新］で最新の状態に更新してください（更新後も設定によりキャッシュが残る場合があります）。",
   unknownRange:"（範囲不明）"},
  en:{title:"Before sending outside your company: check an Excel file for “hidden” information",
   sub:"Excel's own Document Inspector is Windows-only and never shows every category on one screen. This checks for hidden/very-hidden sheets, hidden rows/columns with values, comments/notes, creator/last-modified-by/company, external links, defined names, invisible-looking text, header/footer text and leftover PivotTable cache data — all at once, read-only, with a link to a dedicated tool wherever something is found. Nothing is uploaded.",
@@ -666,10 +666,9 @@ var T={
   cat8:"Header / footer text", cat9:"Leftover PivotTable cache data",
   none:"None found", sheetsLabel:"sheet(s): ", cellsLabel:"cell(s): ", recordsLabel:" record(s)",
   link1:"→ Change sheet visibility", link2:"→ Unhide / clear contents", link3:"→ View list (print/CSV)", link4:"→ Strip them",
-  link5:"→ Find where they're used", link6:"→ Inspect / remove",
+  link5:"→ Find where they're used", link6:"→ Inspect / remove", link9:"→ Empty the cache",
   noToolHint7:"Select the cell in Excel and check its font color on the Home tab.",
   noToolHint8:"Check and edit it from Excel's Insert tab → Header & Footer.",
-  noToolHint9:"Select the PivotTable, then PivotTable Analyze → Refresh (the cache may still remain afterward, depending on its settings).",
   unknownRange:"(unknown range)"}
 };
 var lang="ja";
@@ -769,7 +768,7 @@ function renderResult(f){
     var label=x.srcType==="worksheet"?(x.srcLabel||t.unknownRange):((PIVOT_SRC_LABEL[x.srcType]||{})[lang]||x.srcType);
     return escTrunc(label)+"："+x.recordCount+esc(t.recordsLabel);
   }).join("、") : esc(t.none);
-  h+=catBlock(t.cat9, pv, d9, pv?("<span class='catDetail'>"+esc(t.noToolHint9)+"</span>"):"");
+  h+=catBlock(t.cat9, pv, d9, pv?("<a href='../xlsx-pivot-kesu/'>"+esc(t.link9)+"</a>"):"");
 
   var bannerCls=issues>0?"warn":"ok";
   var bannerText=issues>0?t.bannerWarn(issues):t.bannerOk;

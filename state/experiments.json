@@ -2022,6 +2022,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "xlsx-pivot-kesu",
+      "title": "ピボットテーブルのフィルターに古い項目が残るときの、キャッシュ削除ツール",
+      "url": "https://tenohira-tools.github.io/xlsx-pivot-kesu/",
+      "published": "2026-10-28",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "backlog-ordered",
+      "why": "backlog旧1番。xlsx-kakureが検出するピボットキャッシュ（元データを消しても残る値）の削除先。実用上の主な症状は「フィルターのドロップダウンに削除済みの古い項目が残る」こと（missingItemsLimitが既定の自動のため）で、これを前面の訴求にしつつ、裏の個人情報・数値の残留という本質も説明。選んだキャッシュのpivotCacheRecords・各cacheFieldのsharedItemsだけを空にし、missingItemsLimit=0（保持する項目の数：なし）も設定可能。ピボットテーブルのレイアウト・画面表示（シート側に別途保存）やそれ以外の全パートは一切変更しない安全設計。",
+      "metrics": [
+        {
+          "date": "2026-10-28T20:00:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {

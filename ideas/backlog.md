@@ -7,12 +7,13 @@
 
 並べ方の根拠：5週目も個別42ページは閲覧0（全体+1・トップのみ）で、伸びた分野はまだ無い。Excel細目は25ページで十分なため、①検索語の大きい「複数ファイル横断」系②「社外に渡す前」をWord・PowerPointへ広げる③既存ページの穴埋め、の順にした。2〜6は2026-10-24にWebSearchで確認済み（解決策がVBA・Windows用デスクトップソフト・手作業のみで、ブラウザ完結の無料ツールは見当たらない）。着手前の確認検索は2件まで。相互リンクはまとめページ＋関連3〜5ページだけ。xlsxを書き出すときはxlsx-style/xlsx-haniの圧縮付きbuildZipを使う。
 
-1. 新規：ピボットテーブルの元データを消したのにファイルに残っている：ピボットキャッシュの一覧・削除（2026-10-28にxlsx-kakureで検出が動くようになったので着手可。キャッシュ削除後はExcelで「更新」が必要になる点を明記）。
-2. 新規（要確認）：CSVのセル内改行で行がずれる・Excelで崩れるときに、セル内改行を削除または任意の文字に置換する。競合が多い可能性があるため、着手前の確認検索2件で無料のブラウザ完結ツールが既にあれば見送りに移す。
+1. 新規（要確認）：CSVのセル内改行で行がずれる・Excelで崩れるときに、セル内改行を削除または任意の文字に置換する。競合が多い可能性があるため、着手前の確認検索2件で無料のブラウザ完結ツールが既にあれば見送りに移す。
 
 （条件未充足のため保留：日本の住所英語変換＝競合多数／文字数カウンター＝AI時代の選び方に抵触しやすい／SNS向け画像切り抜き＝競合多数。差別化角度が見つかるまで着手しない）
 
 ### 実施済みの記録
+
+（2026-10-28実施済み：新規：ピボットテーブルの元データを消してもファイルに残る「ピボットキャッシュ」の削除ツール（xlsx-pivot-kesu）を公開。backlog旧1番。主な訴求は「フィルターのドロップダウンに削除済みの古い項目が残る」という実際の症状（Excelの「保持する項目の数」が既定の自動のため）。選んだキャッシュのpivotCacheRecords・各cacheFieldのsharedItemsだけを空にし、missingItemsLimit="0"（保持する項目の数：なし）も設定可能。どのピボットテーブルが使っているか（シート名・名前）も一覧表示。ピボットテーブルのレイアウトや画面表示（シート側に別途保存）、他の全パートは変更しない。xlsx-kakureのピボットキャッシュ検出結果から直接リンクするよう改修。検証：Node.js単体テスト（findTags/serializeTag/applySpans/computeItemCount）、Pythonのzipfileで手組みした実ファイル（ピボットテーブル1件・2フィールド・3レコード）でparsePivotCaches→buildCleanedXlsxを実行し、他の全パートがバイト単位で不変、対象2パートのみ空になることをopenpyxlで再読込して確認、Playwright（ja/en・390/1280px）でアップロード→選択→書き出し→CSV出力・横スクロール無し・JSエラー無しを確認。相互リンクはexcel-trouble・xlsx-kakure・xlsx-omoiの3ページに絞り双方向をgrepで確認。docs/index.htmlにも追加、excel-troubleの案内数表記を28→29に更新。）
 
 （2026-10-28実施済み：改善：xlsx-kakureに「ヘッダー・フッターの文字」と「ピボットテーブルのキャッシュ（元データを削除しても残る値）」の検出を追加。backlog旧1番。ヘッダー・フッターは各シートのheaderFooter要素（oddHeader/oddFooter/evenHeader/evenFooter/firstHeader/firstFooter）から、ページ番号・日付・フォント指定などの差し込みコード（&P &N &D &"フォント名" 等）を取り除いた実際の文字だけを抜き出して表示（現在使われていない奇数/偶数/先頭ページ設定も含む）。ピボットキャッシュはworkbook.xmlのpivotCaches→各pivotCacheDefinitionのcacheSource（元データのシート名・範囲、または外部データ/統合/シナリオの種別）と、関連するpivotCacheRecordsのcount属性からレコード件数を集計し、元データを削除してもキャッシュに残っている可能性を件数で示す（読み取り専用、削除は次のbacklog項目に委ねる）。7→9項目に増えたため、banner文言・about/FAQ・JSON-LD・docs/index.html・excel-troubleの案内文言も「9項目」に更新。検証：Node.js単体テスト（&L/&C/&R分割、&&のリテラル&化、&K色コード・フォント指定の除去）、Pythonのzipfileで手組みしたpivotCache一式（cacheSource・pivotCacheRecords）とheaderFooterを含む実ファイルでparseXlsxKakureを直接実行する統合テスト、Playwright（Chromiumヘッドレス、ja/en・390px/1280px幅）で警告ファイル・クリーンなファイルの両方をアップロードしバナーの「9項目」表記・新2項目の表示・CSV出力内容・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。）
 
