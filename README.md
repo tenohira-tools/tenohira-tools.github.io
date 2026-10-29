@@ -22,6 +22,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [社外に渡す前に確認：Wordの「隠れた情報」一括チェック（変更履歴・コメント・隠し文字・ヘッダーフッター）](https://tenohira-tools.github.io/docx-kakure/)
 - [エクセルが重い・保存できない・エラーが出るときの対策まとめ｜症状から探す29ツール](https://tenohira-tools.github.io/excel-trouble/)
 - [表記ゆれ・全角半角チェッカー（サーバ/サーバーなどを検出して統一）](https://tenohira-tools.github.io/hyoki-yure/)
+- [領収書のファイル名・まとめ方・経費精算で困ったときの対策まとめ｜症状から探す4ツール](https://tenohira-tools.github.io/keihi-trouble/)
 - [交通費精算書メーカー｜区間・金額を入力してその場で集計・印刷](https://tenohira-tools.github.io/kotsuhi-seisan/)
 - [社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除](https://tenohira-tools.github.io/pptx-kakure/)
 - [領収書まとめ台紙メーカー｜複数のレシート写真を1枚のPDFに整列](https://tenohira-tools.github.io/receipt-sheet/)
