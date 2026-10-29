@@ -514,3 +514,9 @@
 - 検証：Node.js単体テスト、Pythonで手組みした実ファイルでparse→build→他パートのバイト一致をopenpyxlで確認、Playwright（ja/en・390/1280px）で選択・書き出し・CSV・JSエラー無しを確認。
 - 相互リンクはexcel-trouble・xlsx-kakure・xlsx-omoiの3ページに絞り双方向を確認。docs/index.htmlにも追加、excel-troubleの案内数を28→29に更新。
 - 次回：xlsx-pivot-kesuの初回閲覧数を記録。backlogは残り1件（CSV改行対策、着手前確認検索が必要）。
+
+## 2026-10-29 実験53
+- 計測：GoatCounter取得成功。サイト全体累計9→10（+1）。/receipt-sheet/が公開以来初めて0→1に変化（個別ページで初の非ゼロ）。他48ページは0のまま。health.md（48ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：STRATEGY.mdの「閲覧が増え始めたページは新規作成より改善を優先」に従い、receipt-sheetを含む経理・事務書類4ツール（shohyo-rename/receipt-sheet/shorui-scan/kotsuhi-seisan）向けに、excel-trouble/csv-troubleと同型の症状別ガイド（keihi-trouble）を新設。
+- 検証：JSON-LD・HTML構文チェック、Playwright（ja/en・390/1280px）でkeihi-troubleと4ツール全てのJSエラー無し・横スクロール無しを確認。相互リンクは4ツール×keihi-trouble＋docs/index.htmlをgrepで双方向確認。
+- 次回：1件のみの変化のため継続監視。次回増加があればreceipt-sheetの使い勝手改善を、無ければbacklog最後の1件（CSV改行対策）に進む。
