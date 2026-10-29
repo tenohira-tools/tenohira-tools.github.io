@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>CSVのセル内改行で行がずれる・列が崩れるときの削除・置換ツール | てのひらツール</title>
+<meta name="description" content="CSVのセルの中に入った改行（Alt+Enterで入力した折り返しなど）が原因で、テキストエディタや他のツールに読み込むと行数がずれる・列が崩れるときに。CSVの引用符のルールを正しく解析してセル内の改行だけを検出し、削除または任意の文字（スペースなど）に置き換えた新しいCSVをダウンロードできます。本来の行の区切りはそのまま残ります。ファイルはサーバーに送信されません。When a line break inside a CSV cell makes rows look shifted or columns break in other tools, detect and fix only the in-cell breaks (not real row breaks), entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/csv-kaigyo/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--ok:#2f6f4f;--ok-bg:#e8f2ec;--brk:#c0392b;--brk-bg:#fbe9e7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--ok:#7cc39c;--ok-bg:#1f3328;--brk:#e08a7a;--brk-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+label{font-size:.92rem}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;max-width:100%}
+select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileInfo{font-size:.92rem;color:var(--muted);margin-top:10px}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.checkline{display:flex;align-items:center;gap:8px;margin-top:10px}
+.checkline input{width:auto;min-height:auto}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:120px}
+.stat .num{font-size:1.4rem;font-weight:700}
+.stat.ok .num{color:var(--ok)}
+.stat.warn .num{color:var(--brk)}
+.okBanner{padding:12px 14px;border-radius:10px;background:var(--ok-bg);color:var(--ok);font-weight:600}
+.replaceRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px}
+.replaceRow input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;width:9em}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.presets button{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:999px;padding:4px 12px;cursor:pointer}
+.presets button:hover{border-color:var(--accent);color:var(--accent)}
+.scroll{max-height:380px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.val{max-width:280px;word-break:break-all}
+.brk{color:var(--brk);background:var(--brk-bg);border-radius:3px;padding:0 2px;font-weight:700}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">CSVのセル内改行で行がずれる・列が崩れるときの削除・置換ツール</h1>
+    <p class="sub" data-i="sub">セルの中に改行（Alt+Enterで入力した折り返しなど）が入ったCSVを、テキストエディタで開いたり単純な行区切りで読み込んだりすると、行数が実際より増えて見えたり列がずれたりします。CSVの引用符のルールを正しく解析してセルの中の改行だけを検出し、削除または任意の文字に置き換えます。行と行を分ける本来の改行はそのまま残ります。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにCSVをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">CSV・TSV・テキストファイル対応。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/*" style="display:none">
+  <p id="fileInfo" aria-live="polite"></p>
+  <div class="checkline">
+    <input type="checkbox" id="headerCheck" checked>
+    <label for="headerCheck" data-i="headerLabel">1行目を見出し（ヘッダー）として扱う（列名の表示にのみ使用）</label>
+  </div>
+</section>
+
+<section class="card" id="encCard" style="display:none">
+  <h2 data-i="detectedLabel">検出した文字コード</h2>
+  <p id="encStatus" aria-live="polite"></p>
+  <div class="row">
+    <label for="encSelect" data-i="encSelectLabel">文字コードを指定（自動判定がおかしい場合に変更）</label>
+    <select id="encSelect">
+      <option value="utf-8">UTF-8</option>
+      <option value="shift_jis">Shift_JIS（CP932）</option>
+      <option value="euc-jp">EUC-JP</option>
+      <option value="iso-2022-jp">ISO-2022-JP（JIS）</option>
+    </select>
+  </div>
+  <div class="note" id="warnBox"></div>
+</section>
+
+<section class="card" id="scanCard" style="display:none">
+  <h2 data-i="scanHeading">検出結果</h2>
+  <div class="statGrid">
+    <div class="stat"><div class="num" id="statRows">0</div><div data-i="statRowsLabel">全体の行数</div></div>
+    <div class="stat warn"><div class="num" id="statCells">0</div><div data-i="statCellsLabel">改行が入っているセル</div></div>
+    <div class="stat warn"><div class="num" id="statBreaks">0</div><div data-i="statBreaksLabel">改行の合計数</div></div>
+  </div>
+  <p id="okBanner" class="okBanner" style="display:none" data-i="okBanner">このファイルのセルには改行は見つかりませんでした。そのままでも問題ありません。</p>
+  <div id="fixBox" style="display:none">
+    <div class="replaceRow">
+      <label for="replaceInput" data-i="replaceLabel">置き換える文字（空欄にすると完全に削除）</label>
+      <input type="text" id="replaceInput" value=" ">
+    </div>
+    <div class="presets" role="group" aria-label="置き換えのプリセット">
+      <button type="button" data-val=" " data-i="presetSpace">スペース</button>
+      <button type="button" data-val="" data-i="presetDelete">完全に削除</button>
+      <button type="button" data-val="/" data-i="presetSlash">／（スラッシュ）</button>
+      <button type="button" data-val="、" data-i="presetComma">、（読点）</button>
+    </div>
+    <p class="hint" data-i="replaceHint">連続した改行（空行）はまとめて1回だけ置き換えます。行と行を分ける本来の改行は対象にならず、そのまま残ります。</p>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th data-i="thRow">行</th><th data-i="thCol">列</th><th data-i="thCount">改行数</th><th data-i="thBefore">修正前</th><th data-i="thAfter">修正後</th>
+        </tr></thead>
+        <tbody id="listBody"></tbody>
+      </table>
+    </div>
+    <p class="hint" id="listNote"></p>
+  </div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="outputHeading">ダウンロード設定</h2>
+  <div class="checkline">
+    <input type="checkbox" id="bomCheck" checked>
+    <label for="bomCheck" data-i="bomLabel">BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）</label>
+  </div>
+  <p style="margin-top:16px"><button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">修正してCSVをダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にCSVファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>セルの中に改行が入っているセルが一覧表示されます。無ければ「改行は見つかりませんでした」と表示されます。</li>
+      <li>「置き換える文字」にスペースなど好きな文字を入れる（空欄なら完全に削除）と、一覧の「修正後」がその場で変わります。</li>
+      <li>内容を確認したら「修正してCSVをダウンロード」を押します。</li>
+    </ol>
+    <h3>Q. なぜセル内改行で行がずれるのですか？</h3>
+    <p>A. ExcelでセルにAlt+Enterで改行を入力してCSVとして保存すると、そのセルはダブルクォート（"）で囲まれ、改行は文字としてそのままセルの中に保存されます。これはCSVの正式な仕様ですが、1行＝1レコードだと単純に思い込んでいるテキストエディタや自作の行区切り処理で読み込むと、そのセルの中の改行が余分な行として数えられてしまい、行がずれて見えたり後続の列が崩れたりします。</p>
+    <h3>Q. 本来の行の区切り（改行）も消えてしまいませんか？</h3>
+    <p>A. いいえ。このツールはCSVの引用符のルールに従って正しく解析するため、ダブルクォートで囲まれたセルの中にある改行だけを検出・置き換えます。行と行を分ける本来の改行はそのまま残ります。</p>
+    <h3>Q. 置き換える文字を空欄にするとどうなりますか？</h3>
+    <p>A. 改行を完全に削除し、前後の文字をそのままつなげます。単語の間にスペースなどを挟みたい場合は、空欄のままにせず「置き換える文字」に入力してください。</p>
+    <h3>Q. セルの中に改行が複数回（空行を含めて）入っている場合は？</h3>
+    <p>A. 連続した改行はまとめて検出し、1回だけ置き換えます。空行が複数続いていても置き換える文字が何個も連続することはありません。</p>
+    <h3>Q. アップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 大きなファイルは扱えますか？</h3>
+    <p>A. ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop a CSV file into the box above, or click it to choose a file.</li>
+      <li>Every cell that contains a line break is listed. If none are found, you'll see "No line breaks were found".</li>
+      <li>Type a replacement (a space, or leave it blank to delete entirely) — the "After" column updates live.</li>
+      <li>Check the list, then click "Fix and download CSV".</li>
+    </ol>
+    <h3>Q. Why does a line break inside a cell make rows look shifted?</h3>
+    <p>A. When you press Alt+Enter inside an Excel cell and save as CSV, that cell is wrapped in double quotes and the line break is kept literally inside it — this is valid CSV. But a text editor or a naive line-by-line reader that assumes "one line = one row" counts that embedded break as an extra row, so everything after it looks shifted or the columns break.</p>
+    <h3>Q. Will it also remove the real line breaks that separate rows?</h3>
+    <p>A. No. This tool parses the CSV's quoting rules correctly, so it only touches line breaks inside quoted cells. The real line breaks that separate one row from the next are left untouched.</p>
+    <h3>Q. What happens if I leave the replacement blank?</h3>
+    <p>A. The line break is removed entirely and the text before and after it is joined directly. If you want a space (or anything else) between them, type it into the replacement field instead of leaving it blank.</p>
+    <h3>Q. What if a cell has several line breaks, or blank lines, in a row?</h3>
+    <p>A. A run of consecutive line breaks is treated as one and replaced only once — you won't get several replacement characters in a row from a blank line inside a cell.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded — everything is processed inside this browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Can it handle large files?</h3>
+    <p>A. Everything runs in browser memory, so it's built for files up to tens of megabytes.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../csv-trouble/">CSVのトラブル解決ガイド（症状から探す）</a> — 文字化け・結合できない・表記ゆれなど、症状からCSV系ツールを選べる案内ページ。</li>
+      <li><a href="../csv-fix/">CSVやテキストを開くと文字化けする：文字コード変換ツール</a> — Shift_JISやEUC-JPで文字化けしたファイルをUTF-8に変換。</li>
+      <li><a href="../csv-seiri/">全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール</a> — 全角半角・カナ・郵便番号・ハイフンの書式を列ごとにそろえる。</li>
+      <li><a href="../csv-merge/">文字コードがバラバラな複数のCSVを結合できない：複数CSV結合ツール</a> — 文字コードがバラバラな複数のCSVを、ファイルごとに自動判定してから1つに結合。</li>
+      <li><a href="../csv-to-xlsx/">CSVの先頭の0が消える・日付に化けるときのExcel変換</a> — 郵便番号・社員番号・JANコードの先頭の0が消える列を文字列として保存し、CSVをExcel(.xlsx)に変換。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../csv-trouble/">CSV Troubleshooting Guide</a> — Find the right CSV tool by symptom: mojibake, merge failures, inconsistent notation and more.</li>
+      <li><a href="../csv-fix/">CSV / Text Mojibake Fixer</a> — Fix mojibake by converting Shift_JIS/EUC-JP files to UTF-8.</li>
+      <li><a href="../csv-seiri/">CSV Column Formatter</a> — Normalize full/half-width characters, katakana, postal codes and hyphens per column.</li>
+      <li><a href="../csv-merge/">Multi-CSV Merge Tool</a> — Merge multiple CSV files with different character encodings, auto-detected per file.</li>
+      <li><a href="../csv-to-xlsx/">CSV to Excel (.xlsx) Converter — Keep Leading Zeros</a> — Convert a CSV to Excel (.xlsx) without losing leading zeros or having values turn into dates.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"なぜセル内改行で行がずれるのですか？","acceptedAnswer":{"@type":"Answer","text":"Excelでセルに入力した改行を含むCSVは、そのセルがダブルクォートで囲まれ改行が文字としてそのまま保存されます。1行＝1レコードだと思い込む単純なツールで読むと、その改行が余分な行として数えられ、行がずれて見えます。"}},
+    {"@type":"Question","name":"本来の行の区切り（改行）も消えてしまいませんか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。CSVの引用符のルールに従って正しく解析し、ダブルクォートで囲まれたセルの中にある改行だけを検出・置き換えます。行と行を分ける本来の改行はそのまま残ります。"}},
+    {"@type":"Question","name":"置き換える文字を空欄にするとどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"改行を完全に削除し、前後の文字をそのままつなげます。スペースなどを挟みたい場合は空欄にせず入力してください。"}},
+    {"@type":"Question","name":"アップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+var ENC_LABEL={
+  "utf-8":{ja:"UTF-8",en:"UTF-8"},
+  "shift_jis":{ja:"Shift_JIS（CP932）",en:"Shift_JIS (CP932)"},
+  "euc-jp":{ja:"EUC-JP",en:"EUC-JP"},
+  "iso-2022-jp":{ja:"ISO-2022-JP（JIS）",en:"ISO-2022-JP (JIS)"}
+};
+
+var T={
+ ja:{title:"CSVのセル内改行で行がずれる・列が崩れるときの削除・置換ツール",
+  sub:"セルの中に改行（Alt+Enterで入力した折り返しなど）が入ったCSVを、テキストエディタで開いたり単純な行区切りで読み込んだりすると、行数が実際より増えて見えたり列がずれたりします。CSVの引用符のルールを正しく解析してセルの中の改行だけを検出し、削除または任意の文字に置き換えます。行と行を分ける本来の改行はそのまま残ります。ファイルはどこにも送信されません。",
+  dropzoneText:"ここにCSVをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"CSV・TSV・テキストファイル対応。ファイルは選択した端末の中だけで処理されます。",
+  headerLabel:"1行目を見出し（ヘッダー）として扱う（列名の表示にのみ使用）",
+  fileLabel:"ファイル",detectedLabel:"検出した文字コード",
+  encSelectLabel:"文字コードを指定（自動判定がおかしい場合に変更）",
+  warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。上の文字コードを別の候補に変更してみてください。",
+  warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。手動で文字コードを選び直してください。",
+  scanHeading:"検出結果",
+  statRowsLabel:"全体の行数",statCellsLabel:"改行が入っているセル",statBreaksLabel:"改行の合計数",
+  okBanner:"このファイルのセルには改行は見つかりませんでした。そのままでも問題ありません。",
+  replaceLabel:"置き換える文字（空欄にすると完全に削除）",
+  presetSpace:"スペース",presetDelete:"完全に削除",presetSlash:"／（スラッシュ）",presetComma:"、（読点）",
+  replaceHint:"連続した改行（空行）はまとめて1回だけ置き換えます。行と行を分ける本来の改行は対象にならず、そのまま残ります。",
+  thRow:"行",thCol:"列",thCount:"改行数",thBefore:"修正前",thAfter:"修正後",
+  listNoteMore:"件中、先頭",listNoteMore2:"件のみ表示しています（ダウンロードするファイルは全て修正されます）。",
+  colFallback:"列",
+  outputHeading:"ダウンロード設定",
+  bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
+  downloadBtn:"修正してCSVをダウンロード",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"CSV In-Cell Line Break Remover / Replacer",
+  sub:"When a CSV cell contains a line break (e.g. from Alt+Enter in Excel), opening it in a text editor or a naive line-based tool can make rows look shifted or columns break. This parses the CSV's quoting rules correctly, finds only the line breaks inside cells, and lets you delete or replace them. Real row breaks are left untouched. Nothing is uploaded.",
+  dropzoneText:"Drag and drop a CSV here, or click to choose one",
+  dropzoneHint:"Works with CSV, TSV and plain text files. Everything happens on this device.",
+  headerLabel:"Treat the first row as a header (used only to label columns)",
+  fileLabel:"File",detectedLabel:"Detected encoding",
+  encSelectLabel:"Choose encoding manually (if auto-detect looks wrong)",
+  warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding above.",
+  warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose the correct encoding manually.",
+  scanHeading:"Scan results",
+  statRowsLabel:"Total rows",statCellsLabel:"Cells with a line break",statBreaksLabel:"Total line breaks",
+  okBanner:"No line breaks were found inside any cell — this file is fine as is.",
+  replaceLabel:"Replacement text (leave blank to delete entirely)",
+  presetSpace:"Space",presetDelete:"Delete",presetSlash:"/ (slash)",presetComma:"、(comma)",
+  replaceHint:"A run of consecutive line breaks (a blank line) is replaced only once. Real line breaks that separate rows are never touched.",
+  thRow:"Row",thCol:"Column",thCount:"Breaks",thBefore:"Before",thAfter:"After",
+  listNoteMore:"Showing the first ",listNoteMore2:" of all matches (the downloaded file fixes every one).",
+  colFallback:"Column",
+  outputHeading:"Download options",
+  bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
+  downloadBtn:"Fix and download CSV",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+/* ---- encoding ---- */
+function tryDecode(bytes,label){
+  try{ return new TextDecoder(label,{fatal:true}).decode(bytes); }
+  catch(e){ return null; }
+}
+function hasBOM(bytes){ return bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF; }
+function detectEncoding(bytes){
+  var order=["utf-8","shift_jis","euc-jp","iso-2022-jp"];
+  for(var i=0;i<order.length;i++){
+    var t=tryDecode(bytes,order[i]);
+    if(t!==null) return {enc:order[i], ok:true};
+  }
+  return {enc:"utf-8", ok:false};
+}
+
+/* ---- CSV parse/serialize (quote-aware: in-cell \r\n stay inside the field) ---- */
+function parseCSV(text){
+  var rows=[],row=[],cur="",inQ=false,i=0,n=text.length;
+  while(i<n){
+    var c=text[i];
+    if(inQ){
+      if(c==='"'){
+        if(text.charAt(i+1)==='"'){cur+='"';i+=2;continue;}
+        inQ=false;i++;continue;
+      }
+      cur+=c;i++;continue;
+    }
+    if(c==='"'){inQ=true;i++;continue;}
+    if(c===','){row.push(cur);cur="";i++;continue;}
+    if(c==='\r'){ if(text.charAt(i+1)==='\n') i++; row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    if(c==='\n'){ row.push(cur);cur="";rows.push(row);row=[];i++;continue; }
+    cur+=c;i++;
+  }
+  if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function csvField(v){
+  v=String(v);
+  if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function serializeCSV(rows){
+  return rows.map(function(r){ return r.map(csvField).join(","); }).join("\r\n");
+}
+
+var BREAK_RE=/\r\n|\r|\n/;
+var BREAK_RE_G=/\r\n|\r|\n/g;
+var BREAK_RUN_RE_G=/(\r\n|\r|\n)+/g;
+
+function scanBreaks(rows){
+  var items=[], totalBreaks=0, affectedRows=Object.create(null);
+  for(var r=0;r<rows.length;r++){
+    var row=rows[r];
+    for(var c=0;c<row.length;c++){
+      var v=row[c];
+      if(v && BREAK_RE.test(v)){
+        var n=(v.match(BREAK_RE_G)||[]).length;
+        totalBreaks+=n;
+        affectedRows[r]=true;
+        items.push({r:r,c:c,count:n,val:v});
+      }
+    }
+  }
+  return {items:items, totalBreaks:totalBreaks, affectedRowCount:Object.keys(affectedRows).length};
+}
+function fixRows(rows, replacement){
+  return rows.map(function(row){
+    return row.map(function(v){
+      return (v && BREAK_RE.test(v)) ? v.replace(BREAK_RUN_RE_G, replacement) : v;
+    });
+  });
+}
+
+/* ---- state ---- */
+var state={bytes:null, name:"", rows:[], enc:"utf-8", forcedFallback:false, scan:null};
+
+function escTrunc(s,max){ s=String(s); max=max||60; var t = s.length>max ? s.slice(0,max)+"…" : s; return esc(t); }
+function escBreaks(s,max){
+  s=String(s); max=max||60;
+  var t = s.length>max ? s.slice(0,max)+"…" : s;
+  return esc(t).replace(BREAK_RE_G, '<span class="brk">⏎</span>');
+}
+
+function headerArr(rows, hasHeader){
+  if(hasHeader && rows[0]) return rows[0];
+  var n=0; for(var i=0;i<rows.length;i++) n=Math.max(n,rows[i].length);
+  var out=[]; for(var j=0;j<n;j++) out.push(T[lang].colFallback+(j+1));
+  return out;
+}
+function colLabel(headers,i){
+  var v=headers[i];
+  return (v!==undefined && v!=="") ? v : (T[lang].colFallback+(i+1));
+}
+
+function renderScan(){
+  var box=$("scanCard");
+  if(!state.rows.length){ box.style.display="none"; $("outCard").style.display="none"; $("downloadBtn").disabled=true; return; }
+  box.style.display="";
+  var scan=scanBreaks(state.rows);
+  state.scan=scan;
+  $("statRows").textContent=state.rows.length;
+  $("statCells").textContent=scan.items.length;
+  $("statBreaks").textContent=scan.totalBreaks;
+
+  var fixBox=$("fixBox"), ok=$("okBanner");
+  if(!scan.items.length){
+    fixBox.style.display="none"; ok.style.display="";
+    $("outCard").style.display="none"; $("downloadBtn").disabled=true;
+    return;
+  }
+  ok.style.display="none"; fixBox.style.display=""; $("outCard").style.display=""; $("downloadBtn").disabled=false;
+  renderList();
+}
+
+function renderList(){
+  var headers=headerArr(state.rows, $("headerCheck").checked);
+  var replacement=$("replaceInput").value;
+  var items=state.scan.items;
+  var max=60;
+  var shown=items.slice(0,max);
+  var body="";
+  shown.forEach(function(it){
+    var colName = colLabel(headers, it.c);
+    var fixedVal = it.val.replace(BREAK_RUN_RE_G, replacement);
+    body+="<tr><td>"+(it.r+1)+"</td><td>"+escTrunc(colName,30)+"</td><td>"+it.count+"</td>"+
+      "<td class='val'>"+escBreaks(it.val,80)+"</td><td class='val'>"+escTrunc(fixedVal,80)+"</td></tr>";
+  });
+  $("listBody").innerHTML=body;
+  var note=$("listNote");
+  if(items.length>max){
+    note.textContent = T[lang].listNoteMore + max + T[lang].listNoteMore2;
+  } else {
+    note.textContent="";
+  }
+}
+
+function applyEncoding(enc, forcedFallback){
+  var bytes=state.bytes;
+  var t=tryDecode(bytes,enc);
+  var warn="";
+  if(t===null){
+    t=new TextDecoder(enc,{fatal:false}).decode(bytes);
+    warn=T[lang].warnReplace;
+  } else if(forcedFallback){
+    warn=T[lang].warnUnknown;
+  }
+  state.enc=enc; state.forcedFallback=forcedFallback;
+  state.rows=parseCSV(t);
+  var label=ENC_LABEL[enc]?ENC_LABEL[enc][lang]:enc;
+  $("encStatus").innerHTML="<span>"+esc(label)+"</span>";
+  $("warnBox").textContent=warn;
+  renderScan();
+}
+
+function handleFile(file){
+  state.name=file.name;
+  file.arrayBuffer().then(function(buf){
+    state.bytes=new Uint8Array(buf);
+    var d=detectEncoding(state.bytes);
+    $("encSelect").value=d.enc;
+    $("encCard").style.display="";
+    var bom=hasBOM(state.bytes);
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(bom?", BOM":"")+")";
+    applyEncoding(d.enc, !d.ok);
+  }).catch(function(){
+    $("fileInfo").textContent=T[lang].warnUnknown;
+  });
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) handleFile(f);
+});
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){
+  var f=e.target.files && e.target.files[0];
+  if(f) handleFile(f);
+});
+$("encSelect").addEventListener("change",function(){
+  if(state.bytes) applyEncoding(this.value,false);
+});
+$("headerCheck").addEventListener("change",function(){ if(state.rows.length) renderList(); });
+$("replaceInput").addEventListener("input",function(){ if(state.scan) renderList(); });
+var presetBtns=document.querySelectorAll(".presets button");
+for(var pi=0;pi<presetBtns.length;pi++){
+  presetBtns[pi].addEventListener("click",function(){
+    $("replaceInput").value=this.getAttribute("data-val");
+    if(state.scan) renderList();
+  });
+}
+
+$("downloadBtn").addEventListener("click",function(){
+  if(!state.rows.length || !state.scan || !state.scan.items.length) return;
+  var replacement=$("replaceInput").value;
+  var fixed=fixRows(state.rows, replacement);
+  var csvText=serializeCSV(fixed);
+  var addBom=$("bomCheck").checked;
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes;
+  if(addBom){
+    bytes=new Uint8Array(encoded.length+3);
+    bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF;
+    bytes.set(encoded,3);
+  } else bytes=encoded;
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var base=(state.name||"file").replace(/\.[^.]+$/,"")||"file";
+  var outName=base+"_kaigyo.csv";
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download=outName;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  if(state.bytes){
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
+    var label=ENC_LABEL[state.enc]?ENC_LABEL[state.enc][lang]:state.enc;
+    $("encStatus").innerHTML="<span>"+esc(label)+"</span>";
+  }
+  if(state.rows.length) renderScan();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

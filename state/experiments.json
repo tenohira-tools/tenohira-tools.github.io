@@ -2066,6 +2066,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "csv-kaigyo",
+      "title": "CSVのセル内改行で行がずれる・列が崩れるときの削除・置換ツール",
+      "url": "https://tenohira-tools.github.io/csv-kaigyo/",
+      "published": "2026-10-29",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "ideas/backlog.mdの最後の候補（CSVセル内改行の削除・置換）。着手前にWebSearch2件（日本語・英語）を実施し、Excel・SUBSTITUTE関数での手作業や、行区切りと見分けずに全改行を潰す汎用テキストツールはあるが、CSVの引用符ルールを解析してセル内改行だけを区別できる無料のブラウザ完結ツールは見当たらないことを確認して着手。",
+      "metrics": [
+        {
+          "date": "2026-10-29T20:16:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {

@@ -520,3 +520,10 @@
 - やったこと：STRATEGY.mdの「閲覧が増え始めたページは新規作成より改善を優先」に従い、receipt-sheetを含む経理・事務書類4ツール（shohyo-rename/receipt-sheet/shorui-scan/kotsuhi-seisan）向けに、excel-trouble/csv-troubleと同型の症状別ガイド（keihi-trouble）を新設。
 - 検証：JSON-LD・HTML構文チェック、Playwright（ja/en・390/1280px）でkeihi-troubleと4ツール全てのJSエラー無し・横スクロール無しを確認。相互リンクは4ツール×keihi-trouble＋docs/index.htmlをgrepで双方向確認。
 - 次回：1件のみの変化のため継続監視。次回増加があればreceipt-sheetの使い勝手改善を、無ければbacklog最後の1件（CSV改行対策）に進む。
+
+## 2026-10-29 実験54
+- 計測：GoatCounter取得成功。サイト全体累計10のまま変化なし。/receipt-sheet/も1のまま。health.md（48ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：変化なしのためbacklog最後の1件「CSVセル内改行の削除・置換」に進む。着手前にWebSearch2件で確認し、CSVの引用符ルールを区別できる無料のブラウザ完結ツールは無いことを確認し、csv-kaigyoを公開。
+- 設計：csv-master-replace等と同じ引用符対応parseCSVでセル内改行だけを検出（行区切りの改行は対象外）。置き換え文字は空欄で完全削除、既定はスペース、連続改行は1回だけ置換。
+- 検証：Node.js単体テスト12件、Playwright（ja/en・390/1280px）でUTF-8・Shift_JIS実ファイル・プリセット切替・ダウンロード再解析・改行なしファイルの分岐・横スクロール無し・JSエラー無しを確認。
+- 相互リンクはcsv-trouble・csv-fix・csv-seiri・csv-merge・csv-to-xlsxの5ページに絞り双方向をgrepで確認。csv-troubleの対象数表記を7→8に更新、docs/index.htmlにも追加。backlogは空になったため次回補充が必要。

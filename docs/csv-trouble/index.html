@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
-<title>CSVが文字化けする・結合できない・表記ゆれがあるときの対策まとめ｜症状から探す7ツール | てのひらツール</title>
-<meta name="description" content="「文字化けする」「複数のCSVを結合できない」「全角半角・郵便番号の表記がバラバラ」「列の値ごとに分けたい」「コードを名称に変換したい」「Excelで開くと0が消える・日付に化ける」「日付の書き方（和暦・西暦）が混在している」など、CSVのよくあるトラブルを症状から選んで直せる無料ツール7個への案内。登録不要、ファイルはブラウザ内だけで処理。A symptom-based directory to 7 free, browser-only tools for common CSV file problems.">
+<title>CSVが文字化けする・結合できない・表記ゆれがあるときの対策まとめ｜症状から探す8ツール | てのひらツール</title>
+<meta name="description" content="「文字化けする」「複数のCSVを結合できない」「全角半角・郵便番号の表記がバラバラ」「列の値ごとに分けたい」「コードを名称に変換したい」「Excelで開くと0が消える・日付に化ける」「日付の書き方（和暦・西暦）が混在している」「セルの中の改行で行がずれる」など、CSVのよくあるトラブルを症状から選んで直せる無料ツール8個への案内。登録不要、ファイルはブラウザ内だけで処理。A symptom-based directory to 8 free, browser-only tools for common CSV file problems.">
 <link rel="canonical" href="https://tenohira-tools.github.io/csv-trouble/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec}
@@ -71,6 +71,7 @@ html[lang=en] .en-only{display:block}
     <li><a href="#lookup"><span class="ja-only">コード列を名称などに一括変換したい</span><span class="en-only" style="display:none">Want to convert codes to names in bulk</span></a></li>
     <li><a href="#excel"><span class="ja-only">Excelで開くと0が消える・日付に化ける</span><span class="en-only" style="display:none">Excel drops leading zeros or mangles dates on open</span></a></li>
     <li><a href="#date"><span class="ja-only">日付の書き方（和暦・西暦）が混在している</span><span class="en-only" style="display:none">Dates mix Japanese-era and Western formats</span></a></li>
+    <li><a href="#linebreak"><span class="ja-only">セルの中の改行で行がずれる・列が崩れる</span><span class="en-only" style="display:none">A line break inside a cell shifts rows or breaks columns</span></a></li>
   </ol>
 </nav>
 
@@ -130,11 +131,19 @@ html[lang=en] .en-only{display:block}
   </ul>
 </section>
 
+<section class="card" id="linebreak">
+  <h2 class="ja-only">セルの中の改行で行がずれる・列が崩れる</h2>
+  <h2 class="en-only" style="display:none">A line break inside a cell shifts rows or breaks columns</h2>
+  <ul class="tools">
+    <li><a href="../csv-kaigyo/">CSVのセル内改行で行がずれる・列が崩れるときの削除・置換ツール</a><p class="ja-only">CSVの引用符ルールを正しく解析し、セルの中にある改行だけを検出。削除または任意の文字（スペースなど）に置き換えた新しいCSVを書き出す。行の区切りとして使われる本来の改行はそのまま保持。</p><p class="en-only" style="display:none">Parses CSV quoting rules correctly to find only the line breaks inside cells, then deletes or replaces them — the real line breaks that separate rows are left untouched.</p></li>
+  </ul>
+</section>
+
 <section class="card about">
   <div class="ja-only">
     <h2>このページについて</h2>
     <h3>Q. このページは何をするところですか？</h3>
-    <p>A. CSVファイルのよくあるトラブルを症状別に分類し、このサイトで公開している7個の無料ツールへの案内をまとめたページです。このページ自体はファイルを処理しません。</p>
+    <p>A. CSVファイルのよくあるトラブルを症状別に分類し、このサイトで公開している8個の無料ツールへの案内をまとめたページです。このページ自体はファイルを処理しません。</p>
     <h3>Q. Excelファイル（.xlsx）のトラブルはありますか？</h3>
     <p>A. 「重い」「保存できない」「エラーが出る」などExcel特有のトラブルは<a href="../excel-trouble/">エクセルのトラブル解決ガイド</a>にまとめています。</p>
     <h3>Q. 料金や登録は必要ですか？</h3>
@@ -143,7 +152,7 @@ html[lang=en] .en-only{display:block}
   <div class="en-only">
     <h2>About this page</h2>
     <h3>Q. What does this page do?</h3>
-    <p>A. It's a directory that sorts common CSV problems by symptom and points you to the matching free tool among the 7 listed above. This page itself does not process files.</p>
+    <p>A. It's a directory that sorts common CSV problems by symptom and points you to the matching free tool among the 8 listed above. This page itself does not process files.</p>
     <h3>Q. What about Excel (.xlsx) file problems?</h3>
     <p>A. Excel-specific issues like heavy files, save errors or stray error values are covered in the <a href="../excel-trouble/">Excel Troubleshooting Guide</a>.</p>
     <h3>Q. Is this free, and do I need to sign up?</h3>
@@ -160,7 +169,7 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"このページは何をするところですか？","acceptedAnswer":{"@type":"Answer","text":"CSVファイルのよくあるトラブルを症状別に分類し、このサイトで公開している7個の無料ツールへの案内をまとめたページです。このページ自体はファイルを処理しません。"}},
+    {"@type":"Question","name":"このページは何をするところですか？","acceptedAnswer":{"@type":"Answer","text":"CSVファイルのよくあるトラブルを症状別に分類し、このサイトで公開している8個の無料ツールへの案内をまとめたページです。このページ自体はファイルを処理しません。"}},
     {"@type":"Question","name":"Excelファイル（.xlsx）のトラブルはありますか？","acceptedAnswer":{"@type":"Answer","text":"「重い」「保存できない」「エラーが出る」などExcel特有のトラブルはエクセルのトラブル解決ガイド（excel-trouble）にまとめています。"}},
     {"@type":"Question","name":"料金や登録は必要ですか？","acceptedAnswer":{"@type":"Answer","text":"すべて無料・登録不要です。ファイルはアップロードされず、お使いのブラウザの中だけで処理されます（このページ・各ツールページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}}
   ]
