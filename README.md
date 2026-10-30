@@ -26,6 +26,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [領収書のファイル名・まとめ方・経費精算で困ったときの対策まとめ｜症状から探す4ツール](https://tenohira-tools.github.io/keihi-trouble/)
 - [交通費精算書メーカー｜区間・金額を入力してその場で集計・印刷](https://tenohira-tools.github.io/kotsuhi-seisan/)
 - [社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除](https://tenohira-tools.github.io/pptx-kakure/)
+- [「パワーポイントが重い」原因を診断：ファイル内訳チェッカー](https://tenohira-tools.github.io/pptx-omoi/)
 - [領収書まとめ台紙メーカー｜複数のレシート写真を1枚のPDFに整列](https://tenohira-tools.github.io/receipt-sheet/)
 - [正規表現テスター（日本語で自動解説）](https://tenohira-tools.github.io/regex-ja/)
 - [社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す](https://tenohira-tools.github.io/sakusha-kesu/)
