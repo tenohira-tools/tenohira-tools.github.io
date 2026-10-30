@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>「グラフのデータを編集」で元の表が丸ごと見える：PowerPointグラフの埋め込みExcel診断ツール | てのひらツール</title>
+<meta name="description" content="PowerPoint(.pptx)のグラフを右クリック「データの編集」で開くと、グラフに表示していない余分な行・列まで埋め込みExcelシートに残っていることがあります。社外に渡す前に、ファイルを開かず全スライドのグラフを一括診断。グラフのキャッシュ値の個数と埋め込みシートの使用範囲を比較し、余分なデータが残っている可能性を検出します（読み取り専用、ブラウザ内処理）。Before sharing a PowerPoint file, check every chart's embedded Excel sheet for leftover rows/columns beyond what the chart actually plots — entirely in your browser, read-only.">
+<link rel="canonical" href="https://tenohira-tools.github.io/pptx-chart-kakure/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px;min-width:0}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;min-width:0}
+.fileCard .fTop{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCard .fName{font-weight:700;word-break:break-all}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.summary{font-size:.9rem;color:var(--muted);margin:0 0 10px}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.wrap{white-space:normal;word-break:break-word;max-width:16em}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.extra{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.badge.clean{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.unknown{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.none{color:var(--muted)}
+button.secondary{font:inherit;font-size:.88rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:10px}
+button.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.errBox{border:1px solid var(--diff);background:var(--diff-bg);color:var(--diff);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">「グラフのデータを編集」で元の表が丸ごと見える：PowerPointグラフの埋め込みExcel診断ツール</h1>
+    <p class="sub" data-i="sub">PowerPointのグラフ（Excelグラフオブジェクト）を右クリックして「データの編集」を開くと、グラフには表示されていない余分な行・列まで埋め込みExcelシートにそのまま残っていることがあります。社外にファイルを渡す前に、全スライドのグラフを一括で診断し、グラフが実際に使っている値の個数と、埋め込みシートの使用範囲を比較して、余分なデータが残っている可能性を知らせます。複数ファイルを一括処理でき、ファイルはサーバーに送らずこのブラウザの中だけで処理します（読み取り専用・ファイルは書き換えません）。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p><strong data-i="dropzoneStrong">ここにPowerPointファイルをドラッグ＆ドロップ</strong><span data-i="dropzoneRest">、またはクリックして選択</span></p>
+    <p class="hint" data-i="dropzoneHint">.pptx に対応（.pptは読み込めません）。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".pptx" multiple style="display:none">
+</section>
+
+<section class="card" id="listSec" style="display:none">
+  <h2 data-i="listHeading">読み込んだファイル</h2>
+  <div id="fileList"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にPowerPoint(.pptx)ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル可）。</li>
+      <li>ファイル内の全スライドにあるグラフが一覧表示されます。「埋め込みExcelあり」のグラフについて、グラフが実際に使っている値の個数（キャッシュ）と、埋め込みシートの使用範囲（行数・列数）を比較し、「差異の可能性」「差異なし」「判定できません」のいずれかを表示します。</li>
+      <li>「差異の可能性」のグラフは、PowerPointでグラフを右クリック→「データの編集」を開き、キャッシュに使われていない余分な行・列が残っていないか確認してください。</li>
+    </ol>
+    <h3>Q. このツールは何をチェックしていますか？</h3>
+    <p>A. グラフを「Excelグラフオブジェクト」として貼り付けた場合、グラフ自体の表示に使うキャッシュ値（numCache/strCache）とは別に、元になったExcelシートがファイルの中に丸ごと埋め込まれていることがあります。見た目には出ないこの埋め込みシートに、グラフが拾っている範囲より外側の行・列が残っていないかを、ファイルを開かずに（グラフのXMLとシートの使用範囲の記録だけを読んで）確認します。</p>
+    <h3>Q. 「差異の可能性」と出たら、必ず余分なデータが含まれていますか？</h3>
+    <p>A. 必ずではありません。使用範囲（Ctrl+Endで飛ぶ場所）は、実際のデータ量に関わらず広がっている場合もあります（xlsx-omoiやxlsx-haniで扱っているのと同じ現象です）。ただし、グラフが使っていない行・列がファイルの中に機械的に残っていることは確かなので、「データの編集」で内容を確認する価値があります。</p>
+    <h3>Q. 「判定できません」と出るのはどんな場合ですか？</h3>
+    <p>A. バブルチャート・株価チャート・等高線グラフ、項目軸が複数階層になっているグラフなど、キャッシュの数え方が単純でない場合、埋め込みが古い形式（OLEオブジェクト・.bin）で中身を読み取れない場合、または埋め込みシート自体が壊れている・読み取れない場合です。誤って「問題なし」と判定するより、分からないものは分からないと表示する方針にしています。</p>
+    <h3>Q. 見つかったらどう対処すればいいですか？</h3>
+    <p>A. このツールは診断のみで、ファイルの書き換えは行いません。対処法としては、①グラフを右クリック→「データの編集」でExcelを開き、キャッシュの範囲より外側にある余分な行・列を削除してから保存し直す、②どうしても心配な場合はグラフをコピーして「図として貼り付け」で画像化する（編集できなくなりますが元データは残りません）、のいずれかをおすすめします。</p>
+    <h3>Q. 複数のファイルを一度に確認できますか？</h3>
+    <p>A. はい。ファイルを追加するたびにカードが増え、それぞれ個別に結果を確認できます。</p>
+    <h3>Q. 対応しているグラフの種類は？</h3>
+    <p>A. 棒・線・円・面・散布図・ドーナツ・レーダー、およびこれらの組み合わせグラフに対応しています。バブルチャート・株価チャート・等高線グラフは対象外として「判定できません」と表示されます。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. PowerPoint 2007以降の.pptx形式です。古い.ppt形式や、パスワードで保護されたファイルは読み込めません。グラフの埋め込みも、近年のPowerPointが使う.xlsx形式のみ対象です（古いOLE形式の埋め込みは「埋め込みあり（旧形式）」とだけ表示します）。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析が行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。ファイルの内容を書き換えたり保存したりすることもありません。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop PowerPoint (.pptx) files into the box above, or click it to choose (multiple files are fine).</li>
+      <li>Every chart across every slide is listed. For charts with an embedded Excel workbook, the tool compares the number of data points the chart actually uses (its cache) against the embedded sheet's used range (rows × columns), and shows one of: possible extra data, no difference, or unable to tell.</li>
+      <li>For charts flagged as possibly having extra data, right-click the chart in PowerPoint and open "Edit Data" to check for rows/columns the chart isn't using.</li>
+    </ol>
+    <h3>Q. What does this tool check?</h3>
+    <p>A. When a chart is pasted as a native "Excel Chart Object", the source workbook it was built from can remain fully embedded inside the file — separate from the small cache of values (numCache/strCache) the chart actually displays. This invisible embedded sheet can hold rows or columns the chart never plots. This tool checks for that, without opening the file, by reading only the chart's own XML and the embedded sheet's recorded used range.</p>
+    <h3>Q. If it says "possible extra data," is there definitely something hidden?</h3>
+    <p>A. Not necessarily. A sheet's recorded used range (where Ctrl+End jumps) can be larger than the actual data for unrelated reasons (the same phenomenon covered by xlsx-omoi and xlsx-hani). Still, it does mean the file mechanically retains rows/columns the chart doesn't use, so it's worth checking with "Edit Data".</p>
+    <h3>Q. When does it say "unable to tell"?</h3>
+    <p>A. For chart types whose cache isn't simple to count (bubble, stock, surface charts, or multi-level category axes), for embeddings in the older OLE/.bin format this tool can't parse, or when the embedded sheet itself can't be read. The tool prefers saying "unable to tell" over risking a false "no issue" result.</p>
+    <h3>Q. What should I do if extra data is found?</h3>
+    <p>A. This tool only diagnoses — it never rewrites your file. Either right-click the chart → "Edit Data" in Excel and delete the rows/columns beyond what's cached, then save, or — if you'd rather be safe — copy the chart and "Paste as Picture" to flatten it to an image (no longer editable, but no source data remains).</p>
+    <h3>Q. Can I check multiple files at once?</h3>
+    <p>A. Yes. Each file you add gets its own card with its own results.</p>
+    <h3>Q. Which chart types are supported?</h3>
+    <p>A. Bar, line, pie, area, scatter, doughnut, radar charts, and combinations of these. Bubble, stock and surface charts are out of scope and shown as "unable to tell".</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. PowerPoint 2007+ (.pptx). The older .ppt format and password-protected files are not supported. Only charts with a modern .xlsx-format embedded workbook are inspected (older OLE-format embeddings are shown as "embedded (legacy format)" only).</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and analyzed inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter). The file's contents are never modified or saved anywhere.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../pptx-kakure/">社外に渡す前に：PowerPointのノート・非表示スライド・コメントを一覧化</a> — ノート（発表者メモ）・非表示スライド・コメントの一括診断とノート削除。</li>
+      <li><a href="../pptx-omoi/">「パワーポイントが重い」原因を診断：ファイル内訳チェッカー</a> — 画像・動画・埋め込みオブジェクトの内訳と、使われていないスライドレイアウトも検出。</li>
+      <li><a href="../docx-kakure/">社外に渡す前に確認：Wordの「隠れた情報」一括チェック</a> — Word版の同種のチェック。変更履歴の編集者名・コメント・隠し文字・ヘッダーフッターの文字を一括診断。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — Excelファイルの非表示シート・コメント・外部リンクなどの一括診断。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — Excel・Word・PowerPointの作成者名・コメント投稿者名をまとめて消去。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../pptx-kakure/">Before sharing: list every slide's notes, hidden status and comments</a> — plus bulk-clear just the speaker notes.</li>
+      <li><a href="../pptx-omoi/">Why is this PowerPoint file heavy? Part-by-part size diagnosis</a> — Breaks down size by media and embedded objects, and flags unused slide layouts.</li>
+      <li><a href="../docx-kakure/">Before sending outside your company: check a Word file for &quot;hidden&quot; information</a> — Track Changes editors, comments, hidden text and header/footer text, all at once.</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for &quot;hidden&quot; information before sending it outside your company</a> — hidden sheets, comments, external links and more, all at once.</li>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — across Excel, Word and PowerPoint files at once.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールは何をチェックしていますか？","acceptedAnswer":{"@type":"Answer","text":"グラフを「Excelグラフオブジェクト」として貼り付けた場合、グラフのキャッシュ値とは別に元のExcelシートがファイル内に丸ごと埋め込まれていることがあります。このツールは、グラフが実際に使っている値の個数と、埋め込みシートの使用範囲を比較し、余分な行・列が残っている可能性を検出します。"}},
+    {"@type":"Question","name":"「差異の可能性」と出たら必ず余分なデータが含まれていますか？","acceptedAnswer":{"@type":"Answer","text":"必ずではありません。シートの使用範囲は実際のデータ量に関わらず広がっている場合もあります。ただしグラフが使っていない行・列が機械的に残っていることは確かなので、確認する価値があります。"}},
+    {"@type":"Question","name":"「判定できません」と出るのはどんな場合ですか？","acceptedAnswer":{"@type":"Answer","text":"バブルチャートや株価チャートなどキャッシュの数え方が単純でないグラフ、古いOLE形式の埋め込み、または埋め込みシート自体が読み取れない場合です。"}},
+    {"@type":"Question","name":"見つかったらどう対処すればいいですか？","acceptedAnswer":{"@type":"Answer","text":"このツールは診断のみです。グラフを右クリック→「データの編集」で余分な行・列を削除するか、グラフを図として貼り直して画像化してください。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   ZIP read (no write needed — this tool is read-only) — same hand-rolled
+   approach already shipped across xlsx-omoi/pptx-omoi/pptx-kakure etc.
+   Reads the central directory for part sizes without decompressing
+   everything, and decompresses only the small XML parts actually needed
+   (presentation/slide/chart XML + rels, and — only when a chart has one —
+   its embedded workbook's workbook.xml + first sheet). Images, video and
+   any embedding this tool doesn't need stay compressed and unread.
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var method=readU16(dv,p+10), localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function readPartText(bytes,entries,name){
+  var en=entries.find(function(e){return e.name===name});
+  if(!en) return null;
+  var data=await zipReadEntry(bytes,en);
+  return new TextDecoder("utf-8").decode(data);
+}
+
+/* =====================================================================
+   Minimal XML tag parser (shared across this site's xlsx- and pptx- tools).
+   ===================================================================== */
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function dirName(path){ var i=path.lastIndexOf("/"); return i===-1?"":path.slice(0,i); }
+function baseName(path){ var i=path.lastIndexOf("/"); return i===-1?path:path.slice(i+1); }
+function relsPathFor(path){ var d=dirName(path); return (d?d+"/":"")+"_rels/"+baseName(path)+".rels"; }
+function resolveRelPath(baseDir,target){
+  if(/^\//.test(target)) return target.replace(/^\/+/,"");
+  var baseParts=baseDir?baseDir.split("/"):[];
+  target.split("/").forEach(function(p){
+    if(p===""||p===".") return;
+    if(p==="..") baseParts.pop(); else baseParts.push(p);
+  });
+  return baseParts.join("/");
+}
+function parseRels(xml){
+  return findTags(xml,"Relationship").map(function(t){return {id:t.attrs.Id,type:t.attrs.Type||"",target:t.attrs.Target||""};});
+}
+function colLettersToNum(letters){
+  var n=0;
+  for(var i=0;i<letters.length;i++){ n=n*26+(letters.charCodeAt(i)-64); }
+  return n;
+}
+function parseDimension(ref){
+  if(!ref) return {rows:0,cols:0};
+  var parts=ref.split(":");
+  var startRef=parts[0], endRef=parts[parts.length-1];
+  var sm=/^([A-Z]+)([0-9]+)$/.exec(startRef), em=/^([A-Z]+)([0-9]+)$/.exec(endRef);
+  if(!em) return {rows:0,cols:0};
+  var endCol=colLettersToNum(em[1]), endRow=parseInt(em[2],10);
+  var startCol=sm?colLettersToNum(sm[1]):endCol, startRow=sm?parseInt(sm[2],10):endRow;
+  return {rows:Math.max(1,endRow-startRow+1), cols:Math.max(1,endCol-startCol+1)};
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml||"","Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+
+/* =====================================================================
+   PowerPoint chart inspection (business logic; Node.js unit + fixture
+   tests cover this before publishing — see state/log.md).
+   ===================================================================== */
+function ptCountOf(block){
+  if(!block) return null;
+  var pcTag=findTags(block.inner||"","c:ptCount")[0];
+  if(pcTag && pcTag.attrs.val!==undefined) return parseInt(pcTag.attrs.val,10);
+  var pts=findTags(block.inner||"","c:pt");
+  return pts.length?pts.length:null;
+}
+function extractChartTitle(chartXml){
+  var titleTag=findTags(chartXml,"c:title")[0];
+  if(!titleTag) return null;
+  var texts=findTags(titleTag.inner,"a:t").map(function(t){return t.inner===null?"":decodeXmlEntities(t.inner)});
+  var joined=texts.join("").trim();
+  return joined||null;
+}
+var UNSUPPORTED_CHART_TAGS=["c:bubbleChart","c:stockChart","c:surfaceChart","c:surface3DChart","c:ofPieChart"];
+async function analyzeOneChart(bytes,entries,chartPath){
+  var chartXml=await readPartText(bytes,entries,chartPath);
+  var chartRelsXml=await readPartText(bytes,entries,relsPathFor(chartPath))||"";
+  var chartRels=parseRels(chartRelsXml);
+  var chartRelById={}; chartRels.forEach(function(r){chartRelById[r.id]=r});
+  var result={title:extractChartTitle(chartXml),hasEmbedded:false,embeddedKind:null,embeddedSize:0,
+    embeddedRows:null,embeddedCols:null,plottedRows:null,plottedCols:null,verdict:"noEmbedded"};
+  var extDataTag=findTags(chartXml,"c:externalData")[0];
+  if(!extDataTag) return result;
+  var rid2=extDataTag.attrs["r:id"];
+  var rel2=rid2?chartRelById[rid2]:null;
+  if(!rel2){ result.verdict="unknown"; return result; }
+  var embPath=resolveRelPath(dirName(chartPath),rel2.target);
+  var embEntry=entries.find(function(e){return e.name===embPath});
+  if(!embEntry){ result.verdict="unknown"; return result; }
+  result.hasEmbedded=true;
+  result.embeddedSize=embEntry.uncompSize;
+  var isPackage=/relationships\/package$/.test(rel2.type||"") || /\.xlsx$/i.test(embPath) || /\.xlsm$/i.test(embPath);
+  if(!isPackage){ result.embeddedKind="legacy"; result.verdict="unknown"; return result; }
+  result.embeddedKind="xlsx";
+
+  var embBytes;
+  try{ embBytes=await zipReadEntry(bytes,embEntry); }catch(e){ result.verdict="unknown"; return result; }
+  var nestedEntries;
+  try{ nestedEntries=zipCentralDirectory(embBytes); }catch(e){ result.verdict="unknown"; return result; }
+  var wbXml=await readPartText(embBytes,nestedEntries,"xl/workbook.xml");
+  if(!wbXml){ result.verdict="unknown"; return result; }
+  var wbRelsXml=await readPartText(embBytes,nestedEntries,"xl/_rels/workbook.xml.rels")||"";
+  var sheetList=parseSheetList(wbXml,wbRelsXml);
+  if(!sheetList.length){ result.verdict="unknown"; return result; }
+  var sheetXml=await readPartText(embBytes,nestedEntries,sheetList[0].path);
+  if(!sheetXml){ result.verdict="unknown"; return result; }
+  var dimM=/<dimension\s+ref="([^"]+)"/.exec(sheetXml);
+  if(!dimM){ result.verdict="unknown"; return result; }
+  var dim=parseDimension(dimM[1]);
+  result.embeddedRows=dim.rows; result.embeddedCols=dim.cols;
+
+  var isUnsupportedType=UNSUPPORTED_CHART_TAGS.some(function(tag){ return new RegExp("<"+tag+"[\\s/>]").test(chartXml); });
+  if(isUnsupportedType){ result.verdict="unknown"; return result; }
+  var isScatter=/<c:scatterChart[\s/>]/.test(chartXml);
+  var serList=findTags(chartXml,"c:ser");
+  if(!serList.length){ result.verdict="unknown"; return result; }
+  var catTag=isScatter?"c:xVal":"c:cat", valTag=isScatter?"c:yVal":"c:val";
+  var complex=false, hasCategory=false, maxPts=0;
+  serList.forEach(function(ser){
+    var catBlock=findTags(ser.inner,catTag)[0];
+    var valBlock=findTags(ser.inner,valTag)[0];
+    if(catBlock){
+      hasCategory=true;
+      if(findTags(catBlock.inner||"","c:multiLvlStrRef").length) complex=true;
+    }
+    var catPts=ptCountOf(catBlock), valPts=ptCountOf(valBlock);
+    if(catPts===null && valPts===null) complex=true;
+    maxPts=Math.max(maxPts, catPts||0, valPts||0);
+  });
+  if(complex){ result.verdict="unknown"; return result; }
+  var expectedRows=maxPts+1, expectedCols=serList.length+(hasCategory?1:0);
+  result.plottedRows=expectedRows; result.plottedCols=expectedCols;
+  result.verdict=(dim.rows>expectedRows || dim.cols>expectedCols)?"extra":"clean";
+  return result;
+}
+async function analyzePptxCharts(bytes){
+  var entries=zipCentralDirectory(bytes);
+  if(!entries.some(function(e){return e.name==="ppt/presentation.xml"})) throw new Error("NOT_SUPPORTED");
+  var presXml=await readPartText(bytes,entries,"ppt/presentation.xml");
+  var presRelsXml=await readPartText(bytes,entries,relsPathFor("ppt/presentation.xml"))||"";
+  var presRels=parseRels(presRelsXml);
+  var relById={}; presRels.forEach(function(r){relById[r.id]=r});
+  var slidePaths=findTags(presXml,"p:sldId").map(function(t){
+    var rel=relById[t.attrs["r:id"]];
+    return rel?resolveRelPath(dirName("ppt/presentation.xml"),rel.target):null;
+  }).filter(Boolean);
+
+  var charts=[];
+  for(var i=0;i<slidePaths.length;i++){
+    var slidePath=slidePaths[i];
+    if(!entries.some(function(e){return e.name===slidePath})) continue;
+    var slideXml=await readPartText(bytes,entries,slidePath);
+    var slideRelsXml=await readPartText(bytes,entries,relsPathFor(slidePath))||"";
+    var slideRels=parseRels(slideRelsXml);
+    var slideRelById={}; slideRels.forEach(function(r){slideRelById[r.id]=r});
+    var chartRefs=findTags(slideXml,"c:chart");
+    for(var k=0;k<chartRefs.length;k++){
+      var rid=chartRefs[k].attrs["r:id"];
+      var rel=rid?slideRelById[rid]:null;
+      if(!rel) continue;
+      var chartPath=resolveRelPath(dirName(slidePath),rel.target);
+      if(!entries.some(function(e){return e.name===chartPath})) continue;
+      var info=await analyzeOneChart(bytes,entries,chartPath);
+      charts.push({slideIndex:i+1,chartIndexOnSlide:k+1,title:info.title,hasEmbedded:info.hasEmbedded,
+        embeddedKind:info.embeddedKind,embeddedSize:info.embeddedSize,embeddedRows:info.embeddedRows,
+        embeddedCols:info.embeddedCols,plottedRows:info.plottedRows,plottedCols:info.plottedCols,verdict:info.verdict});
+    }
+  }
+  return {charts:charts, slideCount:slidePaths.length,
+    embeddedCount:charts.filter(function(c){return c.hasEmbedded}).length,
+    extraCount:charts.filter(function(c){return c.verdict==="extra"}).length};
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+
+var T={
+ ja:{
+  title:"「グラフのデータを編集」で元の表が丸ごと見える：PowerPointグラフの埋め込みExcel診断ツール",
+  sub:"PowerPointのグラフ（Excelグラフオブジェクト）を右クリックして「データの編集」を開くと、グラフには表示されていない余分な行・列まで埋め込みExcelシートにそのまま残っていることがあります。社外にファイルを渡す前に、全スライドのグラフを一括で診断し、グラフが実際に使っている値の個数と、埋め込みシートの使用範囲を比較して、余分なデータが残っている可能性を知らせます。複数ファイルを一括処理でき、ファイルはサーバーに送らずこのブラウザの中だけで処理します（読み取り専用・ファイルは書き換えません）。",
+  dropzoneStrong:"ここにPowerPointファイルをドラッグ＆ドロップ",dropzoneRest:"、またはクリックして選択",
+  dropzoneHint:".pptx に対応（.pptは読み込めません）。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。",
+  listHeading:"読み込んだファイル",
+  thSlide:"スライド",thChart:"グラフ",thEmbedded:"埋め込みExcel",thSize:"サイズ",thEmbeddedDim:"シートの使用範囲",thPlotted:"グラフが使う範囲",thVerdict:"判定",
+  verdictExtra:"差異の可能性",verdictClean:"差異なし",verdictUnknown:"判定できません",verdictNoEmbedded:"埋め込みなし",
+  embeddedYes:"あり",embeddedLegacy:"あり（旧形式）",embeddedNo:"—",
+  dimFmt:function(r,c){return r+"行×"+c+"列"},dimUnknown:"不明",
+  chartLabelFmt:function(n,title){return "グラフ"+n+(title?"「"+title+"」":"")},
+  summaryFmt:function(n,slides,embedded,extra){
+    return "全"+slides+"スライド中、グラフ"+n+"件（埋め込みExcelあり"+embedded+"件・差異の可能性"+extra+"件）。";
+  },
+  summaryNoCharts:"このファイルにはグラフが見つかりませんでした。",
+  csvBtn:"結果をCSVでダウンロード",
+  errBad:"読み込めませんでした（.pptx以外の形式か、パスワード保護、または壊れたファイルの可能性があります）",
+  loadingLabel:"読み込み中…",removeLabel:"削除",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{
+  title:"\"Edit Data\" reveals the whole source table: diagnose PowerPoint charts' embedded Excel data",
+  sub:"Right-clicking a PowerPoint chart (a native Excel Chart Object) and choosing \"Edit Data\" can reveal rows and columns the chart never displays, still sitting in the embedded Excel sheet. Before sharing a file outside your company, scan every chart across every slide at once: this tool compares how many data points the chart actually uses against the embedded sheet's recorded used range, and flags charts that may be carrying extra, unused data. Process multiple files at once — nothing is uploaded, everything runs inside this browser (read-only — your file is never modified).",
+  dropzoneStrong:"Drag and drop PowerPoint files here",dropzoneRest:", or click to choose",
+  dropzoneHint:".pptx supported (.ppt cannot be read). Add multiple files at once. Everything happens on this device.",
+  listHeading:"Loaded files",
+  thSlide:"Slide",thChart:"Chart",thEmbedded:"Embedded Excel",thSize:"Size",thEmbeddedDim:"Sheet's used range",thPlotted:"Range the chart uses",thVerdict:"Verdict",
+  verdictExtra:"Possible extra data",verdictClean:"No difference",verdictUnknown:"Unable to tell",verdictNoEmbedded:"No embedding",
+  embeddedYes:"Yes",embeddedLegacy:"Yes (legacy format)",embeddedNo:"—",
+  dimFmt:function(r,c){return r+" rows × "+c+" cols"},dimUnknown:"Unknown",
+  chartLabelFmt:function(n,title){return "Chart "+n+(title?' "'+title+'"':"")},
+  summaryFmt:function(n,slides,embedded,extra){
+    return "Of "+slides+" slide(s): "+n+" chart(s) ("+embedded+" with an embedded workbook, "+extra+" flagged possible extra data).";
+  },
+  summaryNoCharts:"No charts were found in this file.",
+  csvBtn:"Download results as CSV",
+  errBad:"Could not read this file (it may not be .pptx, may be password-protected, or may be corrupted)",
+  loadingLabel:"Loading…",removeLabel:"Remove",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var files=[]; // {id,name,size,loading,error,result}
+var seq=0;
+
+function addFiles(fileList){
+  Array.prototype.slice.call(fileList).forEach(function(file){
+    var id=++seq;
+    var rec={id:id,name:file.name,size:file.size,loading:true,error:"",result:null};
+    files.push(rec);
+    render();
+    (async function(){
+      try{
+        var buf=await file.arrayBuffer();
+        var result=await analyzePptxCharts(new Uint8Array(buf));
+        rec.loading=false; rec.result=result;
+      }catch(e){
+        rec.loading=false; rec.error=T[lang].errBad;
+      }
+      render();
+    })();
+  });
+}
+function removeFile(id){ files=files.filter(function(r){return r.id!==id}); render(); }
+
+function dimCell(rows,cols,t){
+  if(rows===null||cols===null) return t.dimUnknown;
+  return t.dimFmt(rows,cols);
+}
+function chartRowHtml(c,t){
+  var embCell = c.hasEmbedded ? (c.embeddedKind==="legacy"?t.embeddedLegacy:t.embeddedYes) : t.embeddedNo;
+  var sizeCell = c.hasEmbedded ? fmtBytes(c.embeddedSize) : "—";
+  var embDim = c.hasEmbedded && c.embeddedKind==="xlsx" ? dimCell(c.embeddedRows,c.embeddedCols,t) : "—";
+  var plottedDim = c.plottedRows!==null ? dimCell(c.plottedRows,c.plottedCols,t) : "—";
+  var verdictKey={extra:"verdictExtra",clean:"verdictClean",unknown:"verdictUnknown",noEmbedded:"verdictNoEmbedded"}[c.verdict];
+  var verdictCls={extra:"extra",clean:"clean",unknown:"unknown",noEmbedded:"none"}[c.verdict];
+  return "<tr>"
+    +"<td>"+c.slideIndex+"</td>"
+    +"<td class=\"wrap\">"+esc(t.chartLabelFmt(c.chartIndexOnSlide,c.title))+"</td>"
+    +"<td>"+embCell+"</td>"
+    +"<td>"+sizeCell+"</td>"
+    +"<td>"+embDim+"</td>"
+    +"<td>"+plottedDim+"</td>"
+    +"<td><span class=\"badge "+verdictCls+"\">"+t[verdictKey]+"</span></td>"
+    +"</tr>";
+}
+function fileCardHtml(rec){
+  var t=T[lang];
+  if(rec.loading) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+t.loadingLabel+'</span></div></div>';
+  if(rec.error) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div><p class="errBox">'+t.errBad+'</p></div>';
+  var r=rec.result;
+  var rows=r.charts.map(function(c){return chartRowHtml(c,t)}).join("");
+  var html='<div class="fileCard">'
+    +'<div class="fTop"><span class="fName">'+esc(rec.name)+'</span>'
+    +'<span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div>'
+    +'<p class="summary">'+(r.charts.length?t.summaryFmt(r.charts.length,r.slideCount,r.embeddedCount,r.extraCount):t.summaryNoCharts)+'</p>';
+  if(r.charts.length){
+    html+='<div class="scroll"><table><thead><tr>'
+      +'<th>'+t.thSlide+'</th><th>'+t.thChart+'</th><th>'+t.thEmbedded+'</th><th>'+t.thSize+'</th>'
+      +'<th>'+t.thEmbeddedDim+'</th><th>'+t.thPlotted+'</th><th>'+t.thVerdict+'</th>'
+      +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +'<p><button type="button" class="secondary" data-csv="'+rec.id+'">'+t.csvBtn+'</button></p>';
+  }
+  html+='</div>';
+  return html;
+}
+function csvEscape(s){ s=String(s); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function downloadCsv(rec){
+  var t=T[lang];
+  var header=[t.thSlide,t.thChart,t.thEmbedded,t.thSize,t.thEmbeddedDim,t.thPlotted,t.thVerdict];
+  var lines=[header.map(csvEscape).join(",")];
+  rec.result.charts.forEach(function(c){
+    var embCell = c.hasEmbedded ? (c.embeddedKind==="legacy"?t.embeddedLegacy:t.embeddedYes) : t.embeddedNo;
+    var verdictKey={extra:"verdictExtra",clean:"verdictClean",unknown:"verdictUnknown",noEmbedded:"verdictNoEmbedded"}[c.verdict];
+    lines.push([
+      c.slideIndex, t.chartLabelFmt(c.chartIndexOnSlide,c.title), embCell,
+      c.hasEmbedded?fmtBytes(c.embeddedSize):"—",
+      (c.hasEmbedded && c.embeddedKind==="xlsx")?dimCell(c.embeddedRows,c.embeddedCols,t):"—",
+      c.plottedRows!==null?dimCell(c.plottedRows,c.plottedCols,t):"—",
+      t[verdictKey]
+    ].map(csvEscape).join(","));
+  });
+  var blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url;
+  var dot=rec.name.lastIndexOf("."); var base=dot>0?rec.name.slice(0,dot):rec.name;
+  a.download=base+"_charts.csv"; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },1000);
+}
+
+function render(){
+  var t=T[lang];
+  document.documentElement.lang=lang;
+  $("listSec").style.display=files.length?"block":"none";
+  $("fileList").innerHTML=files.map(fileCardHtml).join("");
+  document.querySelectorAll("[data-i]").forEach(function(el){
+    var k=el.getAttribute("data-i"); if(t[k]!==undefined) el.textContent=t[k];
+  });
+}
+
+document.addEventListener("click",function(e){
+  var rm=e.target.getAttribute && e.target.getAttribute("data-remove");
+  if(rm){ removeFile(parseInt(rm,10)); return; }
+  var cv=e.target.getAttribute && e.target.getAttribute("data-csv");
+  if(cv){ var rec=files.filter(function(r){return r.id===parseInt(cv,10)})[0]; if(rec) downloadCsv(rec); return; }
+});
+
+var dz=$("dropzone"), fi=$("fileInput");
+dz.addEventListener("click",function(){ fi.click(); });
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fi.click(); } });
+fi.addEventListener("change",function(){ if(fi.files.length) addFiles(fi.files); fi.value=""; });
+["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add("drag"); }); });
+["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove("drag"); }); });
+dz.addEventListener("drop",function(e){ if(e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+document.querySelectorAll(".lang button").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    lang=btn.getAttribute("data-lang");
+    document.querySelectorAll(".lang button").forEach(function(b){ b.setAttribute("aria-pressed", b===btn?"true":"false"); });
+    render();
+  });
+});
+
+render();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

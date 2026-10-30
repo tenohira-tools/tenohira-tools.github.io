@@ -2106,6 +2106,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "pptx-chart-kakure",
+      "title": "「グラフのデータを編集」で元の表が丸ごと見える：PowerPointグラフの埋め込みExcel診断ツール",
+      "url": "https://tenohira-tools.github.io/pptx-chart-kakure/",
+      "published": "2026-10-30",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "backlogが空のため、集中分野「社外に渡す前の処理」の角度でWebSearch3件を実施。「PowerPointの使われていないスライドマスター削除」はDeckMeditのGhost Layout Exorcist等、無料のブラウザ完結ツールが既に存在すると確認できたため見送り、「グラフに埋め込まれたExcelの元データ」はMicrosoft公式サポートが問題自体（ドキュメント検査では削除できない）を認めている一方、ブラウザ完結で診断できる無料ツールは見当たらないことを確認して着手。pptx-omoiのZIPセントラルディレクトリ解析と、ネストしたzip（埋め込みxlsx）へのxlsx-omoi同種の選択的解凍・dimension読み取りを組み合わせ、グラフのキャッシュ値（numCache/strCache）の個数と埋め込みシートの使用範囲を比較する設計。バブル・株価等キャッシュの数え方が単純でないグラフ、多階層の項目軸、古いOLE形式の埋め込みは誤検出を避けるため「判定できません」に分類する安全側の設計。",
+      "metrics": [
+        {
+          "date": "2026-10-30T18:30:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {
