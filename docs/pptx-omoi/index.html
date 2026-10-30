@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>「パワーポイントが重い」原因を診断：ファイル内訳チェッカー | てのひらツール</title>
+<meta name="description" content="「パワーポイントが重い」「ファイルサイズが大きい」と感じたPowerPoint(.pptx)ファイルの原因を、ファイルを開かずに診断。画像・動画・音声・埋め込みオブジェクトなどパーツごとの容量に加え、他のテンプレートから引き継いだまま使われていない「スライドレイアウト」や、複数残ったスライドマスターも検出します。ブラウザ内だけで処理し、ファイルは送信されません。Diagnose why a PowerPoint file feels heavy — breaks down file size by media, embedded objects and unused slide layouts/masters left over from a template, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/pptx-omoi/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:110px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.num{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:nowrap}
+td.detail{color:var(--muted);font-size:.82rem}
+.barWrap{position:relative}
+.barWrap .bar{position:absolute;left:0;top:0;bottom:0;background:var(--accent-bg);z-index:0;border-radius:3px}
+.barWrap .barLabel{position:relative;z-index:1}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.causeList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.causeList li{border:1px solid var(--warn);background:var(--warn-bg);color:var(--fg);border-radius:10px;padding:10px 14px;font-size:.92rem}
+.causeList li .rank{color:var(--warn);font-weight:700;margin-right:4px}
+.causeList.none li{border-color:var(--line);background:var(--bg);color:var(--muted)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-size:.88rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">「パワーポイントが重い」原因を診断：ファイル内訳チェッカー</h1>
+    <p class="sub" data-i="sub">PowerPoint(.pptx)ファイルの容量を、画像・動画・音声・埋め込みオブジェクトなどのパーツ別に内訳表示し、容量を押し上げている可能性が高い原因を順に挙げます。他のテンプレートから引き継いだまま使われていない「スライドレイアウト」や、複数残ったスライドマスターも検出します。ファイルを開かず、ブラウザの中だけで診断します。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにPowerPoint(.pptx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。.pptxのみ対応（.ppt・パスワード保護は読み込めません）。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".pptx" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="overviewCard" style="display:none">
+  <h2 data-i="overviewHeading">全体の内訳</h2>
+  <div class="statGrid" id="overviewGrid"></div>
+  <p class="hint" data-i="overviewHint">「ZIP内サイズ」は.pptxファイル自体の容量（メール添付などで実感する重さ）に直結する数値です。</p>
+</section>
+
+<section class="card" id="causesCard" style="display:none">
+  <h2 data-i="causesHeading">容量を押し上げている可能性が高い原因</h2>
+  <ul class="causeList" id="causeList"></ul>
+  <p class="hint" data-i="causesHint">数値から機械的に推測した「可能性」であり、断定ではありません。</p>
+</section>
+
+<section class="card" id="tableCard" style="display:none">
+  <h2 data-i="tableHeading">パーツ別の容量一覧</h2>
+  <div class="scroll"><table id="breakdownTable"></table></div>
+  <p style="margin-top:12px"><button type="button" class="secondary" id="csvBtn" data-i="csvBtn">内訳をCSVでダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にPowerPoint（.pptx）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>「全体の内訳」でファイル容量に占める大まかな構成と、スライド・レイアウト・マスターの数を確認します。</li>
+      <li>「容量を押し上げている可能性が高い原因」を確認します（スコアが高い順）。</li>
+      <li>「パーツ別の容量一覧」で、スライドごと・画像・動画・埋め込みオブジェクトなどの実際のサイズを細かく確認できます。必要ならCSVでダウンロードできます。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。ファイルの内容を書き換えたり保存したりすることもありません。</p>
+    <h3>Q. 「パワーポイントが重い」原因はどうやって調べていますか？</h3>
+    <p>A. .pptxファイルの実体はZIP形式で、内部にスライド・画像・動画・埋め込みオブジェクト・スライドレイアウト・スライドマスターなどの部品が別々のファイルとして入っています。このツールはZIPの目次（セントラルディレクトリ）から各部品の実際のサイズを読み取って内訳を作り、さらに各スライドが実際にどのスライドレイアウトを使っているかを調べて、容量や動作の重さに関わりやすい箇所を順に挙げます。</p>
+    <h3>Q. 「使われていないスライドレイアウト」とはどういう意味ですか？</h3>
+    <p>A. 社内の決まったテンプレートファイルをコピーして新しいプレゼンを作ったり、別の人が作ったスライドを貼り付けたりすると、そのテンプレートに元から用意されていた数十種類のスライドレイアウト（表紙用・見出し用・比較用など）が、実際には使っていないものも含めて全部ファイルの中に残ります。このツールは、ファイル内の全スライドレイアウトのうち、今あるどのスライドからも参照されていないものを検出し、その数と容量を表示します。PowerPointの「表示」→「スライドマスター」画面で、該当するレイアウトを右クリックして削除すると、使っていないレイアウトを減らせます（実際に使っているレイアウトを間違って消さないよう、このツールが挙げた名前で確認してから操作してください）。</p>
+    <h3>Q. スライドマスターが複数あると何が問題ですか？</h3>
+    <p>A. スライドマスター1つにつき、その下に数十種類のスライドレイアウトが紐づいています。複数のテンプレートから作ったスライドを1つのファイルにまとめると、スライドマスターごとまとめて増え、使っていないレイアウトも比例して増えやすくなります。</p>
+    <h3>Q. 画像・動画・音声・埋め込みオブジェクトの違いは何ですか？</h3>
+    <p>A. 画像はスライドに貼り付けた写真・図などです。動画・音声はそのまま埋め込んだメディアファイルで、1本あたりの容量が画像よりはるかに大きくなりやすいです。埋め込みオブジェクトは、グラフの元データ（Excelブック）や、Word・PDFなどのファイルをアイコンや画面表示のまま貼り付けたものです。</p>
+    <h3>Q. 対応しているファイル形式は？ファイルサイズの上限はありますか？</h3>
+    <p>A. PowerPoint 2007以降の.pptx形式に対応しています。古い.ppt形式や、パスワードで保護されたファイルは読み込めません。ファイルはブラウザのメモリ上で処理するため、非常に大きいファイル（数百MB以上）では、診断自体に時間がかかったりブラウザが重くなったりすることがあります。</p>
+    <h3>Q. 結果通りに直せば必ずファイルが軽くなりますか？</h3>
+    <p>A. このツールは原因の「可能性」を挙げるだけで、ファイルを書き換えることはしません。実際に軽くするには、使っていないスライドレイアウトの削除、画像の圧縮、動画・埋め込みオブジェクトの整理などをPowerPoint側で行う必要があります。原因が1つに絞れないファイルもあります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop a PowerPoint (.pptx) file into the box above, or click it to choose one.</li>
+      <li>Check the overall breakdown: the rough share of each part, plus counts like slides, layouts and masters.</li>
+      <li>Review the ranked list of likely causes (highest score first).</li>
+      <li>Use the detailed per-part table (slides, images, video, embedded objects, …) for the exact sizes, and download it as CSV if needed.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter). The file's contents are never modified or saved anywhere.</p>
+    <h3>Q. How does this figure out why a file feels heavy?</h3>
+    <p>A. A .pptx file is really a ZIP archive containing separate parts for slides, images, video, embedded objects, slide layouts, slide masters and more. This tool reads the ZIP's central directory to get each part's real size, then checks which slide layout each actual slide uses, and ranks the factors most likely to be adding to the size.</p>
+    <h3>Q. What does "unused slide layout" mean?</h3>
+    <p>A. Copying a company template or pasting in slides someone else made brings along every slide layout that template ever defined — title slides, section headers, comparison layouts, and so on — even the ones no slide in this file actually uses. This tool finds every slide layout in the file that no current slide references, and reports its count and size. In PowerPoint's View → Slide Master screen, right-click the layout (by the name this tool reports, to avoid removing one that's actually in use) and delete it to trim the unused ones.</p>
+    <h3>Q. Why would multiple slide masters be a problem?</h3>
+    <p>A. Each slide master carries dozens of its own slide layouts underneath it. Combining slides built from several different templates into one file multiplies both the masters and the layouts, including the unused ones.</p>
+    <h3>Q. What's the difference between images, video/audio and embedded objects?</h3>
+    <p>A. Images are pictures pasted onto slides. Video/audio are media files embedded as-is, and tend to be far larger than any single image. Embedded objects are things like a chart's source data (an Excel workbook) or a Word/PDF file pasted in and displayed as an icon or preview.</p>
+    <h3>Q. Which formats and sizes are supported?</h3>
+    <p>A. PowerPoint 2007+ .pptx files. The older .ppt format and password-protected files are not supported. Everything runs in your browser's memory, so very large files (several hundred MB) may take a while or make the browser sluggish during diagnosis.</p>
+    <h3>Q. If I act on the results, is the file guaranteed to get smaller?</h3>
+    <p>A. This tool only reports likely causes — it never modifies your file. Actually shrinking it requires deleting unused slide layouts, compressing images, or cleaning up video/embedded objects in PowerPoint itself. Some files don't have one single cause.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../pptx-kakure/">社外に渡す前に：PowerPointのノート・非表示スライド・コメントを一覧化</a> — ノート（発表者メモ）・非表示スライド・コメントをスライドごとに一覧表示し、ノートだけをまとめて削除。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — Excel版の同種の診断。シート・画像・スタイル・共有文字列・ピボットキャッシュの内訳と原因を表示。</li>
+      <li><a href="../docx-kakure/">社外に渡す前に確認：Wordの「隠れた情報」一括チェック</a> — Word版の同種のチェック。変更履歴の編集者名・コメント・隠し文字・ヘッダーフッターの文字を一括診断。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — Excelファイルの非表示シート・コメント・外部リンクなどの一括診断。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../pptx-kakure/">Before sharing a PowerPoint file: list notes, hidden slides and comments</a> — List every slide's speaker notes, hidden status and comments at once, then bulk-clear just the notes.</li>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up Excel, Word and PowerPoint files at once before sending them outside your company.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy? Part-by-part size diagnosis</a> — The Excel equivalent: breaks down size by sheet, images, styles, shared strings and pivot caches.</li>
+      <li><a href="../docx-kakure/">Before sending outside your company: check a Word file for &quot;hidden&quot; information</a> — The Word equivalent: Track Changes editors, comments, hidden text and header/footer text, all at once.</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for &quot;hidden&quot; information before sending it outside your company</a> — The Excel equivalent: hidden sheets, comments, external links and more, all at once.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"「パワーポイントが重い」原因はどうやって調べていますか？","acceptedAnswer":{"@type":"Answer","text":".pptxの実体はZIP形式で、スライド・画像・動画・埋め込みオブジェクト・スライドレイアウトなどが別々の部品として入っています。ZIPの目次から各部品の実サイズを読み取り、各スライドが実際に使っているレイアウトも調べて、原因になりやすい箇所を順に挙げます。"}},
+    {"@type":"Question","name":"「使われていないスライドレイアウト」とはどういう意味ですか？","acceptedAnswer":{"@type":"Answer","text":"テンプレートのコピーや他のファイルからのスライド貼り付けで、実際には使っていないスライドレイアウトまで一緒にファイルへ残ることがあります。このツールはどのスライドからも参照されていないレイアウトを検出し、数と容量を表示します。"}},
+    {"@type":"Question","name":"スライドマスターが複数あると何が問題ですか？","acceptedAnswer":{"@type":"Answer","text":"スライドマスター1つにつき数十種類のレイアウトが紐づいているため、複数のテンプレートを1つのファイルにまとめると、使っていないレイアウトも比例して増えやすくなります。"}},
+    {"@type":"Question","name":"画像・動画・音声・埋め込みオブジェクトの違いは何ですか？","acceptedAnswer":{"@type":"Answer","text":"画像はスライドに貼り付けた写真・図、動画・音声はそのまま埋め込んだメディアファイル、埋め込みオブジェクトはグラフの元データやWord・PDFなどのファイルをそのまま貼り付けたものです。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   PPTX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-omoi/pptx-kakure (no external libraries; only standard browser
+   APIs: DecompressionStream/TextDecoder). Like xlsx-omoi, this tool
+   reads the ZIP central directory for PART SIZES without decompressing
+   anything, and only decompresses the small handful of XML parts it
+   actually needs (presentation.xml, each slide, each slide's .rels) —
+   media, embeddings and layout/master XML are sized but never read.
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function readEntryText(bytes,entries,name){
+  var en=entries.find(function(e){return e.name===name});
+  if(!en) return null;
+  var data=await zipReadEntry(bytes,en);
+  return new TextDecoder("utf-8").decode(data);
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function getOpenAttrs(xml,tagName){
+  var re=new RegExp("<"+tagName+"(?=[\\s/>])");
+  var m=re.exec(xml);
+  if(!m) return null;
+  return parseOpenTag(xml,m.index+1+tagName.length).attrs;
+}
+function dirName(path){ var i=path.lastIndexOf("/"); return i===-1?"":path.slice(0,i); }
+function baseName(path){ var i=path.lastIndexOf("/"); return i===-1?path:path.slice(i+1); }
+function relsPathFor(path){ var d=dirName(path); return (d?d+"/":"")+"_rels/"+baseName(path)+".rels"; }
+function resolveRelPath(baseDir,target){
+  if(/^\//.test(target)) return target.replace(/^\/+/,"");
+  var baseParts=baseDir?baseDir.split("/"):[];
+  target.split("/").forEach(function(p){
+    if(p===""||p===".") return;
+    if(p==="..") baseParts.pop(); else baseParts.push(p);
+  });
+  return baseParts.join("/");
+}
+function parseRels(xml){
+  return findTags(xml,"Relationship").map(function(t){return {id:t.attrs.Id,type:t.attrs.Type||"",target:t.attrs.Target||""};});
+}
+
+/* =====================================================================
+   Diagnosis
+   ===================================================================== */
+async function diagnosePptx(bytes){
+  var entries=zipCentralDirectory(bytes);
+  var byPath={}; entries.forEach(function(e){ byPath[e.name]=e; });
+  if(!byPath["ppt/presentation.xml"]) throw new Error("NOT_PPTX");
+
+  var presXml=await readEntryText(bytes,entries,"ppt/presentation.xml");
+  var presRelsXml=await readEntryText(bytes,entries,relsPathFor("ppt/presentation.xml"))||"";
+  var presRels=parseRels(presRelsXml);
+  var relById={}; presRels.forEach(function(r){ relById[r.id]=r; });
+
+  var slidePaths=findTags(presXml,"p:sldId").map(function(t){
+    var rel=relById[t.attrs["r:id"]];
+    return rel ? resolveRelPath(dirName("ppt/presentation.xml"),rel.target) : null;
+  }).filter(Boolean);
+  var masterPaths=findTags(presXml,"p:sldMasterId").map(function(t){
+    var rel=relById[t.attrs["r:id"]];
+    return rel ? resolveRelPath(dirName("ppt/presentation.xml"),rel.target) : null;
+  }).filter(Boolean);
+
+  var usedLayoutPaths={};
+  var slideStats=[];
+  for(var i=0;i<slidePaths.length;i++){
+    var sp=slidePaths[i], entry=byPath[sp];
+    if(!entry){ slideStats.push({idx:i+1,path:sp,found:false,compSize:0,uncompSize:0,hidden:false,hasNotes:false,layoutName:""}); continue; }
+    var slideXml=await readEntryText(bytes,entries,sp);
+    var rootAttrs=getOpenAttrs(slideXml,"p:sld")||{};
+    var hidden=rootAttrs.show==="0";
+    var slideRelsXml=await readEntryText(bytes,entries,relsPathFor(sp))||"";
+    var slideRels=parseRels(slideRelsXml);
+    var layoutRel=slideRels.filter(function(r){return /\/slideLayout$/.test(r.type)})[0];
+    var notesRel=slideRels.filter(function(r){return /\/notesSlide$/.test(r.type)})[0];
+    var layoutPath=layoutRel ? resolveRelPath(dirName(sp),layoutRel.target) : null;
+    if(layoutPath) usedLayoutPaths[layoutPath]=true;
+    slideStats.push({idx:i+1,path:sp,found:true,compSize:entry.compSize,uncompSize:entry.uncompSize,
+      hidden:hidden,hasNotes:!!notesRel,layoutPath:layoutPath});
+  }
+
+  var allLayoutEntries=entries.filter(function(e){return /^ppt\/slideLayouts\/slideLayout\d+\.xml$/.test(e.name)});
+  var unusedLayoutEntries=allLayoutEntries.filter(function(e){return !usedLayoutPaths[e.name]});
+  var usedLayoutEntries=allLayoutEntries.filter(function(e){return usedLayoutPaths[e.name]});
+  var allMasterEntries=entries.filter(function(e){return /^ppt\/slideMasters\/slideMaster\d+\.xml$/.test(e.name)});
+
+  var usedPaths={};
+  slidePaths.forEach(function(p){ usedPaths[p]=true; });
+  allLayoutEntries.forEach(function(e){ usedPaths[e.name]=true; });
+  allMasterEntries.forEach(function(e){ usedPaths[e.name]=true; });
+
+  var cats={
+    images:{count:0,compSize:0,uncompSize:0}, video:{count:0,compSize:0,uncompSize:0}, audio:{count:0,compSize:0,uncompSize:0},
+    embeddings:{count:0,compSize:0,uncompSize:0}, charts:{count:0,compSize:0,uncompSize:0},
+    notesSlides:{count:0,compSize:0,uncompSize:0}, theme:{count:0,compSize:0,uncompSize:0},
+    other:{count:0,compSize:0,uncompSize:0}
+  };
+  var totalComp=0, totalUncomp=0;
+  var VIDEO_EXT=["mp4","mov","wmv","avi","m4v","mpg","mpeg","asf"];
+  var AUDIO_EXT=["mp3","wav","m4a","wma","aac","mid","midi"];
+  entries.forEach(function(e){
+    if(/\/$/.test(e.name)) return;
+    totalComp+=e.compSize; totalUncomp+=e.uncompSize;
+    if(usedPaths[e.name]) return;
+    var key, extM=/\.([a-z0-9]+)$/i.exec(e.name), ext=extM?extM[1].toLowerCase():"";
+    if(/^ppt\/media\//.test(e.name)){
+      if(VIDEO_EXT.indexOf(ext)!==-1) key="video";
+      else if(AUDIO_EXT.indexOf(ext)!==-1) key="audio";
+      else key="images";
+    }
+    else if(/^ppt\/embeddings\//.test(e.name)) key="embeddings";
+    else if(/^ppt\/charts\//.test(e.name)) key="charts";
+    else if(/^ppt\/notesSlides\//.test(e.name)) key="notesSlides";
+    else if(/^ppt\/theme\//.test(e.name)) key="theme";
+    else key="other";
+    cats[key].count++; cats[key].compSize+=e.compSize; cats[key].uncompSize+=e.uncompSize;
+  });
+
+  function sumEntries(list){
+    return list.reduce(function(a,e){ return {compSize:a.compSize+e.compSize, uncompSize:a.uncompSize+e.uncompSize}; },{compSize:0,uncompSize:0});
+  }
+
+  return {
+    slideStats:slideStats, totalComp:totalComp, totalUncomp:totalUncomp, cats:cats,
+    layoutTotal:allLayoutEntries.length, layoutUsedCount:usedLayoutEntries.length, layoutUnusedCount:unusedLayoutEntries.length,
+    layoutUsedSum:sumEntries(usedLayoutEntries), layoutUnusedSum:sumEntries(unusedLayoutEntries),
+    masterCount:allMasterEntries.length, masterSum:sumEntries(allMasterEntries)
+  };
+}
+
+function buildCauses(d,lang){
+  var causes=[], total=Math.max(1,d.totalUncomp), pct;
+  var img=d.cats.images;
+  if(img.count>0){
+    pct=img.uncompSize/total;
+    if(pct>=0.15) causes.push({score:pct, key:"images", n:img.count, pct:Math.round(pct*100)});
+  }
+  var vid=d.cats.video;
+  if(vid.count>0){
+    pct=vid.uncompSize/total;
+    causes.push({score:Math.max(pct,0.6), key:"video", n:vid.count, pct:Math.round(pct*100)});
+  }
+  var aud=d.cats.audio;
+  if(aud.count>0){
+    pct=aud.uncompSize/total;
+    if(pct>=0.1) causes.push({score:Math.max(pct,0.3), key:"audio", n:aud.count, pct:Math.round(pct*100)});
+  }
+  var emb=d.cats.embeddings;
+  if(emb.count>0){
+    pct=emb.uncompSize/total;
+    causes.push({score:Math.max(pct,0.45), key:"embeddings", n:emb.count, pct:Math.round(pct*100)});
+  }
+  var chr=d.cats.charts;
+  if(chr.count>0){
+    pct=chr.uncompSize/total;
+    if(pct>=0.08) causes.push({score:pct, key:"charts", n:chr.count, pct:Math.round(pct*100)});
+  }
+  if(d.layoutUnusedCount>=3){
+    pct=d.layoutUnusedSum.uncompSize/total;
+    causes.push({score:Math.max(pct,0.4), key:"unusedLayouts", n:d.layoutUnusedCount, total:d.layoutTotal, pct:Math.round(pct*100)});
+  }
+  if(d.masterCount>=2){
+    causes.push({score:0.35, key:"manyMasters", n:d.masterCount});
+  }
+  causes.sort(function(a,b){return b.score-a.score});
+  return causes.slice(0,4);
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"「パワーポイントが重い」原因を診断：ファイル内訳チェッカー",
+  sub:"PowerPoint(.pptx)ファイルの容量を、画像・動画・音声・埋め込みオブジェクトなどのパーツ別に内訳表示し、容量を押し上げている可能性が高い原因を順に挙げます。他のテンプレートから引き継いだまま使われていない「スライドレイアウト」や、複数残ったスライドマスターも検出します。ファイルを開かず、ブラウザの中だけで診断します。",
+  dropzoneText:"ここにPowerPoint(.pptx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。.pptxのみ対応（.ppt・パスワード保護は読み込めません）。ファイルは選択した端末の中だけで処理されます。",
+  overviewHeading:"全体の内訳", overviewHint:"「ZIP内サイズ」は.pptxファイル自体の容量（メール添付などで実感する重さ）に直結する数値です。",
+  statFileSize:"ファイル容量（ZIP内合計）", statSlides:"スライド数", statLayoutsUsed:"使用中のレイアウト", statLayoutsUnused:"未使用のレイアウト",
+  statMasters:"スライドマスター数", statImages:"画像の数",
+  causesHeading:"容量を押し上げている可能性が高い原因",
+  causesHint:"数値から機械的に推測した「可能性」であり、断定ではありません。",
+  causeNone:"今回のファイルでは、容量を大きく占める特定の原因は見当たりませんでした。スライド数自体が多い、または全体に薄く分散しているなどが考えられます。",
+  causeImages:"画像が全体の展開後サイズの約{pct}%（{n}枚）を占めています。解像度の高い画像を多数貼り付けている場合、画像を圧縮するかサイズを縮小すると小さくなる可能性があります。",
+  causeVideo:"動画が含まれており、全体の約{pct}%（{n}本）を占めています。動画は1本あたりの容量が大きく、ファイルが重くなる最大の原因になりやすいです。PowerPointの「メディアの圧縮」機能や、動画自体の解像度を落とすと軽くなる可能性があります。",
+  causeAudio:"音声ファイルが含まれており、全体の約{pct}%（{n}個）を占めています。",
+  causeEmbeddings:"埋め込みオブジェクト（グラフの元データ、Word・PDF・別のファイルの埋め込みなど、{n}個）が含まれています。他のファイルをそのまま貼り付けている場合、容量が大きくなりやすい原因です。",
+  causeCharts:"グラフのデータが全体の約{pct}%（{n}個）を占めています。グラフの数が多い、または元データが大きいファイルで発生しやすいです。",
+  causeUnusedLayouts:"全{total}種類のスライドレイアウトのうち、どのスライドからも使われていないものが{n}種類あります（全体の約{pct}%）。テンプレートのコピーや他ファイルからのスライド貼り付けで、使っていないレイアウトまで一緒に残っていることがよくあります。PowerPointの「スライドマスター」表示から該当レイアウトを削除すると減らせます。",
+  causeManyMasters:"スライドマスターが{n}個あります。通常は1個で、複数ある場合は別のテンプレートから作られたスライドを後から1つのファイルにまとめたことが多く、使っていないレイアウトも比例して増えやすい原因になります。",
+  tableHeading:"パーツ別の容量一覧", csvBtn:"内訳をCSVでダウンロード",
+  colPart:"パーツ",colKind:"種別",colSize:"ZIP内サイズ",colPct:"割合",colDetail:"詳細",
+  kindSlide:"スライド",
+  kindCat:{images:"画像",video:"動画",audio:"音声",embeddings:"埋め込みオブジェクト",charts:"グラフ",notesSlides:"ノート（発表者メモ）",theme:"テーマ",other:"その他",layoutsUsed:"スライドレイアウト（使用中）",layoutsUnused:"スライドレイアウト（未使用）",masters:"スライドマスター"},
+  detailSlide:"{hidden}{notes}レイアウト:{layout}",hiddenTag:"非表示／",notesTag:"ノートあり／",noLayout:"（不明）",
+  detailCount:"{n}個のファイル",detailLayouts:"{n}種類",detailNone:"なし（0件）",
+  removeBtn:"削除",loadingLabel:"読み込み中…",
+  errBad:"読み込めませんでした（.pptx以外の形式か、パスワード保護の可能性があります）",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Why is this PowerPoint file heavy? Part-by-part size diagnosis",
+  sub:"Breaks down a PowerPoint (.pptx) file's size by images, video/audio, embedded objects and more, then ranks the factors most likely adding to it — including slide layouts and masters left over, unused, from a copied template. Diagnosed entirely in your browser, without opening the file.",
+  dropzoneText:"Drag and drop a PowerPoint (.pptx) file here, or click to choose",
+  dropzoneHint:"One file at a time. .pptx only (.ppt and password-protected files aren't supported). Everything happens on this device.",
+  overviewHeading:"Overall breakdown", overviewHint:"\"ZIP-internal size\" tracks directly to the .pptx file's own size — the weight you feel attaching it to an email.",
+  statFileSize:"File size (total in ZIP)", statSlides:"Slides", statLayoutsUsed:"Layouts in use", statLayoutsUnused:"Unused layouts",
+  statMasters:"Slide masters", statImages:"Images",
+  causesHeading:"Factors likely adding to the size",
+  causesHint:"These are mechanically inferred possibilities, not certainties.",
+  causeNone:"No single factor stood out as dominating this file's size. It may simply have many slides, or the size may be spread evenly across parts.",
+  causeImages:"Images make up about {pct}% of the uncompressed content ({n} files). If you've pasted many high-resolution images, compressing or downscaling them may shrink the file.",
+  causeVideo:"This file contains video, about {pct}% of the content ({n} file(s)). Video is usually the single biggest contributor to file size — PowerPoint's \"Compress Media\" feature, or lowering the video's own resolution, may help.",
+  causeAudio:"This file contains audio, about {pct}% of the content ({n} file(s)).",
+  causeEmbeddings:"This file contains embedded objects ({n}) — a chart's source data (an Excel workbook), or a Word/PDF/other file pasted in as-is. These tend to add a lot of size.",
+  causeCharts:"Chart data makes up about {pct}% of the content ({n} chart(s)). This tends to happen with many charts, or charts backed by large source data.",
+  causeUnusedLayouts:"Of {total} slide layouts in this file, {n} are not used by any current slide (about {pct}% of the content). Copying a template or pasting in slides from elsewhere commonly brings along layouts nothing here actually uses. Delete them from PowerPoint's Slide Master view to trim this.",
+  causeManyMasters:"This file has {n} slide masters. Normally there's just one — multiple masters usually mean slides from different templates were later combined into one file, which tends to multiply unused layouts too.",
+  tableHeading:"Size by part", csvBtn:"Download this breakdown as CSV",
+  colPart:"Part",colKind:"Kind",colSize:"Size in ZIP",colPct:"Share",colDetail:"Detail",
+  kindSlide:"Slide",
+  kindCat:{images:"Images",video:"Video",audio:"Audio",embeddings:"Embedded objects",charts:"Charts",notesSlides:"Speaker notes",theme:"Theme",other:"Other",layoutsUsed:"Slide layouts (in use)",layoutsUnused:"Slide layouts (unused)",masters:"Slide masters"},
+  detailSlide:"{hidden}{notes}layout: {layout}",hiddenTag:"hidden / ",notesTag:"has notes / ",noLayout:"(unknown)",
+  detailCount:"{n} file(s)",detailLayouts:"{n} layout(s)",detailNone:"none (0)",
+  removeBtn:"Remove",loadingLabel:"Loading…",
+  errBad:"Could not read this file (it may not be .pptx, or it's password-protected)",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  if(n<1024*1024*1024) return (n/1024/1024).toFixed(2)+" MB";
+  return (n/1024/1024/1024).toFixed(2)+" GB";
+}
+function fmtTemplate(tpl,params){
+  return tpl.replace(/\{(\w+)\}/g,function(_,k){return params[k]!==undefined?params[k]:""});
+}
+
+var state={fileName:"",loading:false,error:"",diag:null,rows:[]};
+
+function resetFile(){ state={fileName:"",loading:false,error:"",diag:null,rows:[]}; render(); }
+
+function addFile(file){
+  state={fileName:file.name,loading:true,error:"",diag:null,rows:[]};
+  render();
+  file.arrayBuffer().then(function(buf){ return diagnosePptx(new Uint8Array(buf)); })
+    .then(function(d){ state.loading=false; state.diag=d; state.rows=buildRows(d); render(); })
+    .catch(function(){ state.loading=false; state.error=T[lang].errBad; render(); });
+}
+
+function layoutLabel(path){
+  if(!path) return T[lang].noLayout;
+  var m=/slideLayout(\d+)\.xml$/.exec(path);
+  return m ? m[1] : path;
+}
+
+function buildRows(d){
+  var rows=[];
+  d.slideStats.forEach(function(s){
+    var detail=fmtTemplate(T[lang].detailSlide,{
+      hidden: s.hidden?T[lang].hiddenTag:"",
+      notes: s.hasNotes?T[lang].notesTag:"",
+      layout: s.found?layoutLabel(s.layoutPath):T[lang].noLayout
+    });
+    rows.push({kind:"slide", label:T[lang].kindSlide+" "+s.idx, compSize:s.compSize, uncompSize:s.uncompSize, detail:detail});
+  });
+  if(d.layoutUsedCount>0){
+    rows.push({kind:"cat", label:T[lang].kindCat.layoutsUsed, compSize:d.layoutUsedSum.compSize, uncompSize:d.layoutUsedSum.uncompSize,
+      detail:fmtTemplate(T[lang].detailLayouts,{n:d.layoutUsedCount})});
+  }
+  if(d.layoutUnusedCount>0){
+    rows.push({kind:"cat", label:T[lang].kindCat.layoutsUnused, compSize:d.layoutUnusedSum.compSize, uncompSize:d.layoutUnusedSum.uncompSize,
+      detail:fmtTemplate(T[lang].detailLayouts,{n:d.layoutUnusedCount})});
+  }
+  if(d.masterCount>0){
+    rows.push({kind:"cat", label:T[lang].kindCat.masters, compSize:d.masterSum.compSize, uncompSize:d.masterSum.uncompSize,
+      detail:fmtTemplate(T[lang].detailLayouts,{n:d.masterCount})});
+  }
+  Object.keys(d.cats).forEach(function(key){
+    var c=d.cats[key];
+    if(c.count===0) return;
+    rows.push({kind:"cat", label:T[lang].kindCat[key], compSize:c.compSize, uncompSize:c.uncompSize,
+      detail:fmtTemplate(T[lang].detailCount,{n:c.count})});
+  });
+  rows.sort(function(a,b){ return b.compSize-a.compSize; });
+  return rows;
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.diag){ h+="<span class='fMeta'>"+fmtBytes(state.diag.totalComp)+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function renderOverview(d){
+  var items=[
+    [fmtBytes(d.totalComp), T[lang].statFileSize],
+    [d.slideStats.length, T[lang].statSlides],
+    [d.layoutUsedCount, T[lang].statLayoutsUsed],
+    [d.layoutUnusedCount, T[lang].statLayoutsUnused],
+    [d.masterCount, T[lang].statMasters],
+    [d.cats.images.count, T[lang].statImages]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox'><div class='n'>"+esc(it[0])+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("overviewGrid").innerHTML=h;
+}
+
+function renderCauses(d){
+  var causes=buildCauses(d,lang);
+  var box=$("causeList");
+  if(!causes.length){
+    box.className="causeList none";
+    box.innerHTML="<li>"+esc(T[lang].causeNone)+"</li>";
+    return;
+  }
+  box.className="causeList";
+  var tplKey={images:"causeImages",video:"causeVideo",audio:"causeAudio",embeddings:"causeEmbeddings",
+    charts:"causeCharts",unusedLayouts:"causeUnusedLayouts",manyMasters:"causeManyMasters"};
+  var h="";
+  causes.forEach(function(c,i){
+    var tpl=T[lang][tplKey[c.key]];
+    h+="<li><span class='rank'>"+(i+1)+".</span>"+esc(fmtTemplate(tpl,c))+"</li>";
+  });
+  box.innerHTML=h;
+}
+
+function renderTable(rows,totalComp){
+  var h="<thead><tr><th>"+esc(T[lang].colPart)+"</th><th>"+esc(T[lang].colSize)+"</th><th>"+esc(T[lang].colPct)+"</th><th>"+esc(T[lang].colDetail)+"</th></tr></thead><tbody>";
+  var maxSize=rows.length?rows[0].compSize:1;
+  rows.forEach(function(r){
+    var pct = totalComp>0 ? (r.compSize/totalComp*100) : 0;
+    var barPct = maxSize>0 ? (r.compSize/maxSize*100) : 0;
+    h+="<tr>";
+    h+="<td>"+esc(r.label)+"</td>";
+    h+="<td class='num'><span class='barWrap'><span class='bar' style='width:"+barPct.toFixed(1)+"%'></span><span class='barLabel'>"+esc(fmtBytes(r.compSize))+"</span></span></td>";
+    h+="<td class='num'>"+pct.toFixed(1)+"%</td>";
+    h+="<td class='detail'>"+esc(r.detail)+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody>";
+  $("breakdownTable").innerHTML=h;
+}
+
+function render(){
+  renderFileCard();
+  if(!state.fileName || state.loading || state.error || !state.diag){
+    $("overviewCard").style.display="none"; $("causesCard").style.display="none"; $("tableCard").style.display="none";
+    return;
+  }
+  var d=state.diag;
+  $("overviewCard").style.display=""; $("causesCard").style.display=""; $("tableCard").style.display="";
+  renderOverview(d);
+  renderCauses(d);
+  renderTable(state.rows,d.totalComp);
+}
+
+function toCsv(rows,totalComp){
+  var head=["part","size_bytes","percent","detail"];
+  var lines=[head.join(",")];
+  function q(s){ s=String(s); return '"'+s.replace(/"/g,'""')+'"'; }
+  rows.forEach(function(r){
+    var pct = totalComp>0 ? (r.compSize/totalComp*100).toFixed(1) : "0.0";
+    lines.push([q(r.label), r.compSize, pct, q(r.detail)].join(","));
+  });
+  return lines.join("\r\n");
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("csvBtn").addEventListener("click",function(){
+  if(!state.diag) return;
+  var csv="﻿"+toCsv(state.rows,state.diag.totalComp);
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=(state.fileName||"pptx")+"_内訳.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  if(state.diag) state.rows=buildRows(state.diag);
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
