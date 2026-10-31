@@ -21,6 +21,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [CSVをExcelで開くと0が消える・日付になるときの変換ツール（.xlsx書き出し）](https://tenohira-tools.github.io/csv-to-xlsx/)
 - [CSVが文字化けする・結合できない・表記ゆれがあるときの対策まとめ｜症状から探す8ツール](https://tenohira-tools.github.io/csv-trouble/)
 - [社外に渡す前に確認：Wordの「隠れた情報」一括チェック（変更履歴・コメント・隠し文字・ヘッダーフッター）](https://tenohira-tools.github.io/docx-kakure/)
+- [「Wordファイルが重い」原因を診断：ファイル内訳チェッカー（画像・フォント埋め込み・トリミング残存データ）](https://tenohira-tools.github.io/docx-omoi/)
 - [エクセルが重い・保存できない・エラーが出るときの対策まとめ｜症状から探す29ツール](https://tenohira-tools.github.io/excel-trouble/)
 - [表記ゆれ・全角半角チェッカー（サーバ/サーバーなどを検出して統一）](https://tenohira-tools.github.io/hyoki-yure/)
 - [領収書のファイル名・まとめ方・経費精算で困ったときの対策まとめ｜症状から探す4ツール](https://tenohira-tools.github.io/keihi-trouble/)

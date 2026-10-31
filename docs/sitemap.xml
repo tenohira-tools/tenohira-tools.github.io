@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://tenohira-tools.github.io/</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/config-convert/</loc><lastmod>2026-10-17</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/csv-fix/</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/csv-group-split/</loc><lastmod>2026-10-20</lastmod></url>
@@ -10,17 +10,18 @@
   <url><loc>https://tenohira-tools.github.io/csv-seiri/</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/csv-to-xlsx/</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/csv-trouble/</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/docx-kakure/</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/docx-kakure/</loc><lastmod>2026-10-31</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/docx-omoi/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/excel-trouble/</loc><lastmod>2026-10-28</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/hyoki-yure/</loc><lastmod>2026-10-17</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/keihi-trouble/</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/kotsuhi-seisan/</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/pptx-chart-kakure/</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/pptx-chart-kakure/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/pptx-kakure/</loc><lastmod>2026-10-30</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/pptx-omoi/</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/pptx-omoi/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/receipt-sheet/</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/regex-ja/</loc><lastmod>2026-10-17</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/sakusha-kesu/</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/sakusha-kesu/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/shohyo-rename/</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/shorui-scan/</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/wareki-toitsu/</loc><lastmod>2026-10-20</lastmod></url>
@@ -45,7 +46,7 @@
   <url><loc>https://tenohira-tools.github.io/xlsx-namae/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-nyuryoku/</loc><lastmod>2026-10-23</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-okikae/</loc><lastmod>2026-10-25</lastmod></url>
-  <url><loc>https://tenohira-tools.github.io/xlsx-omoi/</loc><lastmod>2026-10-30</lastmod></url>
+  <url><loc>https://tenohira-tools.github.io/xlsx-omoi/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-pivot-kesu/</loc><lastmod>2026-10-28</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-saihyouji/</loc><lastmod>2026-10-26</lastmod></url>
   <url><loc>https://tenohira-tools.github.io/xlsx-style/</loc><lastmod>2026-10-27</lastmod></url>
