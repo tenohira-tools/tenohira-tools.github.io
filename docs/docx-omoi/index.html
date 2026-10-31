@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>「Wordファイルが重い」原因を診断：ファイル内訳チェッカー（画像・フォント埋め込み・トリミング残存データ） | てのひらツール</title>
+<meta name="description" content="Wordファイルが急に重い・容量が大きいと感じたとき、Word自体には画像サイズの内訳を見る機能がありません。.docxファイルの容量を画像・埋め込みオブジェクト・埋め込みフォントなどのパーツ別に表示し、容量を押し上げている可能性が高い原因を順に挙げます。画像をトリミングしても元のデータがファイルに残り続ける問題も検出。ファイルを開かず、ブラウザ内だけで診断しサーバーには送信しません。Diagnose why a Word (.docx) file feels heavy: breaks down file size by images, embedded objects and embedded fonts, and detects images that were cropped in Word but still carry their full original pixel data inside the file — entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/docx-omoi/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px;min-width:0}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:110px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.num{text-align:right;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:nowrap}
+td.detail{color:var(--muted);font-size:.82rem}
+.barWrap{position:relative}
+.barWrap .bar{position:absolute;left:0;top:0;bottom:0;background:var(--accent-bg);z-index:0;border-radius:3px}
+.barWrap .barLabel{position:relative;z-index:1}
+.causeList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.causeList li{border:1px solid var(--warn);background:var(--warn-bg);color:var(--fg);border-radius:10px;padding:10px 14px;font-size:.92rem}
+.causeList li .rank{color:var(--warn);font-weight:700;margin-right:4px}
+.causeList.none li{border-color:var(--line);background:var(--bg);color:var(--muted)}
+.cropList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.cropList li{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:.88rem}
+.cropList .cName{font-weight:700;word-break:break-all}
+button.secondary{font:inherit;font-size:.88rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">「Wordファイルが重い」原因を診断：ファイル内訳チェッカー</h1>
+    <p class="sub" data-i="sub">Word(.docx)ファイルの容量を、画像・埋め込みオブジェクト・埋め込みフォントなどのパーツ別に内訳表示し、容量を押し上げている可能性が高い原因を順に挙げます。画像をトリミング（切り取り）しても元の画像データがファイルにそのまま残る問題も検出します。ファイルを開かず、ブラウザの中だけで診断します。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにWord(.docx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。.docxのみ対応（.doc・パスワード保護は読み込めません）。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".docx" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="overviewCard" style="display:none">
+  <h2 data-i="overviewHeading">全体の内訳</h2>
+  <div class="statGrid" id="overviewGrid"></div>
+  <p class="hint" data-i="overviewHint">「ZIP内サイズ」は.docxファイル自体の容量（メール添付などで実感する重さ）に直結する数値です。</p>
+</section>
+
+<section class="card" id="causesCard" style="display:none">
+  <h2 data-i="causesHeading">容量を押し上げている可能性が高い原因</h2>
+  <ul class="causeList" id="causeList"></ul>
+  <p class="hint" data-i="causesHint">数値から機械的に推測した「可能性」であり、断定ではありません。</p>
+</section>
+
+<section class="card" id="cropCard" style="display:none">
+  <h2 data-i="cropHeading">トリミングされた画像（元データが残っている可能性）</h2>
+  <ul class="cropList" id="cropList"></ul>
+  <p class="hint" data-i="cropHint">「切り取り範囲の推定」は画像のバイト数に対する面積比から機械的に見積もった目安で、実際の圧縮方式によって前後します。</p>
+</section>
+
+<section class="card" id="tableCard" style="display:none">
+  <h2 data-i="tableHeading">パーツ別の容量一覧</h2>
+  <div class="scroll"><table id="breakdownTable"></table></div>
+  <p style="margin-top:12px"><button type="button" class="secondary" id="csvBtn" data-i="csvBtn">内訳をCSVでダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にWord（.docx）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>「全体の内訳」でファイル容量の大まかな構成（画像・埋め込みオブジェクト・埋め込みフォントなどの数）を確認します。</li>
+      <li>「容量を押し上げている可能性が高い原因」を確認します（スコアが高い順）。</li>
+      <li>トリミングされた画像が見つかった場合は、専用の一覧で該当する画像ファイル名と、元データが残っている可能性のあるおおよその容量を確認できます。</li>
+      <li>「パーツ別の容量一覧」で、本文・ヘッダー・フッター・画像・埋め込みオブジェクトなどの実際のサイズを細かく確認できます。必要ならCSVでダウンロードできます。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。ファイルの内容を書き換えたり保存したりすることもありません。</p>
+    <h3>Q. 「Wordファイルが重い」原因はどうやって調べていますか？</h3>
+    <p>A. .docxファイルの実体はZIP形式で、内部に本文・画像・埋め込みオブジェクト・埋め込みフォントなどの部品が別々のファイルとして入っています。Word自身には画像ごとの容量を一覧で見る機能がありません。このツールはZIPの目次（セントラルディレクトリ）から各部品の実際のサイズを読み取って内訳を作り、容量や重さに関わりやすい箇所を順に挙げます。</p>
+    <h3>Q. 「画像をトリミングしても元データが残る」とはどういうことですか？</h3>
+    <p>A. Wordで画像を「トリミング」すると、画面上は切り取られたように見えますが、実際には画像データそのものは削除されず、「どこを表示するか」という範囲情報（切り取り位置）だけが別に記録され、元の画像は丸ごとファイルの中に残ります。大きな写真の一部だけを使うつもりで大胆にトリミングすると、見えている部分よりはるかに大きい元画像のデータがそのままファイルに残り続け、容量を圧迫します。このツールは、本文・ヘッダー・フッター・脚注・文末脚注にある画像の切り取り範囲（DrawingMLのsrcRect）を調べ、切り取られた面積の比率から「元データが残っている可能性が高い画像」とその推定容量を一覧表示します。Word側で完全に削除するには、画像を選んで「図ツール」→「图の圧縮」で「トリミングした領域を削除する」にチェックを入れて保存し直す必要があります（このツール自体はファイルを書き換えません）。</p>
+    <h3>Q. 「埋め込みフォント」が原因になるのはなぜですか？</h3>
+    <p>A. Wordの「ファイル」→「オプション」→「保存」で「フォントをファイルに埋め込む」を有効にすると、使用した日本語・欧文フォントの実データ（1つあたり数百KB〜数MBになることがあります）がファイルの中にそのまま保存されます。社外の人が同じフォントを持っていなくても見た目が崩れないようにするための機能ですが、フォントの数や文字種によってファイルサイズを大きく押し上げる原因になります。</p>
+    <h3>Q. 画像と埋め込みオブジェクトの違いは何ですか？</h3>
+    <p>A. 画像は本文に貼り付けた写真・図などです。埋め込みオブジェクトは、Excelの表やグラフの元データ、PDF・別のWordファイルなどを、アイコンや画面表示のまま貼り付けたものです。1つあたりの容量が画像より大きくなりやすいです。</p>
+    <h3>Q. 対応しているファイル形式は？ファイルサイズの上限はありますか？</h3>
+    <p>A. Word 2007以降の.docx形式に対応しています。古い.doc形式や、パスワードで保護されたファイルは読み込めません。ファイルはブラウザのメモリ上で処理するため、非常に大きいファイル（数百MB以上）では、診断自体に時間がかかったりブラウザが重くなったりすることがあります。</p>
+    <h3>Q. 結果通りに直せば必ずファイルが軽くなりますか？</h3>
+    <p>A. このツールは原因の「可能性」を挙げるだけで、ファイルを書き換えることはしません。実際に軽くするには、トリミング領域の完全削除、画像自体の圧縮、埋め込みフォント・埋め込みオブジェクトの整理などをWord側で行う必要があります。原因が1つに絞れないファイルもあります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop a Word (.docx) file into the box above, or click it to choose one.</li>
+      <li>Check the overall breakdown: rough counts of images, embedded objects and embedded fonts.</li>
+      <li>Review the ranked list of likely causes (highest score first).</li>
+      <li>If cropped images are found, a dedicated list shows each image's file name and the estimated size of the original data that may still be sitting in the file.</li>
+      <li>Use the detailed per-part table (body, headers, footers, images, embedded objects, …) for exact sizes, and download it as CSV if needed.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter). The file's contents are never modified or saved anywhere.</p>
+    <h3>Q. How does this figure out why a file feels heavy?</h3>
+    <p>A. A .docx file is really a ZIP archive containing separate parts for the body text, images, embedded objects, embedded fonts and more. Word itself has no built-in way to see a per-image size breakdown. This tool reads the ZIP's central directory to get each part's real size, then ranks the factors most likely adding to the total.</p>
+    <h3>Q. What does "cropped image, original data still present" mean?</h3>
+    <p>A. When you crop a picture in Word, it only looks cut on screen — the underlying image data isn't actually trimmed. Word just stores a separate "which part to show" rectangle (DrawingML's srcRect) and keeps the full original image inside the file. If you aggressively crop a large photo down to a small detail, the much larger original keeps taking up space. This tool checks every image's crop rectangle in the body, headers, footers, footnotes and endnotes, and lists images where a large share of the original was cropped away but is still stored, along with an estimated size. To actually discard it in Word, select the image, go to Picture Format → Compress Pictures, and check "Delete cropped areas of pictures" before re-saving (this tool itself never rewrites your file).</p>
+    <h3>Q. Why would an embedded font add to the size?</h3>
+    <p>A. Turning on "Embed fonts in the file" under Word's File → Options → Save stores the actual font data — sometimes several hundred KB to a few MB per font — directly inside the document, so it displays correctly even if the recipient doesn't have that font installed. The number of fonts and the character sets they cover can add up quickly.</p>
+    <h3>Q. What's the difference between images and embedded objects?</h3>
+    <p>A. Images are pictures pasted into the body. Embedded objects are things like an Excel table or chart's source data, a PDF, or another Word file pasted in and shown as an icon or preview — these tend to be larger than a typical image.</p>
+    <h3>Q. Which formats and sizes are supported?</h3>
+    <p>A. Word 2007+ .docx files. The older .doc format and password-protected files are not supported. Everything runs in your browser's memory, so very large files (several hundred MB) may take a while or make the browser sluggish during diagnosis.</p>
+    <h3>Q. If I act on the results, is the file guaranteed to get smaller?</h3>
+    <p>A. This tool only reports likely causes — it never modifies your file. Actually shrinking it requires deleting cropped image data, compressing images, or cleaning up embedded fonts/objects in Word itself. Some files don't have one single cause.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../docx-kakure/">社外に渡す前に確認：Wordの「隠れた情報」一括チェック</a> — 変更履歴の編集者名・コメント・隠し文字・ヘッダーフッターの文字を一括診断（読み取り専用）。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。</li>
+      <li><a href="../xlsx-omoi/">「エクセルが重い」原因を診断：ファイル内訳チェッカー</a> — Excel版の同種の診断。シート・画像・スタイル・共有文字列・ピボットキャッシュの内訳と原因を表示。</li>
+      <li><a href="../pptx-omoi/">「パワーポイントが重い」原因を診断：ファイル内訳チェッカー</a> — PowerPoint版の同種の診断。画像・動画・埋め込みオブジェクトの内訳と、使われていないスライドレイアウトも検出。</li>
+      <li><a href="../pptx-chart-kakure/">「グラフのデータを編集」で元の表が丸ごと見える：PowerPointグラフの埋め込みExcel診断</a> — 同じ「見えないが残っているデータ」という角度を、グラフの埋め込みExcelに適用した診断。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../docx-kakure/">Before sending outside your company: check a Word file for "hidden" information</a> — Track Changes editors, comments, hidden text and header/footer text, all at once (read-only).</li>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up Excel, Word and PowerPoint files at once before sending them outside your company.</li>
+      <li><a href="../xlsx-omoi/">Why is this Excel file heavy? Part-by-part size diagnosis</a> — The Excel equivalent: breaks down size by sheet, images, styles, shared strings and pivot caches.</li>
+      <li><a href="../pptx-omoi/">Why is this PowerPoint file heavy? Part-by-part size diagnosis</a> — The PowerPoint equivalent: breaks down size by media and embedded objects, and flags unused slide layouts/masters.</li>
+      <li><a href="../pptx-chart-kakure/">"Edit Data" reveals the whole source table: diagnose PowerPoint charts' embedded Excel data</a> — The same "invisible but still stored" angle, applied to a chart's embedded Excel sheet.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"「Wordファイルが重い」原因はどうやって調べていますか？","acceptedAnswer":{"@type":"Answer","text":".docxの実体はZIP形式で、本文・画像・埋め込みオブジェクト・埋め込みフォントなどが別々の部品として入っています。ZIPの目次から各部品の実サイズを読み取り、原因になりやすい箇所を順に挙げます。"}},
+    {"@type":"Question","name":"「画像をトリミングしても元データが残る」とはどういうことですか？","acceptedAnswer":{"@type":"Answer","text":"Wordで画像をトリミングしても画像データ自体は削除されず、表示範囲の情報だけが追加され、元の画像は丸ごとファイルに残ります。このツールは切り取られた面積の比率から、元データが残っている可能性が高い画像と推定容量を一覧表示します。"}},
+    {"@type":"Question","name":"「埋め込みフォント」が原因になるのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"フォントをファイルに埋め込む設定を使うと、フォントの実データ（1つあたり数百KB〜数MB）がそのままファイルに保存されるため、フォントの数に応じて容量を大きく押し上げます。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   DOCX ZIP + XML core — same hand-rolled approach already shipped in
+   docx-kakure/xlsx-omoi/pptx-omoi (no external libraries; only standard
+   browser APIs: DecompressionStream/TextDecoder). Part sizes come from
+   the ZIP central directory without decompressing anything; only the
+   handful of XML parts that can contain a cropped image (document.xml,
+   headers, footers, footnotes, endnotes) are actually decompressed.
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function readEntryText(bytes,entries,name){
+  var en=entries.find(function(e){return e.name===name});
+  if(!en) return null;
+  var data=await zipReadEntry(bytes,en);
+  return new TextDecoder("utf-8").decode(data);
+}
+function dirName(path){ var i=path.lastIndexOf("/"); return i===-1?"":path.slice(0,i); }
+function baseName(path){ var i=path.lastIndexOf("/"); return i===-1?path:path.slice(i+1); }
+function relsPathFor(path){ var d=dirName(path); return (d?d+"/":"")+"_rels/"+baseName(path)+".rels"; }
+function resolveRelPath(baseDir,target){
+  if(/^\//.test(target)) return target.replace(/^\/+/,"");
+  var baseParts=baseDir?baseDir.split("/"):[];
+  target.split("/").forEach(function(p){
+    if(p===""||p===".") return;
+    if(p==="..") baseParts.pop(); else baseParts.push(p);
+  });
+  return baseParts.join("/");
+}
+function findAttr(tagText,name){
+  var m=new RegExp(name+'="([^"]*)"').exec(tagText);
+  return m?m[1]:null;
+}
+function parseRels(xml){
+  var out=[], re=/<Relationship\b([^>]*)\/?>/g, m;
+  while((m=re.exec(xml))){
+    out.push({id:findAttr(m[1],"Id"), type:findAttr(m[1],"Type")||"", target:findAttr(m[1],"Target")||""});
+  }
+  return out;
+}
+
+/* =====================================================================
+   Cropped-image detection: every <pic:blipFill>/<a:blipFill> block holds
+   one <a:blip r:embed="rIdX"/> plus an optional <a:srcRect l="" t=""
+   r="" b=""/> giving the crop rectangle in 1/1000ths of a percent.
+   Word never trims the underlying image when you crop it — it only
+   narrows this rectangle — so a large crop means a lot of the image's
+   stored bytes are no longer shown, but are still sitting in the file.
+   ===================================================================== */
+function clampPct(n){ n=isNaN(n)?0:n; return Math.max(0,Math.min(100000,n)); }
+function extractCrops(xml,relMap,byPath){
+  var out=[], re=/<(?:pic:blipFill|a:blipFill)\b[^>]*>([\s\S]*?)<\/(?:pic:blipFill|a:blipFill)>/g, m;
+  while((m=re.exec(xml))){
+    var inner=m[1];
+    var blipTagM=/<a:blip\b[^>]*\/?>/.exec(inner);
+    if(!blipTagM) continue;
+    var rid=findAttr(blipTagM[0],"r:embed");
+    if(!rid) continue;
+    var mediaPath=relMap[rid];
+    if(!mediaPath) continue;
+    var mediaEntry=byPath[mediaPath];
+    if(!mediaEntry) continue;
+    var srcM=/<a:srcRect\b([^>]*)\/?>/.exec(inner);
+    var l=0,t=0,r=0,b=0;
+    if(srcM){
+      l=clampPct(parseInt(findAttr(srcM[1],"l")||"0",10));
+      t=clampPct(parseInt(findAttr(srcM[1],"t")||"0",10));
+      r=clampPct(parseInt(findAttr(srcM[1],"r")||"0",10));
+      b=clampPct(parseInt(findAttr(srcM[1],"b")||"0",10));
+    }
+    if(l+t+r+b<=0) continue;
+    var usedW=Math.max(0,100000-l-r)/100000, usedH=Math.max(0,100000-t-b)/100000;
+    var croppedFrac=1-(usedW*usedH);
+    if(croppedFrac<=0.01) continue;
+    out.push({
+      media:mediaPath, croppedFrac:croppedFrac,
+      croppedPct:Math.round(croppedFrac*100),
+      uncompSize:mediaEntry.uncompSize,
+      wastedBytes:Math.round(mediaEntry.uncompSize*croppedFrac)
+    });
+  }
+  return out;
+}
+
+/* =====================================================================
+   Diagnosis
+   ===================================================================== */
+var VIDEO_EXT=["mp4","mov","wmv","avi","m4v","mpg","mpeg","asf"];
+var AUDIO_EXT=["mp3","wav","m4a","wma","aac","mid","midi"];
+
+function partLabel(name,lang){
+  var m=/^word\/(document|header(\d+)|footer(\d+)|footnotes|endnotes)\.xml$/i.exec(name);
+  if(!m) return name;
+  if(m[1]==="document") return lang==="en"?"Body":"本文";
+  if(m[2]) return (lang==="en"?"Header ":"ヘッダー")+m[2];
+  if(m[3]) return (lang==="en"?"Footer ":"フッター")+m[3];
+  if(/^footnotes/i.test(m[1])) return lang==="en"?"Footnotes":"脚注";
+  return lang==="en"?"Endnotes":"文末脚注";
+}
+
+async function diagnoseDocx(bytes){
+  var entries=zipCentralDirectory(bytes);
+  var byPath={}; entries.forEach(function(e){ byPath[e.name]=e; });
+  if(!byPath["word/document.xml"]) throw new Error("NOT_DOCX");
+
+  var partNames=["word/document.xml"];
+  entries.filter(function(e){return /^word\/(header|footer)\d+\.xml$/i.test(e.name)})
+    .map(function(e){return e.name}).sort().forEach(function(n){partNames.push(n)});
+  if(byPath["word/footnotes.xml"]) partNames.push("word/footnotes.xml");
+  if(byPath["word/endnotes.xml"]) partNames.push("word/endnotes.xml");
+
+  var cropList=[], revisionCount=0, partRows=[];
+  for(var i=0;i<partNames.length;i++){
+    var pn=partNames[i], entry=byPath[pn];
+    if(!entry) continue;
+    var xml=await readEntryText(bytes,entries,pn);
+    revisionCount+=(xml.match(/<w:(ins|del)\b/g)||[]).length;
+    var relsXml=await readEntryText(bytes,entries,relsPathFor(pn))||"";
+    var rels=parseRels(relsXml);
+    var relMap={};
+    rels.forEach(function(r){ if(r.id) relMap[r.id]=resolveRelPath(dirName(pn),r.target); });
+    extractCrops(xml,relMap,byPath).forEach(function(c){ cropList.push(c); });
+    partRows.push({name:pn,compSize:entry.compSize,uncompSize:entry.uncompSize});
+  }
+
+  var cropByMedia={};
+  cropList.forEach(function(c){
+    if(!cropByMedia[c.media] || c.croppedFrac>cropByMedia[c.media].croppedFrac) cropByMedia[c.media]=c;
+  });
+  var cropFinal=Object.keys(cropByMedia).map(function(k){return cropByMedia[k]});
+  cropFinal.sort(function(a,b){return b.wastedBytes-a.wastedBytes});
+
+  var usedPaths={}; partNames.forEach(function(p){usedPaths[p]=true});
+  var cats={
+    images:{count:0,compSize:0,uncompSize:0}, video:{count:0,compSize:0,uncompSize:0}, audio:{count:0,compSize:0,uncompSize:0},
+    embeddings:{count:0,compSize:0,uncompSize:0}, fonts:{count:0,compSize:0,uncompSize:0},
+    theme:{count:0,compSize:0,uncompSize:0}, glossary:{count:0,compSize:0,uncompSize:0}, other:{count:0,compSize:0,uncompSize:0}
+  };
+  var totalComp=0, totalUncomp=0;
+  entries.forEach(function(e){
+    if(/\/$/.test(e.name)) return;
+    totalComp+=e.compSize; totalUncomp+=e.uncompSize;
+    if(usedPaths[e.name]) return;
+    var key, extM=/\.([a-z0-9]+)$/i.exec(e.name), ext=extM?extM[1].toLowerCase():"";
+    if(/^word\/media\//.test(e.name)){
+      if(VIDEO_EXT.indexOf(ext)!==-1) key="video";
+      else if(AUDIO_EXT.indexOf(ext)!==-1) key="audio";
+      else key="images";
+    }
+    else if(/^word\/embeddings\//.test(e.name)) key="embeddings";
+    else if(/^word\/fonts\//.test(e.name)) key="fonts";
+    else if(/^word\/theme\//.test(e.name)) key="theme";
+    else if(/^word\/glossary\//.test(e.name)) key="glossary";
+    else key="other";
+    cats[key].count++; cats[key].compSize+=e.compSize; cats[key].uncompSize+=e.uncompSize;
+  });
+
+  return {partRows:partRows, totalComp:totalComp, totalUncomp:totalUncomp, cats:cats, cropList:cropFinal, revisionCount:revisionCount};
+}
+
+function buildCauses(d){
+  var causes=[], total=Math.max(1,d.totalUncomp), pct;
+  var img=d.cats.images;
+  if(img.count>0){
+    pct=img.uncompSize/total;
+    if(pct>=0.15) causes.push({score:pct, key:"images", n:img.count, pct:Math.round(pct*100)});
+  }
+  var emb=d.cats.embeddings;
+  if(emb.count>0){
+    pct=emb.uncompSize/total;
+    causes.push({score:Math.max(pct,0.45), key:"embeddings", n:emb.count, pct:Math.round(pct*100)});
+  }
+  var fnt=d.cats.fonts;
+  if(fnt.count>0){
+    pct=fnt.uncompSize/total;
+    causes.push({score:Math.max(pct,0.4), key:"fonts", n:fnt.count, pct:Math.round(pct*100)});
+  }
+  if(d.cropList.length>0){
+    var wastedSum=d.cropList.reduce(function(a,c){return a+c.wastedBytes},0);
+    pct=wastedSum/total;
+    causes.push({score:Math.max(pct,0.35), key:"croppedImages", n:d.cropList.length, pct:Math.round(pct*100)});
+  }
+  if(d.revisionCount>=30){
+    causes.push({score:0.3, key:"revisions", n:d.revisionCount});
+  }
+  causes.sort(function(a,b){return b.score-a.score});
+  return causes.slice(0,5);
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"「Wordファイルが重い」原因を診断：ファイル内訳チェッカー",
+  sub:"Word(.docx)ファイルの容量を、画像・埋め込みオブジェクト・埋め込みフォントなどのパーツ別に内訳表示し、容量を押し上げている可能性が高い原因を順に挙げます。画像をトリミング（切り取り）しても元の画像データがファイルにそのまま残る問題も検出します。ファイルを開かず、ブラウザの中だけで診断します。",
+  dropzoneText:"ここにWord(.docx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。.docxのみ対応（.doc・パスワード保護は読み込めません）。ファイルは選択した端末の中だけで処理されます。",
+  overviewHeading:"全体の内訳", overviewHint:"「ZIP内サイズ」は.docxファイル自体の容量（メール添付などで実感する重さ）に直結する数値です。",
+  statFileSize:"ファイル容量（ZIP内合計）", statImages:"画像の数", statEmbeddings:"埋め込みオブジェクト", statFonts:"埋め込みフォント", statCrops:"トリミング画像（残存の疑い）",
+  causesHeading:"容量を押し上げている可能性が高い原因",
+  causesHint:"数値から機械的に推測した「可能性」であり、断定ではありません。",
+  causeNone:"今回のファイルでは、容量を大きく占める特定の原因は見当たりませんでした。本文自体の文字量が多い、または全体に薄く分散しているなどが考えられます。",
+  causeImages:"画像が全体の展開後サイズの約{pct}%（{n}枚）を占めています。解像度の高い画像を多数貼り付けている場合、画像を圧縮するかサイズを縮小すると小さくなる可能性があります。",
+  causeEmbeddings:"埋め込みオブジェクト（Excelの表・グラフの元データ、PDF・別のWordファイルの埋め込みなど、{n}個）が含まれています。他のファイルをそのまま貼り付けている場合、容量が大きくなりやすい原因です。",
+  causeFonts:"フォントがファイルに埋め込まれています（全体の約{pct}%、{n}個）。「フォントをファイルに埋め込む」設定を使うと、フォントの実データがそのまま保存され、数や文字種によって容量を大きく押し上げます。",
+  causeCroppedImages:"トリミングされた画像が{n}枚見つかりました（元データが残っている可能性のある容量は全体の約{pct}%）。Wordは画像をトリミングしても元の画像データを削除せず、表示範囲の情報だけを追加します。下の一覧で該当する画像を確認できます。",
+  causeRevisions:"変更履歴（挿入・削除の記録）が{n}件残っています。件数が多いファイルは、本文のXML自体が肥大化して容量を押し上げることがあります。「変更履歴の確認」タブから「すべての変更を反映」すると解消できます。",
+  cropHeading:"トリミングされた画像（元データが残っている可能性）",
+  cropHint:"「切り取り範囲の推定」は画像のバイト数に対する面積比から機械的に見積もった目安で、実際の圧縮方式によって前後します。",
+  cropItem:"切り取られた範囲：約{pct}%／元の画像サイズ：{size}／残っている可能性のある容量：約{waste}",
+  tableHeading:"パーツ別の容量一覧", csvBtn:"内訳をCSVでダウンロード",
+  colPart:"パーツ",colSize:"ZIP内サイズ",colPct:"割合",colDetail:"詳細",
+  kindCat:{images:"画像",video:"動画",audio:"音声",embeddings:"埋め込みオブジェクト",fonts:"埋め込みフォント",theme:"テーマ",glossary:"定型句（Glossary）",other:"その他（本文・設定など）"},
+  detailCount:"{n}個のファイル",
+  removeBtn:"削除",loadingLabel:"読み込み中…",
+  errBad:"読み込めませんでした（.docx以外の形式か、パスワード保護の可能性があります）",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Why is this Word file heavy? Part-by-part size diagnosis",
+  sub:"Breaks down a Word (.docx) file's size by images, embedded objects, embedded fonts and more, then ranks the factors most likely adding to it — including images that were cropped in Word but still carry their full original pixel data. Diagnosed entirely in your browser, without opening the file.",
+  dropzoneText:"Drag and drop a Word (.docx) file here, or click to choose",
+  dropzoneHint:"One file at a time. .docx only (.doc and password-protected files aren't supported). Everything happens on this device.",
+  overviewHeading:"Overall breakdown", overviewHint:"\"ZIP-internal size\" tracks directly to the .docx file's own size — the weight you feel attaching it to an email.",
+  statFileSize:"File size (total in ZIP)", statImages:"Images", statEmbeddings:"Embedded objects", statFonts:"Embedded fonts", statCrops:"Cropped images (likely retained)",
+  causesHeading:"Factors likely adding to the size",
+  causesHint:"These are mechanically inferred possibilities, not certainties.",
+  causeNone:"No single factor stood out as dominating this file's size. It may simply have a lot of body text, or the size may be spread evenly across parts.",
+  causeImages:"Images make up about {pct}% of the uncompressed content ({n} files). If you've pasted many high-resolution images, compressing or downscaling them may shrink the file.",
+  causeEmbeddings:"This file contains embedded objects ({n}) — an Excel table/chart's source data, or a PDF/other Word file pasted in as-is. These tend to add a lot of size.",
+  causeFonts:"Fonts are embedded in this file (about {pct}% of the content, {n} file(s)). Turning on \"Embed fonts in the file\" stores each font's actual data, which can add up quickly depending on how many fonts and character sets are covered.",
+  causeCroppedImages:"{n} cropped image(s) were found (about {pct}% of the content may be original data no longer shown). Word never deletes an image's underlying data when you crop it — it only adds a \"which part to show\" rectangle. See the list below for details.",
+  causeRevisions:"{n} tracked-change record(s) (insertions/deletions) remain. A large number can bloat the body XML itself. \"Accept All Changes\" on the Review tab can clear this.",
+  cropHeading:"Cropped images (original data likely still present)",
+  cropHint:"The estimated crop size is a mechanical guess based on the cropped area's share of the image's byte size, and varies with the actual compression used.",
+  cropItem:"Cropped away: about {pct}% / original image size: {size} / estimated size still retained: about {waste}",
+  tableHeading:"Size by part", csvBtn:"Download this breakdown as CSV",
+  colPart:"Part",colSize:"Size in ZIP",colPct:"Share",colDetail:"Detail",
+  kindCat:{images:"Images",video:"Video",audio:"Audio",embeddings:"Embedded objects",fonts:"Embedded fonts",theme:"Theme",glossary:"Glossary (building blocks)",other:"Other (body, settings, …)"},
+  detailCount:"{n} file(s)",
+  removeBtn:"Remove",loadingLabel:"Loading…",
+  errBad:"Could not read this file (it may not be .docx, or it's password-protected)",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  if(n<1024*1024*1024) return (n/1024/1024).toFixed(2)+" MB";
+  return (n/1024/1024/1024).toFixed(2)+" GB";
+}
+function fmtTemplate(tpl,params){
+  return tpl.replace(/\{(\w+)\}/g,function(_,k){return params[k]!==undefined?params[k]:""});
+}
+
+var state={fileName:"",loading:false,error:"",diag:null,rows:[]};
+
+function resetFile(){ state={fileName:"",loading:false,error:"",diag:null,rows:[]}; render(); }
+
+function addFile(file){
+  state={fileName:file.name,loading:true,error:"",diag:null,rows:[]};
+  render();
+  file.arrayBuffer().then(function(buf){ return diagnoseDocx(new Uint8Array(buf)); })
+    .then(function(d){ state.loading=false; state.diag=d; state.rows=buildRows(d); render(); })
+    .catch(function(){ state.loading=false; state.error=T[lang].errBad; render(); });
+}
+
+function buildRows(d){
+  var rows=[];
+  d.partRows.forEach(function(p){
+    rows.push({label:partLabel(p.name,lang), compSize:p.compSize, uncompSize:p.uncompSize, detail:""});
+  });
+  Object.keys(d.cats).forEach(function(key){
+    var c=d.cats[key];
+    if(c.count===0) return;
+    rows.push({label:T[lang].kindCat[key], compSize:c.compSize, uncompSize:c.uncompSize,
+      detail:fmtTemplate(T[lang].detailCount,{n:c.count})});
+  });
+  rows.sort(function(a,b){ return b.compSize-a.compSize; });
+  return rows;
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.diag){ h+="<span class='fMeta'>"+fmtBytes(state.diag.totalComp)+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function renderOverview(d){
+  var items=[
+    [fmtBytes(d.totalComp), T[lang].statFileSize],
+    [d.cats.images.count, T[lang].statImages],
+    [d.cats.embeddings.count, T[lang].statEmbeddings],
+    [d.cats.fonts.count, T[lang].statFonts],
+    [d.cropList.length, T[lang].statCrops]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox'><div class='n'>"+esc(it[0])+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("overviewGrid").innerHTML=h;
+}
+
+function renderCauses(d){
+  var causes=buildCauses(d);
+  var box=$("causeList");
+  if(!causes.length){
+    box.className="causeList none";
+    box.innerHTML="<li>"+esc(T[lang].causeNone)+"</li>";
+    return;
+  }
+  box.className="causeList";
+  var tplKey={images:"causeImages",embeddings:"causeEmbeddings",fonts:"causeFonts",croppedImages:"causeCroppedImages",revisions:"causeRevisions"};
+  var h="";
+  causes.forEach(function(c,i){
+    var tpl=T[lang][tplKey[c.key]];
+    h+="<li><span class='rank'>"+(i+1)+".</span>"+esc(fmtTemplate(tpl,c))+"</li>";
+  });
+  box.innerHTML=h;
+}
+
+function renderCropList(d){
+  var sec=$("cropCard");
+  if(!d.cropList.length){ sec.style.display="none"; return; }
+  sec.style.display="";
+  var h="";
+  d.cropList.forEach(function(c){
+    var detail=fmtTemplate(T[lang].cropItem,{pct:c.croppedPct, size:fmtBytes(c.uncompSize), waste:fmtBytes(c.wastedBytes)});
+    h+="<li><div class='cName'>"+esc(baseNameOf(c.media))+"</div><div>"+esc(detail)+"</div></li>";
+  });
+  $("cropList").innerHTML=h;
+}
+function baseNameOf(path){ var i=path.lastIndexOf("/"); return i===-1?path:path.slice(i+1); }
+
+function renderTable(rows,totalComp){
+  var h="<thead><tr><th>"+esc(T[lang].colPart)+"</th><th>"+esc(T[lang].colSize)+"</th><th>"+esc(T[lang].colPct)+"</th><th>"+esc(T[lang].colDetail)+"</th></tr></thead><tbody>";
+  var maxSize=rows.length?rows[0].compSize:1;
+  rows.forEach(function(r){
+    var pct = totalComp>0 ? (r.compSize/totalComp*100) : 0;
+    var barPct = maxSize>0 ? (r.compSize/maxSize*100) : 0;
+    h+="<tr>";
+    h+="<td>"+esc(r.label)+"</td>";
+    h+="<td class='num'><span class='barWrap'><span class='bar' style='width:"+barPct.toFixed(1)+"%'></span><span class='barLabel'>"+esc(fmtBytes(r.compSize))+"</span></span></td>";
+    h+="<td class='num'>"+pct.toFixed(1)+"%</td>";
+    h+="<td class='detail'>"+esc(r.detail)+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody>";
+  $("breakdownTable").innerHTML=h;
+}
+
+function render(){
+  renderFileCard();
+  if(!state.fileName || state.loading || state.error || !state.diag){
+    $("overviewCard").style.display="none"; $("causesCard").style.display="none";
+    $("cropCard").style.display="none"; $("tableCard").style.display="none";
+    return;
+  }
+  var d=state.diag;
+  $("overviewCard").style.display=""; $("causesCard").style.display=""; $("tableCard").style.display="";
+  renderOverview(d);
+  renderCauses(d);
+  renderCropList(d);
+  renderTable(state.rows,d.totalComp);
+}
+
+function toCsv(rows,totalComp){
+  var head=["part","size_bytes","percent","detail"];
+  var lines=[head.join(",")];
+  function q(s){ s=String(s); return '"'+s.replace(/"/g,'""')+'"'; }
+  rows.forEach(function(r){
+    var pct = totalComp>0 ? (r.compSize/totalComp*100).toFixed(1) : "0.0";
+    lines.push([q(r.label), r.compSize, pct, q(r.detail)].join(","));
+  });
+  return lines.join("\r\n");
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("csvBtn").addEventListener("click",function(){
+  if(!state.diag) return;
+  var csv="﻿"+toCsv(state.rows,state.diag.totalComp);
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=(state.fileName||"docx")+"_内訳.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  if(state.diag) state.rows=buildRows(state.diag);
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

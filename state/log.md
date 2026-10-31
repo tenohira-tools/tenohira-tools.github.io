@@ -541,3 +541,11 @@
 - 設計：グラフのキャッシュ値（numCache/strCache）の個数と、埋め込みシート（ネストしたzip）の使用範囲を比較。バブル・株価・多階層項目軸・旧OLE形式は「判定できません」に分類する安全側の設計。
 - 検証：Node.js単体テスト、python-pptx製の実ファイル（クリーン・余分な行を注入・バブルチャート・タイトル付き）での統合テストで3種の判定が期待通りに出ることを確認、Playwright（ja/en・390/1280px）でアップロード・CSV出力・ファイル削除・横スクロール無し・JSエラー無しを確認。
 - 相互リンクはpptx-kakure・pptx-omoi・docx-kakure・xlsx-kakure・sakusha-kesuの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
+
+## 2026-10-31 実験57
+- 計測：GoatCounter取得成功（TOTAL.jsonで累計10のまま変化なし、内訳は「/」9＋receipt-sheet「1」、他50ページは0）。health.md（52ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlogが空のためWebSearch2件を実施。「Wordが重い」原因解説は画像中心でブラウザ完結の内訳診断ツールが見当たらず、特に「画像をトリミングしても元データが削除されず残る」問題は診断ツール自体が見当たらないことを確認し、docx-omoiを新規公開。
+- 設計：xlsx-omoi/pptx-omoiのZIPセントラルディレクトリ解析を流用し、画像・埋め込みオブジェクト・埋め込みフォントの内訳に加え、DrawingMLのsrcRect（切り取り範囲）を本文・ヘッダー・フッター・脚注・文末脚注の全画像について解析し、トリミングで見えなくなった元データの推定容量を検出。
+- 検証：Node.js単体テスト15件（crop比率計算・負値のpadding誤検出防止・NOT_DOCX等）、python-docx製の実ファイルに手組みのsrcRect（75%相当の切り取り）・埋め込みフォント・埋め込みOLEオブジェクト・変更履歴35件を注入した統合テストで全て期待通り検出、Playwright（ja/en・390/1280px）でアップロード・causes一覧・CSV出力・ファイル削除・横スクロール無し・JSエラー無しを確認。
+- 相互リンクはdocx-kakure・xlsx-omoi・pptx-omoi・pptx-chart-kakure・sakusha-kesuの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
+- 次回：docx-omoiの初回閲覧数を記録。backlogは空のため、次回も集中分野で確認検索3件以内の補充が必要。

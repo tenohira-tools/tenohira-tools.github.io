@@ -2126,6 +2126,26 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "slug": "docx-omoi",
+      "title": "「Wordファイルが重い」原因を診断：ファイル内訳チェッカー",
+      "url": "https://tenohira-tools.github.io/docx-omoi/",
+      "published": "2026-10-31",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "backlogが空のため、集中分野「社外に渡す前の処理」をWordの容量診断へ広げる角度でWebSearch2件を実施。Wordファイルが重い原因は画像が中心と広く解説されるが、ブラウザ完結でパーツ別の内訳を見られる無料ツールは見当たらず、特に「画像をトリミングしても元データが削除されずファイルに残る」問題（Microsoft公式解説・既存記事どちらにも明確な診断ツールなし）は未対応と確認し着手。xlsx-omoi/pptx-omoiのZIPセントラルディレクトリ解析を流用し、画像・埋め込みオブジェクト・埋め込みフォントの内訳に加え、DrawingMLのsrcRect（切り取り範囲）を画像ごとに解析して「見えないが残っているデータ」を検出する設計（xlsx-omoi/pptx-omoiで確立済みのpptx-chart-kakureと同じ角度のWord版）。",
+      "metrics": [
+        {
+          "date": "2026-10-31T00:00:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": []
     }
   ],
   "review_summary_2026-10-24": {
