@@ -526,7 +526,8 @@ async function buildMokujiXlsx(parsed, lang){
   var newFileName=pickWorksheetFileName(parsed.existingNames);
   var newRid="rId"+(parsed.maxRid+1);
   var newSheetId=parsed.maxSheetId+1;
-  var newSheetTagText='<sheet name="'+xmlEscapeAttr(tocSheetName)+'" sheetId="'+newSheetId+'" r:id="'+newRid+'"/>';
+  // xmlns:r is declared on the element itself: files written by openpyxl/pandas declare it per <sheet>, not on <workbook>.
+  var newSheetTagText='<sheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" name="'+xmlEscapeAttr(tocSheetName)+'" sheetId="'+newSheetId+'" r:id="'+newRid+'"/>';
 
   var newWorkbookXml=buildPatchedWorkbookXml(parsed.workbookXml, newSheetTagText);
   var newRelTag='<Relationship Id="'+newRid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/'+newFileName+'"/>';

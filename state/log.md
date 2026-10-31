@@ -549,3 +549,11 @@
 - 検証：Node.js単体テスト15件（crop比率計算・負値のpadding誤検出防止・NOT_DOCX等）、python-docx製の実ファイルに手組みのsrcRect（75%相当の切り取り）・埋め込みフォント・埋め込みOLEオブジェクト・変更履歴35件を注入した統合テストで全て期待通り検出、Playwright（ja/en・390/1280px）でアップロード・causes一覧・CSV出力・ファイル削除・横スクロール無し・JSエラー無しを確認。
 - 相互リンクはdocx-kakure・xlsx-omoi・pptx-omoi・pptx-chart-kakure・sakusha-kesuの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
 - 次回：docx-omoiの初回閲覧数を記録。backlogは空のため、次回も集中分野で確認検索3件以内の補充が必要。
+
+## 2026-10-31 週次レビュー
+- 計測：GoatCounter取得成功。全体累計10（今週+1）、増加はreceipt-sheetの0→1のみ。他52ページ・トップは変化なし。
+- 点検：今週公開・更新の13ページを本番でja・390/1280pxに実ファイルを通して確認。JSエラー・横スクロールなし、計測タグは全ページにあり。
+- 修正：xlsx-mokujiがopenpyxl/pandas製xlsxで壊れたworkbook.xmlを書き出す不具合（xmlns:r未宣言）を修正し、再読込を確認。
+- 修正：pptx-omoiの未使用レイアウトの「全体の約◯%」を「ファイル内データ量の約◯%」に明確化（8/11種類と食い違って見えたため）。
+- 方針：STRATEGY方針メモ3行・量産担当への指示2行を追記、backlogを10件に補充（WebSearch5件）、escalationsに状況報告を追記。
+- 次回：backlog1番（receipt-sheetの検索語寄せ）から。
