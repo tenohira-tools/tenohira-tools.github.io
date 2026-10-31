@@ -7,20 +7,21 @@
 
 並べ方の根拠：6週目で個別ページの閲覧はreceipt-sheetの1件だけ（経理・事務書類）。それ以外は判定材料が無いため、①唯一反応のあったページの改善②VBA記事しか無く検索語の大きい複数ファイル・一括系③Word・PPTの「社外に渡す前」の順にした。2〜4は2026-10-31にWebSearchで確認済み（VBA・zip展開の手作業・Windowsソフトのみで、ブラウザ完結の無料ツールは見当たらない）。5〜10は着手前に確認検索2件まで。相互リンクはまとめページ＋関連3〜5ページだけ。
 
-1. 改善：receipt-sheet（唯一閲覧のあったページ）。title・h1・descriptionの先頭に「レシート 写真 複数 1枚にまとめる」「領収書 まとめて PDF」の言い回しを入れ、FAQ・JSON-LDの有無を点検、keihi-troubleとの導線を確認。機能は変えない。
-2. 新規：xlsx-bunkatsu「シートごとに別ファイルに保存（一括分割）」。各シートだけを残したxlsxをZIPで一括ダウンロード。workbook.xml/relsから他シートを外す方式（xlsx-mokujiの編集処理を流用）。他シート参照の数式は「値に変換」オプション＋警告。外側ZIPは無圧縮でよい。
-3. 新規：office-gazou「Excel・Word・PowerPointの画像を一括保存」。xl/word/ppt の media を取り出しZIPで保存、どのシート・スライドの画像かの対応表CSV付き。拡張子をzipに変える手作業の代わり。
-4. 新規：docx-shodaku「複数のWordファイルの変更履歴をまとめて承諾（確定）」。w:ins展開・w:del削除・moveFrom/moveTo・*PrChange除去を本文・ヘッダー・フッター・脚注で。コメント削除はオプション。社外に渡す前の処理。
-5. 新規：office-trouble「Word・PowerPointを社外に渡す前のチェックまとめ」。docx-kakure・docx-omoi・pptx-kakure・pptx-omoi・pptx-chart-kakure・sakusha-kesuを症状から選べるまとめページ（excel-trouble型）。
-6. 改善：pptx-kakureに「ノートをテキスト/CSVで書き出す」（発表原稿の印刷・共有）。既存のノート抽出を流用。
-7. 新規：docx-comment「Wordのコメント一覧をCSV/Excelに書き出す」（校閲の対応表）。docx-kakureのコメント解析を流用。
-8. 新規：xlsx-furigana「Excelのふりがな情報（rPh）の確認・一括削除」。sharedStrings内のふりがなが他人に読み方ごと渡る・PHONETICの誤表示対策。日本固有。
-9. 新規：pptx-font「PowerPointの使用フォント一覧（スライド・マスター別・テーマフォント解決）」。別のPCで文字化け・崩れる原因の確認。標準の「フォントの置換」では場所が分からない点が勝ち筋。
-10. 新規：docx-mojisu「複数のWordファイルの文字数を一括カウント」（スペース・改行を除く数え方を選択、CSV出力）。翻訳・原稿の見積もり用。
+1. 新規：xlsx-bunkatsu「シートごとに別ファイルに保存（一括分割）」。各シートだけを残したxlsxをZIPで一括ダウンロード。workbook.xml/relsから他シートを外す方式（xlsx-mokujiの編集処理を流用）。他シート参照の数式は「値に変換」オプション＋警告。外側ZIPは無圧縮でよい。
+2. 新規：office-gazou「Excel・Word・PowerPointの画像を一括保存」。xl/word/ppt の media を取り出しZIPで保存、どのシート・スライドの画像かの対応表CSV付き。拡張子をzipに変える手作業の代わり。
+3. 新規：docx-shodaku「複数のWordファイルの変更履歴をまとめて承諾（確定）」。w:ins展開・w:del削除・moveFrom/moveTo・*PrChange除去を本文・ヘッダー・フッター・脚注で。コメント削除はオプション。社外に渡す前の処理。
+4. 新規：office-trouble「Word・PowerPointを社外に渡す前のチェックまとめ」。docx-kakure・docx-omoi・pptx-kakure・pptx-omoi・pptx-chart-kakure・sakusha-kesuを症状から選べるまとめページ（excel-trouble型）。
+5. 改善：pptx-kakureに「ノートをテキスト/CSVで書き出す」（発表原稿の印刷・共有）。既存のノート抽出を流用。
+6. 新規：docx-comment「Wordのコメント一覧をCSV/Excelに書き出す」（校閲の対応表）。docx-kakureのコメント解析を流用。
+7. 新規：xlsx-furigana「Excelのふりがな情報（rPh）の確認・一括削除」。sharedStrings内のふりがなが他人に読み方ごと渡る・PHONETICの誤表示対策。日本固有。
+8. 新規：pptx-font「PowerPointの使用フォント一覧（スライド・マスター別・テーマフォント解決）」。別のPCで文字化け・崩れる原因の確認。標準の「フォントの置換」では場所が分からない点が勝ち筋。
+9. 新規：docx-mojisu「複数のWordファイルの文字数を一括カウント」（スペース・改行を除く数え方を選択、CSV出力）。翻訳・原稿の見積もり用。
 
 （条件未充足のため保留：日本の住所英語変換＝競合多数／文字数カウンター＝AI時代の選び方に抵触しやすい／SNS向け画像切り抜き＝競合多数。差別化角度が見つかるまで着手しない）
 
 ### 実施済みの記録
+
+（2026-10-31実施済み：改善：receipt-sheetのtitle/h1/descriptionを検索語「レシート 写真 複数 1枚にまとめる」「領収書 まとめて PDF」に寄せた。FAQ・JSON-LD・keihi-trouble導線は既存で変更なし。機能は変更なし。）
 
 （2026-10-31実施済み：新規：「Wordファイルが重い」原因を診断するファイル内訳チェッカー（docx-omoi）を公開。backlogが空のため、集中分野「社外に渡す前の処理」をWordの容量診断（xlsx-omoi/pptx-omoiのWord版）へ広げる角度でWebSearch2件を実施。「Wordが重い」の原因解説はいずれも画像圧縮中心で、ブラウザ完結のパーツ別内訳診断ツールは見当たらず、特に「画像をトリミングしても元のデータは削除されずファイルに残る」問題は、現象自体はMicrosoft公式・解説記事とも言及があるが、検出できる無料ツールが見当たらないことを確認して着手。xlsx-omoi/pptx-omoiのZIPセントラルディレクトリ解析（展開せずパーツサイズのみ取得）を流用し、画像・埋め込みオブジェクト（word/embeddings）・埋め込みフォント（word/fonts）の内訳に加え、本文・ヘッダー・フッター・脚注・文末脚注のXMLからDrawingMLのsrcRect（切り取り範囲、1/1000パーセント単位）を画像ごとに解析し、トリミングで見えなくなった面積の比率から元データが残っている可能性が高い画像と推定容量を検出する機能を新規実装（pptx-chart-kakureと同じ「見えないが残っているデータ」という角度のWord版）。負の値（パディング指定でトリミングではない）は0にクランプし誤検出を防ぐ安全側の設計。変更履歴（w:ins/w:del）が30件以上残っている場合も本文XML肥大化の原因として検出。検証：Node.js単体テスト15件（crop比率計算・srcRect欠落/全ゼロ/負値のケース・buildCausesのスコア順序・NOT_DOCX等）に加え、python-docxで作成した実ファイルにPythonのzipfileで手組みしたsrcRect（切り取り75%相当）・埋め込みフォントファイル（約80KB）・埋め込みOLEオブジェクト（約25KB）・変更履歴35件（w:ins20+w:del15）を注入した統合テストを実施し、期待通りの検出件数・推定容量・原因ランキングをすべて確認。Playwright（Chromiumヘッドレス、ja-JP/英語切替・390px/1280px幅）でアップロード→全体の内訳→原因リスト→トリミング画像一覧→CSVダウンロード→ファイル削除までJSエラー無し・横スクロール無しを確認（クリーンなファイルでは原因なし・トリミング一覧非表示も確認）。相互リンクはdocx-kakure・xlsx-omoi・pptx-omoi・pptx-chart-kakure・sakusha-kesuの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。）
 

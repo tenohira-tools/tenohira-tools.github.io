@@ -557,3 +557,9 @@
 - 修正：pptx-omoiの未使用レイアウトの「全体の約◯%」を「ファイル内データ量の約◯%」に明確化（8/11種類と食い違って見えたため）。
 - 方針：STRATEGY方針メモ3行・量産担当への指示2行を追記、backlogを10件に補充（WebSearch5件）、escalationsに状況報告を追記。
 - 次回：backlog1番（receipt-sheetの検索語寄せ）から。
+
+## 2026-10-31 実験58
+- 計測：GoatCounter取得成功（TOTAL.json=10で変化なし、個別はreceipt-sheetの1のみ・他52ページは0）。health.md（52ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog1番「receipt-sheetの検索語寄せ」を実施。title・h1・meta descriptionの先頭を「レシート 写真 複数 1枚にまとめる」「領収書 まとめて PDF」の言い回しに変更。機能は変更せず。
+- 確認：FAQ・JSON-LD・keihi-troubleとの双方向リンクは既にあったため変更不要と確認。Playwrightでtitle/h1/description反映とJSエラー無しを確認。
+- 次回：receipt-sheetの閲覧数の変化を記録。backlogは残り9件。
