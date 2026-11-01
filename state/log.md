@@ -571,3 +571,11 @@
 - 検証：Node.js単体テスト（cross-sheet数式判定・shared formula解決・名前定義の保持/除外）、Pythonで手組みした実ファイル（他シート参照・自己参照・shared formula群・キャッシュ値なしの数式・非表示シート・ワークブック/シート範囲の名前定義を含む）でopenpyxl再読込しcalcChain削除・dangling参照無しを確認、Playwright（ja/en・390/1280px）でアップロード→一覧→全選択/解除→ZIP一括ダウンロード→横スクロール無し・JSエラー無しを確認。
 - 相互リンクはxlsx-mokuji・xlsx-saihyouji・csv-group-split・sakusha-kesu・excel-troubleの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加、excel-troubleの案内数表記を29→30に更新。
 - 次回：xlsx-bunkatsuの初回閲覧数を記録。backlogは残り8件。
+
+## 2026-11-01 実験60
+- 計測：GoatCounter取得成功（TOTAL.jsonで累計10のまま変化なし、内訳は「/」9＋receipt-sheet「1」、他52ページは0、xlsx-bunkatsuも0）。health.md（53ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog旧2番「複数のWordファイルの変更履歴をまとめて承諾（確定）」を実施。本文・ヘッダー・フッター・脚注・文末脚注を対象に、挿入は確定・削除は除去・移動は移動後の位置で確定・書式変更の記録は消去するdocx-shodakuを新規公開。コメント削除はオプション（パーツ・Content_Types・relsも整合させて削除）。
+- 設計：単一タグ名のdepth管理だけで済んだ既存のfindTagsでは「アンラップ」と「丸ごと削除」が混在するネスト構造を扱えないため、汎用のXML木構造パーサー＋再帰シリアライズを新規実装（w:ins/w:moveToはアンラップ、w:del/w:moveFrom・*PrChange・tblGridChangeは丸ごと削除、を再帰的に適用）。表の行・列の構造的な挿入・削除・セル結合の履歴は安全のため対象外とFAQ・limitNoteに明記。
+- 検証：Node.js単体テスト15件（ins/del/move/PrChangeの基本動作、del内側にネストしたins、paragraph-mark用の自己終了マーカー、コメント削除オプション、acceptChanges統合）に加え、python-docxで作成した実ファイルにPythonのzipfileで本物の変更履歴5種・コメント1件を注入し、Node.jsの実コード（ZIP解凍・CompressionStream圧縮含む）で処理した結果をlxml/python-docxで再読込し、挿入文字が残り削除文字が消え移動文字が1回だけ残ることを確認。Playwright（ja/en・390/1280px）でアップロード→検出件数表示→コメント削除チェック→ダウンロード→JSエラー無し・横スクロール無しを確認し、ダウンロードファイルもPython側で再検証。
+- 相互リンクはdocx-kakure・sakusha-kesu・docx-omoi・pptx-kakureの4ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
+- 次回：docx-shodakuの初回閲覧数を記録。backlogは残り7件。

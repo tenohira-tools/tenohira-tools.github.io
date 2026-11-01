@@ -2502,6 +2502,33 @@
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
         }
       ]
+    },
+    {
+      "slug": "docx-shodaku",
+      "title": "複数のWordファイルの変更履歴（校閲）を一括で確定",
+      "url": "https://tenohira-tools.github.io/docx-shodaku/",
+      "published": "2026-11-01",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "backlog旧2番。「変更履歴の記録」が付いた複数のWordファイルを1件ずつ開いて「すべての変更を反映」する手間を一括化。社外に渡す前の処理という集中分野の延長で、VBA記事以外にブラウザ完結の無料ツールは見当たらない。XMLを木構造に解析し、w:ins/w:moveToは展開（内容を残し囲みタグだけ外す）、w:del/w:moveFromとPrChange系・tblGridChangeは要素ごと削除する再帰処理で、ネストした挿入・削除の組み合わせにも対応。表の行・列の挿入・削除やセル結合の履歴は安全のため対象外とFAQで明記。コメントは任意で一括削除（パーツ・Content_Types・relsも整合させて削除）。",
+      "metrics": [
+        {
+          "date": "2026-11-01T00:00:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": [
+        {
+          "date": "2026-11-01",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        }
+      ]
     }
   ],
   "review_summary_2026-10-24": {

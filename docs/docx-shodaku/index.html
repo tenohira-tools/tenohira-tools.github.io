@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>複数のWordファイルの変更履歴（校閲）を一括で確定・反映：挿入・削除・移動をすべて承諾 | てのひらツール</title>
+<meta name="description" content="Wordの「変更履歴の記録（校閲）」が付いたままの複数ファイルを、1件ずつ開いて「すべての変更を反映」を押す手間をなくし、まとめて確定したいときに。挿入は本文として確定、削除された文字は除去、移動は移動後の場所に確定、書式変更の記録は消去します。本文・ヘッダー・フッター・脚注・文末脚注が対象。コメントも一括で削除できます（オプション）。ファイルはサーバーに送らずブラウザの中だけで処理します。Accept every tracked change (insertions, deletions, moves, formatting) across multiple Word files at once, without opening each one — entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/docx-shodaku/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.fileCard .fTop{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCard .fName{font-weight:700;word-break:break-all}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.fmt{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.detectBox{font-size:.9rem;margin:6px 0 10px}
+.detectBox .row{display:flex;gap:6px;flex-wrap:wrap;margin:3px 0}
+.detectBox .k{color:var(--muted);min-width:9em}
+.detectBox .v{word-break:break-all}
+.detectBox .v.empty{color:var(--muted)}
+.optRow{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0}
+.optRow label{display:flex;align-items:center;gap:6px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;min-height:40px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.errBox{border:1px solid var(--diff);background:var(--diff-bg);color:var(--diff);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">複数のWordファイルの変更履歴（校閲）を一括で確定</h1>
+    <p class="sub" data-i="sub">「変更履歴の記録」が付いたままのWordファイルを、1件ずつ開いて「すべての変更を反映」を押す手間をなくしたいときに。挿入は本文として確定、削除された文字は取り除き、移動は移動後の場所に確定、書式変更の記録は消去します。本文・ヘッダー・フッター・脚注・文末脚注すべてが対象です。コメントも一括で削除できます（オプション）。複数ファイルを同時に処理でき、ファイルはサーバーに送らずこのブラウザの中だけで書き換えます。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p><strong data-i="dropzoneStrong">ここにWord(.docx)ファイルをドラッグ＆ドロップ</strong><span data-i="dropzoneRest">、またはクリックして選択</span></p>
+    <p class="hint" data-i="dropzoneHint">.docx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".docx" multiple style="display:none">
+</section>
+
+<section class="card" id="listSec" style="display:none">
+  <h2 data-i="listHeading">読み込んだファイル</h2>
+  <div id="fileList"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にWord(.docx)ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル可）。</li>
+      <li>各ファイルについて、見つかった変更履歴（挿入・削除・移動・書式変更の記録）とコメントの件数が表示されます。必要ならコメントも削除するにチェックを入れ、「確定して書き出す」を押すとダウンロードされます。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. 具体的に何をしますか？Wordの「すべての変更を反映」と同じですか？</h3>
+    <p>A. Wordの校閲タブにある「すべての変更を反映（承諾）」をファイルを開かずにまとめて行うものです。挿入された文字・図は本文として確定し、削除された文字は実際に取り除き、移動（ドラッグ等で場所を変えた文章）は移動後の位置の内容として確定します。段落・表・文字単位の書式変更の記録（元の書式を記憶している部分）も、現在の書式を残したまま履歴だけ消します。対象は本文・ヘッダー・フッター・脚注・文末脚注です。</p>
+    <h3>Q. 表の行・列の挿入・削除やセルの結合の履歴はどうなりますか？</h3>
+    <p>A. 対象外です。表の行・列が「挿入・削除として記録されたまま」になっている場合や、セル結合の履歴は、このツールでは変更しません（安全のため、行・列ごと削除するような構造的な書き換えは行いません）。文章の挿入・削除・移動・書式変更の履歴だけを対象にしています。該当する表がある場合は、Word上で「すべての変更を反映」を実行してから使うか、このツール適用後にWordで確認してください。</p>
+    <h3>Q. コメントは消えますか？</h3>
+    <p>A. 既定では消えません。「コメントも削除する」にチェックを入れた場合のみ、コメント本文・コメントへの吹き出しの印（コメント範囲の開始・終了・参照マーク）をすべて削除します。チェックを入れなければ、変更履歴だけを確定し、コメントはそのまま残ります。</p>
+    <h3>Q. 変更履歴が無いファイルを処理すると何が起きますか？</h3>
+    <p>A. 何も変わりません。変更履歴・コメントの件数が0件と表示されたまま「確定して書き出す」を押すと、内容が同じファイルがそのままダウンロードされます（安全に使えることの確認用にお使いください）。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、確定後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_確定済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Word(.docx)です。古い.doc形式や、パスワードで保護されたファイルは読み込めません。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Word (.docx) files into the box above, or click it to choose (multiple files are fine).</li>
+      <li>Each file shows how many tracked changes (insertions, deletions, moves, formatting-change records) and comments were found. Check "Also delete comments" if you want those removed too, then click "Accept &amp; build" to download the result. Your original file is untouched.</li>
+    </ol>
+    <h3>Q. What exactly does this do — is it the same as Word's "Accept All Changes"?</h3>
+    <p>A. Yes — it performs Word's Review-tab "Accept All Changes" across every file at once, without opening each one. Inserted text/objects become permanent body content, deleted text is actually removed, and moved text (dragged to a new location) is finalized at its new location. Formatting-change records on paragraphs, tables and runs (which store the previous formatting) are cleared while the current formatting stays. This covers the document body, headers, footers, footnotes and endnotes.</p>
+    <h3>Q. What about tracked row/column insertions, deletions or cell merges in a table?</h3>
+    <p>A. These are not handled. If a table has rows/columns recorded as tracked insertions or deletions, or a tracked cell merge, this tool leaves them as-is (it never deletes a whole row or column structurally, for safety). Only text-level insertions, deletions, moves and formatting-change records are accepted. If your file has this, run Word's own "Accept All Changes" first, or check the result in Word afterwards.</p>
+    <h3>Q. Are comments removed?</h3>
+    <p>A. Not by default. Only when you check "Also delete comments" are the comment bodies and their anchors (range start/end and reference marks) removed. Leave it unchecked to accept tracked changes while keeping comments intact.</p>
+    <h3>Q. What happens if a file has no tracked changes?</h3>
+    <p>A. Nothing changes. If the counts show 0 for both tracked changes and comments, clicking "Accept &amp; build" downloads an unchanged copy (useful to confirm the tool is safe to use).</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_accepted" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Word (.docx) only. The older .doc format and password-protected files are not supported.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../docx-kakure/">社外に渡す前に確認：Wordの「隠れた情報」一括チェック</a> — 変更履歴が残っているか・編集者名・コメント・隠し文字をまとめて診断（読み取り専用）。確定前の確認に。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に：Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す</a> — 変更履歴を確定したあと、ファイルのプロパティに残る作成者名もまとめて消せます。</li>
+      <li><a href="../docx-omoi/">「Wordファイルが重い」原因を診断：ファイル内訳チェッカー</a> — 変更履歴を確定して容量が減ったかどうかの確認にも。</li>
+      <li><a href="../pptx-kakure/">社外に渡す前に：PowerPointのノート・非表示スライド・コメントを一覧化、ノートはまとめて削除</a> — PowerPoint版の「渡す前チェック」。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../docx-kakure/">Check a Word file for &quot;hidden&quot; information before sending it outside your company</a> — Checks whether tracked changes remain, editor names, comments and hidden text, all at once (read-only). Useful before you accept changes.</li>
+      <li><a href="../sakusha-kesu/">Strip creator, last-modified-by and comment-author names from Excel/Word/PowerPoint</a> — After accepting tracked changes, also clear the file-property author names.</li>
+      <li><a href="../docx-omoi/">Why is this Word file heavy?</a> — Check whether accepting tracked changes also shrank the file size.</li>
+      <li><a href="../pptx-kakure/">Before sharing a PowerPoint file: list every slide's notes, hidden status and comments</a> — The PowerPoint equivalent of a pre-sharing checkup.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"具体的に何をしますか？Wordの「すべての変更を反映」と同じですか？","acceptedAnswer":{"@type":"Answer","text":"Wordの「すべての変更を反映（承諾）」をファイルを開かずにまとめて行います。挿入は本文として確定、削除は実際に取り除き、移動は移動後の位置で確定、書式変更の記録は消去します。本文・ヘッダー・フッター・脚注・文末脚注が対象です。"}},
+    {"@type":"Question","name":"表の行・列の挿入・削除やセルの結合の履歴はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"対象外です。安全のため、表の行・列を構造的に削除するような変更は行いません。文章レベルの挿入・削除・移動・書式変更の履歴だけを確定します。"}},
+    {"@type":"Question","name":"コメントは消えますか？","acceptedAnswer":{"@type":"Answer","text":"既定では消えません。「コメントも削除する」にチェックを入れた場合のみ、コメント本文とその印をすべて削除します。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。確定後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =====================================================================
+   ZIP read/write — same hand-rolled approach already shipped across
+   xlsx-merge/xlsx-suushiki/.../sakusha-kesu/xlsx-bunkatsu (no external
+   libraries; only standard browser APIs: DecompressionStream /
+   CompressionStream / TextDecoder / TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =====================================================================
+   Generic XML -> node tree -> string. Needed here (unlike most of this
+   site's xlsx-* tools) because accepting a tracked change means either
+   dropping an element's open/close tags but KEEPING its children
+   (w:ins, w:moveTo: the wrapped content becomes permanent), or dropping
+   an element AND all its children (w:del, w:moveFrom: deleted content
+   really goes away), arbitrarily nested inside one another. A single
+   recursive tree walk handles any nesting depth in one pass; verified
+   against hand-built fixtures with ins-inside-del and del-inside-ins
+   before publishing (see state/log.md).
+   ===================================================================== */
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=xml.slice(vs,i);
+    i++;
+  }
+}
+function parseXmlNodes(xml){
+  var i=0, n=xml.length;
+  function parseList(){
+    var nodes=[];
+    while(i<n){
+      if(xml[i]==="<"){
+        if(xml.slice(i,i+4)==="<!--"){
+          var end=xml.indexOf("-->",i+4); end = end===-1? n : end+3;
+          nodes.push({t:"raw",s:xml.slice(i,end)}); i=end; continue;
+        }
+        if(xml.slice(i,i+9)==="<![CDATA["){
+          var end2=xml.indexOf("]]>",i+9); end2 = end2===-1? n : end2+3;
+          nodes.push({t:"raw",s:xml.slice(i,end2)}); i=end2; continue;
+        }
+        if(xml.slice(i,i+2)==="<?"){
+          var end3=xml.indexOf("?>",i+2); end3 = end3===-1? n : end3+2;
+          nodes.push({t:"raw",s:xml.slice(i,end3)}); i=end3; continue;
+        }
+        if(xml.slice(i,i+2)==="</"){
+          return nodes; /* caller consumes the matching close tag */
+        }
+        var tagStart=i, j=i+1;
+        while(j<n && !/[\s/>]/.test(xml[j])) j++;
+        var tagName=xml.slice(i+1,j);
+        var open=parseOpenTag(xml, i+1+tagName.length);
+        var openText=xml.slice(tagStart, open.end);
+        i=open.end;
+        if(open.selfClose){
+          nodes.push({t:"el",name:tagName,openText:openText,selfClose:true,children:[]});
+        } else {
+          var children=parseList();
+          var closeTag="</"+tagName+">";
+          if(xml.slice(i,i+closeTag.length)===closeTag){ i+=closeTag.length; }
+          else { var gt=xml.indexOf(">",i); i = gt===-1? n : gt+1; }
+          nodes.push({t:"el",name:tagName,openText:openText,selfClose:false,children:children});
+        }
+        continue;
+      } else {
+        var ts=i;
+        while(i<n && xml[i]!=="<") i++;
+        nodes.push({t:"text",s:xml.slice(ts,i)});
+      }
+    }
+    return nodes;
+  }
+  return parseList();
+}
+function localName(name){ var p=name.indexOf(":"); return p===-1?name:name.slice(p+1); }
+/* Classification of one element, by its tracked-change meaning.
+   "unwrap": accept — drop the wrapper tags, keep its children.
+   "delete": reject-away — drop the element and everything inside it.
+   "pass"  : leave completely untouched. */
+function classifyNode(name, opts){
+  var local=localName(name);
+  if(local==="ins" || local==="moveTo") return "unwrap";
+  if(local==="del" || local==="moveFrom") return "delete";
+  if(local==="moveFromRangeStart"||local==="moveFromRangeEnd"||local==="moveToRangeStart"||local==="moveToRangeEnd") return "delete";
+  if(/PrChange$/.test(local) || local==="tblGridChange") return "delete";
+  if(opts.removeComments && (local==="commentRangeStart"||local==="commentRangeEnd"||local==="commentReference")) return "delete";
+  return "pass";
+}
+function serializeNodes(nodes, opts, counters){
+  var out=[];
+  for(var k=0;k<nodes.length;k++){
+    var nd=nodes[k];
+    if(nd.t==="text" || nd.t==="raw"){ out.push(nd.s); continue; }
+    var action=classifyNode(nd.name, opts);
+    if(counters) counters.count(localName(nd.name), action);
+    if(action==="delete"){ continue; }
+    var childStr=serializeNodes(nd.children, opts, counters);
+    if(action==="unwrap"){ out.push(childStr); continue; }
+    out.push(nd.openText, childStr);
+    if(!nd.selfClose) out.push("</"+nd.name+">");
+  }
+  return out.join("");
+}
+
+/* =====================================================================
+   Format detection + per-file inspection (counts only — cheap regex
+   scan, no tree build) + the actual accept/build pass (full tree walk).
+   ===================================================================== */
+var DOCX_REVISION_FILE_RE=/^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/i;
+var COMMENT_PART_NAMES=["word/comments.xml","word/commentsExtended.xml","word/commentsIds.xml","word/commentsExtensible.xml"];
+function countTag(xml,tagLocal){
+  var re=new RegExp("<(?:[A-Za-z0-9_]+:)?"+tagLocal+"\\b","g");
+  var m=xml.match(re);
+  return m?m.length:0;
+}
+function inspectDocx(entries){
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var names=entries.map(function(e){return e.name});
+  if(names.indexOf("word/document.xml")===-1) return null;
+  var dec=new TextDecoder("utf-8");
+  var targetFiles=names.filter(function(n){return DOCX_REVISION_FILE_RE.test(n)});
+  var c={ins:0,del:0,move:0,prchange:0};
+  targetFiles.forEach(function(n){
+    var xml=dec.decode(byName[n].bytes);
+    c.ins += countTag(xml,"ins");
+    c.del += countTag(xml,"del");
+    c.move += countTag(xml,"moveFrom") + countTag(xml,"moveTo");
+    c.prchange += countTag(xml,"\\w*PrChange") + countTag(xml,"tblGridChange");
+  });
+  var commentCount=0;
+  if(byName["word/comments.xml"]){
+    var cxml=dec.decode(byName["word/comments.xml"].bytes);
+    commentCount=countTag(cxml,"comment(?!s)");
+  }
+  return {targetFiles:targetFiles, counts:c, commentCount:commentCount,
+    hasRevisions:(c.ins+c.del+c.move+c.prchange)>0};
+}
+function removePartsAndRefs(entries, partNames){
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var keep=entries.filter(function(e){return partNames.indexOf(e.name)===-1});
+  var baseNames=partNames.map(function(p){return p.split("/").pop()});
+  return keep.map(function(e){
+    if(e.name==="[Content_Types].xml"){
+      var xml=dec.decode(e.bytes);
+      xml=xml.replace(/<Override\b[^>]*\/>/g,function(tag){
+        for(var i=0;i<partNames.length;i++){ if(tag.indexOf('PartName="/'+partNames[i]+'"')!==-1) return ""; }
+        return tag;
+      });
+      return {name:e.name,bytes:enc.encode(xml)};
+    }
+    if(e.name==="word/_rels/document.xml.rels"){
+      var rxml=dec.decode(e.bytes);
+      rxml=rxml.replace(/<Relationship\b[^>]*\/>/g,function(tag){
+        for(var i=0;i<baseNames.length;i++){ if(tag.indexOf('Target="'+baseNames[i]+'"')!==-1) return ""; }
+        return tag;
+      });
+      return {name:e.name,bytes:enc.encode(rxml)};
+    }
+    return e;
+  });
+}
+function acceptChanges(entries, opts){
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var names=entries.map(function(e){return e.name});
+  var out=entries.map(function(e){
+    if(!DOCX_REVISION_FILE_RE.test(e.name)) return e;
+    var xml=dec.decode(e.bytes);
+    var nodes=parseXmlNodes(xml);
+    var newXml=serializeNodes(nodes,{removeComments:!!opts.removeComments},null);
+    return {name:e.name, bytes:enc.encode(newXml)};
+  });
+  if(opts.removeComments){
+    var toRemove=COMMENT_PART_NAMES.filter(function(p){return names.indexOf(p)!==-1});
+    if(toRemove.length) out=removePartsAndRefs(out, toRemove);
+  }
+  return out;
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+var T={
+ ja:{
+  title:"複数のWordファイルの変更履歴（校閲）を一括で確定",
+  sub:"「変更履歴の記録」が付いたままのWordファイルを、1件ずつ開いて「すべての変更を反映」を押す手間をなくしたいときに。挿入は本文として確定、削除された文字は取り除き、移動は移動後の場所に確定、書式変更の記録は消去します。本文・ヘッダー・フッター・脚注・文末脚注すべてが対象です。コメントも一括で削除できます（オプション）。複数ファイルを同時に処理でき、ファイルはサーバーに送らずこのブラウザの中だけで書き換えます。元のファイルは変更しません。",
+  dropzoneStrong:"ここにWord(.docx)ファイルをドラッグ＆ドロップ",dropzoneRest:"、またはクリックして選択",
+  dropzoneHint:".docx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。",
+  listHeading:"読み込んだファイル",
+  kChanges:"変更履歴",kComments:"コメント",
+  changesDetail:function(c){return "挿入"+c.ins+"・削除"+c.del+"・移動"+c.move+"・書式変更の記録"+c.prchange+"（件）"},
+  noneChanges:"（変更履歴なし）",noneComments:"（コメントなし）",
+  optRemoveComments:"コメントも削除する",
+  buildBtn:"確定して書き出す",buildBtnBusy:"書き出し中…",
+  doneMsg:"ダウンロードしました：",
+  errBad:"読み込めませんでした（.docx以外の形式か、パスワード保護、または壊れたファイルの可能性があります）",
+  loadingLabel:"読み込み中…",removeLabel:"削除",
+  limitNote:"表の行・列の挿入・削除、セルの結合の履歴は対象外です（安全のため構造的な削除は行いません）。文章レベルの挿入・削除・移動・書式変更の履歴とコメントだけを対象にしています。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{
+  title:"Accept all tracked changes across multiple Word files at once",
+  sub:"For Word files that still carry \"Track Changes\" history, when you don't want to open each one and click \"Accept All Changes\" yourself. Insertions become permanent body text, deleted text is removed, moved text is finalized at its new location, and formatting-change records are cleared. This covers the document body, headers, footers, footnotes and endnotes. Comments can also be removed in bulk (optional). Process multiple files at once — files are never uploaded, everything is rewritten inside this browser. Your originals are untouched.",
+  dropzoneStrong:"Drag and drop Word (.docx) files here",dropzoneRest:", or click to choose",
+  dropzoneHint:".docx supported. Add multiple files at once. Everything happens on this device.",
+  listHeading:"Loaded files",
+  kChanges:"Tracked changes",kComments:"Comments",
+  changesDetail:function(c){return "insertions "+c.ins+" / deletions "+c.del+" / moves "+c.move+" / formatting-change records "+c.prchange},
+  noneChanges:"(no tracked changes)",noneComments:"(no comments)",
+  optRemoveComments:"Also delete comments",
+  buildBtn:"Accept & build",buildBtnBusy:"Building…",
+  doneMsg:"Downloaded: ",
+  errBad:"Could not read this file (it may not be .docx, may be password-protected, or may be corrupted)",
+  loadingLabel:"Loading…",removeLabel:"Remove",
+  limitNote:"Tracked row/column insertions or deletions in a table, and tracked cell merges, are not handled (no structural deletion is performed, for safety). Only text-level insertions, deletions, moves, formatting-change records and comments are accepted.",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var files=[]; // {id,name,size,loading,error,info,entries,removeComments,outBytes,outName,building}
+var seq=0;
+
+function addFiles(fileList){
+  Array.prototype.slice.call(fileList).forEach(function(file){
+    var id=++seq;
+    var rec={id:id,name:file.name,size:file.size,loading:true,error:"",info:null,entries:null,
+      removeComments:false,outBytes:null,outName:"",building:false};
+    files.push(rec);
+    render();
+    (async function(){
+      try{
+        var buf=await file.arrayBuffer();
+        var entries=await unzipAllEntries(new Uint8Array(buf));
+        var info=inspectDocx(entries);
+        if(!info) throw new Error("NOT_DOCX");
+        rec.loading=false; rec.entries=entries; rec.info=info;
+      }catch(e){
+        rec.loading=false; rec.error=T[lang].errBad;
+      }
+      render();
+    })();
+  });
+}
+function removeFile(id){ files=files.filter(function(r){return r.id!==id}); render(); }
+
+async function buildOne(rec){
+  rec.building=true; render();
+  try{
+    var outEntries=acceptChanges(rec.entries,{removeComments:rec.removeComments});
+    var outBytes=await buildZip(outEntries);
+    var dot=rec.name.lastIndexOf(".");
+    var base=dot>0?rec.name.slice(0,dot):rec.name, ext=dot>0?rec.name.slice(dot):"";
+    var suffix=lang==="ja"?"_確定済み":"_accepted";
+    var outName=base+suffix+ext;
+    var blob=new Blob([outBytes],{type:"application/octet-stream"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=outName; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },1000);
+    rec.outName=outName;
+  }catch(e){
+    rec.error=T[lang].errBad;
+  }
+  rec.building=false; render();
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function fileCardHtml(rec){
+  var t=T[lang];
+  if(rec.loading) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+t.loadingLabel+'</span></div></div>';
+  if(rec.error) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div><p class="errBox">'+t.errBad+'</p></div>';
+  var info=rec.info;
+  var changesLabel=info.hasRevisions? t.changesDetail(info.counts) : "";
+  var commentsLabel=info.commentCount? (String(info.commentCount)+(lang==="ja"?"件":"")) : "";
+  var html='<div class="fileCard">'
+    +'<div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="badge fmt">Word</span>'
+    +'<span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div>'
+    +'<div class="detectBox">'
+    +'<div class="row"><span class="k">'+t.kChanges+'：</span><span class="'+(changesLabel?'v':'v empty')+'">'+(changesLabel?esc(changesLabel):t.noneChanges)+'</span></div>'
+    +'<div class="row"><span class="k">'+t.kComments+'：</span><span class="'+(commentsLabel?'v':'v empty')+'">'+(commentsLabel?esc(commentsLabel):t.noneComments)+'</span></div>'
+    +'</div>'
+    +'<div class="optRow">'
+    +'<label class="'+(info.commentCount?'':'disabled')+'"><input type="checkbox" data-opt="removeComments" data-id="'+rec.id+'" '+(rec.removeComments?'checked':'')+' '+(info.commentCount?'':'disabled')+'>'+t.optRemoveComments+'</label>'
+    +'</div>'
+    +'<p><button type="button" class="primary" data-build="'+rec.id+'" '+(rec.building?'disabled':'')+'>'+(rec.building?t.buildBtnBusy:t.buildBtn)+'</button></p>'
+    +(rec.outName?'<p class="okBox">'+t.doneMsg+esc(rec.outName)+'</p>':'')
+    +'</div>';
+  return html;
+}
+
+function render(){
+  var t=T[lang];
+  document.documentElement.lang=lang;
+  $("listSec").style.display=files.length?"block":"none";
+  $("fileList").innerHTML=files.map(fileCardHtml).join("");
+  document.querySelectorAll("[data-i]").forEach(function(el){
+    var k=el.getAttribute("data-i"); if(t[k]!==undefined && typeof t[k]==="string") el.textContent=t[k];
+  });
+}
+
+document.addEventListener("click",function(e){
+  var rm=e.target.getAttribute && e.target.getAttribute("data-remove");
+  if(rm){ removeFile(parseInt(rm,10)); return; }
+  var bd=e.target.getAttribute && e.target.getAttribute("data-build");
+  if(bd){ var rec=files.filter(function(r){return r.id===parseInt(bd,10)})[0]; if(rec) buildOne(rec); return; }
+});
+document.addEventListener("change",function(e){
+  var optName=e.target.getAttribute && e.target.getAttribute("data-opt");
+  if(optName){
+    var id=parseInt(e.target.getAttribute("data-id"),10);
+    var rec=files.filter(function(r){return r.id===id})[0];
+    if(rec){ rec[optName]=e.target.checked; }
+  }
+});
+
+var dz=$("dropzone"), fi=$("fileInput");
+dz.addEventListener("click",function(){ fi.click(); });
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fi.click(); } });
+fi.addEventListener("change",function(){ if(fi.files.length) addFiles(fi.files); fi.value=""; });
+["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add("drag"); }); });
+["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove("drag"); }); });
+dz.addEventListener("drop",function(e){ if(e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+document.querySelectorAll(".lang button").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    lang=btn.getAttribute("data-lang");
+    document.querySelectorAll(".lang button").forEach(function(b){ b.setAttribute("aria-pressed", b===btn?"true":"false"); });
+    render();
+  });
+});
+
+render();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

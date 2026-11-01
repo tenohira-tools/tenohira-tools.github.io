@@ -8,17 +8,18 @@
 並べ方の根拠：6週目で個別ページの閲覧はreceipt-sheetの1件だけ（経理・事務書類）。それ以外は判定材料が無いため、①唯一反応のあったページの改善②VBA記事しか無く検索語の大きい複数ファイル・一括系③Word・PPTの「社外に渡す前」の順にした。2〜4は2026-10-31にWebSearchで確認済み（VBA・zip展開の手作業・Windowsソフトのみで、ブラウザ完結の無料ツールは見当たらない）。5〜10は着手前に確認検索2件まで。相互リンクはまとめページ＋関連3〜5ページだけ。
 
 1. 新規：office-gazou「Excel・Word・PowerPointの画像を一括保存」。xl/word/ppt の media を取り出しZIPで保存、どのシート・スライドの画像かの対応表CSV付き。拡張子をzipに変える手作業の代わり。
-2. 新規：docx-shodaku「複数のWordファイルの変更履歴をまとめて承諾（確定）」。w:ins展開・w:del削除・moveFrom/moveTo・*PrChange除去を本文・ヘッダー・フッター・脚注で。コメント削除はオプション。社外に渡す前の処理。
-3. 新規：office-trouble「Word・PowerPointを社外に渡す前のチェックまとめ」。docx-kakure・docx-omoi・pptx-kakure・pptx-omoi・pptx-chart-kakure・sakusha-kesuを症状から選べるまとめページ（excel-trouble型）。
-4. 改善：pptx-kakureに「ノートをテキスト/CSVで書き出す」（発表原稿の印刷・共有）。既存のノート抽出を流用。
-5. 新規：docx-comment「Wordのコメント一覧をCSV/Excelに書き出す」（校閲の対応表）。docx-kakureのコメント解析を流用。
-6. 新規：xlsx-furigana「Excelのふりがな情報（rPh）の確認・一括削除」。sharedStrings内のふりがなが他人に読み方ごと渡る・PHONETICの誤表示対策。日本固有。
-7. 新規：pptx-font「PowerPointの使用フォント一覧（スライド・マスター別・テーマフォント解決）」。別のPCで文字化け・崩れる原因の確認。標準の「フォントの置換」では場所が分からない点が勝ち筋。
-8. 新規：docx-mojisu「複数のWordファイルの文字数を一括カウント」（スペース・改行を除く数え方を選択、CSV出力）。翻訳・原稿の見積もり用。
+2. 新規：office-trouble「Word・PowerPointを社外に渡す前のチェックまとめ」。docx-kakure・docx-omoi・pptx-kakure・pptx-omoi・pptx-chart-kakure・sakusha-kesu・docx-shodakuを症状から選べるまとめページ（excel-trouble型）。
+3. 改善：pptx-kakureに「ノートをテキスト/CSVで書き出す」（発表原稿の印刷・共有）。既存のノート抽出を流用。
+4. 新規：docx-comment「Wordのコメント一覧をCSV/Excelに書き出す」（校閲の対応表）。docx-kakureのコメント解析を流用。
+5. 新規：xlsx-furigana「Excelのふりがな情報（rPh）の確認・一括削除」。sharedStrings内のふりがなが他人に読み方ごと渡る・PHONETICの誤表示対策。日本固有。
+6. 新規：pptx-font「PowerPointの使用フォント一覧（スライド・マスター別・テーマフォント解決）」。別のPCで文字化け・崩れる原因の確認。標準の「フォントの置換」では場所が分からない点が勝ち筋。
+7. 新規：docx-mojisu「複数のWordファイルの文字数を一括カウント」（スペース・改行を除く数え方を選択、CSV出力）。翻訳・原稿の見積もり用。
 
 （条件未充足のため保留：日本の住所英語変換＝競合多数／文字数カウンター＝AI時代の選び方に抵触しやすい／SNS向け画像切り抜き＝競合多数。差別化角度が見つかるまで着手しない）
 
 ### 実施済みの記録
+
+（2026-11-01実施済み：新規：複数のWordファイルの変更履歴（校閲）を一括で確定するツール（docx-shodaku）を公開。backlog旧2番。w:ins展開・w:del削除・moveFrom/moveTo・*PrChange除去を本文・ヘッダー・フッター・脚注・文末脚注で。コメント削除はオプション。表の行・列の構造的な挿入・削除は対象外とFAQに明記。）
 
 （2026-11-01実施済み：新規：シートごとに別のExcelファイルに分割するツール（xlsx-bunkatsu）を公開。backlog旧1番。他シート参照の数式は値に変換、他シート参照の名前定義は除外、非表示シートは自動で表示化。）
 
