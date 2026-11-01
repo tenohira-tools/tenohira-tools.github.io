@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>Excelのシートを1枚ずつ別ファイルに分けて保存：一括分割ツール | てのひらツール</title>
+<meta name="description" content="大きなExcelファイルから必要なシートだけを取り出して誰かに渡したい、シートごとに別のファイルとして保存し直したい——コピーして他のシートを1つずつ削除する作業を繰り返さずに、選んだシートをそれぞれ独立したExcel(.xlsx/.xlsm)ファイルに分割し、まとめてZIPでダウンロードします。他のシートを参照する数式は、既定で現在の値に変換してから保存するため、参照先が無くなって#REF!エラーになるのを防ぎます。ブラウザ内だけで処理し、ファイルは送信されません。Split each sheet of a workbook into its own standalone Excel file — pick the sheets, optionally convert cross-sheet formulas to static values first, and download them all as one ZIP, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-bunkatsu/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px;min-width:0}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px;min-width:0}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px;min-width:0}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.ok .n{color:var(--accent)}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.center{text-align:center;white-space:nowrap}
+.badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.78rem;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px;margin-right:10px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:11px 18px;cursor:pointer;min-height:44px;margin-right:10px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+button.small{font:inherit;font-size:.82rem;color:var(--accent);background:transparent;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;margin-right:8px}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+label.optRow{display:flex;align-items:flex-start;gap:8px;font-size:.92rem;margin:4px 0 14px;cursor:pointer}
+label.optRow input{margin-top:4px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">Excelのシートを1枚ずつ別ファイルに分けて保存</h1>
+    <p class="sub" data-i="sub">大きなブックから必要なシートだけ取り出して誰かに渡したい、シートごとに別のファイルとして保存し直したいときに。コピーを作って他のシートを1つずつ削除する作業を繰り返す代わりに、選んだシートをそれぞれ独立したExcel(.xlsx/.xlsm)ファイルに分割し、1つにまとめてZIPでダウンロードします。他のシートを参照する数式は、既定で今の計算結果の値に変換してから保存するため、参照先のシートが無くなって#REF!エラーになるのを防ぎます。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。全シートの名前・表示状態・数式を解析します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">シート一覧</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p>
+    <button type="button" class="small" id="selectAllBtn" data-i="selectAllBtn">全て選択</button>
+    <button type="button" class="small" id="selectNoneBtn" data-i="selectNoneBtn">全て解除</button>
+  </p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th data-i="colPick"></th>
+          <th data-i="colIndex">#</th>
+          <th data-i="colSheet">シート名</th>
+          <th data-i="colState">状態</th>
+          <th data-i="colFormula">数式</th>
+        </tr>
+      </thead>
+      <tbody id="sheetRows"></tbody>
+    </table>
+  </div>
+  <p class="okBox" data-i="resultMsgOk">選んだシートを、それぞれ独立したExcelファイルに分割します。2つ以上選ぶと1つのZIPにまとめてダウンロードします。</p>
+  <p class="warnBox" id="crossNote" style="display:none" data-i="crossNote">注意：選択中のシートの一部に、他のシートを参照する数式があります。下のオプションで「値に変換」を外すと、分割後のファイルを開いて再計算した際に#REF!エラーになることがあります。</p>
+  <label class="optRow"><input type="checkbox" id="convertChk" checked><span data-i="convertLabel">他のシートを参照する数式を、今の計算結果の値に変換してから保存する（推奨）</span></label>
+  <p>
+    <button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">選択したシートを分割してダウンロード</button>
+  </p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card" id="resultCard" style="display:none">
+  <h2 data-i="resultHeading">分割結果の内訳</h2>
+  <div id="resultBox"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>全シートの名前・表示状態・他のシートを参照する数式の有無が一覧表示されます（既定では全シートが選択済みです）。</li>
+      <li>分割したくないシートはチェックを外します。「全て選択」「全て解除」でまとめて切り替えられます。</li>
+      <li>必要なら「他のシートを参照する数式を値に変換してから保存する」のチェックを調整します（既定はオン）。</li>
+      <li>「選択したシートを分割してダウンロード」で書き出します。2つ以上選んだ場合は1つのZIPに、1つだけの場合はそのシートのExcelファイルを直接ダウンロードします。</li>
+    </ol>
+    <h3>Q. 他のシートを参照する数式はどうなりますか？</h3>
+    <p>A. 既定（推奨）では、選んだシート以外を参照する数式を、現在Excel上で表示されている計算結果の値に変換してから保存します。元の数式は消えますが、値はそのまま残ります（計算結果が保存されていない数式は変換できず、数式のまま残ります）。オプションを外すと数式はそのまま残りますが、参照先のシートが無いファイルを開いて再計算すると#REF!エラーになることがあります。</p>
+    <h3>Q. 名前定義（名前付き範囲）はどうなりますか？</h3>
+    <p>A. 選んだシートだけに限定された名前定義で、参照先も選んだシートの中に収まっているものはそのまま残します（シート番号は自動で調整します）。全シート共通の名前定義、または他のシートを参照している名前定義は、分割後のファイルには含まれません。その名前を数式で使っていた場合、#NAME?エラーになることがあります。</p>
+    <h3>Q. ピボットテーブルやグラフが別シートの元データを参照している場合は？</h3>
+    <p>A. 元データのシートを含めずに分割すると、ピボットテーブルやグラフの部品自体は残りますが、参照先のデータが無いため正しく更新・表示されない場合があります。元データのシートも一緒に選んで分割するか、分割後に手動で確認してください。</p>
+    <h3>Q. 非表示・完全非表示のシートを選んだ場合はどうなりますか？</h3>
+    <p>A. 分割後のファイルではそのシートが唯一のシートになるため、Excelの仕様（最低1枚は表示シートが必要）に従い、自動的に「表示」状態に変わります。</p>
+    <h3>Q. 複数シートを選んだときのダウンロード形式は？</h3>
+    <p>A. 選んだシートの数だけExcelファイルを作り、1つのZIPファイルにまとめてダウンロードします（ファイル名はシート名から自動生成、同名が重複する場合は末尾に(2)などを付けます）。1つだけ選んだ場合は、ZIPを経由せずそのシートのExcelファイルを直接ダウンロードします。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. 変更されません。元のファイルはそのまま残り、分割後のファイルは別名で新しく書き出されます。</p>
+    <h3>Q. マクロ（.xlsmファイル）でも使えますか？</h3>
+    <p>A. 読み込み自体は可能で、マクロ（VBAプロジェクト）はそのまま各分割後のファイルに含まれます。ただしマクロが削除されたシートを参照する処理を含んでいる場合、分割後は正しく動作しない可能性があります。マクロを使っているファイルは、分割後に動作を確認してください。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one.</li>
+      <li>Every sheet's name, visibility and whether it has formulas referencing other sheets are listed (all sheets are selected by default).</li>
+      <li>Uncheck any sheet you don't want split out. "Select all" / "Select none" toggle them in bulk.</li>
+      <li>Adjust the "convert cross-sheet formulas to values" option if needed (on by default).</li>
+      <li>Click "Split selected sheets and download". Two or more sheets download as one ZIP; a single sheet downloads directly as its own Excel file.</li>
+    </ol>
+    <h3>Q. What happens to formulas that reference other sheets?</h3>
+    <p>A. By default (recommended), any formula that references a sheet other than the one you kept is converted to its current calculated value before saving — the formula itself is dropped, but the value stays (a formula with no cached result can't be converted this way and is left as a formula). Turning the option off leaves the formula as-is, which can show #REF! once Excel recalculates it, since the referenced sheet is gone.</p>
+    <h3>Q. What happens to named ranges?</h3>
+    <p>A. A named range scoped to just the sheet you kept, whose reference also stays within that sheet, is kept (its internal sheet index is adjusted automatically). A workbook-wide named range, or one that points at another sheet, is dropped from the split file — formulas using that name may then show #NAME?.</p>
+    <h3>Q. What if a PivotTable or chart's source data is on a different sheet?</h3>
+    <p>A. If you split without including the source-data sheet, the PivotTable or chart itself remains, but it may not refresh or display correctly since its source is gone. Either include the source sheet too, or check manually afterward.</p>
+    <h3>Q. What happens if I split a hidden or very-hidden sheet?</h3>
+    <p>A. Since it becomes the only sheet in the new file, it's automatically switched to visible — Excel requires every workbook to have at least one visible sheet.</p>
+    <h3>Q. What format do I get when splitting several sheets?</h3>
+    <p>A. One Excel file per sheet, all bundled into a single ZIP (filenames are generated from the sheet names, with (2), (3)... appended for duplicates). If you select only one sheet, it downloads directly as its own Excel file with no ZIP step.</p>
+    <h3>Q. Does this change my original file?</h3>
+    <p>A. No. Your original file is left untouched; the split files are written out under new names.</p>
+    <h3>Q. Does this work on macro-enabled (.xlsm) files?</h3>
+    <p>A. Yes, it can read them, and the VBA project is carried into each split file unchanged. But if a macro refers to a sheet that got removed, it may no longer work correctly — test macros after splitting.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../excel-trouble/">エクセルのトラブル解決ガイド</a> — 「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全ツールを探す。</li>
+      <li><a href="../xlsx-mokuji/">シートが多すぎて移動しづらいときの「目次」シート自動作成</a> — 分割せずシート数のまま使いたい場合は、各シートへ移動できる目次シートを先頭に追加する方法もあります。</li>
+      <li><a href="../xlsx-saihyouji/">シートの「再表示」に出てこないときの対策</a> — 分割したいシートが非表示・完全非表示になっている場合は、先にこちらで表示状態を確認・変更できます。</li>
+      <li><a href="../csv-group-split/">1つのCSVを列の値ごとに複数ファイルに分割</a> — Excelのシート単位ではなく、CSVの中の値（都道府県・担当者など）で分けたいときはこちら。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — 分割したファイルをそれぞれ別の相手に渡す前に、作成者情報を消去。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../excel-trouble/">Excel Troubleshooting Guide</a> — find the right tool by symptom: heavy, save errors, error values, links, printing.</li>
+      <li><a href="../xlsx-mokuji/">Too many sheet tabs to scroll through?</a> — If you'd rather keep every sheet in one file, add a clickable "Contents" sheet instead of splitting.</li>
+      <li><a href="../xlsx-saihyouji/">Sheet missing from the Unhide dialog?</a> — Check or change a sheet's visibility first if the one you want to split out is hidden or very hidden.</li>
+      <li><a href="../csv-group-split/">Split one CSV into files by a column's value</a> — For splitting by a value inside the data (e.g. by prefecture) rather than by Excel sheet.</li>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up each split file before handing it to a different recipient.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"他のシートを参照する数式はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"既定では、選んだシート以外を参照する数式を現在の計算結果の値に変換して保存します。オプションを外すと数式のまま残りますが、参照先のシートが無いため再計算時に#REF!エラーになることがあります。"}},
+    {"@type":"Question","name":"名前定義（名前付き範囲）はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"選んだシート内に収まる名前定義はそのまま残し、他のシートを参照する名前定義は分割後のファイルには含まれません。"}},
+    {"@type":"Question","name":"非表示・完全非表示のシートを選んだ場合はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"唯一のシートになるため、Excelの仕様に従い自動的に「表示」状態に変わります。"}},
+    {"@type":"Question","name":"複数シートを選んだときのダウンロード形式は？","acceptedAnswer":{"@type":"Answer","text":"1つのZIPファイルにまとめてダウンロードします。1つだけ選んだ場合はそのシートのExcelファイルを直接ダウンロードします。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-merge/xlsx-suushiki/xlsx-namae/xlsx-link/xlsx-ketsugo/xlsx-omoi/
+   xlsx-jouken/xlsx-junkan/xlsx-hyperlink/xlsx-error/xlsx-style/xlsx-hani/
+   xlsx-saihyouji/xlsx-mokuji (no external libraries; only standard
+   browser APIs: DecompressionStream/CompressionStream/TextDecoder/
+   TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+/* inner xlsx files: deflate-raw compressed (buildZip). An uncompressed
+   (STORE-method) output would bloat each split file ~3.6x, so this must
+   never be swapped for a STORE-only writer (see STRATEGY.md 2026-10-10). */
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+/* outer bundle (ZIP of already-compressed .xlsx files): STORE method is
+   fine and avoids pointlessly re-compressing data that's already
+   deflated inside each split .xlsx (same reasoning as csv-group-split). */
+function buildStoreZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  files.forEach(function(f){
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var size=f.bytes.length;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,0,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,size,true); dv.setUint32(22,size,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,f.bytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,0,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,size,true); cdv.setUint32(24,size,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + f.bytes.length;
+  });
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function sheetState(attrs){
+  var s=attrs.state;
+  if(s==="veryHidden") return "veryHidden";
+  if(s==="hidden") return "hidden";
+  return "visible";
+}
+
+/* =====================================================================
+   Cross-sheet formula detection. A formula's sheet-qualified references
+   (quoted 'Sheet Name'! or bare Name!) are found after blanking out any
+   double-quoted string literals first (so a literal text like "see
+   Sheet2!A1" inside quotes is never mistaken for a real reference).
+   Any qualifier other than the kept sheet's own name counts as a
+   cross-sheet (or external-workbook) reference.
+   ===================================================================== */
+function stripStringLiterals(s){
+  var out="",i=0,n=s.length;
+  while(i<n){
+    if(s[i]==='"'){
+      out+=" ";i++;
+      while(i<n){
+        if(s[i]==='"'){ if(s[i+1]==='"'){ out+="  ";i+=2;continue } out+=" ";i++;break }
+        out+=" ";i++;
+      }
+      continue;
+    }
+    out+=s[i];i++;
+  }
+  return out;
+}
+var SHEET_REF_RE=/'((?:[^']|'')*)'!|([\p{L}\p{N}_.]+)!/gu;
+function formulaReferencesOtherSheet(formulaText, keptNameLower){
+  var stripped=stripStringLiterals(formulaText);
+  var re=new RegExp(SHEET_REF_RE.source,"gu"), m;
+  while((m=re.exec(stripped))){
+    var name=m[1]!==undefined?m[1].replace(/''/g,"'"):m[2];
+    if(!name) continue;
+    if(name.toLowerCase()!==keptNameLower) return true;
+  }
+  return false;
+}
+
+/* =====================================================================
+   Per-sheet formula scan + (optionally) cross-sheet formula -> value
+   conversion. Shared-formula follower cells (t="shared" with no inline
+   formula text) are resolved against their group's master formula text;
+   since only relative cell coordinates shift within a shared-formula
+   group (the sheet-name token never does), checking the master's text
+   is enough to classify every follower too.
+   ===================================================================== */
+function processSheetFormulas(sheetXmlText, keptNameLower, applyConvert){
+  var cells=findTags(sheetXmlText,"c");
+  var sharedMaster={};
+  cells.forEach(function(c){
+    if(c.inner===null) return;
+    var fTags=findTags(c.inner,"f");
+    if(!fTags.length) return;
+    var f=fTags[0];
+    if(f.inner!==null && f.attrs.t==="shared" && f.attrs.si!==undefined){
+      sharedMaster[f.attrs.si]=decodeXmlEntities(f.inner);
+    }
+  });
+  var edits=[];
+  var stats={formulaTotal:0,crossSheetCount:0,convertedCount:0,leftCount:0,unknownCount:0};
+  cells.forEach(function(c){
+    if(c.inner===null) return;
+    var fTags=findTags(c.inner,"f");
+    if(!fTags.length) return;
+    stats.formulaTotal++;
+    var f=fTags[0];
+    var ownText=f.inner!==null?decodeXmlEntities(f.inner):null;
+    var textForDetect=ownText!==null?ownText:((f.attrs.t==="shared"&&f.attrs.si!==undefined)?sharedMaster[f.attrs.si]:undefined);
+    if(textForDetect===undefined || textForDetect===null){ stats.unknownCount++; return; }
+    if(!formulaReferencesOtherSheet(textForDetect,keptNameLower)) return;
+    stats.crossSheetCount++;
+    if(applyConvert){
+      var vTags=findTags(c.inner,"v");
+      if(vTags.length && vTags[0].inner){
+        var cInnerAbs=c.start+c.openText.length;
+        edits.push({start:cInnerAbs+f.start,end:cInnerAbs+f.end,text:""});
+        stats.convertedCount++;
+      } else { stats.leftCount++; }
+    } else { stats.leftCount++; }
+  });
+  edits.sort(function(a,b){return b.start-a.start});
+  var out=sheetXmlText;
+  edits.forEach(function(e){ out=out.slice(0,e.start)+e.text+out.slice(e.end); });
+  return {patchedXml:out, stats:stats};
+}
+
+/* =====================================================================
+   Workbook parsing — sheet list + per-sheet formula stats.
+   ===================================================================== */
+function resolveWorksheetTarget(target){
+  var t=(target||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+  if(!/^worksheets\//.test(t)) t="worksheets/"+t.replace(/^.*worksheets\//,"");
+  return "xl/"+t;
+}
+async function parseXlsxForBunkatsu(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"], ctEntry=byName["[Content_Types].xml"];
+  if(!wbEntry||!relsEntry||!ctEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes), contentTypesXml=dec.decode(ctEntry.bytes);
+  var sheetsBlock=findTags(workbookXml,"sheets")[0];
+  if(!sheetsBlock||sheetsBlock.selfClose) throw new Error("NOT_XLSX");
+  var sheetItems=findTags(sheetsBlock.inner,"sheet");
+  if(!sheetItems.length) throw new Error("NOT_XLSX");
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  var sheets=sheetItems.map(function(t,idx){
+    var rid=t.attrs["r:id"];
+    var path=resolveWorksheetTarget(relTarget[rid]);
+    return {name:t.attrs.name||"", state:sheetState(t.attrs), rid:rid, path:path, openText:t.openText, index:idx, stats:null};
+  });
+  if(sheets.length<2) throw new Error("ONLY_ONE_SHEET");
+  sheets.forEach(function(s){
+    var entry=byName[s.path];
+    var xmlText=entry?dec.decode(entry.bytes):"";
+    var r=processSheetFormulas(xmlText, String(s.name).toLowerCase(), false);
+    s.stats=r.stats;
+  });
+  return {entries:entries, byName:byName, workbookXml:workbookXml, relsXml:relsXml, contentTypesXml:contentTypesXml, sheets:sheets};
+}
+
+/* =====================================================================
+   Build one split (single-sheet) workbook for sheets[sheetIndex].
+   ===================================================================== */
+function relsPathFor(path){ return path.replace(/^(.*\/)([^\/]+)$/,"$1_rels/$2.rels"); }
+
+async function buildSplitWorkbook(parsed, sheetIndex, convertOption){
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var keptSheet=parsed.sheets[sheetIndex];
+  var keptNameLower=String(keptSheet.name).toLowerCase();
+  var removedPaths={}, removedRelsPaths={};
+  parsed.sheets.forEach(function(s,i){
+    if(i===sheetIndex) return;
+    removedPaths[s.path]=true;
+    removedRelsPaths[relsPathFor(s.path)]=true;
+  });
+
+  var sheetEntry=parsed.byName[keptSheet.path];
+  var sheetXmlText=dec.decode(sheetEntry.bytes);
+  var fr=processSheetFormulas(sheetXmlText, keptNameLower, convertOption);
+  var patchedSheetXml=fr.patchedXml;
+
+  var wbXml=parsed.workbookXml;
+  var edits=[];
+  var sheetsBlock=findTags(wbXml,"sheets")[0];
+  var keptTagText=keptSheet.openText.replace(/\s+state\s*=\s*(["'])(?:hidden|veryHidden)\1/,"");
+  edits.push({start:sheetsBlock.start,end:sheetsBlock.end,text:sheetsBlock.openText+keptTagText+"</sheets>"});
+
+  var wv=findTags(wbXml,"workbookView")[0];
+  if(wv){
+    var wvText=wv.openText, wvChanged=false;
+    ["activeTab","firstSheet"].forEach(function(a){
+      if(wv.attrs[a]!==undefined){
+        var re=new RegExp("("+a+'\\s*=\\s*)(["\'])[^"\']*\\2');
+        wvText=wvText.replace(re,function(m,p1,q){return p1+q+"0"+q});
+        wvChanged=true;
+      }
+    });
+    if(wvChanged) edits.push({start:wv.start,end:wv.end,text:wvText});
+  }
+
+  var dnBlock=findTags(wbXml,"definedNames")[0];
+  if(dnBlock && !dnBlock.selfClose && dnBlock.inner){
+    var dnTags=findTags(dnBlock.inner,"definedName");
+    var keepParts=[];
+    dnTags.forEach(function(dn){
+      var raw=dn.inner!==null?decodeXmlEntities(dn.inner):"";
+      var lsid=dn.attrs.localSheetId;
+      if(lsid!==undefined){
+        var n=parseInt(lsid,10);
+        if(n!==sheetIndex) return;
+        if(formulaReferencesOtherSheet(raw,keptNameLower)) return;
+        var newOpen=dn.openText.replace(/localSheetId\s*=\s*(["'])[^"']*\1/,'localSheetId="0"');
+        keepParts.push(newOpen+(dn.inner||"")+"</definedName>");
+      } else {
+        if(formulaReferencesOtherSheet(raw,keptNameLower)) return;
+        keepParts.push(dn.openText+(dn.inner||"")+"</definedName>");
+      }
+    });
+    if(keepParts.length){
+      edits.push({start:dnBlock.start,end:dnBlock.end,text:dnBlock.openText+keepParts.join("")+"</definedNames>"});
+    } else {
+      edits.push({start:dnBlock.start,end:dnBlock.end,text:""});
+    }
+  }
+
+  var calcPr=findTags(wbXml,"calcPr")[0];
+  if(calcPr){
+    var cpText=calcPr.openText;
+    if(/fullCalcOnLoad\s*=/.test(cpText)) cpText=cpText.replace(/fullCalcOnLoad\s*=\s*(["'])[^"']*\1/,'fullCalcOnLoad="1"');
+    else cpText=cpText.replace(/\/?>$/,function(m){return ' fullCalcOnLoad="1"'+m});
+    edits.push({start:calcPr.start,end:calcPr.end,text:cpText});
+  }
+
+  edits.sort(function(a,b){return b.start-a.start});
+  var newWbXml=wbXml;
+  edits.forEach(function(e){ newWbXml=newWbXml.slice(0,e.start)+e.text+newWbXml.slice(e.end); });
+
+  var relsXml=parsed.relsXml;
+  var relEdits=[];
+  findTags(relsXml,"Relationship").forEach(function(r){
+    var type=r.attrs.Type||"";
+    var normTarget=resolveWorksheetTarget(r.attrs.Target);
+    var isCalcChain=/\/calcChain$/.test(type);
+    var isWorksheetRel=/\/worksheet$/.test(type);
+    if(isCalcChain || (isWorksheetRel && removedPaths[normTarget])){
+      relEdits.push({start:r.start,end:r.end,text:""});
+    }
+  });
+  relEdits.sort(function(a,b){return b.start-a.start});
+  var newRelsXml=relsXml;
+  relEdits.forEach(function(e){ newRelsXml=newRelsXml.slice(0,e.start)+e.text+newRelsXml.slice(e.end); });
+
+  var ctXml=parsed.contentTypesXml;
+  var ctEdits=[];
+  findTags(ctXml,"Override").forEach(function(o){
+    var pn=(o.attrs.PartName||"").replace(/^\//,"");
+    if(removedPaths[pn] || pn==="xl/calcChain.xml"){
+      ctEdits.push({start:o.start,end:o.end,text:""});
+    }
+  });
+  ctEdits.sort(function(a,b){return b.start-a.start});
+  var newCtXml=ctXml;
+  ctEdits.forEach(function(e){ newCtXml=newCtXml.slice(0,e.start)+e.text+newCtXml.slice(e.end); });
+
+  var outFiles=[];
+  parsed.entries.forEach(function(e){
+    if(removedPaths[e.name] || removedRelsPaths[e.name] || e.name==="xl/calcChain.xml") return;
+    if(e.name==="xl/workbook.xml"){ outFiles.push({name:e.name,bytes:enc.encode(newWbXml)}); return; }
+    if(e.name==="xl/_rels/workbook.xml.rels"){ outFiles.push({name:e.name,bytes:enc.encode(newRelsXml)}); return; }
+    if(e.name==="[Content_Types].xml"){ outFiles.push({name:e.name,bytes:enc.encode(newCtXml)}); return; }
+    if(e.name===keptSheet.path){ outFiles.push({name:e.name,bytes:enc.encode(patchedSheetXml)}); return; }
+    outFiles.push({name:e.name,bytes:e.bytes});
+  });
+
+  var zipBytes=await buildZip(outFiles);
+  return {bytes:zipBytes, stats:fr.stats};
+}
+
+/* =====================================================================
+   File naming / download helpers
+   ===================================================================== */
+function sanitizeName(name){
+  var s=String(name||"").replace(/[\/\\:*?"<>|\x00-\x1F]/g,"_").trim();
+  if(!s) s="Sheet";
+  return s;
+}
+function suggestBaseName(fileName){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(fileName);
+  return m?m[1]:fileName;
+}
+function downloadBlob(bytes,name,type){
+  var blob=new Blob([bytes],{type:type});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var STATE_LABEL={
+  ja:{visible:"表示",hidden:"非表示",veryHidden:"完全非表示"},
+  en:{visible:"Visible",hidden:"Hidden",veryHidden:"Very hidden"}
+};
+var T={
+ ja:{title:"Excelのシートを1枚ずつ別ファイルに分けて保存",
+  sub:"大きなブックから必要なシートだけ取り出して誰かに渡したい、シートごとに別のファイルとして保存し直したいときに。コピーを作って他のシートを1つずつ削除する作業を繰り返す代わりに、選んだシートをそれぞれ独立したExcel(.xlsx/.xlsm)ファイルに分割し、1つにまとめてZIPでダウンロードします。他のシートを参照する数式は、既定で今の計算結果の値に変換してから保存するため、参照先のシートが無くなって#REF!エラーになるのを防ぎます。元のファイルは変更しません。",
+  dropzoneText:"ここにExcel(.xlsx/.xlsm)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。全シートの名前・表示状態・数式を解析します。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"シート一覧",
+  statSheets:"シート数",statSelected:"選択中",statCrossSheet:"他シート参照の数式があるシート",
+  selectAllBtn:"全て選択",selectNoneBtn:"全て解除",
+  colPick:"",colIndex:"#",colSheet:"シート名",colState:"状態",colFormula:"数式",
+  formulaCrossBadge:"他シート参照あり",formulaNone:"なし",
+  resultMsgOk:"選んだシートを、それぞれ独立したExcelファイルに分割します。2つ以上選ぶと1つのZIPにまとめてダウンロードします。",
+  crossNote:"注意：選択中のシートの一部に、他のシートを参照する数式があります。下のオプションで「値に変換」を外すと、分割後のファイルを開いて再計算した際に#REF!エラーになることがあります。",
+  convertLabel:"他のシートを参照する数式を、今の計算結果の値に変換してから保存する（推奨）",
+  buildBtn:"選択したシートを分割してダウンロード",buildBtnN:"選択した{n}シートを分割してダウンロード",buildBtnBusy:"処理中…（{n}/{t}）",
+  resultHeading:"分割結果の内訳",
+  colResultSheet:"シート名",colResultTotal:"数式セル数",colResultCross:"他シート参照",colResultConv:"値に変換",colResultLeft:"数式のまま",colResultUnknown:"判定できず",
+  loadingLabel:"読み込み中…",removeBtn:"削除",
+  errBad:"読み込めませんでした（.xlsx/.xlsm以外の形式か、パスワード保護、またはシート構成を読み取れないファイルの可能性があります）",
+  errOnlySheet:"このファイルにはシートが1枚しかないため、分割する必要がありません",
+  buildDoneZip:"ダウンロードしました：",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Split each Excel sheet into its own file",
+  sub:"When you need to pull just a few sheets out of a large workbook to hand to someone, or save each sheet as its own separate file, instead of making a copy and deleting the other sheets one by one, this builds a standalone Excel (.xlsx/.xlsm) file for each sheet you choose and downloads them all as one ZIP. Formulas referencing other sheets are, by default, converted to their current calculated value first, so they don't turn into #REF! errors once the referenced sheet is gone. Your original file is untouched.",
+  dropzoneText:"Drag and drop an Excel (.xlsx/.xlsm) file here, or click to choose",
+  dropzoneHint:"One file at a time. Every sheet's name, visibility and formulas are analyzed. Everything happens on this device.",
+  statsHeading:"Sheet list",
+  statSheets:"Sheets",statSelected:"Selected",statCrossSheet:"Sheets with cross-sheet formulas",
+  selectAllBtn:"Select all",selectNoneBtn:"Select none",
+  colPick:"",colIndex:"#",colSheet:"Sheet name",colState:"State",colFormula:"Formulas",
+  formulaCrossBadge:"has cross-sheet refs",formulaNone:"None",
+  resultMsgOk:"Builds a standalone Excel file for each sheet you select. Two or more download together as one ZIP.",
+  crossNote:"Note: some selected sheets have formulas referencing other sheets. If you turn off \"convert to values\" below, those may become #REF! errors once the split file recalculates.",
+  convertLabel:"Convert formulas referencing other sheets to their current value before saving (recommended)",
+  buildBtn:"Split selected sheets and download",buildBtnN:"Split {n} selected sheets and download",buildBtnBusy:"Working… ({n}/{t})",
+  resultHeading:"Split results",
+  colResultSheet:"Sheet",colResultTotal:"Formula cells",colResultCross:"Cross-sheet",colResultConv:"Converted",colResultLeft:"Left as formula",colResultUnknown:"Couldn't verify",
+  loadingLabel:"Loading…",removeBtn:"Remove",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm, may be password-protected, or its sheet structure could not be parsed)",
+  errOnlySheet:"This file only has one sheet, so there's nothing to split",
+  buildDoneZip:"Downloaded: ",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"",fileSize:0,loading:false,error:"",parsed:null,selected:{},convert:true,building:false,progress:"",buildMsg:"",results:null};
+
+function resetFile(){ state={fileName:"",fileSize:0,loading:false,error:"",parsed:null,selected:{},convert:true,building:false,progress:"",buildMsg:"",results:null}; render(); }
+
+function addFile(file){
+  state={fileName:file.name,fileSize:file.size,loading:true,error:"",parsed:null,selected:{},convert:true,building:false,progress:"",buildMsg:"",results:null};
+  render();
+  (async function(){
+    try{
+      var buf=await file.arrayBuffer();
+      var parsed=await parseXlsxForBunkatsu(new Uint8Array(buf));
+      var sel={}; parsed.sheets.forEach(function(s,i){sel[i]=true});
+      state.loading=false; state.parsed=parsed; state.selected=sel; render();
+    }catch(e){
+      state.loading=false;
+      state.error = e && e.message==="ONLY_ONE_SHEET" ? T[lang].errOnlySheet : T[lang].errBad;
+      render();
+    }
+  })();
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.parsed){ h+="<span class='fMeta'>"+fmtBytes(state.fileSize)+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function selectedCount(){
+  var n=0; for(var k in state.selected) if(state.selected[k]) n++;
+  return n;
+}
+
+function renderStats(){
+  var sheets=state.parsed.sheets;
+  var sel=selectedCount();
+  var crossSheets=sheets.filter(function(s){return s.stats.crossSheetCount>0}).length;
+  var items=[
+    [sheets.length,T[lang].statSheets,""],
+    [sel,T[lang].statSelected,sel?"ok":""],
+    [crossSheets,T[lang].statCrossSheet,crossSheets?"":""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+
+  var rowsH="";
+  sheets.forEach(function(s,i){
+    var checked=state.selected[i]?" checked":"";
+    var stateBadge = s.state==="visible" ? "<span class='badge ok'>"+esc(STATE_LABEL[lang][s.state])+"</span>" : "<span class='badge warn'>"+esc(STATE_LABEL[lang][s.state])+"</span>";
+    var formulaCell = s.stats.crossSheetCount>0
+      ? "<span class='badge warn'>"+esc(T[lang].formulaCrossBadge)+" ("+s.stats.crossSheetCount+"/"+s.stats.formulaTotal+")</span>"
+      : (s.stats.formulaTotal>0 ? s.stats.formulaTotal : "<span class='badge'>"+esc(T[lang].formulaNone)+"</span>");
+    rowsH+="<tr><td class='center'><input type='checkbox' class='sheetChk' data-idx='"+i+"'"+checked+"></td><td class='center'>"+(i+1)+"</td><td>"+esc(s.name)+"</td><td>"+stateBadge+"</td><td>"+formulaCell+"</td></tr>";
+  });
+  $("sheetRows").innerHTML=rowsH;
+  var chks=document.querySelectorAll(".sheetChk");
+  for(var j=0;j<chks.length;j++){
+    chks[j].addEventListener("change",function(e){
+      var idx=parseInt(e.target.getAttribute("data-idx"),10);
+      state.selected[idx]=e.target.checked;
+      render();
+    });
+  }
+
+  var selHasCross=sheets.some(function(s,i){return state.selected[i] && s.stats.crossSheetCount>0});
+  $("crossNote").style.display=(selHasCross && !state.convert)?"":"none";
+  $("convertChk").checked=state.convert;
+  $("buildBtn").disabled = sel===0 || state.building;
+  $("buildBtn").textContent = state.building
+    ? T[lang].buildBtnBusy.replace("{n}",state.progressN||0).replace("{t}",state.progressT||0)
+    : (sel>0 ? T[lang].buildBtnN.replace("{n}",sel) : T[lang].buildBtn);
+}
+
+function renderResults(){
+  if(!state.results){ $("resultCard").style.display="none"; return; }
+  $("resultCard").style.display="";
+  var h="<div class='scroll'><table><thead><tr><th>"+esc(T[lang].colResultSheet)+"</th><th>"+esc(T[lang].colResultTotal)+"</th><th>"+esc(T[lang].colResultCross)+"</th><th>"+esc(T[lang].colResultConv)+"</th><th>"+esc(T[lang].colResultLeft)+"</th><th>"+esc(T[lang].colResultUnknown)+"</th></tr></thead><tbody>";
+  state.results.forEach(function(r){
+    h+="<tr><td>"+esc(r.name)+"</td><td class='center'>"+r.stats.formulaTotal+"</td><td class='center'>"+r.stats.crossSheetCount+"</td><td class='center'>"+r.stats.convertedCount+"</td><td class='center'>"+r.stats.leftCount+"</td><td class='center'>"+r.stats.unknownCount+"</td></tr>";
+  });
+  h+="</tbody></table></div>";
+  $("resultBox").innerHTML=h;
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.parsed){
+    $("statsCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  $("statsCard").style.display="";
+  renderStats();
+  renderResults();
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("selectAllBtn").addEventListener("click",function(){ if(!state.parsed) return; state.parsed.sheets.forEach(function(s,i){state.selected[i]=true}); render(); });
+$("selectNoneBtn").addEventListener("click",function(){ if(!state.parsed) return; state.parsed.sheets.forEach(function(s,i){state.selected[i]=false}); render(); });
+$("convertChk").addEventListener("change",function(e){ state.convert=e.target.checked; render(); });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.parsed || state.building) return;
+  var parsed=state.parsed;
+  var chosen=[];
+  parsed.sheets.forEach(function(s,i){ if(state.selected[i]) chosen.push(i); });
+  if(!chosen.length) return;
+  state.building=true; state.buildMsg=""; state.progressN=0; state.progressT=chosen.length; render();
+  (async function(){
+    var results=[];
+    for(var k=0;k<chosen.length;k++){
+      state.progressN=k+1; render();
+      var idx=chosen[k];
+      var r=await buildSplitWorkbook(parsed, idx, state.convert);
+      results.push({sheet:parsed.sheets[idx], bytes:r.bytes, stats:r.stats});
+      await new Promise(function(res){ setTimeout(res,0); });
+    }
+    var baseName=suggestBaseName(state.fileName);
+    var outName;
+    if(results.length===1){
+      outName=baseName+"_"+sanitizeName(results[0].sheet.name)+".xlsx";
+      downloadBlob(results[0].bytes, outName, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    } else {
+      var used={};
+      var zipFiles=results.map(function(r){
+        var nm=sanitizeName(r.sheet.name), base=nm, c=2;
+        while(used[(base+".xlsx").toLowerCase()]){ base=nm+"("+c+")"; c++; }
+        used[(base+".xlsx").toLowerCase()]=true;
+        return {name:base+".xlsx", bytes:r.bytes};
+      });
+      var zipBytes=buildStoreZip(zipFiles);
+      outName=baseName+"_分割.zip";
+      downloadBlob(zipBytes, outName, "application/zip");
+    }
+    state.results=results.map(function(r){ return {name:r.sheet.name, stats:r.stats}; });
+    state.building=false; state.buildMsg=T[lang].buildDoneZip+outName; render();
+  })();
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

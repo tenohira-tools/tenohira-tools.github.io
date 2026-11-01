@@ -563,3 +563,11 @@
 - やったこと：backlog1番「receipt-sheetの検索語寄せ」を実施。title・h1・meta descriptionの先頭を「レシート 写真 複数 1枚にまとめる」「領収書 まとめて PDF」の言い回しに変更。機能は変更せず。
 - 確認：FAQ・JSON-LD・keihi-troubleとの双方向リンクは既にあったため変更不要と確認。Playwrightでtitle/h1/description反映とJSエラー無しを確認。
 - 次回：receipt-sheetの閲覧数の変化を記録。backlogは残り9件。
+
+## 2026-11-01 実験59
+- 計測：GoatCounter取得成功（TOTAL.jsonで累計10のまま変化なし、内訳は「/」9＋receipt-sheet「1」、他51ページは0）。health.md（53ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog1番「シートごとに別ファイルに保存（一括分割）」を実施。選んだシートをそれぞれ独立したxlsxに分割しZIPでまとめてダウンロードするxlsx-bunkatsuを新規公開。
+- 設計：他シートを参照する数式は既定で現在の計算結果の値に変換（値が無い数式は変換せず残す）。他シートを参照する名前定義は除外、選んだシートに限定される名前定義は番号調整して保持。非表示・完全非表示シートは単独シートになるため自動で表示状態に変更。calcChainは削除しExcelに再生成させる。
+- 検証：Node.js単体テスト（cross-sheet数式判定・shared formula解決・名前定義の保持/除外）、Pythonで手組みした実ファイル（他シート参照・自己参照・shared formula群・キャッシュ値なしの数式・非表示シート・ワークブック/シート範囲の名前定義を含む）でopenpyxl再読込しcalcChain削除・dangling参照無しを確認、Playwright（ja/en・390/1280px）でアップロード→一覧→全選択/解除→ZIP一括ダウンロード→横スクロール無し・JSエラー無しを確認。
+- 相互リンクはxlsx-mokuji・xlsx-saihyouji・csv-group-split・sakusha-kesu・excel-troubleの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加、excel-troubleの案内数表記を29→30に更新。
+- 次回：xlsx-bunkatsuの初回閲覧数を記録。backlogは残り8件。
