@@ -2529,6 +2529,33 @@
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
         }
       ]
+    },
+    {
+      "slug": "office-gazou",
+      "title": "Excel・Word・PowerPointの画像をまとめて保存",
+      "url": "https://tenohira-tools.github.io/office-gazou/",
+      "published": "2026-11-02",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "backlog旧1番。拡張子をzipに変えて展開しmediaフォルダから画像を1枚ずつ取り出す手作業を一括化。社外に渡す前の処理という集中分野の延長で、ブラウザ完結・対応表付きの無料ツールは見当たらない。Excelはシートのdrawing、PowerPointはスライド・レイアウト・マスター、Wordは本文/ヘッダー/フッター/脚注/文末脚注それぞれのrelsを辿りa:blip r:embedを突き合わせ、画像ごとの使用場所を特定（不明な場合もファイル自体は抽出）。サムネイル表示・CSV対応表付きZIPで一括ダウンロード。",
+      "metrics": [
+        {
+          "date": "2026-11-02T00:00:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": [
+        {
+          "date": "2026-11-02",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開直後・本番で実ファイル動作確認済み）"
+        }
+      ]
     }
   ],
   "review_summary_2026-10-24": {

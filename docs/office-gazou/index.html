@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>Excel・Word・PowerPointの画像をまとめて保存：zip変換せず一括抽出 | てのひらツール</title>
+<meta name="description" content="拡張子をzipに変えて展開し、media フォルダから1枚ずつ取り出す……という手作業の代わりに、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)に埋め込まれた画像をまとめて抽出し、どのシート・スライド・本文で使われているかの対応表CSV付きでZIPダウンロードします。ファイルはサーバーに送信されず、ブラウザの中だけで処理されます。Extract every embedded image from an Excel/Word/PowerPoint file at once — no renaming to .zip and digging through the media folder — with a CSV mapping each image to the sheet, slide or part that uses it, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/office-gazou/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px;min-width:0}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px;min-width:0}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px;min-width:0}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.ok .n{color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+.thumb{border:1px solid var(--line);border-radius:10px;padding:8px;min-width:0}
+.thumb .ph{display:flex;align-items:center;justify-content:center;height:92px;background:var(--accent-bg);border-radius:8px;overflow:hidden;margin-bottom:6px}
+.thumb .ph img{max-width:100%;max-height:100%;object-fit:contain}
+.thumb .ph .ext{color:var(--accent);font-weight:700;font-size:.85rem}
+.thumb label{display:flex;align-items:flex-start;gap:6px;font-size:.82rem;cursor:pointer}
+.thumb .tName{font-weight:700;word-break:break-all}
+.thumb .tMeta{color:var(--muted);font-size:.78rem;margin-top:2px}
+.thumb .tUse{font-size:.78rem;margin-top:2px}
+.thumb .tUse.unknown{color:var(--warn)}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.center{text-align:center;white-space:nowrap}
+.badge{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.78rem;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.badge.ok{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px;margin-right:10px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:11px 18px;cursor:pointer;min-height:44px;margin-right:10px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+button.small{font:inherit;font-size:.82rem;color:var(--accent);background:transparent;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;margin-right:8px}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.errBox{border:1px solid var(--diff);background:var(--diff-bg);color:var(--diff);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">Excel・Word・PowerPointの画像をまとめて保存する</h1>
+    <p class="sub" data-i="sub">ファイルの拡張子を.zipに変えて展開し、media フォルダから画像を1枚ずつ取り出す……という手作業の代わりに、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)の中に埋め込まれている画像をまとめて抽出します。各画像がどのシート・スライド・本文（ヘッダー/フッター/脚注を含む）で使われているかを一覧表示し、対応表CSV付きのZIPでダウンロードできます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで処理します。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">.xlsx / .xlsm / .docx / .pptx に対応。1回に1ファイル。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm,.docx,.pptx" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">見つかった画像</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p>
+    <button type="button" class="small" id="selectAllBtn" data-i="selectAllBtn">全て選択</button>
+    <button type="button" class="small" id="selectNoneBtn" data-i="selectNoneBtn">全て解除</button>
+  </p>
+  <div class="grid" id="thumbGrid"></div>
+  <p class="warnBox" id="unknownNote" style="display:none" data-i="unknownNote">注意：一部の画像は、どのシート・スライド・本文で使われているか特定できませんでした（図形の背面に隠れている、特殊な埋め込み方法、または参照されず残っているだけの画像である可能性があります）。見つかった画像自体はすべて一覧とZIPに含まれます。</p>
+  <p>
+    <button type="button" class="primary" id="buildBtn" disabled data-i="buildBtn">選択した画像をZIPでダウンロード</button>
+    <button type="button" class="secondary" id="csvBtn" disabled data-i="csvBtn">対応表だけCSVで書き出す</button>
+  </p>
+  <p class="hint" id="buildMsg"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>ファイルの中に埋め込まれている画像が一覧表示されます（既定で全て選択済み）。サムネイルで中身を確認できます（.wmf/.emf/.tiffなどブラウザで表示できない形式はアイコン表示になりますが、抽出自体は可能です）。</li>
+      <li>不要な画像はチェックを外します。「選択した画像をZIPでダウンロード」で、画像ファイルと対応表CSVをまとめたZIPが保存されます。</li>
+    </ol>
+    <h3>Q. 「どこで使われているか」はどうやって調べていますか？</h3>
+    <p>A. Excelはシートごとの描画情報（drawing）、PowerPointはスライド・スライドレイアウト・スライドマスターごとの参照情報、Wordは本文・ヘッダー・フッター・脚注・文末脚注それぞれの内部参照（リレーションシップ）を読み取り、各画像がどこから参照されているかを突き合わせています。参照が見つからなかった画像は「不明」として、画像自体は引き続き一覧・ZIPに含めます。</p>
+    <h3>Q. どの画像形式に対応していますか？</h3>
+    <p>A. ファイル内部のmediaフォルダに保存されている形式（png/jpeg/gif/bmp/tiff/wmf/emf/svgなど）をそのまま、変換・再圧縮せずに取り出します。png・jpeg・gif・bmp・webp・svgはこのページ上でサムネイル表示できますが、wmf・emf・tiffなど一部の形式はブラウザがプレビュー表示できないため、拡張子のアイコン表示になります（ファイル自体は正しく抽出されます）。</p>
+    <h3>Q. 図形の塗りつぶしに使われている画像や、セル内画像（Excelの新しいIMAGE関数・画像の挿入機能）も取り出せますか？</h3>
+    <p>A. 図形の塗りつぶし画像など、DrawingMLの標準的な埋め込み方法（Excelのdrawing、PowerPointのスライド本体）で参照されている画像は取り出せます。Excelの新しいセル内画像機能（リッチデータ形式）や、図形の背後に隠れた古い形式のVML描画など、特殊な保存方法を使っている画像は、ファイル自体は抽出されますが「どこで使われているか」が「不明」になる場合があります。</p>
+    <h3>Q. 動画や音声、埋め込みExcel/Wordオブジェクトも取り出せますか？</h3>
+    <p>A. このツールが取り出すのは画像だけです。動画・音声・埋め込みオブジェクトは対象外です（ファイル全体の内訳を見たい場合は、関連ツールの「重さの内訳」診断ツールをご利用ください）。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. 変更されません。元のファイルの画像データをそのまま複製して取り出すだけで、元のファイルには一切書き込みません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・抽出が行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop an Excel (.xlsx/.xlsm), Word (.docx) or PowerPoint (.pptx) file into the box above, or click it to choose one.</li>
+      <li>Every image embedded in the file is listed (all selected by default), with a thumbnail where the browser can render it (.wmf/.emf/.tiff and similarly unsupported formats show as an icon instead, but are still extracted correctly).</li>
+      <li>Uncheck anything you don't need, then click "Download selected images as ZIP" to get a ZIP containing the image files plus a CSV mapping table.</li>
+    </ol>
+    <h3>Q. How does it figure out where each image is used?</h3>
+    <p>A. For Excel, it reads each sheet's drawing part; for PowerPoint, each slide's, slide layout's and slide master's reference info; for Word, the internal relationships of the body, headers, footers, footnotes and endnotes. Each image is matched against these references. An image with no match found is labeled "unknown" but is still listed and included in the ZIP.</p>
+    <h3>Q. Which image formats are supported?</h3>
+    <p>A. Whatever format is already stored in the file's internal media folder (png/jpeg/gif/bmp/tiff/wmf/emf/svg, etc.) is extracted as-is, with no conversion or re-compression. PNG, JPEG, GIF, BMP, WebP and SVG get a thumbnail preview on this page; a few formats such as WMF, EMF and TIFF can't be previewed by the browser and show as a generic icon instead (the extracted file itself is still correct).</p>
+    <h3>Q. Does it also extract images used as shape fills, or Excel's newer in-cell images (the IMAGE function / "Picture in cell")?</h3>
+    <p>A. Images referenced through the standard DrawingML embedding used by Excel's drawing parts and PowerPoint's slide bodies — including shape-fill images — are extracted and matched. Excel's newer rich-data in-cell image feature, and older VML-based shapes hidden behind other shapes, use less common storage methods; the image file itself is still extracted, but its location may come back as "unknown".</p>
+    <h3>Q. Can it also extract video, audio, or embedded Excel/Word objects?</h3>
+    <p>A. No, this tool only extracts images. Video, audio and embedded objects are out of scope (see the related "where the size is going" diagnosis tools if you want a full breakdown of a file's contents).</p>
+    <h3>Q. Does this change my original file?</h3>
+    <p>A. No. It only copies out the image data that's already inside your file — nothing is written back to the original.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and extracted inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — 画像を取り出して使う前に、元のファイルから個人情報を消したい場合はこちら。</li>
+      <li><a href="../xlsx-omoi/">Excelファイルが重い・遅い原因の内訳診断</a> — 取り出した画像がファイルサイズの主な原因になっていないか確認できます。</li>
+      <li><a href="../pptx-omoi/">PowerPointファイルが重い原因の内訳診断</a> — 未使用のスライドレイアウト・画像・動画など、重さの原因をスライド単位で診断します。</li>
+      <li><a href="../docx-omoi/">Wordファイルが重い原因の内訳診断（トリミング画像の残存データも検出）</a> — 画像をトリミングしても元データが残っている箇所を見つけます。</li>
+      <li><a href="../xlsx-bunkatsu/">Excelのシートを1枚ずつ別ファイルに分けて保存</a> — シート単位でファイルを分けたい場合はこちら。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up personal info in the original file before handing out the extracted images.</li>
+      <li><a href="../xlsx-omoi/">Diagnose why an Excel file is heavy or slow</a> — Check whether the images you just extracted are the main reason the file is large.</li>
+      <li><a href="../pptx-omoi/">Diagnose why a PowerPoint file is heavy</a> — Breaks down size by slide, including unused layouts, images and video.</li>
+      <li><a href="../docx-omoi/">Diagnose why a Word file is heavy (also finds leftover data from cropped images)</a> — Finds images where cropping left the original data behind.</li>
+      <li><a href="../xlsx-bunkatsu/">Split each Excel sheet into its own file</a> — For splitting a workbook by sheet instead.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「どこで使われているか」はどうやって調べていますか？","acceptedAnswer":{"@type":"Answer","text":"Excelは各シートの描画情報、PowerPointは各スライド・レイアウト・マスターの参照情報、Wordは本文・ヘッダー・フッター・脚注・文末脚注の内部参照を読み取り、各画像の参照元を突き合わせています。見つからない場合は「不明」として、画像自体は一覧・ZIPに含めます。"}},
+    {"@type":"Question","name":"どの画像形式に対応していますか？","acceptedAnswer":{"@type":"Answer","text":"ファイル内部のmediaフォルダに保存されている形式をそのまま、変換・再圧縮せずに取り出します。png・jpeg・gif・bmp・webp・svgはサムネイル表示でき、wmf・emf・tiffなどは抽出はできますがブラウザ上でのプレビューには対応していません。"}},
+    {"@type":"Question","name":"動画や音声、埋め込みオブジェクトも取り出せますか？","acceptedAnswer":{"@type":"Answer","text":"取り出すのは画像だけです。動画・音声・埋め込みオブジェクトは対象外です。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"変更されません。画像データを複製して取り出すだけで、元のファイルへの書き込みは一切行いません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX/DOCX/PPTX are all ZIP archives — same hand-rolled ZIP core already
+   shipped in xlsx-merge/xlsx-bunkatsu/docx-shodaku/docx-omoi/pptx-omoi
+   (no external libraries; only standard browser APIs:
+   DecompressionStream/CompressionStream/TextDecoder/TextEncoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =====================================================================
+   Relationship / path helpers (same approach as docx-omoi/pptx-omoi).
+   ===================================================================== */
+function dirName(path){ var i=path.lastIndexOf("/"); return i===-1?"":path.slice(0,i); }
+function baseName(path){ var i=path.lastIndexOf("/"); return i===-1?path:path.slice(i+1); }
+function relsPathFor(path){ var d=dirName(path); return (d?d+"/":"")+"_rels/"+baseName(path)+".rels"; }
+function resolveRelPath(baseDir,target){
+  if(/^\//.test(target)) return target.replace(/^\/+/,"");
+  var baseParts=baseDir?baseDir.split("/"):[];
+  target.split("/").forEach(function(p){
+    if(p===""||p===".") return;
+    if(p==="..") baseParts.pop(); else baseParts.push(p);
+  });
+  return baseParts.join("/");
+}
+function findAttr(tagText,name){
+  var m=new RegExp(name+'="([^"]*)"').exec(tagText);
+  return m?m[1]:null;
+}
+function parseRels(xml){
+  var out=[], re=/<Relationship\b([^>]*)\/?>/g, m;
+  while((m=re.exec(xml))){
+    out.push({id:findAttr(m[1],"Id"), type:findAttr(m[1],"Type")||"", target:findAttr(m[1],"Target")||""});
+  }
+  return out;
+}
+function relMapFor(byName,dec,partPath){
+  var rp=relsPathFor(partPath), bytes=byName[rp];
+  if(!bytes) return {};
+  var xml=dec.decode(bytes), rels=parseRels(xml), map={};
+  rels.forEach(function(r){ if(r.id) map[r.id]=resolveRelPath(dirName(partPath),r.target); });
+  return map;
+}
+/* Every embedded picture (DrawingML) is a self-closing <a:blip r:embed="rIdX".../>
+   whatever the host part — Excel's drawings, PowerPoint's slides/layouts/masters,
+   or Word's body/headers/footers/footnotes/endnotes all use the same tag. */
+function blipMediaPaths(xml,relMap){
+  var out=[], re=/<a:blip\b([^>]*)\/?>/g, m;
+  while((m=re.exec(xml))){
+    var rid=findAttr(m[1],"r:embed");
+    if(rid && relMap[rid]) out.push(relMap[rid]);
+  }
+  return out;
+}
+function addUsage(map,path,label){
+  if(!path || !label) return;
+  if(!map[path]) map[path]=[];
+  if(map[path].indexOf(label)===-1) map[path].push(label);
+}
+
+/* =====================================================================
+   Format detection + per-format "where is this image used" mapping.
+   ===================================================================== */
+function detectFormat(byName){
+  if(byName["xl/workbook.xml"]) return "xlsx";
+  if(byName["word/document.xml"]) return "docx";
+  if(byName["ppt/presentation.xml"]) return "pptx";
+  return null;
+}
+
+function mapXlsxUsage(byName,dec,lang){
+  var map={};
+  var wbPath="xl/workbook.xml";
+  var wbXml=dec.decode(byName[wbPath]);
+  var wbRelMap=relMapFor(byName,dec,wbPath);
+  var re=/<sheet\b([^>]*)\/?>/g, m;
+  while((m=re.exec(wbXml))){
+    var name=findAttr(m[1],"name")||"";
+    var rid=findAttr(m[1],"r:id");
+    var sheetPath=rid?wbRelMap[rid]:null;
+    if(!sheetPath || !byName[sheetPath]) continue;
+    var sheetRelMap=relMapFor(byName,dec,sheetPath);
+    var sheetRelsRaw=byName[relsPathFor(sheetPath)];
+    if(!sheetRelsRaw) continue;
+    var sheetRelsXml=dec.decode(sheetRelsRaw);
+    var drawingRel=parseRels(sheetRelsXml).filter(function(r){return /\/drawing$/.test(r.type)})[0];
+    if(!drawingRel) continue;
+    var drawingPath=resolveRelPath(dirName(sheetPath),drawingRel.target);
+    if(!byName[drawingPath]) continue;
+    var drawingXml=dec.decode(byName[drawingPath]);
+    var drawingRelMap=relMapFor(byName,dec,drawingPath);
+    var label=(lang==="en"?"Sheet: ":"シート：")+name;
+    blipMediaPaths(drawingXml,drawingRelMap).forEach(function(p){ addUsage(map,p,label); });
+  }
+  return map;
+}
+
+function mapPptxUsage(byName,dec,lang){
+  var map={};
+  var presPath="ppt/presentation.xml";
+  var presXml=dec.decode(byName[presPath]);
+  var presRelMap=relMapFor(byName,dec,presPath);
+  var slidePaths=[];
+  var re=/<p:sldId\b([^>]*)\/?>/g, m;
+  while((m=re.exec(presXml))){
+    var rid=findAttr(m[1],"r:id");
+    if(rid && presRelMap[rid]) slidePaths.push(presRelMap[rid]);
+  }
+  slidePaths.forEach(function(sp,i){
+    if(!byName[sp]) return;
+    var xml=dec.decode(byName[sp]);
+    var relMap=relMapFor(byName,dec,sp);
+    var label=(lang==="en"?"Slide ":"スライド")+(i+1);
+    blipMediaPaths(xml,relMap).forEach(function(p){ addUsage(map,p,label); });
+  });
+  var layoutEntries=Object.keys(byName).filter(function(n){return /^ppt\/slideLayouts\/slideLayout\d+\.xml$/.test(n)});
+  layoutEntries.forEach(function(lp){
+    var xml=dec.decode(byName[lp]);
+    var relMap=relMapFor(byName,dec,lp);
+    var label=lang==="en"?"Slide layout (shared)":"スライドレイアウト（共通部分）";
+    blipMediaPaths(xml,relMap).forEach(function(p){ addUsage(map,p,label); });
+  });
+  var masterEntries=Object.keys(byName).filter(function(n){return /^ppt\/slideMasters\/slideMaster\d+\.xml$/.test(n)});
+  masterEntries.forEach(function(mp){
+    var xml=dec.decode(byName[mp]);
+    var relMap=relMapFor(byName,dec,mp);
+    var label=lang==="en"?"Slide master (shared)":"スライドマスター（共通部分）";
+    blipMediaPaths(xml,relMap).forEach(function(p){ addUsage(map,p,label); });
+  });
+  return map;
+}
+
+function docxPartLabel(name,lang){
+  var m=/^word\/(document|header(\d+)|footer(\d+)|footnotes|endnotes)\.xml$/i.exec(name);
+  if(!m) return name;
+  if(m[1]==="document") return lang==="en"?"Body":"本文";
+  if(m[2]) return (lang==="en"?"Header ":"ヘッダー")+m[2];
+  if(m[3]) return (lang==="en"?"Footer ":"フッター")+m[3];
+  if(/^footnotes/i.test(m[1])) return lang==="en"?"Footnotes":"脚注";
+  return lang==="en"?"Endnotes":"文末脚注";
+}
+function mapDocxUsage(byName,dec,lang){
+  var map={};
+  var partNames=["word/document.xml"];
+  Object.keys(byName).filter(function(n){return /^word\/(header|footer)\d+\.xml$/i.test(n)}).sort().forEach(function(n){partNames.push(n)});
+  if(byName["word/footnotes.xml"]) partNames.push("word/footnotes.xml");
+  if(byName["word/endnotes.xml"]) partNames.push("word/endnotes.xml");
+  partNames.forEach(function(pn){
+    if(!byName[pn]) return;
+    var xml=dec.decode(byName[pn]);
+    var relMap=relMapFor(byName,dec,pn);
+    var label=docxPartLabel(pn,lang);
+    blipMediaPaths(xml,relMap).forEach(function(p){ addUsage(map,p,label); });
+  });
+  return map;
+}
+
+/* =====================================================================
+   Natural sort for names like image1.png, image2.png, image10.png.
+   ===================================================================== */
+function naturalCompare(a,b){
+  var ax=[], bx=[];
+  a.replace(/(\d+)|(\D+)/g,function(_,d,s){ ax.push([d?1:0, d||s]) });
+  b.replace(/(\d+)|(\D+)/g,function(_,d,s){ bx.push([d?1:0, d||s]) });
+  while(ax.length && bx.length){
+    var an=ax.shift(), bn=bx.shift();
+    var nt=an[0]-bn[0];
+    if(nt) return nt;
+    var cmp;
+    if(an[0]===1) cmp=parseInt(an[1],10)-parseInt(bn[1],10);
+    else cmp=an[1]<bn[1]?-1:(an[1]>bn[1]?1:0);
+    if(cmp) return cmp;
+  }
+  return ax.length-bx.length;
+}
+
+/* =====================================================================
+   Main analysis entry point.
+   ===================================================================== */
+var PREVIEWABLE_EXT={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",bmp:"image/bmp",webp:"image/webp",svg:"image/svg+xml"};
+
+async function analyzeOfficeFile(bytes,lang){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){ byName[e.name]=e.bytes; });
+  var format=detectFormat(byName);
+  if(!format) throw new Error("NOT_SUPPORTED");
+  var dec=new TextDecoder("utf-8");
+  var mediaPrefix=format==="xlsx"?"xl/media/":format==="docx"?"word/media/":"ppt/media/";
+  var mediaList=entries.filter(function(e){return e.name.indexOf(mediaPrefix)===0 && e.bytes.length>0})
+    .map(function(e){
+      var extM=/\.([a-z0-9]+)$/i.exec(e.name);
+      var ext=extM?extM[1].toLowerCase():"";
+      return {path:e.name, name:baseName(e.name), bytes:e.bytes, ext:ext, size:e.bytes.length};
+    });
+  mediaList.sort(function(a,b){ return naturalCompare(a.name,b.name); });
+
+  var usageMap;
+  if(format==="xlsx") usageMap=mapXlsxUsage(byName,dec,lang);
+  else if(format==="docx") usageMap=mapDocxUsage(byName,dec,lang);
+  else usageMap=mapPptxUsage(byName,dec,lang);
+
+  mediaList.forEach(function(m){ m.usage=usageMap[m.path]||[]; });
+  if(!mediaList.length) throw new Error("NO_IMAGES");
+  return {format:format, mediaList:mediaList};
+}
+
+/* =====================================================================
+   CSV + download helpers.
+   ===================================================================== */
+function csvEscape(v){
+  var s=String(v==null?"":v);
+  return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+function downloadBlob(bytes,name,type){
+  var blob=new Blob([bytes],{type:type});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function buildMappingCsv(items,lang){
+  var header=lang==="en"
+    ? ["file name","original path","size (bytes)","used in"]
+    : ["ファイル名","元のパス","サイズ(バイト)","参照されている場所"];
+  var rows=[header.map(csvEscape).join(",")];
+  items.forEach(function(it){
+    var used=it.usage.length?it.usage.join(lang==="en"?"; ":"、"):(lang==="en"?"unknown":"不明");
+    rows.push([it.outName,it.path,it.size,used].map(csvEscape).join(","));
+  });
+  return "﻿"+rows.join("\r\n")+"\r\n";
+}
+function suggestBaseName(fileName){
+  var m=/^(.*)\.(xlsx|xlsm|docx|pptx)$/i.exec(fileName);
+  return m?m[1]:fileName;
+}
+function uniqueNames(mediaList){
+  var used={};
+  return mediaList.map(function(m){
+    var base=m.name, c=2, out=base;
+    while(used[out.toLowerCase()]){ out=base.replace(/(\.[^.]*)?$/,function(ext){return "("+c+")"+ext}); c++; }
+    used[out.toLowerCase()]=true;
+    return out;
+  });
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"Excel・Word・PowerPointの画像をまとめて保存する",
+  sub:"ファイルの拡張子を.zipに変えて展開し、mediaフォルダから画像を1枚ずつ取り出す……という手作業の代わりに、Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)の中に埋め込まれている画像をまとめて抽出します。各画像がどのシート・スライド・本文（ヘッダー/フッター/脚注を含む）で使われているかを一覧表示し、対応表CSV付きのZIPでダウンロードできます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで処理します。",
+  dropzoneText:"ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:".xlsx / .xlsm / .docx / .pptx に対応。1回に1ファイル。ファイルは選択した端末の中だけで処理されます。",
+  statsHeading:"見つかった画像",
+  statImages:"画像の数",statSelected:"選択中",statUnknown:"参照元が不明な画像",
+  selectAllBtn:"全て選択",selectNoneBtn:"全て解除",
+  unknownNote:"注意：一部の画像は、どのシート・スライド・本文で使われているか特定できませんでした（図形の背面に隠れている、特殊な埋め込み方法、または参照されず残っているだけの画像である可能性があります）。見つかった画像自体はすべて一覧とZIPに含まれます。",
+  buildBtn:"選択した画像をZIPでダウンロード",buildBtnN:"選択した{n}枚をZIPでダウンロード",buildBtnBusy:"処理中…",
+  csvBtn:"対応表だけCSVで書き出す",
+  usedIn:"使用場所：",usedUnknown:"不明",
+  previewUnsupported:"プレビュー非対応",
+  loadingLabel:"読み込み中…",removeBtn:"削除",
+  errBad:"読み込めませんでした（.xlsx/.xlsm/.docx/.pptx以外の形式か、パスワード保護、または構造を読み取れないファイルの可能性があります）",
+  errNoImages:"このファイルの中に画像が見つかりませんでした",
+  buildDoneZip:"ダウンロードしました：",buildDoneCsv:"CSVをダウンロードしました：",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Save every image from an Excel, Word or PowerPoint file at once",
+  sub:"Instead of renaming the file to .zip, extracting it, and pulling images out of the media folder one by one, this extracts every image embedded in an Excel (.xlsx/.xlsm), Word (.docx) or PowerPoint (.pptx) file at once. It lists which sheet, slide or part (including headers, footers and footnotes) each image is used in, and downloads a ZIP containing the images plus a CSV mapping table. Files are never sent to a server — everything happens inside this browser.",
+  dropzoneText:"Drag and drop an Excel/Word/PowerPoint file here, or click to choose",
+  dropzoneHint:"Supports .xlsx / .xlsm / .docx / .pptx. One file at a time. Everything happens on this device.",
+  statsHeading:"Images found",
+  statImages:"Images",statSelected:"Selected",statUnknown:"Images with unknown location",
+  selectAllBtn:"Select all",selectNoneBtn:"Select none",
+  unknownNote:"Note: some images could not be matched to a specific sheet, slide or part (it may be hidden behind another shape, use an uncommon embedding method, or simply be left over and unreferenced). Every found image is still listed and included in the ZIP.",
+  buildBtn:"Download selected images as ZIP",buildBtnN:"Download {n} selected as ZIP",buildBtnBusy:"Working…",
+  csvBtn:"Export just the mapping as CSV",
+  usedIn:"Used in: ",usedUnknown:"unknown",
+  previewUnsupported:"Preview not supported",
+  loadingLabel:"Loading…",removeBtn:"Remove",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm/.docx/.pptx, may be password-protected, or its structure could not be parsed)",
+  errNoImages:"No images were found inside this file",
+  buildDoneZip:"Downloaded: ",buildDoneCsv:"Downloaded CSV: ",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"",fileSize:0,loading:false,error:"",result:null,selected:{},building:false,buildMsg:"",thumbUrls:[]};
+
+function revokeThumbs(){ state.thumbUrls.forEach(function(u){ try{URL.revokeObjectURL(u)}catch(e){} }); state.thumbUrls=[]; }
+
+function resetFile(){
+  revokeThumbs();
+  state={fileName:"",fileSize:0,loading:false,error:"",result:null,selected:{},building:false,buildMsg:"",thumbUrls:[]};
+  render();
+}
+
+function addFile(file){
+  revokeThumbs();
+  state={fileName:file.name,fileSize:file.size,loading:true,error:"",result:null,selected:{},building:false,buildMsg:"",thumbUrls:[]};
+  render();
+  (async function(){
+    try{
+      var buf=await file.arrayBuffer();
+      var result=await analyzeOfficeFile(new Uint8Array(buf),lang);
+      var sel={}; result.mediaList.forEach(function(m,i){ sel[i]=true; });
+      state.loading=false; state.result=result; state.selected=sel; render();
+    }catch(e){
+      state.loading=false;
+      state.error = e && e.message==="NO_IMAGES" ? T[lang].errNoImages : T[lang].errBad;
+      render();
+    }
+  })();
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.result){ h+="<span class='fMeta'>"+fmtBytes(state.fileSize)+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function selectedCount(){
+  var n=0; for(var k in state.selected) if(state.selected[k]) n++;
+  return n;
+}
+
+function renderThumbs(){
+  revokeThumbs();
+  var list=state.result.mediaList;
+  var unknown=list.filter(function(m){return !m.usage.length}).length;
+  var sel=selectedCount();
+  var items=[
+    [list.length,T[lang].statImages,""],
+    [sel,T[lang].statSelected,sel?"ok":""],
+    [unknown,T[lang].statUnknown,""]
+  ];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+  $("unknownNote").style.display=unknown?"":"none";
+
+  var gridH="";
+  list.forEach(function(m,i){
+    var checked=state.selected[i]?" checked":"";
+    var mime=PREVIEWABLE_EXT[m.ext];
+    var phHtml;
+    if(mime){
+      var blob=new Blob([m.bytes],{type:mime});
+      var url=URL.createObjectURL(blob);
+      state.thumbUrls.push(url);
+      phHtml="<img src='"+url+"' alt=''>";
+    } else {
+      phHtml="<span class='ext'>."+esc(m.ext||"?")+"</span>";
+    }
+    var useText = m.usage.length ? esc(m.usage.join("、")) : "<span class='badge warn'>"+esc(T[lang].usedUnknown)+"</span>";
+    gridH+="<div class='thumb'>"+
+      "<div class='ph'>"+phHtml+"</div>"+
+      "<label><input type='checkbox' class='mediaChk' data-idx='"+i+"'"+checked+">"+
+      "<span><span class='tName'>"+esc(m.name)+"</span>"+
+      "<span class='tMeta'>"+fmtBytes(m.size)+"</span>"+
+      "<span class='tUse"+(m.usage.length?"":" unknown")+"'>"+esc(T[lang].usedIn)+useText+"</span>"+
+      "</span></label></div>";
+  });
+  $("thumbGrid").innerHTML=gridH;
+  var chks=document.querySelectorAll(".mediaChk");
+  for(var j=0;j<chks.length;j++){
+    chks[j].addEventListener("change",function(e){
+      var idx=parseInt(e.target.getAttribute("data-idx"),10);
+      state.selected[idx]=e.target.checked;
+      renderThumbs();
+      updateButtons();
+    });
+  }
+  updateButtons();
+}
+
+function updateButtons(){
+  var sel=selectedCount();
+  $("buildBtn").disabled = sel===0 || state.building;
+  $("csvBtn").disabled = sel===0 || state.building;
+  $("buildBtn").textContent = state.building ? T[lang].buildBtnBusy
+    : (sel>0 ? T[lang].buildBtnN.replace("{n}",sel) : T[lang].buildBtn);
+}
+
+function render(){
+  renderFileCard();
+  $("buildMsg").textContent=state.buildMsg;
+  if(!state.fileName || state.loading || state.error || !state.result){
+    $("statsCard").style.display="none";
+    return;
+  }
+  $("statsCard").style.display="";
+  renderThumbs();
+}
+
+function selectedItems(){
+  var list=state.result.mediaList, out=[];
+  list.forEach(function(m,i){ if(state.selected[i]) out.push(m); });
+  var names=uniqueNames(out);
+  out.forEach(function(it,i){ it.outName=names[i]; });
+  return out;
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("selectAllBtn").addEventListener("click",function(){ if(!state.result) return; state.result.mediaList.forEach(function(m,i){state.selected[i]=true}); render(); });
+$("selectNoneBtn").addEventListener("click",function(){ if(!state.result) return; state.result.mediaList.forEach(function(m,i){state.selected[i]=false}); render(); });
+
+$("buildBtn").addEventListener("click",function(){
+  if(!state.result || state.building) return;
+  var items=selectedItems();
+  if(!items.length) return;
+  state.building=true; state.buildMsg=""; updateButtons();
+  (async function(){
+    var files=items.map(function(it){ return {name:it.outName, bytes:it.bytes}; });
+    files.push({name:"対応表.csv", bytes:new TextEncoder().encode(buildMappingCsv(items,lang))});
+    var zipBytes=await buildZip(files);
+    var outName=suggestBaseName(state.fileName)+"_images.zip";
+    downloadBlob(zipBytes, outName, "application/zip");
+    state.building=false; state.buildMsg=T[lang].buildDoneZip+outName; updateButtons(); $("buildMsg").textContent=state.buildMsg;
+  })();
+});
+
+$("csvBtn").addEventListener("click",function(){
+  if(!state.result) return;
+  var items=selectedItems();
+  if(!items.length) return;
+  var csv=buildMappingCsv(items,lang);
+  var outName=suggestBaseName(state.fileName)+"_images.csv";
+  downloadBlob(new TextEncoder().encode(csv), outName, "text/csv;charset=utf-8");
+  state.buildMsg=T[lang].buildDoneCsv+outName; $("buildMsg").textContent=state.buildMsg;
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(typeof T[lang][k]==="string")els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

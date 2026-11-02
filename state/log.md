@@ -579,3 +579,11 @@
 - 検証：Node.js単体テスト15件（ins/del/move/PrChangeの基本動作、del内側にネストしたins、paragraph-mark用の自己終了マーカー、コメント削除オプション、acceptChanges統合）に加え、python-docxで作成した実ファイルにPythonのzipfileで本物の変更履歴5種・コメント1件を注入し、Node.jsの実コード（ZIP解凍・CompressionStream圧縮含む）で処理した結果をlxml/python-docxで再読込し、挿入文字が残り削除文字が消え移動文字が1回だけ残ることを確認。Playwright（ja/en・390/1280px）でアップロード→検出件数表示→コメント削除チェック→ダウンロード→JSエラー無し・横スクロール無しを確認し、ダウンロードファイルもPython側で再検証。
 - 相互リンクはdocx-kakure・sakusha-kesu・docx-omoi・pptx-kakureの4ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
 - 次回：docx-shodakuの初回閲覧数を記録。backlogは残り7件。
+
+## 2026-11-02 実験61
+- 計測：GoatCounter取得成功（TOTAL.jsonで累計10のまま変化なし、内訳は「/」9＋receipt-sheet「1」、他55ページは0）。health.md（55ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog1番「Excel・Word・PowerPointの画像を一括保存」を実施。拡張子をzipに変える手作業の代わりに画像をまとめて抽出し、対応表CSV付きZIPでダウンロードするoffice-gazouを新規公開。
+- 設計：Excelはシートのdrawing、PowerPointはスライド・レイアウト・マスター、Wordは本文/ヘッダー/フッター/脚注/文末脚注、各パーツ独自のrelsを辿りa:blip r:embedと突き合わせて画像の使用場所を特定。見つからない画像も「不明」として抽出自体は継続。png/jpeg/gif/bmp/webp/svgはサムネイル表示、wmf/emf/tiffはアイコン表示。
+- 検証：Playwright（ja/en・390/1280px）で、openpyxl/python-docx/python-pptxで作成した実ファイル（xlsxは2シートに画像・1シートは無し、docxは本文+ヘッダー+フッター、pptxは4スライド中2・4枚目のみ）をアップロードし、画像数・使用場所の判定・ZIPダウンロード・横スクロール無し・JSエラー無しを確認。ダウンロードしたZIPをPython側で再展開し、画像が正しく再デコードできること・CSVの対応表内容が期待通りであることを確認。画像0件・非対応形式ファイルのエラー表示も確認。
+- 相互リンクはsakusha-kesu・xlsx-omoi・pptx-omoi・docx-omoi・xlsx-bunkatsuの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
+- 次回：office-gazouの初回閲覧数を記録。backlogは残り6件。
