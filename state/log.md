@@ -587,3 +587,10 @@
 - 検証：Playwright（ja/en・390/1280px）で、openpyxl/python-docx/python-pptxで作成した実ファイル（xlsxは2シートに画像・1シートは無し、docxは本文+ヘッダー+フッター、pptxは4スライド中2・4枚目のみ）をアップロードし、画像数・使用場所の判定・ZIPダウンロード・横スクロール無し・JSエラー無しを確認。ダウンロードしたZIPをPython側で再展開し、画像が正しく再デコードできること・CSVの対応表内容が期待通りであることを確認。画像0件・非対応形式ファイルのエラー表示も確認。
 - 相互リンクはsakusha-kesu・xlsx-omoi・pptx-omoi・docx-omoi・xlsx-bunkatsuの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
 - 次回：office-gazouの初回閲覧数を記録。backlogは残り6件。
+
+## 2026-11-02 実験62
+- 計測：GoatCounter取得成功（TOTAL.jsonで累計10のまま変化なし、内訳は「/」9＋receipt-sheet「1」、他55ページは0）。health.md（55ページ・問題0件）・計測タグ・表記いずれも不備なし。
+- やったこと：backlog1番「office-trouble：Word・PowerPointを社外に渡す前のチェックまとめ」を実施。docx-kakure・docx-omoi・docx-shodaku・pptx-kakure・pptx-omoi・pptx-chart-kakure・sakusha-kesu・office-gazouの8ツールを8症状に分類し、excel-trouble／csv-trouble型の案内ページ（docs/office-trouble/）を公開。ページ自体はファイルを処理しない。
+- 内部リンク：対象8ページ全ての「関連ツール」欄の先頭に本ページへのリンクを追加（ja/en各1件、grepで8ファイル×2＝16件を確認）。docs/index.htmlのCSV・Excel群でcsv-troubleの直後にも追加。
+- 検証：Pythonのhtml.parserで更新10ファイル（新規1＋既存8＋index.html）のHTML構文、json.loadで全JSON-LD構文を確認。Playwright（ja/en・390/1280px）で新ページと対象8ページ全てを巡回し、横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）・言語切替・8ツールへのリンクが全てHTTP 200で解決することを確認。
+- 次回：office-troubleの初回閲覧数を記録。backlogは残り5件。
