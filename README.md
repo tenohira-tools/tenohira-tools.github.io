@@ -20,6 +20,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [全角半角・カナ・郵便番号の表記ゆれをまとめて統一：CSV書式統一ツール](https://tenohira-tools.github.io/csv-seiri/)
 - [CSVをExcelで開くと0が消える・日付になるときの変換ツール（.xlsx書き出し）](https://tenohira-tools.github.io/csv-to-xlsx/)
 - [CSVが文字化けする・結合できない・表記ゆれがあるときの対策まとめ｜症状から探す8ツール](https://tenohira-tools.github.io/csv-trouble/)
+- [文書のあちこちに散らばったWordのコメントを全部一覧に（返信・解決済みも）CSV書き出し](https://tenohira-tools.github.io/docx-comment/)
 - [社外に渡す前に確認：Wordの「隠れた情報」一括チェック（変更履歴・コメント・隠し文字・ヘッダーフッター）](https://tenohira-tools.github.io/docx-kakure/)
 - [「Wordファイルが重い」原因を診断：ファイル内訳チェッカー（画像・フォント埋め込み・トリミング残存データ）](https://tenohira-tools.github.io/docx-omoi/)
 - [複数のWordファイルの変更履歴（校閲）を一括で確定・反映：挿入・削除・移動をすべて承諾](https://tenohira-tools.github.io/docx-shodaku/)
