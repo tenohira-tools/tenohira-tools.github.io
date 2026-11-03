@@ -33,9 +33,9 @@ Google Search Console への登録・サイトマップ送信は完了済みと�
 お願い（10-24と同じ・どれか1つで可）：Search Console の「ページ」レポートの件数（登録済み／検出 - インデックス未登録／クロール済み - インデックス未登録）を state/metrics-manual.md に1行で貼る。これで「待つ」か「量産を減らして既存を磨く」かを決められる。
 判断してほしいこと：外部からの被リンク（オーナー自身のブログ・SNSで1回紹介）を作るかどうか。11-22〜の60日判定で状況が同じなら、量産を1日1回に減らし残りを既存ページの改善に回すことを提案する。
 
-## 2026-11-03（量産担当より）確認のお願い：公開先ブランチがmainではない
-何が起きているか：RULES.mdは「GitHub Pagesはmainの/docsから公開済み」としているが、実際に確認したところ本番ページ（https://tenohira-tools.github.io/ ）はmainではなくclaude/brave-hawking-ilxpbnブランチの内容をそのまま配信していた（office-trouble等のページ内容をバイト単位で比較し確認）。main側は2026-10-30時点（experiment56・pptx-chart-kakure）で止まっており、以降の17コミット（docx-omoi・xlsx-bunkatsu・docx-shodaku・office-gazou・office-trouble等）が反映されていない。サイト自体は正しく最新内容を配信できているため実害は無いが、今後どちらのブランチを「正」として扱うかが食い違ったままだと事故の元になる。
-お願い（任意）：リポジトリのSettings→Pagesで公開ブランチの設定を確認し、意図した設定であればRULES.mdの記述をclaude/brave-hawking-ilxpbnに合わせて更新する（または、mainを公開先に戻すならブランチ保護等でmainへの直接pushが妨げられていないか確認する）ことを次回のレビューで判断してほしい。エージェント側はこのままclaude/brave-hawking-ilxpbn（実際に配信されている方）で作業を継続する。
+## 2026-11-03（量産担当より）報告：mainが17コミット分遅れていたが、今回push時に解消 → 解消
+何が起きているか：セッション開始時、main（RULES.mdが前提とする公開先）がclaude/brave-hawking-ilxpbnブランチより17コミット遅れており（2026-10-30・experiment56で停止）、本番ページも当時はclaude/brave-hawking-ilxpbn側の内容を配信していた（バイト比較で確認）。原因は不明（ブランチ保護等でmainへの直接pushが妨げられていた可能性）。
+対応：今回の作業後、claude/brave-hawking-ilxpbnの内容をmainへfast-forward pushしたところ問題なく成功し（拒否されず）、maintenance.ymlも正常にmain側で起動、本番ページも新内容（pptx-kakureのノート書き出し機能）を配信していることを確認した。現時点でmain・claude/brave-hawking-ilxpbnは同じ内容。この項目は解消。今後も毎回の実行の最後にmainへ直接pushを試みる（RULES.md通り）。原因不明のため再発する可能性はあるが、再発時は同様にclaude/brave-hawking-ilxpbnへのフォールバック＋本番ページのバイト比較で実害が無いことを確認しつつ対応する。
 
 ## 収益化パッケージ
 （該当なし：2026-10-31時点でも継続的な閲覧のある実験が無い（個別ページで閲覧があるのはreceipt-sheetの1件のみ・全体累計10）。個別ページの閲覧が週5件を超えた分野から作る）
