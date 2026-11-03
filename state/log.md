@@ -594,3 +594,10 @@
 - 内部リンク：対象8ページ全ての「関連ツール」欄の先頭に本ページへのリンクを追加（ja/en各1件、grepで8ファイル×2＝16件を確認）。docs/index.htmlのCSV・Excel群でcsv-troubleの直後にも追加。
 - 検証：Pythonのhtml.parserで更新10ファイル（新規1＋既存8＋index.html）のHTML構文、json.loadで全JSON-LD構文を確認。Playwright（ja/en・390/1280px）で新ページと対象8ページ全てを巡回し、横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）・言語切替・8ツールへのリンクが全てHTTP 200で解決することを確認。
 - 次回：office-troubleの初回閲覧数を記録。backlogは残り5件。
+
+## 2026-11-03 実験63
+- 計測：GoatCounter取得成功（TOTAL.jsonで累計10のまま変化なし、内訳は「/」9＋receipt-sheet「1」、他55ページは0）。health.md（57ページ・問題0件）・計測タグ（全59 index.html）・表記いずれも不備なし。
+- やったこと：backlog1番「pptx-kakureにノートのテキスト/CSV書き出しを追加」を実施。既存のノート抽出・CSV書き出しコード（xlsx-pivot-kesu由来）を再利用し、ノートが見つかったスライドの番号・本文（CSVは非表示状態も）だけをダウンロードできるボタンを2つ追加。削除機能とは独立で、ファイルは書き換えない。
+- 検証：node --check・json.load・html.parserで構文確認後、python-pptxで作った3スライド構成（ノート2件・カンマ/改行/引用符を含むノート1件・非表示スライド1件）の実ファイルをPlaywright（ja/en・390/1280px）でアップロードし、テキスト/CSVダウンロード内容（CSVはUTF-8 BOM・正しいクォート）・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。
+- 気づき：main ブランチ（RULES.mdが前提とする公開先）がclaude/brave-hawking-ilxpbnブランチより17コミット遅れ、office-trouble等6回分がmainに未反映だったが、実際のGitHub Pagesはclaude/brave-hawking-ilxpbn側の内容を配信していると確認（live pageのバイト比較で一致）。RULES.mdの「mainから公開」という前提が実態と食い違っているため escalations に記録した。
+- 次回：pptx-kakureの閲覧変化を記録。backlogは残り4件。
