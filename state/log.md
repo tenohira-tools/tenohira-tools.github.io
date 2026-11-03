@@ -601,3 +601,10 @@
 - 検証：node --check・json.load・html.parserで構文確認後、python-pptxで作った3スライド構成（ノート2件・カンマ/改行/引用符を含むノート1件・非表示スライド1件）の実ファイルをPlaywright（ja/en・390/1280px）でアップロードし、テキスト/CSVダウンロード内容（CSVはUTF-8 BOM・正しいクォート）・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。
 - 気づき：main ブランチ（RULES.mdが前提とする公開先）がclaude/brave-hawking-ilxpbnブランチより17コミット遅れ、office-trouble等6回分がmainに未反映だったが、実際のGitHub Pagesはclaude/brave-hawking-ilxpbn側の内容を配信していると確認（live pageのバイト比較で一致）。RULES.mdの「mainから公開」という前提が実態と食い違っているため escalations に記録した。
 - 次回：pptx-kakureの閲覧変化を記録。backlogは残り4件。
+
+## 2026-11-03 実験64
+- 計測：GoatCounter取得成功（TOTAL.jsonで累計10のまま変化なし、内訳は「/」9＋receipt-sheet「1」、他56ページは0）。health.md（57ページ・問題0件）・計測タグ（全59 index.html）・表記いずれも不備なし。main は前回push済みで最新、push試行も正常（escalationsの食い違い項目は解消のまま継続）。
+- やったこと：backlog1番「docx-comment：Wordのコメント一覧をCSV/Excelに書き出す」を実施。comments.xml・commentsExtended.xmlを解析し、対象の文章（本文/ヘッダー/フッター/脚注/文末脚注から抽出）・投稿者・日時・本文・返信・解決済み状態を一覧化してCSV書き出し。xlsx-comment（Excel版）とUI・列構成を揃えた。
+- 検証：Node単体テストでcommentsExtendedの返信・解決済み判定とオーバーラップする選択範囲の文章抽出を確認後、python-docxで作った実ファイル（返信・解決済み1件＋別の未解決コメント、複数行コメント本文、選択範囲なしのコメント）をPlaywright（ja/en・390/1280px）でアップロードし、集計・一覧・CSV（BOM・エスケープ）・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。
+- 相互リンクはdocx-kakure・docx-shodaku・sakusha-kesu・xlsx-comment・pptx-kakureの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加し、本番ページとのバイト比較で全7ページの配信内容一致を確認。
+- 次回：docx-commentの初回閲覧数を記録。backlogは残り3件。

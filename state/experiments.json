@@ -2587,6 +2587,33 @@
           "class": "継続（公開直後。8ツールへの相互リンク・言語切替・横スクロール無しをPlaywrightで確認済み）"
         }
       ]
+    },
+    {
+      "slug": "docx-comment",
+      "title": "文書のあちこちに散らばったWordのコメントを全部一覧に（返信・解決済みも）CSV書き出し",
+      "url": "https://tenohira-tools.github.io/docx-comment/",
+      "published": "2026-11-03",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "backlog1番。Wordのコメントが本文のあちこちにあり、校閲の対応表としてCSV化したい需要に対応。comments.xml（本体）に加えcommentsExtended.xml（w15、2013以降の「解決済み」「返信」情報）を解析し、対象の文章（commentRangeStart/End・commentReferenceから抽出）・投稿者・日時・本文を一覧化してCSV書き出し。古い形式のファイルは返信・解決情報が無いため全件独立コメントとして表示する安全側フォールバックも実装。xlsx-comment（Excel版）と対になる構成でUI・列名を揃えた。",
+      "metrics": [
+        {
+          "date": "2026-11-03T20:16:26Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": [
+        {
+          "date": "2026-11-03",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開直後。commentsExtended.xmlの返信・解決済み判定、本文/ヘッダー/フッター/脚注/文末脚注の対象の文章抽出、CSVのBOM・エスケープ、言語切替・横スクロール無しをNode単体テスト＋python-docxで作った実ファイル＋Playwrightで確認済み）"
+        }
+      ]
     }
   ],
   "review_summary_2026-10-24": {
