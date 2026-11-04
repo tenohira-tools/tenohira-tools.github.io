@@ -2641,6 +2641,33 @@
           "class": "継続（公開直後。rPh/phoneticPrの検出・削除をPythonでzipfile直接注入した実ファイル（共有文字列1件・インライン文字列1件・ふりがな無しセル1件）で検証し、削除後にopenpyxlで再読込して文字が変わらずrPh/phoneticPrが消えていることを確認。Playwright（ja/en・390/1280px）で一覧表示・CSV出力・削除済みファイルのダウンロード・横スクロール無し・JSエラー無しを確認済み）"
         }
       ]
+    },
+    {
+      "slug": "pptx-font",
+      "title": "別のPCで文字化け・レイアウト崩れする原因を確認：使用フォント一覧",
+      "url": "https://tenohira-tools.github.io/pptx-font/",
+      "published": "2026-11-04",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "backlog1番。別のPCで開くと文字化け・レイアウトが崩れる原因確認の需要。標準の「フォントの置換」では使用箇所（スライド番号）が分からず、テーマのフォント参照（+mn-lt等）と直接指定（上書き）の区別もできない点が勝ち筋。テーマのmajor/minorFontを実フォント名に解決し、スライド・マスターごとに検出したフォント指定を使用箇所・指定方法（テーマ参照／直接指定）・埋め込み状況付きで一覧化、CSV出力に対応。",
+      "metrics": [
+        {
+          "date": "2026-11-04T18:00:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": [
+        {
+          "date": "2026-11-04",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開直後。python-pptxで作成した実ファイル（直接指定の欧文フォント+埋め込みフォント一致、明示的なテーマ参照の+mn-lt/+mj-ea、無指定テキストの3パターン）をPlaywright（ja/en・390/1280px）でアップロードし、テーマフォント表の「未設定」表示、使用一覧の指定方法（直接指定／テーマ参照）・埋め込み状況・使用箇所（スライド番号・マスター番号、重複なし）・CSV出力を確認。関連5ページ（pptx-omoi/pptx-kakure/pptx-chart-kakure/sakusha-kesu/office-gazou）との双方向リンクをgrepで確認。）"
+        }
+      ]
     }
   ],
   "review_summary_2026-10-24": {

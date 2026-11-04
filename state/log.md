@@ -615,3 +615,11 @@
 - 検証：Pythonのzipfileで共有文字列1件・インライン文字列1件・ふりがな無しセル1件を注入した実ファイルを作成し、Playwright（ja/en・390/1280px）でアップロード→一覧・集計・CSV→削除済みファイルのダウンロードを確認。ダウンロードしたファイルをopenpyxlで再読込し、文字は不変・rPh/phoneticPrが消えていることを確認。
 - 相互リンクはxlsx-okikae・xlsx-comment・xlsx-kakure・sakusha-kesu・excel-troubleの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加し、excel-troubleの案内数表記を30→31に更新。
 - 次回：xlsx-furiganaの初回閲覧数を記録。backlogは残り2件。
+
+## 2026-11-04 実験66
+- 計測：GoatCounter取得成功（TOTAL.json累計11のまま変化なし、内訳は「/」10・receipt-sheet「1」、新規59ページ含め他は0）。health.md（58ページ・問題0件）・計測タグ（全61 index.html）・表記いずれも不備なし。
+- やったこと：backlog1番「pptx-font：PowerPointの使用フォント一覧（スライド・マスター別、テーマフォント解決）」を実施。各スライド・マスターのフォント指定（a:latin/a:ea/a:cs）を検出し、テーマのmajor/minorFont（+mn-lt等）を実フォント名に解決、スライド側の直接指定（上書き）とは区別して一覧化。embeddedFontLstから埋め込み状況も判定。
+- 設計：「フォントの置換」ダイアログには無い使用箇所（スライド番号・マスター）と、テーマ参照か直接指定かの区別を主な価値とした。テーマ側が未設定（空欄）で実名が解決できないテーマ参照は一覧から除外し、テーマ表の「（未設定）」表示のみで示す設計にした。
+- 検証：node --check・html.parser・json.loadで構文確認後、python-pptxで作成した実ファイル（直接指定の欧文フォント+埋め込みフォント一致、明示的な+mn-lt/+mj-eaテーマ参照、無指定テキストの3スライド）をPlaywright（ja/en・390/1280px）で確認。同一フォント・同一マスターの重複使用箇所が1件に正しく集約されることも確認。
+- 相互リンクはpptx-omoi・pptx-kakure・pptx-chart-kakure・sakusha-kesu・office-gazouの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
+- 次回：pptx-fontの初回閲覧数を記録。backlogは残り1件（docx-mojisu）。

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>別のPCで文字化け・レイアウト崩れする原因を確認：PowerPointの使用フォント一覧（スライド・マスター別、テーマフォント解決） | てのひらツール</title>
+<meta name="description" content="PowerPointファイルが別のPCで文字化けしたりレイアウトが崩れたりする原因を、ファイルを開かずに確認。各スライド・各スライドマスターで実際に指定されているフォントを、「テーマのフォント（+mn-lt等）」か「直接指定（上書き）」かを区別して一覧化し、「フォントの置換」ダイアログでは分からない使用箇所（スライド番号）も表示。フォントの埋め込み状況も確認できます。ブラウザ内だけで処理し、ファイルは送信されません。Find out why a PowerPoint file looks different or garbled on another PC — lists every font actually specified per slide and per slide master, resolving theme font placeholders to real names, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/pptx-font/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:110px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.detail{color:var(--muted);font-size:.82rem}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.direct{border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+.badge.theme{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.badge.noemb{border-color:var(--diff);background:var(--diff-bg);color:var(--diff)}
+.badge.emb{border-color:var(--line);color:var(--muted)}
+.warnText{color:var(--warn);font-weight:600}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-size:.88rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">別のPCで文字化け・レイアウト崩れする原因を確認：使用フォント一覧</h1>
+    <p class="sub" data-i="sub">PowerPoint(.pptx)ファイルの各スライド・各スライドマスターで実際に指定されているフォントを一覧化します。「テーマのフォント」への参照（+mn-lt等）は実際のフォント名に解決し、スライド側で直接指定（上書き）されたフォントとは区別して表示します。標準の「フォントの置換」ダイアログでは分からない使用箇所（スライド番号）も確認できます。フォントの埋め込み状況も表示します。ファイルを開かず、ブラウザの中だけで診断します。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにPowerPoint(.pptx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">1回に1ファイル。.pptxのみ対応（.ppt・パスワード保護は読み込めません）。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".pptx" style="display:none">
+</section>
+
+<section class="card" id="fileCardSec" style="display:none">
+  <div class="fileCard" id="fileCard"></div>
+</section>
+
+<section class="card" id="overviewCard" style="display:none">
+  <h2 data-i="overviewHeading">全体の概要</h2>
+  <div class="statGrid" id="overviewGrid"></div>
+</section>
+
+<section class="card" id="themeCard" style="display:none">
+  <h2 data-i="themeHeading">マスターごとのテーマフォント（既定値）</h2>
+  <p class="hint" data-i="themeHint">フォントを個別に指定していない文字は、そのスライドが使っているマスター（テーマ）のこの既定フォントで表示されます。「（未設定）」は、開くPCの環境によって実際に使われるフォントが変わる可能性がある項目です。</p>
+  <div class="scroll"><table id="themeTable"></table></div>
+</section>
+
+<section class="card" id="usageCard" style="display:none">
+  <h2 data-i="usageHeading">フォント使用一覧（スライド・マスター別）</h2>
+  <p class="hint" data-i="usageHint">各スライド・マスターのXMLに実際に記録されているフォント指定を集計しています。「直接指定」はテーマと無関係にその場所だけで上書きされたフォントで、別のPCに同じフォントが入っていないと表示が変わりやすい項目です。</p>
+  <div class="scroll"><table id="usageTable"></table></div>
+  <p style="margin-top:12px"><button type="button" class="secondary" id="csvBtn" data-i="csvBtn">一覧をCSVでダウンロード</button></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にPowerPoint（.pptx）ファイルをドラッグ＆ドロップするか、クリックして選びます。</li>
+      <li>「マスターごとのテーマフォント」で、そのファイルのテーマが本来使うはずのフォント（見出し用・本文用、欧文・日本語）を確認します。「（未設定）」があれば、PC環境によって表示フォントが変わりうる箇所です。</li>
+      <li>「フォント使用一覧」で、実際にスライド・マスターに記録されているフォント指定を、どのスライドで使われているか（使用箇所）付きで確認します。「直接指定」で「未埋め込み」のフォントが、別のPCで文字化け・崩れる最も可能性の高い原因です。</li>
+      <li>必要ならCSVでダウンロードして記録に残せます。</li>
+    </ol>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。ファイルの内容を書き換えたり保存したりすることもありません。</p>
+    <h3>Q. 標準の「フォントの置換」ダイアログと何が違いますか？</h3>
+    <p>A. PowerPoint（ホーム→フォントの置換）は、ファイル全体で使われているフォント名を一覧で出せますが、「どのスライドで使われているか」は表示されず、テーマ経由で使われているフォントと、そのスライドだけで直接指定されたフォントの区別もできません。このツールは、使用箇所（スライド番号・マスター）と、テーマ参照か直接指定かの区別を併せて表示するため、原因になっているフォントがどこにあるのかを特定しやすくなります。</p>
+    <h3>Q. 「テーマ参照」と「直接指定」の違いは何ですか？</h3>
+    <p>A. PowerPointのテーマ（デザイン→バリエーション→フォント）で選んだフォントは、ファイル内部では「+mn-lt」「+mj-ea」のような記号（プレースホルダー）で記録され、実際のフォント名はテーマ側に別途記録されています。このツールはこの記号を実際のフォント名に変換（解決）して表示します。一方、「直接指定」は、文字を選んでフォントを個別に変更した場合などに、テーマと無関係にその場所だけフォント名がそのまま書き込まれているものです。他の資料からコピーした文章にありがちで、受け取った側のPCにそのフォントが入っていないと、近い別のフォントに自動で置き換えられて見た目が変わることがあります。</p>
+    <h3>Q. テーマフォントが「（未設定）」になっているのはなぜですか？</h3>
+    <p>A. テーマによっては、日本語（全角）用や複合文字用のフォントが設定されておらず、空欄になっていることがあります。この場合、実際にどのフォントで表示されるかはPowerPointやOSの既定フォントに委ねられるため、作成時のPCと閲覧時のPCで見た目が変わりやすくなります。デザイン→バリエーション→フォント→「フォントのカスタマイズ」から日本語用フォントを明示的に設定すると解消できます。</p>
+    <h3>Q. 「埋め込み」とは何ですか？どうすれば埋め込めますか？</h3>
+    <p>A. PowerPointには、使っているフォント自体をファイルの中に保存する「フォントの埋め込み」機能があります（ファイル→オプション→保存→「ファイルにフォントを埋め込む」）。埋め込まれていれば、そのフォントが入っていないPCで開いても見た目が変わりません。このツールは、ファイル内に埋め込みフォントがあるかどうかと、一覧にある各フォントが埋め込まれているかどうかを表示します。なお埋め込みはファイル容量を増やすため、既定では無効になっていることが多いです。</p>
+    <h3>Q. マスター（テーマ）が複数あるのはなぜですか？</h3>
+    <p>A. 別のテンプレートで作ったスライドを後から1つのファイルにまとめた場合などに、スライドマスター（テーマ）が複数残ることがあります。マスターごとにテーマフォントが異なる場合、同じファイルの中でもスライドによって既定フォントが違うことになります。</p>
+    <h3>Q. 対応しているファイル形式は？ファイルサイズの上限はありますか？</h3>
+    <p>A. PowerPoint 2007以降の.pptx形式に対応しています。古い.ppt形式や、パスワードで保護されたファイルは読み込めません。ファイルはブラウザのメモリ上で処理するため、非常に大きいファイル（数百MB以上）では診断に時間がかかることがあります。</p>
+    <h3>Q. 結果の通りに直せば文字化けは必ず直りますか？</h3>
+    <p>A. このツールは診断のみで、ファイルを書き換えることはしません。また、スライドの文字の中でフォントを個別指定も直接指定もしていない（上の一覧に出てこない）文字は、テーマの既定フォントがそのまま使われています。実際に直すには、PowerPoint側でフォントの置換や埋め込みを行う必要があります。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop a PowerPoint (.pptx) file into the box above, or click it to choose one.</li>
+      <li>Check "Theme fonts per master" to see the fonts the file's theme is actually supposed to use (heading/body, Latin/East Asian). A "(not set)" entry means the rendered font can vary by PC.</li>
+      <li>Check "Font usage" to see exactly which font is recorded where (which slide), and whether it's a theme reference or a direct override. A directly-specified, non-embedded font is the most likely cause of a file looking different on another PC.</li>
+      <li>Download the list as CSV if you need a record.</li>
+    </ol>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter). The file's contents are never modified or saved anywhere.</p>
+    <h3>Q. How is this different from PowerPoint's own "Replace Fonts" dialog?</h3>
+    <p>A. PowerPoint's Replace Fonts dialog (Home → Replace Fonts) lists font names used somewhere in the file, but it doesn't show which slide each one is on, and it doesn't distinguish a font reached through the theme from one directly overridden on that one slide. This tool shows both the location (slide number / master) and whether each entry is a theme reference or a direct override, making it easier to track down exactly where a problem font lives.</p>
+    <h3>Q. What's the difference between "theme reference" and "direct override"?</h3>
+    <p>A. A font chosen through PowerPoint's theme (Design → Variants → Fonts) is stored internally as a placeholder symbol like "+mn-lt" or "+mj-ea", with the real font name recorded separately in the theme. This tool resolves that symbol back to the real font name. A "direct override", on the other hand, is a font name written directly at that one spot — typically from selecting text and changing its font manually, or from pasted-in text that brought its own font along. If the recipient's PC doesn't have that exact font, it gets silently substituted with something else, which is a common cause of a file looking different elsewhere.</p>
+    <h3>Q. Why does a theme font show as "(not set)"?</h3>
+    <p>A. Some themes leave the East Asian or complex-script font blank. In that case, which font actually renders is left up to PowerPoint/the OS's own default, so the look can differ between the PC that made the file and the PC viewing it. Setting it explicitly via Design → Variants → Fonts → "Customize Fonts" fixes this.</p>
+    <h3>Q. What does "embedded" mean, and how do I embed a font?</h3>
+    <p>A. PowerPoint can save the actual font data inside the file itself (File → Options → Save → "Embed fonts in the file"). An embedded font displays correctly even on a PC that doesn't have it installed. This tool reports whether the file has any embedded fonts at all, and whether each font in the list is among them. Embedding increases file size, so it's usually off by default.</p>
+    <h3>Q. Why would there be more than one master/theme?</h3>
+    <p>A. Combining slides from different templates into one file later on commonly leaves more than one slide master (theme) behind. If their theme fonts differ, the default font can differ from slide to slide within the same file.</p>
+    <h3>Q. Which formats and sizes are supported?</h3>
+    <p>A. PowerPoint 2007+ .pptx files. The older .ppt format and password-protected files are not supported. Everything runs in your browser's memory, so very large files (several hundred MB) may take a while to diagnose.</p>
+    <h3>Q. If I act on the results, is the garbling guaranteed to be fixed?</h3>
+    <p>A. This tool only diagnoses — it never modifies your file. Also, any text that has no explicit or direct font setting (and so doesn't appear in the list above) simply uses the theme's default font as-is. Actually fixing things requires replacing fonts or embedding them in PowerPoint itself.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../pptx-omoi/">「パワーポイントが重い」原因を診断：ファイル内訳チェッカー</a> — 画像・動画・埋め込みオブジェクトなどパーツ別の容量を診断。</li>
+      <li><a href="../pptx-kakure/">社外に渡す前に：PowerPointのノート・非表示スライド・コメントを一覧化</a> — ノート（発表者メモ）・非表示スライド・コメントをスライドごとに一覧表示。</li>
+      <li><a href="../pptx-chart-kakure/">「グラフのデータを編集」で元の表が丸ごと見える：PowerPointグラフの埋め込みExcel診断</a> — グラフのキャッシュ値と埋め込みシートの範囲を比較して余分なデータの可能性を検出。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — Excel・Word・PowerPointの作成者・最終更新者・コメント投稿者名をまとめて消去。</li>
+      <li><a href="../office-gazou/">Excel・Word・PowerPointの画像をまとめて保存</a> — 埋め込み画像を一括抽出し、使用場所の対応表CSV付きでダウンロード。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../pptx-omoi/">Why is this PowerPoint file heavy? Part-by-part size diagnosis</a> — Breaks down size by images, video, embedded objects, and more.</li>
+      <li><a href="../pptx-kakure/">Before sharing a PowerPoint file: list notes, hidden slides and comments</a> — List every slide's speaker notes, hidden status and comments at once.</li>
+      <li><a href="../pptx-chart-kakure/">"Edit Data" reveals the whole source table: diagnose PowerPoint charts' embedded Excel data</a> — Compares a chart's cached values against its embedded sheet's used range to flag possible extra data.</li>
+      <li><a href="../sakusha-kesu/">Strip creator / last-modified-by / comment-author names before sharing</a> — Clean up Excel, Word and PowerPoint files at once before sending them outside your company.</li>
+      <li><a href="../office-gazou/">Save every image from an Excel, Word or PowerPoint file at once</a> — Extract embedded images at once with a mapping table CSV.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込みが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
+    {"@type":"Question","name":"標準の「フォントの置換」ダイアログと何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"標準のダイアログはファイル全体で使われているフォント名の一覧は出せますが、どのスライドで使われているか、テーマ経由か直接指定かは分かりません。このツールは使用箇所とテーマ参照／直接指定の区別を併せて表示します。"}},
+    {"@type":"Question","name":"「テーマ参照」と「直接指定」の違いは何ですか？","acceptedAnswer":{"@type":"Answer","text":"テーマで選んだフォントはファイル内部で「+mn-lt」等の記号で記録され、実名はテーマ側にあります。このツールはこの記号を実際のフォント名に解決して表示します。直接指定はその場所だけフォント名がそのまま書き込まれているもので、他のPCにそのフォントが無いと表示が変わりやすい原因になります。"}},
+    {"@type":"Question","name":"「埋め込み」とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"PowerPointにはフォント自体をファイルに保存する「フォントの埋め込み」機能があります（ファイル→オプション→保存）。埋め込まれていれば別のPCでも見た目が変わりません。このツールは埋め込み状況を一覧に表示します。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   PPTX ZIP + XML core — same hand-rolled approach already shipped in
+   pptx-omoi/pptx-kakure (no external libraries; only standard browser
+   APIs: DecompressionStream/TextDecoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function readEntryText(bytes,entries,name){
+  var en=entries.find(function(e){return e.name===name});
+  if(!en) return null;
+  var data=await zipReadEntry(bytes,en);
+  return new TextDecoder("utf-8").decode(data);
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function getOpenAttrs(xml,tagName){
+  var re=new RegExp("<"+tagName+"(?=[\\s/>])");
+  var m=re.exec(xml);
+  if(!m) return null;
+  return parseOpenTag(xml,m.index+1+tagName.length).attrs;
+}
+function dirName(path){ var i=path.lastIndexOf("/"); return i===-1?"":path.slice(0,i); }
+function baseName(path){ var i=path.lastIndexOf("/"); return i===-1?path:path.slice(i+1); }
+function relsPathFor(path){ var d=dirName(path); return (d?d+"/":"")+"_rels/"+baseName(path)+".rels"; }
+function resolveRelPath(baseDir,target){
+  if(/^\//.test(target)) return target.replace(/^\/+/,"");
+  var baseParts=baseDir?baseDir.split("/"):[];
+  target.split("/").forEach(function(p){
+    if(p===""||p===".") return;
+    if(p==="..") baseParts.pop(); else baseParts.push(p);
+  });
+  return baseParts.join("/");
+}
+function parseRels(xml){
+  return findTags(xml,"Relationship").map(function(t){return {id:t.attrs.Id,type:t.attrs.Type||"",target:t.attrs.Target||""};});
+}
+
+/* =====================================================================
+   Font analysis
+   ===================================================================== */
+function readFontScheme(themeXml){
+  if(!themeXml) return null;
+  function readFam(tagName){
+    var fams=findTags(themeXml,tagName);
+    if(!fams.length||!fams[0].inner) return {lt:"",ea:"",cs:""};
+    var inner=fams[0].inner;
+    return {
+      lt:(getOpenAttrs(inner,"a:latin")||{}).typeface||"",
+      ea:(getOpenAttrs(inner,"a:ea")||{}).typeface||"",
+      cs:(getOpenAttrs(inner,"a:cs")||{}).typeface||""
+    };
+  }
+  var nameAttrs=getOpenAttrs(themeXml,"a:theme")||{};
+  return {name:nameAttrs.name||"", major:readFam("a:majorFont"), minor:readFam("a:minorFont")};
+}
+
+function resolveThemeFont(typeface,theme){
+  var m=/^\+(mj|mn)-(lt|ea|cs)$/.exec(typeface||"");
+  if(!m) return {name:typeface,isThemeRef:false,unresolved:false};
+  if(!theme) return {name:typeface,isThemeRef:true,unresolved:true};
+  var fam=(m[1]==="mj")?theme.major:theme.minor;
+  var val=fam[m[2]]||"";
+  return {name:val||typeface,isThemeRef:true,unresolved:!val};
+}
+
+function scanFonts(xml){
+  var found=[], seen={};
+  ["a:rPr","a:defRPr","a:endParaRPr"].forEach(function(tagName){
+    findTags(xml,tagName).forEach(function(t){
+      if(!t.inner) return;
+      [["a:latin","lt"],["a:ea","ea"],["a:cs","cs"]].forEach(function(pair){
+        var attrs=getOpenAttrs(t.inner,pair[0]);
+        var tf=attrs&&attrs.typeface;
+        if(!tf) return;
+        var key=pair[1]+"|"+tf;
+        if(seen[key]) return;
+        seen[key]=true;
+        found.push({script:pair[1],typeface:tf});
+      });
+    });
+  });
+  return found;
+}
+
+async function analyzePptx(bytes){
+  var entries=zipCentralDirectory(bytes);
+  var byPath={}; entries.forEach(function(e){ byPath[e.name]=e; });
+  if(!byPath["ppt/presentation.xml"]) throw new Error("NOT_PPTX");
+
+  var presXml=await readEntryText(bytes,entries,"ppt/presentation.xml");
+  var presRelsXml=await readEntryText(bytes,entries,relsPathFor("ppt/presentation.xml"))||"";
+  var presRels=parseRels(presRelsXml);
+  var relById={}; presRels.forEach(function(r){ relById[r.id]=r; });
+
+  var slidePaths=findTags(presXml,"p:sldId").map(function(t){
+    var rel=relById[t.attrs["r:id"]];
+    return rel ? resolveRelPath(dirName("ppt/presentation.xml"),rel.target) : null;
+  }).filter(Boolean);
+  var masterPaths=findTags(presXml,"p:sldMasterId").map(function(t){
+    var rel=relById[t.attrs["r:id"]];
+    return rel ? resolveRelPath(dirName("ppt/presentation.xml"),rel.target) : null;
+  }).filter(Boolean);
+
+  var embeddedNames={};
+  var embedLst=findTags(presXml,"p:embeddedFontLst");
+  if(embedLst.length && embedLst[0].inner){
+    findTags(embedLst[0].inner,"p:embeddedFont").forEach(function(ef){
+      if(!ef.inner) return;
+      var fontAttrs=getOpenAttrs(ef.inner,"p:font");
+      if(fontAttrs && fontAttrs.typeface) embeddedNames[fontAttrs.typeface]=true;
+    });
+  }
+
+  var masterInfo=[], masterByPath={};
+  for(var mi=0;mi<masterPaths.length;mi++){
+    var mp=masterPaths[mi];
+    var mRelsXml=await readEntryText(bytes,entries,relsPathFor(mp))||"";
+    var mRels=parseRels(mRelsXml);
+    var themeRel=mRels.filter(function(r){return /\/theme$/.test(r.type)})[0];
+    var themePath=themeRel?resolveRelPath(dirName(mp),themeRel.target):null;
+    var themeXml=themePath?await readEntryText(bytes,entries,themePath):null;
+    var scheme=readFontScheme(themeXml);
+    var info={idx:mi+1,path:mp,themeName:(scheme&&scheme.name)||"",
+      major:(scheme&&scheme.major)||{lt:"",ea:"",cs:""},
+      minor:(scheme&&scheme.minor)||{lt:"",ea:"",cs:""}};
+    masterInfo.push(info);
+    masterByPath[mp]=info;
+  }
+
+  var layoutMasterCache={};
+  async function masterPathForLayout(layoutPath){
+    if(!layoutPath) return null;
+    if(layoutMasterCache.hasOwnProperty(layoutPath)) return layoutMasterCache[layoutPath];
+    var relsXml=await readEntryText(bytes,entries,relsPathFor(layoutPath))||"";
+    var rels=parseRels(relsXml);
+    var mrel=rels.filter(function(r){return /\/slideMaster$/.test(r.type)})[0];
+    var mpath=mrel?resolveRelPath(dirName(layoutPath),mrel.target):null;
+    layoutMasterCache[layoutPath]=mpath;
+    return mpath;
+  }
+
+  var occKey2entry={}, occurrences=[];
+  var hasCsUsage=masterInfo.some(function(m){return m.major.cs||m.minor.cs});
+
+  function addOccurrence(f,theme,loc){
+    var resolved=resolveThemeFont(f.typeface,theme);
+    if(resolved.unresolved) return; // テーマ側が未設定で実フォント名が分からない（テーマ表の「未設定」側で表示）
+    if(f.script==="cs") hasCsUsage=true;
+    var key=resolved.name+"|"+f.script+"|"+(resolved.isThemeRef?1:0);
+    var entry=occKey2entry[key];
+    if(!entry){
+      entry={name:resolved.name,script:f.script,isThemeRef:resolved.isThemeRef,
+        embedded:!!embeddedNames[resolved.name],locs:[]};
+      occKey2entry[key]=entry;
+      occurrences.push(entry);
+    }
+    var locKey=loc.type+loc.idx;
+    if(entry.locs.some(function(l){return (l.type+l.idx)===locKey})) return;
+    entry.locs.push(loc);
+  }
+
+  for(var si=0;si<slidePaths.length;si++){
+    var sp=slidePaths[si];
+    if(!byPath[sp]) continue;
+    var slideXml=await readEntryText(bytes,entries,sp);
+    var fonts=scanFonts(slideXml);
+    if(!fonts.length) continue;
+    var slideRelsXml=await readEntryText(bytes,entries,relsPathFor(sp))||"";
+    var slideRels=parseRels(slideRelsXml);
+    var layoutRel=slideRels.filter(function(r){return /\/slideLayout$/.test(r.type)})[0];
+    var layoutPath=layoutRel?resolveRelPath(dirName(sp),layoutRel.target):null;
+    var masterPath=await masterPathForLayout(layoutPath);
+    var theme=masterByPath[masterPath];
+    fonts.forEach(function(f){ addOccurrence(f,theme,{type:"slide",idx:si+1}); });
+  }
+
+  for(var mj=0;mj<masterInfo.length;mj++){
+    var info=masterInfo[mj];
+    if(!byPath[info.path]) continue;
+    var masterXml=await readEntryText(bytes,entries,info.path);
+    var mFonts=scanFonts(masterXml);
+    mFonts.forEach(function(f){ addOccurrence(f,info,{type:"master",idx:info.idx}); });
+  }
+
+  occurrences.forEach(function(o){ o.count=o.locs.length; });
+  occurrences.sort(function(a,b){
+    if(a.isThemeRef!==b.isThemeRef) return a.isThemeRef?1:-1;
+    if(a.embedded!==b.embedded) return a.embedded?1:-1;
+    if(a.script!==b.script) return a.script<b.script?-1:1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return {
+    slideCount:slidePaths.length,
+    masterInfo:masterInfo,
+    occurrences:occurrences,
+    hasCsUsage:hasCsUsage,
+    embeddedCount:Object.keys(embeddedNames).length
+  };
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"別のPCで文字化け・レイアウト崩れする原因を確認：使用フォント一覧",
+  sub:"PowerPoint(.pptx)ファイルの各スライド・各スライドマスターで実際に指定されているフォントを一覧化します。「テーマのフォント」への参照（+mn-lt等）は実際のフォント名に解決し、スライド側で直接指定（上書き）されたフォントとは区別して表示します。標準の「フォントの置換」ダイアログでは分からない使用箇所（スライド番号）も確認できます。フォントの埋め込み状況も表示します。ファイルを開かず、ブラウザの中だけで診断します。",
+  dropzoneText:"ここにPowerPoint(.pptx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"1回に1ファイル。.pptxのみ対応（.ppt・パスワード保護は読み込めません）。ファイルは選択した端末の中だけで処理されます。",
+  overviewHeading:"全体の概要",
+  statSlides:"スライド数", statMasters:"マスター（テーマ）数", statFonts:"検出したフォント数", statEmbedded:"埋め込みフォント数",
+  themeHeading:"マスターごとのテーマフォント（既定値）",
+  themeHint:"フォントを個別に指定していない文字は、そのスライドが使っているマスター（テーマ）のこの既定フォントで表示されます。「（未設定）」は、開くPCの環境によって実際に使われるフォントが変わる可能性がある項目です。",
+  colMaster:"マスター", colHeadingLatin:"見出し用（欧文）", colHeadingEa:"見出し用（日本語）", colHeadingCs:"見出し用（複合文字用）",
+  colBodyLatin:"本文用（欧文）", colBodyEa:"本文用（日本語）", colBodyCs:"本文用（複合文字用）",
+  notSet:"（未設定）",
+  usageHeading:"フォント使用一覧（スライド・マスター別）",
+  usageHint:"各スライド・マスターのXMLに実際に記録されているフォント指定を集計しています。「直接指定」はテーマと無関係にその場所だけで上書きされたフォントで、別のPCに同じフォントが入っていないと表示が変わりやすい項目です。",
+  colFont:"フォント名", colScript:"用途", colKind:"指定方法", colEmbedded:"埋め込み", colLocs:"使用箇所", colCount:"件数",
+  scriptLt:"欧文（半角英数字）", scriptEa:"日本語（全角）", scriptCs:"複合文字用",
+  kindDirect:"直接指定", kindTheme:"テーマ参照",
+  embYes:"済", embNo:"未埋め込み",
+  locSlide:"スライド", locMaster:"マスター",
+  csvBtn:"一覧をCSVでダウンロード",
+  removeBtn:"削除",loadingLabel:"読み込み中…",
+  errBad:"読み込めませんでした（.pptx以外の形式か、パスワード保護の可能性があります）",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Why does this PowerPoint look different on another PC? Font usage list",
+  sub:"Lists every font actually specified in each slide and each slide master of a PowerPoint (.pptx) file. References to the theme's fonts (placeholders like +mn-lt) are resolved to their real names, and shown separately from fonts directly overridden on a specific slide. Also shows the location (slide number) that PowerPoint's own \"Replace Fonts\" dialog doesn't, plus whether each font is embedded. Diagnosed entirely in your browser, without opening the file.",
+  dropzoneText:"Drag and drop a PowerPoint (.pptx) file here, or click to choose",
+  dropzoneHint:"One file at a time. .pptx only (.ppt and password-protected files aren't supported). Everything happens on this device.",
+  overviewHeading:"Overview",
+  statSlides:"Slides", statMasters:"Masters (themes)", statFonts:"Fonts found", statEmbedded:"Embedded fonts",
+  themeHeading:"Theme fonts per master (defaults)",
+  themeHint:"Text with no font set explicitly uses this default, from whichever master (theme) its slide uses. \"(not set)\" means the font actually rendered can vary by PC.",
+  colMaster:"Master", colHeadingLatin:"Heading (Latin)", colHeadingEa:"Heading (East Asian)", colHeadingCs:"Heading (Complex script)",
+  colBodyLatin:"Body (Latin)", colBodyEa:"Body (East Asian)", colBodyCs:"Body (Complex script)",
+  notSet:"(not set)",
+  usageHeading:"Font usage (by slide / master)",
+  usageHint:"Aggregated from the font settings actually recorded in each slide's and master's XML. \"Direct override\" means the font was set at that one spot regardless of the theme — the most likely culprit if the recipient's PC lacks that font.",
+  colFont:"Font", colScript:"Used for", colKind:"How it's set", colEmbedded:"Embedded", colLocs:"Location", colCount:"Count",
+  scriptLt:"Latin", scriptEa:"East Asian", scriptCs:"Complex script",
+  kindDirect:"Direct override", kindTheme:"Theme reference",
+  embYes:"Yes", embNo:"No",
+  locSlide:"Slide", locMaster:"Master",
+  csvBtn:"Download this list as CSV",
+  removeBtn:"Remove",loadingLabel:"Loading…",
+  errBad:"Could not read this file (it may not be .pptx, or it's password-protected)",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={fileName:"",loading:false,error:"",data:null};
+
+function resetFile(){ state={fileName:"",loading:false,error:"",data:null}; render(); }
+
+function addFile(file){
+  state={fileName:file.name,loading:true,error:"",data:null};
+  render();
+  file.arrayBuffer().then(function(buf){ return analyzePptx(new Uint8Array(buf)); })
+    .then(function(d){ state.loading=false; state.data=d; render(); })
+    .catch(function(){ state.loading=false; state.error=T[lang].errBad; render(); });
+}
+
+function famCell(val){
+  if(!val) return "<span class='warnText'>"+esc(T[lang].notSet)+"</span>";
+  return esc(val);
+}
+
+function renderTheme(data){
+  var t=T[lang];
+  var cols=[t.colMaster,t.colHeadingLatin,t.colHeadingEa];
+  if(data.hasCsUsage) cols.push(t.colHeadingCs);
+  cols.push(t.colBodyLatin,t.colBodyEa);
+  if(data.hasCsUsage) cols.push(t.colBodyCs);
+  var h="<thead><tr>"+cols.map(function(c){return "<th>"+esc(c)+"</th>"}).join("")+"</tr></thead><tbody>";
+  data.masterInfo.forEach(function(m){
+    var label=m.themeName?m.themeName:(t.locMaster+" "+m.idx);
+    h+="<tr><td>"+esc(label)+"</td>";
+    h+="<td>"+famCell(m.major.lt)+"</td><td>"+famCell(m.major.ea)+"</td>";
+    if(data.hasCsUsage) h+="<td>"+famCell(m.major.cs)+"</td>";
+    h+="<td>"+famCell(m.minor.lt)+"</td><td>"+famCell(m.minor.ea)+"</td>";
+    if(data.hasCsUsage) h+="<td>"+famCell(m.minor.cs)+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody>";
+  $("themeTable").innerHTML=h;
+}
+
+function scriptLabel(s){
+  var t=T[lang];
+  return s==="lt"?t.scriptLt:(s==="ea"?t.scriptEa:t.scriptCs);
+}
+function formatLocs(locs){
+  var t=T[lang];
+  var sep=lang==="en"?", ":"、";
+  return locs.map(function(l){
+    return (l.type==="slide"?t.locSlide:t.locMaster)+l.idx;
+  }).join(sep);
+}
+
+function renderUsage(data){
+  var t=T[lang];
+  var h="<thead><tr><th>"+esc(t.colFont)+"</th><th>"+esc(t.colScript)+"</th><th>"+esc(t.colKind)+"</th><th>"+esc(t.colEmbedded)+"</th><th>"+esc(t.colLocs)+"</th><th>"+esc(t.colCount)+"</th></tr></thead><tbody>";
+  data.occurrences.forEach(function(o){
+    var kindBadge="<span class='badge "+(o.isThemeRef?"theme":"direct")+"'>"+esc(o.isThemeRef?t.kindTheme:t.kindDirect)+"</span>";
+    var embBadge="<span class='badge "+(o.embedded?"emb":"noemb")+"'>"+esc(o.embedded?t.embYes:t.embNo)+"</span>";
+    h+="<tr><td>"+esc(o.name)+"</td><td>"+esc(scriptLabel(o.script))+"</td><td>"+kindBadge+"</td><td>"+embBadge+"</td><td class='detail'>"+esc(formatLocs(o.locs))+"</td><td>"+o.count+"</td></tr>";
+  });
+  h+="</tbody>";
+  $("usageTable").innerHTML=h;
+}
+
+function renderFileCard(){
+  var box=$("fileCard");
+  if(!state.fileName){ $("fileCardSec").style.display="none"; return; }
+  $("fileCardSec").style.display="";
+  var h="<span class='fName'>"+esc(state.fileName)+"</span>";
+  if(state.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+  else if(state.error){ h+="<span class='fWarn'>"+esc(state.error)+"</span>"; }
+  else if(state.data){ h+="<span class='fMeta'>"+state.data.slideCount+" "+esc(T[lang].statSlides)+"</span>"; }
+  h+="<button type='button' class='remove' id='removeFileBtn'>"+esc(T[lang].removeBtn)+"</button>";
+  box.innerHTML=h;
+  $("removeFileBtn").addEventListener("click",resetFile);
+}
+
+function render(){
+  renderFileCard();
+  if(!state.fileName || state.loading || state.error || !state.data){
+    $("overviewCard").style.display="none"; $("themeCard").style.display="none"; $("usageCard").style.display="none";
+    return;
+  }
+  var d=state.data, t=T[lang];
+  $("overviewCard").style.display=""; $("themeCard").style.display=""; $("usageCard").style.display="";
+  var items=[
+    [d.slideCount, t.statSlides],
+    [d.masterInfo.length, t.statMasters],
+    [d.occurrences.length, t.statFonts],
+    [d.embeddedCount, t.statEmbedded]
+  ];
+  var gh="";
+  items.forEach(function(it){ gh+="<div class='statBox'><div class='n'>"+esc(it[0])+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("overviewGrid").innerHTML=gh;
+  renderTheme(d);
+  renderUsage(d);
+}
+
+function toCsv(data){
+  var t=T[lang];
+  var head=["font","used_for","how_set","embedded","location","count"];
+  var lines=[head.join(",")];
+  function q(s){ s=String(s); return '"'+s.replace(/"/g,'""')+'"'; }
+  data.occurrences.forEach(function(o){
+    lines.push([q(o.name), q(scriptLabel(o.script)), q(o.isThemeRef?t.kindTheme:t.kindDirect),
+      q(o.embedded?t.embYes:t.embNo), q(formatLocs(o.locs)), o.count].join(","));
+  });
+  return lines.join("\r\n");
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs&&fs.length) addFile(fs[0]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs&&fs.length) addFile(fs[0]); e.target.value=""; });
+
+$("csvBtn").addEventListener("click",function(){
+  if(!state.data) return;
+  var csv="﻿"+toCsv(state.data);
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download=(state.fileName||"pptx")+"_フォント一覧.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
