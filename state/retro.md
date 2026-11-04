@@ -304,3 +304,6 @@
 
 ## 2026-11-03（新規実験：docx-comment）
 - 気づいた点：Wordの「解決済み」「返信」はcommentsExtended.xml（w15:commentEx）がcomments.xml側のw14:paraIdを介して紐付く仕組みで、python-docxは標準ではこの部分を書き出さないため、テストでは生成後にzipfileで直接注入する必要があった。対象の文章（commentRangeStart/End）は同じ範囲に複数のコメントが入れ子・重複して開く場合があり、タグ単位で「現在開いているid集合」に本文を同時追記する実装にすると、ネストでも正しく処理できた。xlsx-comment（返信・解決済みを扱う既存Excel版）と設計をほぼ1対1で対応させられたため、実装・検証の見通しが良かった。
+
+## 2026-11-04（新規実験：xlsx-furigana）
+- 気づいた点：ふりがな（rPh）は<si>/<is>の末尾に1件以上の<rPh sb eb>（読みのtを内包）＋その書式だけを持つ<phoneticPr>という形で付くため、既存のfindTagsで<rPh>の位置範囲を集めて「その外側にある<t>だけを本文、内側にある<t>をまとめて読みとする」処理だけで、共有文字列・インライン文字列どちらにも同じ関数を適用できた。削除も位置を降順に単純に切り出すだけで済み、置換のような文字列の書き換えロジックは不要だった。openpyxlは標準でrPhを書き出さないため、テストはpython-docx同様にzipfileでsharedStrings.xml・worksheet.xmlへ直接注入する必要があった。

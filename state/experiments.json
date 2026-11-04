@@ -2614,6 +2614,33 @@
           "class": "継続（公開直後。commentsExtended.xmlの返信・解決済み判定、本文/ヘッダー/フッター/脚注/文末脚注の対象の文章抽出、CSVのBOM・エスケープ、言語切替・横スクロール無しをNode単体テスト＋python-docxで作った実ファイル＋Playwrightで確認済み）"
         }
       ]
+    },
+    {
+      "slug": "xlsx-furigana",
+      "title": "セルのふりがな（読み）情報を一覧チェック・一括削除",
+      "url": "https://tenohira-tools.github.io/xlsx-furigana/",
+      "published": "2026-11-04",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "backlog1番。Excelのセルの裏に保存される「ふりがな（読み）」情報（rPh・phoneticPr）は見た目では分からず、氏名・地名など読み方そのものが個人情報になりうるため社外に渡す前の確認需要がある。日本固有の角度でAI時代の選び方に合致。共有文字列（sharedStrings.xml）とセル個別のインライン文字列（<is>）の両方からrPhを検出して全シート横断で一覧化・CSV出力し、ふりがな情報だけを取り除いた新しいファイルも書き出せる（表示文字は変更しない）。既存のzip+XML手組み処理・buildZip（deflate-raw）をそのまま流用。",
+      "metrics": [
+        {
+          "date": "2026-11-04T17:17:25Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "reviews": [
+        {
+          "date": "2026-11-04",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開直後。rPh/phoneticPrの検出・削除をPythonでzipfile直接注入した実ファイル（共有文字列1件・インライン文字列1件・ふりがな無しセル1件）で検証し、削除後にopenpyxlで再読込して文字が変わらずrPh/phoneticPrが消えていることを確認。Playwright（ja/en・390/1280px）で一覧表示・CSV出力・削除済みファイルのダウンロード・横スクロール無し・JSエラー無しを確認済み）"
+        }
+      ]
     }
   ],
   "review_summary_2026-10-24": {

@@ -608,3 +608,10 @@
 - 検証：Node単体テストでcommentsExtendedの返信・解決済み判定とオーバーラップする選択範囲の文章抽出を確認後、python-docxで作った実ファイル（返信・解決済み1件＋別の未解決コメント、複数行コメント本文、選択範囲なしのコメント）をPlaywright（ja/en・390/1280px）でアップロードし、集計・一覧・CSV（BOM・エスケープ）・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。
 - 相互リンクはdocx-kakure・docx-shodaku・sakusha-kesu・xlsx-comment・pptx-kakureの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加し、本番ページとのバイト比較で全7ページの配信内容一致を確認。
 - 次回：docx-commentの初回閲覧数を記録。backlogは残り3件。
+
+## 2026-11-04 実験65
+- 計測：GoatCounter取得成功（TOTAL.json累計10→11、内訳は「/」9→10、receipt-sheet「1」のまま、他57ページ・docx-commentも0）。health.md（58ページ・問題0件）・計測タグ（全60 index.html）・表記いずれも不備なし。
+- やったこと：backlog1番「xlsx-furigana：Excelのふりがな（読み）情報の確認・一括削除」を実施。共有文字列・インライン文字列の両方からrPh（ふりがな）を検出し、全シート横断で一覧化してCSV出力、情報だけを取り除いた新しいファイルも書き出せるツールを新規公開。
+- 検証：Pythonのzipfileで共有文字列1件・インライン文字列1件・ふりがな無しセル1件を注入した実ファイルを作成し、Playwright（ja/en・390/1280px）でアップロード→一覧・集計・CSV→削除済みファイルのダウンロードを確認。ダウンロードしたファイルをopenpyxlで再読込し、文字は不変・rPh/phoneticPrが消えていることを確認。
+- 相互リンクはxlsx-okikae・xlsx-comment・xlsx-kakure・sakusha-kesu・excel-troubleの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加し、excel-troubleの案内数表記を30→31に更新。
+- 次回：xlsx-furiganaの初回閲覧数を記録。backlogは残り2件。

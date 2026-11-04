@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>セルのふりがな（読み）情報を一覧チェック・一括削除：Excelふりがなクリーナー | てのひらツール</title>
+<meta name="description" content="Excel（.xlsx/.xlsm）のセルには、見た目には出ない「ふりがな（読み）」情報（PHONETIC関数やふりがなの表示で使われるrPh）が裏に保存されていることがあります。人名・地名など読み方そのものが個人情報になりうる文字列も対象になるため、社外に渡す前に、どのセル・シートにふりがなが付いているかを一覧表示し、CSV書き出しや、ふりがな情報だけを一括削除した新しいファイルの書き出しができます。文字そのものは変更しません。ファイルはどこにも送信されません。Excel cells can carry a hidden phonetic reading (furigana) you can't see at a glance — list every cell that has one, export as CSV, or build a copy with just the furigana data stripped (the visible text is untouched). Nothing is uploaded.">
+<link rel="canonical" href="https://tenohira-tools.github.io/xlsx-furigana/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select,input[type=text]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus,input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileListBox{display:grid;gap:10px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.fileCardHead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:#c0392b;font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:#c0392b;border-color:#c0392b}
+.fileCard .downloadRow{margin-top:8px}
+.fileCard button.dl{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:.88rem}
+.fileCard button.dl:disabled{opacity:.5;cursor:not-allowed}
+.fileCard .buildMsg{color:var(--accent);font-size:.85rem;margin:6px 0 0}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:100px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.total .n{color:var(--accent)}
+.filterRow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;margin-bottom:10px}
+.filterRow label{display:flex;align-items:center;gap:6px}
+.filterRow input[type=text]{min-width:200px}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card);white-space:nowrap}
+td.cell{white-space:nowrap}
+td.text{max-width:260px;white-space:pre-wrap;word-break:break-word}
+td.reading{max-width:260px;white-space:pre-wrap;word-break:break-word;color:var(--warn)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+@media print{
+  .top,.lang,#dropzone,#fileListCard,.filterRow,.btnRow,.about,.related,footer{display:none!important}
+  .hint{display:none}
+  .scroll{max-height:none;overflow:visible;border:0}
+  th{position:static}
+  body{background:#fff;color:#000}
+  section.card{border:0;padding:0;margin:0 0 10px}
+}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">セルのふりがな（読み）情報を一覧チェック・一括削除</h1>
+    <p class="sub" data-i="sub">Excelのセルには、見た目には出ない「ふりがな（読み）」情報が裏に保存されていることがあります。氏名・地名など、読み方そのものが個人情報になりうる文字列も対象です。どのシート・セルにふりがなが付いているかを一覧表示し、CSV書き出しや、ふりがな情報だけを取り除いた新しいファイルの書き出しに対応します。表示されている文字そのものは変更しません。ファイルはどこにも送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数可）</p>
+    <p class="hint" data-i="dropzoneHint">全シート・共有文字列・セル個別の文字列からふりがな（rPh）が付いているものだけを抜き出します。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">ふりがなの集計</h2>
+  <div class="statGrid" id="statGrid"></div>
+  <p class="hint" data-i="statsHint">共有文字列（複数のセルで同じ文字列を共有している場合も含む）とセル個別の文字列（インライン文字列）の両方から、ふりがな（rPh）が設定されているものだけを数えています。</p>
+</section>
+
+<section class="card" id="filterCard" style="display:none">
+  <h2 data-i="filterHeading">絞り込み</h2>
+  <div class="filterRow">
+    <label id="fileFilterLabel" style="display:none"><span data-i="filterFile">ファイル：</span><select id="fileFilter"></select></label>
+    <label><span data-i="filterSheet">シート：</span><select id="sheetFilter"></select></label>
+    <label><input type="text" id="searchBox" data-i-ph="searchPh"></label>
+  </div>
+</section>
+
+<section class="card" id="resultCard" style="display:none">
+  <h2 data-i="resultHeading">ふりがなが付いているセルの一覧</h2>
+  <p class="hint" id="resultCount"></p>
+  <div id="resultBox"></div>
+  <div class="btnRow">
+    <button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">この一覧をCSVでダウンロード</button>
+    <button type="button" class="secondary" id="printBtn" disabled data-i="printBtn">この一覧を印刷</button>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル・複数シートも自動でまとめて読み込みます）。</li>
+      <li>ファイルごとに、ふりがなが付いているセルの件数が表示されます。件数が1件以上ある場合は「ふりがなを削除した新しいファイルをダウンロード」ボタンが出ます。</li>
+      <li>下の一覧で、どのシート・セルに、どの文字に対してどのふりがなが付いているかを確認します。絞り込みでファイル・シート・キーワードを指定できます。</li>
+      <li>必要であれば一覧を「CSVでダウンロード」するか「この一覧を印刷」します。ふりがな情報を取り除いた新しいファイルが必要な場合は、ファイルごとの削除ボタンを使います（文字そのものは変わりません。元のファイルも変更されません）。</li>
+    </ol>
+    <h3>Q. そもそも「ふりがな（読み）」情報とは何ですか？</h3>
+    <p>A. Excelのセルに日本語の文字を入力すると、PHONETIC関数やセルの「ふりがなの表示」機能で使うための読み方（ひらがな・カタカナ）が、ファイルの中に文字とは別に保存されることがあります。見た目のセルの表示を変えても、この読み情報だけが古いまま残っていることもあります。</p>
+    <h3>Q. なぜ社外に渡す前に確認した方がいいのですか？</h3>
+    <p>A. セルの文字自体を通称名や略称に直しても、裏のふりがな情報には本来の読み方（本名の読みなど）が残っている場合があります。氏名・会社名・地名のふりがなは、文字だけでは分からない情報を含むことがあるため、渡す前に何が入っているか確認する価値があります。</p>
+    <h3>Q. 「削除」すると、セルの文字や見た目は変わりますか？</h3>
+    <p>A. 変わりません。削除するのはふりがな（読み）情報と、その書式設定（phoneticPr）だけです。セルに表示されている文字・数式・書式・列幅などはすべてそのまま残ります。PHONETIC関数やふりがなの表示機能は、削除後は空欄を返すようになります。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。「ダウンロード」ボタンを押すと、ふりがな情報だけを取り除いた新しいファイルが別名でダウンロードされます。アップロードした元のファイルは変更されません。</p>
+    <h3>Q. 一覧に出てこないのに、ふりがなが残っていることはありますか？</h3>
+    <p>A. このツールは、実際に読み（rPh）が設定されているセルだけを一覧に出します。読みが未設定のまま「ふりがなの書式設定」だけが残っている場合（見た目には何も影響しません）は一覧に出ませんが、削除を実行すると、その空の設定もまとめて取り除かれます。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Excel (.xlsx/.xlsm) files into the box above, or click it to choose one or more (every sheet in every file is scanned automatically).</li>
+      <li>Each file shows how many cells carry phonetic (furigana) reading data. When there's at least one, a "Download a copy with furigana removed" button appears for that file.</li>
+      <li>The list below shows exactly which sheet, cell, display text and reading each one has. Use the filters to narrow it down by file, sheet or keyword.</li>
+      <li>Download the list as CSV or print it directly. To get a file with the reading data stripped, use the per-file download button (the visible text is untouched; your original file is never changed).</li>
+    </ol>
+    <h3>Q. What is this hidden "furigana" / phonetic reading data?</h3>
+    <p>A. When you type Japanese text into an Excel cell, a phonetic reading (in hiragana or katakana) can be stored alongside it for the PHONETIC function or Excel's "Show Furigana" display. It's saved separately from the visible text, so it can go stale even after you edit the cell.</p>
+    <h3>Q. Why check this before sending a file outside your company?</h3>
+    <p>A. Even if you've replaced a cell's visible text with a nickname or abbreviation, the hidden reading can still carry the original reading (for example, the real reading of someone's name). Names, company names and place names can carry information in their reading that isn't obvious from the displayed text alone.</p>
+    <h3>Q. Does removing it change the cell's text or appearance?</h3>
+    <p>A. No. Only the phonetic reading data and its formatting settings (phoneticPr) are removed. The visible text, formulas, formatting and column widths are all left exactly as they are. The PHONETIC function and "Show Furigana" will return blank afterwards.</p>
+    <h3>Q. Is my original file changed?</h3>
+    <p>A. No. Clicking "Download" saves a new file with the phonetic data stripped, under a different name. The uploaded original is never modified.</p>
+    <h3>Q. Could furigana remain even if a cell isn't listed?</h3>
+    <p>A. This tool lists only cells where an actual reading (rPh) is set. A cell that has empty phonetic formatting but no reading text yet (invisible either way) won't appear in the list, but removal still clears that empty setting too.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel 2007+ .xlsx and .xlsm files. The older .xls format and password-protected files are not supported; a failed file shows an error next to it.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul id="relJa"></ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul id="relEn"></ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"そもそも「ふりがな（読み）」情報とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"Excelのセルに日本語を入力すると、PHONETIC関数やふりがなの表示機能のための読み方がファイル内に別途保存されることがあり、見た目を直しても古い読みが残る場合があります。"}},
+    {"@type":"Question","name":"なぜ社外に渡す前に確認した方がいいのですか？","acceptedAnswer":{"@type":"Answer","text":"セルの文字を通称名や略称に直しても、裏のふりがな情報には本来の読み方が残っていることがあり、文字だけでは分からない情報を含む場合があります。"}},
+    {"@type":"Question","name":"「削除」すると、セルの文字や見た目は変わりますか？","acceptedAnswer":{"@type":"Answer","text":"変わりません。削除するのはふりがな情報とその書式設定だけで、セルの文字・数式・書式はすべてそのまま残ります。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。新しいファイルが別名でダウンロードされ、アップロードした元のファイルは変更されません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   XLSX ZIP + XML core — same hand-rolled approach already shipped across
+   the xlsx-* tool family (no external libraries; only standard browser
+   APIs: DecompressionStream/CompressionStream/TextDecoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+/* Compresses each entry with deflate-raw so the rebuilt workbook doesn't
+   balloon to several times its original size (same approach as
+   xlsx-style/xlsx-hani/xlsx-okikae's buildZip). */
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function colLetterToIndex(ref){
+  var m=/^([A-Z]+)/.exec(ref); if(!m) return 0;
+  var letters=m[1], idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.charCodeAt(i)-64);
+  return idx-1;
+}
+function refToRowCol(ref){
+  var m=/^\$?([A-Z]+)\$?([0-9]+)$/.exec(ref);
+  if(!m) return {row:0,col:0};
+  return {col:colLetterToIndex(m[1]), row:parseInt(m[2],10)-1};
+}
+
+/* =====================================================================
+   Furigana (phonetic reading) extraction & removal.
+
+   A shared string <si> (or inline <is>) that carries furigana stores it
+   as one or more trailing <rPh sb=".." eb="..">
+tags, each wrapping a
+   <t> with the reading text, plus a sibling <phoneticPr> that only
+   records the font used for the reading (no reading text itself). Both
+   are emitted by findTags(xml, "rPh"/"phoneticPr") regardless of
+   nesting depth, so they're found whether the display text is a plain
+   <t> or multiple rich-text <r> runs.
+   ===================================================================== */
+function extractRunFurigana(innerXml){
+  var rphTags=findTags(innerXml,"rPh");
+  if(!rphTags.length) return null;
+  var ranges=rphTags.map(function(t){return [t.start,t.end]});
+  function inRange(pos){ for(var i=0;i<ranges.length;i++){ if(pos>=ranges[i][0]&&pos<ranges[i][1]) return true; } return false; }
+  var baseText=findTags(innerXml,"t").filter(function(t){ return !t.selfClose && t.inner!==null && !inRange(t.start); })
+    .map(function(t){ return decodeXmlEntities(t.inner); }).join("");
+  var reading=rphTags.map(function(rp){
+    if(rp.selfClose || rp.inner===null) return "";
+    var innerT=findTags(rp.inner,"t")[0];
+    return (innerT && innerT.inner!==null) ? decodeXmlEntities(innerT.inner) : "";
+  }).join("");
+  if(!baseText && !reading) return null;
+  return {text:baseText, reading:reading};
+}
+function stripFuriganaTags(xml){
+  var spans=[];
+  findTags(xml,"rPh").forEach(function(t){ spans.push([t.start,t.end]); });
+  findTags(xml,"phoneticPr").forEach(function(t){ spans.push([t.start,t.end]); });
+  if(!spans.length) return xml;
+  spans.sort(function(a,b){ return b[0]-a[0]; });
+  var out=xml;
+  spans.forEach(function(s){ out=out.slice(0,s[0])+out.slice(s[1]); });
+  return out;
+}
+
+async function parseXlsxFurigana(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  if(!sheetList.length) throw new Error("NOT_XLSX");
+
+  var sssEntry=byName["xl/sharedStrings.xml"];
+  var sssPath=sssEntry?sssEntry.name:null;
+  var sharedInfo={};
+  if(sssEntry){
+    var sssXml=dec.decode(sssEntry.bytes);
+    findTags(sssXml,"si").forEach(function(si,idx){
+      if(si.selfClose||si.inner===null) return;
+      var fx=extractRunFurigana(si.inner);
+      if(fx) sharedInfo[idx]=fx;
+    });
+  }
+
+  var sheetPaths=[], rows=[];
+  sheetList.forEach(function(s){
+    var entry=byName[s.path];
+    if(!entry) return;
+    sheetPaths.push(s.path);
+    var xml=dec.decode(entry.bytes);
+    findTags(xml,"c").forEach(function(c){
+      if(c.selfClose||c.inner===null) return;
+      var ref=c.attrs.r||"?";
+      if(c.attrs.t==="s"){
+        var vTag=findTags(c.inner,"v")[0];
+        if(!vTag||vTag.inner===null) return;
+        var idx=parseInt(decodeXmlEntities(vTag.inner),10);
+        if(!isNaN(idx) && sharedInfo[idx]){
+          rows.push({sheet:s.name, ref:ref, text:sharedInfo[idx].text, reading:sharedInfo[idx].reading});
+        }
+      } else {
+        var isTag=findTags(c.inner,"is")[0];
+        if(isTag && isTag.inner!==null){
+          var fx=extractRunFurigana(isTag.inner);
+          if(fx) rows.push({sheet:s.name, ref:ref, text:fx.text, reading:fx.reading});
+        }
+      }
+    });
+  });
+  rows.sort(function(a,b){
+    if(a.sheet!==b.sheet) return a.sheet<b.sheet?-1:1;
+    var ra=refToRowCol(a.ref), rb=refToRowCol(b.ref);
+    if(ra.row!==rb.row) return ra.row-rb.row;
+    return ra.col-rb.col;
+  });
+  return {entries:entries, sssPath:sssPath, sheetPaths:sheetPaths, sheetNames:sheetList.map(function(s){return s.name}), rows:rows};
+}
+
+async function buildFuriganaRemovedXlsx(parsed){
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var targets={}; if(parsed.sssPath) targets[parsed.sssPath]=true;
+  parsed.sheetPaths.forEach(function(p){ targets[p]=true; });
+  var outFiles=parsed.entries.map(function(e){
+    if(!targets[e.name]) return {name:e.name, bytes:e.bytes};
+    var xml=dec.decode(e.bytes);
+    return {name:e.name, bytes:enc.encode(stripFuriganaTags(xml))};
+  });
+  return await buildZip(outFiles);
+}
+
+/* =====================================================================
+   CSV export
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"セルのふりがな（読み）情報を一覧チェック・一括削除",
+  sub:"Excelのセルには、見た目には出ない「ふりがな（読み）」情報が裏に保存されていることがあります。氏名・地名など、読み方そのものが個人情報になりうる文字列も対象です。どのシート・セルにふりがなが付いているかを一覧表示し、CSV書き出しや、ふりがな情報だけを取り除いた新しいファイルの書き出しに対応します。表示されている文字そのものは変更しません。ファイルはどこにも送信されません。",
+  dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
+  dropzoneHint:"全シート・共有文字列・セル個別の文字列からふりがな（rPh）が付いているものだけを抜き出します。ファイルは選択した端末の中だけで処理されます。",
+  fileListHeading:"追加したファイル",
+  statsHeading:"ふりがなの集計",
+  statsHint:"共有文字列（複数のセルで同じ文字列を共有している場合も含む）とセル個別の文字列（インライン文字列）の両方から、ふりがな（rPh）が設定されているものだけを数えています。",
+  statTotal:"合計セル数",statSheets:"該当シート数",statFiles:"該当ファイル数",
+  filterHeading:"絞り込み",
+  filterFile:"ファイル：",filterSheet:"シート：",
+  searchPh:"セル・文字・ふりがなを検索",
+  allOption:"すべて",
+  resultHeading:"ふりがなが付いているセルの一覧",
+  downloadBtn:"この一覧をCSVでダウンロード",
+  printBtn:"この一覧を印刷",
+  removeBtn:"削除",
+  dlBtn:"ふりがなを削除した新しいファイルをダウンロード",
+  dlBtnBusy:"書き出し中…",
+  dlDone:"ダウンロードしました：",
+  loadingLabel:"読み込み中…",
+  noneLabel:"ふりがなは見つかりませんでした",
+  colFile:"ファイル",colSheet:"シート",colCell:"セル",colText:"文字",colReading:"ふりがな",
+  errBad:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  errNone:"ふりがなが付いているセルは見つかりませんでした",
+  moreNote:"件まで表示しています（ダウンロードには絞り込み後の全件が含まれます）。",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Check every cell's hidden phonetic reading (furigana) — and bulk-remove it",
+  sub:"Excel cells can carry a hidden phonetic reading (furigana) that isn't visible at a glance — including for names and places, where the reading itself can carry information the displayed text doesn't. List every sheet/cell that has one, export as CSV, or build a copy with just the reading data stripped. The visible text itself is never changed. Nothing is uploaded.",
+  dropzoneText:"Drag and drop Excel (.xlsx) file(s) here, or click to choose (multiple allowed)",
+  dropzoneHint:"Only cells with an actual phonetic reading (rPh), shared or per-cell, are extracted, across every sheet. Everything happens on this device.",
+  fileListHeading:"Added files",
+  statsHeading:"Furigana summary",
+  statsHint:"Counts both shared strings (even when several cells share the same text) and per-cell inline strings — only ones with an actual reading (rPh) set.",
+  statTotal:"Total cells",statSheets:"Sheets affected",statFiles:"Files affected",
+  filterHeading:"Filters",
+  filterFile:"File:",filterSheet:"Sheet:",
+  searchPh:"Search cell / text / reading",
+  allOption:"All",
+  resultHeading:"Cells with a phonetic reading",
+  downloadBtn:"Download this list as CSV",
+  printBtn:"Print this list",
+  removeBtn:"Remove",
+  dlBtn:"Download a copy with furigana removed",
+  dlBtnBusy:"Building…",
+  dlDone:"Downloaded: ",
+  loadingLabel:"Loading…",
+  noneLabel:"No furigana found",
+  colFile:"File",colSheet:"Sheet",colCell:"Cell",colText:"Text",colReading:"Reading",
+  errBad:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  errNone:"No cells with a phonetic reading were found",
+  moreNote:" rows shown (the download includes every filtered row).",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1, fileFilter:"", sheetFilter:"", search:""};
+var MAX_RENDER=1000;
+
+function escTrunc(s,max){ s=String(s); max=max||160; var t=s.length>max?s.slice(0,max)+"…":s; return esc(t); }
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", parsed:null, rows:[], sheetNames:[], building:false, buildMsg:""};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){ return parseXlsxFurigana(new Uint8Array(buf)); })
+    .then(function(result){
+      f.parsed=result; f.rows=result.rows; f.sheetNames=result.sheetNames; f.loading=false; render();
+    }).catch(function(){
+      f.loading=false; f.error=T[lang].errBad; f.rows=[]; render();
+    });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function allRows(){
+  var out=[];
+  state.files.forEach(function(f){
+    if(f.loading||f.error) return;
+    f.rows.forEach(function(r){ out.push({file:f.name,fileId:f.id,sheet:r.sheet,ref:r.ref,text:r.text,reading:r.reading}); });
+  });
+  return out;
+}
+function filteredRows(){
+  var rows=allRows(), s=state;
+  var needle=s.search.trim().toLowerCase();
+  return rows.filter(function(r){
+    if(s.fileFilter && String(r.fileId)!==s.fileFilter) return false;
+    if(s.sheetFilter && r.sheet!==s.sheetFilter) return false;
+    if(needle){
+      var hay=(r.ref+" "+(r.text||"")+" "+(r.reading||"")).toLowerCase();
+      if(hay.indexOf(needle)===-1) return false;
+    }
+    return true;
+  });
+}
+
+function suggestOutName(name){
+  var m=/^(.*)\.(xlsx|xlsm)$/i.exec(name);
+  if(!m) return name+"_ふりがな削除済み.xlsx";
+  return m[1]+"_ふりがな削除済み."+m[2].toLowerCase();
+}
+function buildAndDownload(id){
+  var f=state.files.filter(function(x){return x.id===id})[0];
+  if(!f || !f.parsed || !f.rows.length || f.building) return;
+  var t=T[lang];
+  f.building=true; f.buildMsg=""; render();
+  buildFuriganaRemovedXlsx(f.parsed).then(function(bytes){
+    var outName=suggestOutName(f.name);
+    var blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=outName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},2000);
+    f.building=false; f.buildMsg=t.dlDone+outName; render();
+  }).catch(function(){
+    f.building=false; f.buildMsg=t.errBad; render();
+  });
+}
+
+function renderFileList(){
+  var box=$("fileListBox"), h="", t=T[lang];
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<div class='fileCardHead'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){ h+="<span class='fMeta'>"+esc(t.loadingLabel)+"</span>"; }
+    else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+    else { h+="<span class='fMeta'>"+(f.rows.length?f.rows.length:esc(t.noneLabel))+"</span>"; }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(t.removeBtn)+"</button>";
+    h+="</div>";
+    if(!f.loading && !f.error && f.rows.length){
+      h+="<div class='downloadRow'><button type='button' class='dl' data-id='"+f.id+"' "+(f.building?"disabled":"")+">"+esc(f.building?t.dlBtnBusy:t.dlBtn)+"</button>";
+      if(f.buildMsg) h+="<p class='buildMsg'>"+esc(f.buildMsg)+"</p>";
+      h+="</div>";
+    }
+    h+="</div>";
+  });
+  box.innerHTML=h;
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+  var dls=box.querySelectorAll(".dl");
+  for(var k=0;k<dls.length;k++){ dls[k].addEventListener("click",function(){ buildAndDownload(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function renderStats(rows){
+  var sheets={}, files={};
+  rows.forEach(function(r){ sheets[r.sheet]=true; files[r.fileId]=true; });
+  var items=[[rows.length,T[lang].statTotal,"total"],[Object.keys(sheets).length,T[lang].statSheets,""],[Object.keys(files).length,T[lang].statFiles,""]];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function renderFilterOptions(){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  $("fileFilterLabel").style.display=multiFile?"":"none";
+  if(multiFile){
+    var curFile=$("fileFilter").value;
+    var h="<option value=''>"+esc(T[lang].allOption)+"</option>";
+    state.files.forEach(function(f){ if(!f.loading&&!f.error) h+="<option value='"+f.id+"'>"+esc(f.name)+"</option>"; });
+    $("fileFilter").innerHTML=h;
+    $("fileFilter").value=curFile&&state.files.some(function(f){return String(f.id)===curFile})?curFile:"";
+    state.fileFilter=$("fileFilter").value;
+  } else { state.fileFilter=""; }
+  var all=allRows();
+  var sheetSet=[], seenSheet={};
+  all.forEach(function(r){ if(!state.fileFilter||String(r.fileId)===state.fileFilter){ if(!seenSheet[r.sheet]){seenSheet[r.sheet]=true; sheetSet.push(r.sheet);} } });
+  var curSheet=$("sheetFilter").value;
+  var sh="<option value=''>"+esc(T[lang].allOption)+"</option>";
+  sheetSet.forEach(function(s){ sh+="<option value='"+esc(s)+"'>"+esc(s)+"</option>"; });
+  $("sheetFilter").innerHTML=sh;
+  $("sheetFilter").value=sheetSet.indexOf(curSheet)!==-1?curSheet:"";
+  state.sheetFilter=$("sheetFilter").value;
+}
+
+function renderResult(rows){
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  $("resultCount").textContent=rows.length;
+  if(!rows.length){
+    $("resultBox").innerHTML="<p class='hint'>"+esc(T[lang].errNone)+"</p>";
+    $("downloadBtn").disabled=true; $("printBtn").disabled=true;
+    return;
+  }
+  var shown=rows.slice(0,MAX_RENDER);
+  var h="<div class='scroll'><table><thead><tr>";
+  if(multiFile) h+="<th>"+esc(T[lang].colFile)+"</th>";
+  h+="<th>"+esc(T[lang].colSheet)+"</th><th>"+esc(T[lang].colCell)+"</th>"+
+     "<th>"+esc(T[lang].colText)+"</th><th>"+esc(T[lang].colReading)+"</th></tr></thead><tbody>";
+  shown.forEach(function(r){
+    h+="<tr>";
+    if(multiFile) h+="<td>"+escTrunc(r.file,40)+"</td>";
+    h+="<td>"+escTrunc(r.sheet,30)+"</td><td class='cell'>"+esc(r.ref)+"</td>";
+    h+="<td class='text'>"+escTrunc(r.text||"",200)+"</td>";
+    h+="<td class='reading'>"+escTrunc(r.reading||"",200)+"</td>";
+    h+="</tr>";
+  });
+  h+="</tbody></table></div>";
+  if(rows.length>MAX_RENDER) h+="<p class='hint'>"+MAX_RENDER+T[lang].moreNote+"</p>";
+  $("resultBox").innerHTML=h;
+  $("downloadBtn").disabled=false; $("printBtn").disabled=false;
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+  if(!has){
+    $("statsCard").style.display="none"; $("filterCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  var ready=state.files.some(function(f){return !f.loading&&!f.error});
+  if(!ready){
+    $("statsCard").style.display="none"; $("filterCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  renderFilterOptions();
+  $("statsCard").style.display=""; $("filterCard").style.display=""; $("resultCard").style.display="";
+  var all=allRows();
+  renderStats(all);
+  renderResult(filteredRows());
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+$("fileFilter").addEventListener("change",function(){ state.fileFilter=this.value; renderFilterOptions(); renderResult(filteredRows()); });
+$("sheetFilter").addEventListener("change",function(){ state.sheetFilter=this.value; renderResult(filteredRows()); });
+$("searchBox").addEventListener("input",function(){ state.search=this.value; renderResult(filteredRows()); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var rows=filteredRows();
+  if(!rows.length) return;
+  var multiFile=state.files.filter(function(f){return !f.loading&&!f.error}).length>1;
+  var header=[];
+  if(multiFile) header.push(T[lang].colFile);
+  header=header.concat([T[lang].colSheet,T[lang].colCell,T[lang].colText,T[lang].colReading]);
+  var out=[header];
+  rows.forEach(function(r){
+    var row=[];
+    if(multiFile) row.push(r.file);
+    row=row.concat([r.sheet,r.ref,r.text||"",r.reading||""]);
+    out.push(row);
+  });
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="furigana.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+$("printBtn").addEventListener("click",function(){ window.print(); });
+
+var RELATED=[
+ {href:"../xlsx-okikae/",ja:["Excelの置換（Ctrl+H）も開いているファイルだけ：複数のエクセルファイルの文字列を一括置換","このツールと同じく共有文字列を扱うツール。文字列の置換時はふりがな（rPh）部分を変更対象から除外して安全に処理します。"],
+   en:["Excel's own Find & Replace only works on the open file — replace text across many files at once","Also works with shared strings; its find/replace safely skips the furigana (rPh) portion."]},
+ {href:"../xlsx-comment/",ja:["シートのあちこちに散らばったコメント・メモを全部一覧に","セルに付いた見えにくい情報を一覧化する点ではこのツールと同じ考え方。コメント・メモ版。"],
+   en:["List every cell comment and note across every sheet","The same idea applied to another hard-to-see per-cell annotation: comments and notes."]},
+ {href:"../xlsx-kakure/",ja:["社外に送る前に確認：Excelの「隠れた情報」一括チェック","非表示シート・コメント・作成者名・外部リンクなどをまとめて診断。ふりがなと合わせて確認すると安心です。"],
+   en:["Check an Excel file for \"hidden\" information before sending it outside your company","Checks hidden sheets, comments, author metadata and external links — pairs well with checking furigana."]},
+ {href:"../sakusha-kesu/",ja:["社外に渡す前に、作成者・最終更新者・コメント投稿者名を消す","作成者名などの個人情報を消す別のツール。ふりがなの削除と合わせて使うと、より安心です。"],
+   en:["Remove creator / comment-author names before sending a file out","Another privacy pass before sharing a file — pairs well with stripping furigana."]},
+ {href:"../excel-trouble/",ja:["エクセルのトラブル解決ガイド","「重い」「保存できない」「エラー」「リンク」「印刷」など症状から全ツールを探す。"],
+   en:["Excel Troubleshooting Guide","Find the right tool by symptom: heavy, save errors, error values, links, printing."]}
+];
+function renderRelated(){
+  var ja="", en="";
+  RELATED.forEach(function(r){
+    ja+="<li><a href='"+r.href+"'>"+esc(r.ja[0])+"</a> — "+esc(r.ja[1])+"</li>";
+    en+="<li><a href='"+r.href+"'>"+esc(r.en[0])+"</a> — "+esc(r.en[1])+"</li>";
+  });
+  $("relJa").innerHTML=ja; $("relEn").innerHTML=en;
+}
+renderRelated();
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var phs=document.querySelectorAll("[data-i-ph]");
+  for(var p=0;p<phs.length;p++){var k2=phs[p].getAttribute("data-i-ph");if(T[lang][k2]!==undefined)phs[p].setAttribute("placeholder",T[lang][k2])}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
