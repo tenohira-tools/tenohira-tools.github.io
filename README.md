@@ -31,6 +31,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [Excel・Word・PowerPointの画像をまとめて保存：zip変換せず一括抽出](https://tenohira-tools.github.io/office-gazou/)
 - [Word・PowerPointを社外に渡す前のチェックまとめ｜症状から探す8ツール](https://tenohira-tools.github.io/office-trouble/)
 - [「グラフのデータを編集」で元の表が丸ごと見える：PowerPointグラフの埋め込みExcel診断ツール](https://tenohira-tools.github.io/pptx-chart-kakure/)
+- [別のPCで文字化け・レイアウト崩れする原因を確認：PowerPointの使用フォント一覧（スライド・マスター別、テーマフォント解決）](https://tenohira-tools.github.io/pptx-font/)
 - [社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除](https://tenohira-tools.github.io/pptx-kakure/)
 - [「パワーポイントが重い」原因を診断：ファイル内訳チェッカー](https://tenohira-tools.github.io/pptx-omoi/)
 - [レシートの写真を複数まとめて1枚のPDFに｜領収書まとめてPDF変換・台紙メーカー](https://tenohira-tools.github.io/receipt-sheet/)
