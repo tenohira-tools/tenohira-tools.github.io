@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>Wordの文字数カウントは1ファイルずつ：複数ファイルの文字数を一括集計（原稿用紙換算も） | てのひらツール</title>
+<meta name="description" content="翻訳料・原稿料の見積もりで、複数のWordファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を見て手で足す手間なく、まとめてアップロードするだけで文字数（全体／空白を除く／空白と改行を除く）とファイルごとの合計、400字詰め原稿用紙換算枚数を一括表示・CSV出力します。ファイルはサーバーに送信されません。Count characters across multiple Word files at once for a translation or writing quote — with/without spaces and line breaks, plus a 400-character manuscript-page estimate. Nothing is uploaded.">
+<link rel="canonical" href="https://tenohira-tools.github.io/docx-mojisu/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+select:focus{outline:2px solid var(--accent);outline-offset:1px}
+#fileListBox{display:grid;gap:10px;margin-top:12px}
+.fileCard{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.fileCard .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.scopeRow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center}
+.statGrid{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.statBox{border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.statBox .n{font-size:1.4rem;font-weight:700}
+.statBox .l{color:var(--muted);font-size:.82rem}
+.statBox.total .n{color:var(--accent)}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal;word-break:break-all;max-width:260px}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+tr.totalRow td{font-weight:700;border-top:2px solid var(--line)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:700;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.secondary:disabled{opacity:.45;cursor:not-allowed}
+.btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+.related ul{padding-left:1.2em}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+@media print{
+  .top,.lang,#dropzone,#fileListCard,.scopeCard,.btnRow,.about,.related,footer{display:none!important}
+  .hint{display:none}
+  .scroll{max-height:none;overflow:visible;border:0}
+  th{position:static}
+  body{background:#fff;color:#000}
+  section.card{border:0;padding:0;margin:0 0 10px}
+}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">Wordの文字数カウントは1ファイルずつ：複数ファイルの文字数を一括集計</h1>
+    <p class="sub" data-i="sub">翻訳料・原稿料の見積もりで、複数のWord(.docx)ファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を確認し手で足す手間なく、まとめてアップロードするだけで文字数（全体／空白を除く／空白と改行を除く）をファイルごと・合計で一覧表示し、400字詰め原稿用紙換算枚数も表示します。ファイルはサーバーに送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p data-i="dropzoneText"><strong>ここにWord(.docx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数可）</p>
+    <p class="hint" data-i="dropzoneHint">文字数を数えるだけで、ファイルの書き換えは行いません。選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".docx" multiple style="display:none">
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">追加したファイル</h2>
+  <div id="fileListBox"></div>
+</section>
+
+<section class="card scopeCard" id="scopeCard" style="display:none">
+  <h2 data-i="scopeHeading">数える範囲</h2>
+  <div class="scopeRow">
+    <label><span data-i="scopeLabel">対象：</span>
+      <select id="scopeSelect">
+        <option value="body" data-i="scopeBody">本文のみ</option>
+        <option value="body_notes" data-i="scopeBodyNotes">本文＋脚注・文末脚注（既定）</option>
+        <option value="all" data-i="scopeAll">本文＋脚注・文末脚注＋ヘッダー・フッター</option>
+      </select>
+    </label>
+  </div>
+  <p class="hint" data-i="scopeHint">コメント・変更履歴で削除された文字は数えません（挿入として記録された文字は本文として数えます）。表の中の文字も本文として数えます。</p>
+</section>
+
+<section class="card" id="statsCard" style="display:none">
+  <h2 data-i="statsHeading">合計（選んだ全ファイル）</h2>
+  <div class="statGrid" id="statGrid"></div>
+</section>
+
+<section class="card" id="resultCard" style="display:none">
+  <h2 data-i="resultHeading">ファイルごとの文字数</h2>
+  <div id="resultBox"></div>
+  <div class="btnRow">
+    <button type="button" class="primary" id="downloadBtn" disabled data-i="downloadBtn">この一覧をCSVでダウンロード</button>
+    <button type="button" class="secondary" id="printBtn" disabled data-i="printBtn">この一覧を印刷</button>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にWord（.docx）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイルも一度に追加できます）。</li>
+      <li>「数える範囲」で、本文のみ／脚注・文末脚注を含める／ヘッダー・フッターまで含める、のどれかを選びます（ファイルを選び直す必要はありません。切り替えるとその場で再集計します）。</li>
+      <li>合計欄と、ファイルごとの一覧で文字数を確認します。</li>
+      <li>「CSVでダウンロード」で保存するか、「この一覧を印刷」でそのまま印刷します。CSVはExcelでそのまま開けます。</li>
+    </ol>
+    <h3>Q. 「文字数（全体）」「空白を除く」「空白・改行を除く」はそれぞれ何を数えていますか？</h3>
+    <p>A. 「全体」は半角・全角スペース、タブ、改行（段落の区切りや強制改行）もすべて1文字として数えた文字数です。「空白を除く」はそこから半角・全角スペースとタブを除いた数、「空白・改行を除く」はさらに改行（段落の区切り・強制改行）も除いた数です。見積もりの文字単価は「空白・改行を除く」文字数で計算することが多いため、この列を基準にしてください。絵文字など2文字分のコード単位を使う文字も、見た目どおり1文字として数えます。</p>
+    <h3>Q. 「400字詰め原稿用紙換算」はどう計算していますか？</h3>
+    <p>A. 「空白・改行を除く」文字数を400で割った枚数です（1行20字×20行の原稿用紙が基準）。小数点以下1桁で表示し、端数の扱いはファイルによって運用が異なるため四捨五入・切り上げは行わず、割った値そのものを表示します。</p>
+    <h3>Q. 「数える範囲」で結果が変わるのはなぜですか？どれを選べばいいですか？</h3>
+    <p>A. ヘッダー・フッターはページごとに同じ内容が繰り返されますが、ファイル内にはその内容が1回だけ保存されています。脚注・文末脚注は、本文に含めるかどうかで見積もりの考え方が分かれる部分です。原稿・翻訳の対象が本文だけなら「本文のみ」、脚注も翻訳対象なら「本文＋脚注・文末脚注」（既定）、ヘッダー・フッターの文言も対象にする場合だけ「全て」を選んでください。セクションごとに違うヘッダー・フッターが設定されているファイルでは、実際に使われているページ数ぶん重複して数えているわけではない点にご注意ください（ファイル内に保存されている内容を1回ずつ数えます）。</p>
+    <h3>Q. Wordの「文字カウント」ダイアログの数字と違うのはなぜですか？</h3>
+    <p>A. Wordは内部の計算方法を公開していないため、改行や特殊な要素の扱いが完全には一致しないことがあります。このツールは本ページに書いた数え方（スペース・タブ・改行の扱い）をそのまま適用するため、表示される数字の意味を確認できます。コメントの本文、変更履歴で「削除」として記録され未確定の文字は対象外です（確定済みとして表示される文字のみ数えます）。</p>
+    <h3>Q. 複数ファイルの合計はどこで見られますか？</h3>
+    <p>A. 「合計（選んだ全ファイル）」に、追加した全ファイルを合算した数字を表示します。ファイルごとの数字は下の一覧とCSVに含まれます。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Word 2007以降の.docx形式に対応しています。古い.doc形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Word (.docx) file(s) into the box above, or click it to choose one or more at once.</li>
+      <li>Pick a scope: body only, body + footnotes/endnotes, or also headers/footers. Switching re-counts instantly — no need to re-add files.</li>
+      <li>Check the combined total and the per-file list.</li>
+      <li>Click "Download as CSV" to save, or "Print this list" to print it directly. The CSV opens directly in Excel.</li>
+    </ol>
+    <h3>Q. What exactly do "all characters", "excl. spaces" and "excl. spaces/breaks" count?</h3>
+    <p>A. "All characters" counts every half/full-width space, tab and line break (paragraph boundary or a manual line break) as one character each. "Excl. spaces" removes half/full-width spaces and tabs. "Excl. spaces/breaks" also removes line breaks. Quote rates are usually based on the "excl. spaces/breaks" figure, so use that column as your baseline. Characters using surrogate pairs (like many emoji) are still counted as one character each, matching how they look.</p>
+    <h3>Q. How is the "400-char manuscript page" estimate calculated?</h3>
+    <p>A. The "excl. spaces/breaks" count divided by 400 (a standard Japanese manuscript page: 20 characters × 20 lines). Shown to one decimal place with no rounding, since conventions for rounding up vary.</p>
+    <h3>Q. Why does the result change with the scope setting — which should I pick?</h3>
+    <p>A. Headers and footers repeat on every page visually, but the file stores that content only once. Footnotes/endnotes are the part where translation-quote practice tends to differ. Use "body only" if only the running text matters, "body + footnotes/endnotes" (the default) if footnotes are also being translated, and "all" only if header/footer text should count too. For files with different headers/footers per section, this counts each stored header/footer once — not once per page it's displayed on.</p>
+    <h3>Q. Why doesn't this match Word's own Word Count dialog?</h3>
+    <p>A. Word doesn't publish exactly how it counts, so edge cases around line breaks can differ slightly. This tool applies the rule described on this page consistently, so you know exactly what's being measured. Comment text, and text recorded as a tracked "deletion" that hasn't been accepted, is excluded (only the text that would currently display is counted).</p>
+    <h3>Q. Where do I see the combined total across files?</h3>
+    <p>A. The "Combined total" panel shows the sum across every added file. Per-file numbers are in the list below and in the CSV.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read and analyzed inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Word 2007+ .docx files. The older .doc format and password-protected files are not supported; a failed file shows an error next to it.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul id="relJa"></ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul id="relEn"></ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「文字数（全体）」「空白を除く」「空白・改行を除く」はそれぞれ何を数えていますか？","acceptedAnswer":{"@type":"Answer","text":"「全体」はスペース・タブ・改行もすべて1文字として数えます。「空白を除く」は半角・全角スペースとタブを除いた数、「空白・改行を除く」はさらに改行も除いた数です。見積もりの文字単価は「空白・改行を除く」文字数で計算することが多いです。"}},
+    {"@type":"Question","name":"「400字詰め原稿用紙換算」はどう計算していますか？","acceptedAnswer":{"@type":"Answer","text":"「空白・改行を除く」文字数を400で割った枚数（1行20字×20行が基準）です。小数点以下1桁で表示し、四捨五入・切り上げは行いません。"}},
+    {"@type":"Question","name":"「数える範囲」で結果が変わるのはなぜですか？どれを選べばいいですか？","acceptedAnswer":{"@type":"Answer","text":"本文のみ／本文＋脚注・文末脚注（既定）／本文＋脚注・文末脚注＋ヘッダー・フッター、から選べます。原稿・翻訳の対象に合わせて選んでください。ヘッダー・フッターはページ数分ではなく、ファイルに保存されている内容を1回ずつ数えます。"}},
+    {"@type":"Question","name":"Wordの「文字カウント」ダイアログの数字と違うのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"Wordは数え方を公開していないため完全には一致しないことがあります。このツールはページに書いた数え方をそのまま適用し、コメント本文や未確定の削除文字は対象外です。"}},
+    {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* =====================================================================
+   DOCX ZIP + XML core — same hand-rolled approach already shipped in
+   xlsx-kakure/xlsx-comment/docx-kakure/pptx-kakure/docx-comment/...
+   (no external libraries; only standard browser APIs:
+   DecompressionStream/TextDecoder).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+
+/* =====================================================================
+   Only the parts that can carry countable text are decoded (not the
+   whole ZIP): word/document.xml, header(N) / footer(N) (one per section
+   definition, stored once regardless of how many pages use it),
+   footnotes.xml, endnotes.xml. Binary parts (media, etc.) are never
+   passed through TextDecoder.
+   ===================================================================== */
+async function parseDocxParts(bytes){
+  var entries=zipCentralDirectory(bytes);
+  var wanted=/^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/i;
+  var map={};
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    if(!wanted.test(en.name)) continue;
+    map[en.name]=en;
+  }
+  if(!map["word/document.xml"]) throw new Error("NOT_DOCX");
+  var out={document:"",headers:[],footers:[],footnotes:"",endnotes:""};
+  for(var name in map){
+    var text=new TextDecoder("utf-8").decode(await zipReadEntry(bytes,map[name]));
+    if(/document\.xml$/i.test(name)) out.document=text;
+    else if(/header\d+\.xml$/i.test(name)) out.headers.push(text);
+    else if(/footer\d+\.xml$/i.test(name)) out.footers.push(text);
+    else if(/footnotes\.xml$/i.test(name)) out.footnotes=text;
+    else if(/endnotes\.xml$/i.test(name)) out.endnotes=text;
+  }
+  return out;
+}
+
+/* Walk a part's XML once, splitting it into paragraphs (w:p ... /w:p).
+   w:tab becomes a tab character, w:br/w:cr become a line break, and
+   w:t runs contribute their decoded text. Text inside a tracked
+   "deletion" uses <w:delText> instead of <w:t>, so it is naturally
+   excluded; text inside a tracked insertion still uses <w:t>, so it
+   is naturally included (matches what currently displays as text). */
+function extractParagraphs(xml){
+  if(!xml) return [];
+  var paras=[], buf=null;
+  var TOKEN_RE=/<w:p\b[^>]*>|<\/w:p>|<w:tab\b[^>]*\/>|<w:br\b[^>]*\/>|<w:cr\b[^>]*\/>|<w:t\b[^>]*\/>|<w:t\b([^>]*?)>([\s\S]*?)<\/w:t>/g;
+  var m;
+  while((m=TOKEN_RE.exec(xml))){
+    var whole=m[0];
+    if(whole.charAt(0)==="<" && whole.charAt(1)==="/"){
+      if(buf!==null){ paras.push(buf); buf=null; }
+      continue;
+    }
+    if(/^<w:p\b/.test(whole)){
+      if(buf!==null) paras.push(buf);
+      buf="";
+      continue;
+    }
+    if(buf===null) continue;
+    if(/^<w:tab\b/.test(whole)){ buf+="\t"; continue; }
+    if(/^<w:br\b/.test(whole) || /^<w:cr\b/.test(whole)){ buf+="\n"; continue; }
+    if(m[2]!==undefined){ buf+=decodeXmlEntities(m[2]); }
+  }
+  if(buf!==null) paras.push(buf);
+  return paras;
+}
+
+function partsToText(parasArrays){
+  var all=[];
+  parasArrays.forEach(function(arr){ arr.forEach(function(p){ all.push(p); }); });
+  return all.join("\n");
+}
+
+function countsFromText(text){
+  var totalAll=Array.from(text).length;
+  var noSpaceText=text.replace(/[ 　\t]/g,"");
+  var noSpace=Array.from(noSpaceText).length;
+  var noSpaceNoBreakText=noSpaceText.replace(/\n/g,"");
+  var noSpaceNoBreak=Array.from(noSpaceNoBreakText).length;
+  return {totalAll:totalAll,noSpace:noSpace,noSpaceNoBreak:noSpaceNoBreak,pages400:noSpaceNoBreak/400};
+}
+
+function computeForFile(f,scope){
+  var paras=[extractParagraphs(f.raw.document)];
+  if(scope!=="body"){
+    paras.push(extractParagraphs(f.raw.footnotes));
+    paras.push(extractParagraphs(f.raw.endnotes));
+  }
+  if(scope==="all"){
+    f.raw.headers.forEach(function(h){ paras.push(extractParagraphs(h)); });
+    f.raw.footers.forEach(function(ft){ paras.push(extractParagraphs(ft)); });
+  }
+  return countsFromText(partsToText(paras));
+}
+
+/* =====================================================================
+   CSV export (same quoting rule used across the site)
+   ===================================================================== */
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var T={
+ ja:{title:"Wordの文字数カウントは1ファイルずつ：複数ファイルの文字数を一括集計",
+  sub:"翻訳料・原稿料の見積もりで、複数のWord(.docx)ファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を確認し手で足す手間なく、まとめてアップロードするだけで文字数（全体／空白を除く／空白と改行を除く）をファイルごと・合計で一覧表示し、400字詰め原稿用紙換算枚数も表示します。ファイルはサーバーに送信されません。",
+  dropzoneText:"ここにWord(.docx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
+  dropzoneHint:"文字数を数えるだけで、ファイルの書き換えは行いません。選択した端末の中だけで処理されます。",
+  fileListHeading:"追加したファイル",
+  scopeHeading:"数える範囲",scopeLabel:"対象：",
+  scopeBody:"本文のみ",scopeBodyNotes:"本文＋脚注・文末脚注（既定）",scopeAll:"本文＋脚注・文末脚注＋ヘッダー・フッター",
+  scopeHint:"コメント・変更履歴で削除された文字は数えません（挿入として記録された文字は本文として数えます）。表の中の文字も本文として数えます。",
+  statsHeading:"合計（選んだ全ファイル）",
+  statAll:"文字数（全体）",statNoSpace:"空白を除く",statNoBreak:"空白・改行を除く",statPages:"400字詰め原稿用紙換算",
+  resultHeading:"ファイルごとの文字数",
+  colFile:"ファイル",colAll:"文字数（全体）",colNoSpace:"空白を除く",colNoBreak:"空白・改行を除く",colPages:"400字詰め原稿用紙換算",
+  totalLabel:"合計",
+  downloadBtn:"この一覧をCSVでダウンロード",
+  printBtn:"この一覧を印刷",
+  removeBtn:"削除",
+  loadingLabel:"読み込み中…",
+  errBad:"読み込めませんでした（.docx以外の形式か、パスワード保護の可能性があります）",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Word's character count is per file: total multiple files at once",
+  sub:"For a translation or writing quote, when you need the combined character count across several Word (.docx) files. Skip opening each one and checking Word Count by hand — add every file at once and see characters (all / excl. spaces / excl. spaces &amp; line breaks) per file and combined, plus a 400-character manuscript-page estimate. Nothing is uploaded.",
+  dropzoneText:"Drag and drop Word (.docx) file(s) here, or click to choose (multiple allowed)",
+  dropzoneHint:"Only counts characters — your file is never rewritten. Everything happens on this device.",
+  fileListHeading:"Added files",
+  scopeHeading:"Scope",scopeLabel:"Count:",
+  scopeBody:"Body only",scopeBodyNotes:"Body + footnotes/endnotes (default)",scopeAll:"Body + footnotes/endnotes + headers/footers",
+  scopeHint:"Text in comments, or recorded as an unaccepted tracked deletion, is never counted (text recorded as a tracked insertion is counted as body text). Table text counts as body text.",
+  statsHeading:"Combined total (all added files)",
+  statAll:"All characters",statNoSpace:"Excl. spaces",statNoBreak:"Excl. spaces/breaks",statPages:"400-char manuscript pages",
+  resultHeading:"Per-file character counts",
+  colFile:"File",colAll:"All characters",colNoSpace:"Excl. spaces",colNoBreak:"Excl. spaces/breaks",colPages:"400-char pages",
+  totalLabel:"Total",
+  downloadBtn:"Download this list as CSV",
+  printBtn:"Print this list",
+  removeBtn:"Remove",
+  loadingLabel:"Loading…",
+  errBad:"Could not read this file (it may not be .docx, or it's password-protected)",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var state={files:[], nextId:1, scope:"body_notes"};
+
+function addFile(file){
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", raw:null};
+  state.files.push(f);
+  render();
+  file.arrayBuffer().then(function(buf){ return parseDocxParts(new Uint8Array(buf)); })
+    .then(function(raw){ f.raw=raw; f.loading=false; render(); })
+    .catch(function(){ f.loading=false; f.error=T[lang].errBad; f.raw=null; render(); });
+}
+function removeFile(id){ state.files=state.files.filter(function(f){return f.id!==id}); render(); }
+
+function readyFiles(){ return state.files.filter(function(f){return !f.loading&&!f.error}); }
+
+function renderFileList(){
+  var box=$("fileListBox"), h="";
+  state.files.forEach(function(f){
+    h+="<div class='fileCard' data-id='"+f.id+"'>";
+    h+="<span class='fName'>"+esc(f.name)+"</span>";
+    if(f.loading){ h+="<span class='fMeta'>"+esc(T[lang].loadingLabel)+"</span>"; }
+    else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+    h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
+    h+="</div>";
+  });
+  box.innerHTML=h;
+  var rms=box.querySelectorAll(".remove");
+  for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+
+function fmtPages(n){ return n.toFixed(1); }
+
+function renderStats(rows){
+  var totals={totalAll:0,noSpace:0,noSpaceNoBreak:0};
+  rows.forEach(function(r){ totals.totalAll+=r.c.totalAll; totals.noSpace+=r.c.noSpace; totals.noSpaceNoBreak+=r.c.noSpaceNoBreak; });
+  var pages=totals.noSpaceNoBreak/400;
+  var items=[[totals.totalAll,T[lang].statAll,"total"],[totals.noSpace,T[lang].statNoSpace,""],[totals.noSpaceNoBreak,T[lang].statNoBreak,""],[fmtPages(pages),T[lang].statPages,""]];
+  var h="";
+  items.forEach(function(it){ h+="<div class='statBox "+it[2]+"'><div class='n'>"+it[0]+"</div><div class='l'>"+esc(it[1])+"</div></div>"; });
+  $("statGrid").innerHTML=h;
+}
+
+function renderResult(rows){
+  if(!rows.length){
+    $("resultBox").innerHTML="";
+    $("downloadBtn").disabled=true; $("printBtn").disabled=true;
+    return;
+  }
+  var totals={totalAll:0,noSpace:0,noSpaceNoBreak:0};
+  var h="<div class='scroll'><table><thead><tr><th>"+esc(T[lang].colFile)+"</th><th>"+esc(T[lang].colAll)+"</th><th>"+esc(T[lang].colNoSpace)+"</th><th>"+esc(T[lang].colNoBreak)+"</th><th>"+esc(T[lang].colPages)+"</th></tr></thead><tbody>";
+  rows.forEach(function(r){
+    totals.totalAll+=r.c.totalAll; totals.noSpace+=r.c.noSpace; totals.noSpaceNoBreak+=r.c.noSpaceNoBreak;
+    h+="<tr><td>"+esc(r.name)+"</td><td>"+r.c.totalAll+"</td><td>"+r.c.noSpace+"</td><td>"+r.c.noSpaceNoBreak+"</td><td>"+fmtPages(r.c.pages400)+"</td></tr>";
+  });
+  if(rows.length>1){
+    h+="<tr class='totalRow'><td>"+esc(T[lang].totalLabel)+"</td><td>"+totals.totalAll+"</td><td>"+totals.noSpace+"</td><td>"+totals.noSpaceNoBreak+"</td><td>"+fmtPages(totals.noSpaceNoBreak/400)+"</td></tr>";
+  }
+  h+="</tbody></table></div>";
+  $("resultBox").innerHTML=h;
+  $("downloadBtn").disabled=false; $("printBtn").disabled=false;
+}
+
+function computedRows(){
+  return readyFiles().map(function(f){ return {name:f.name, c:computeForFile(f,state.scope)}; });
+}
+
+function render(){
+  var has=state.files.length>0;
+  $("fileListCard").style.display=has?"":"none";
+  renderFileList();
+  var ready=readyFiles();
+  if(!has || !ready.length){
+    $("scopeCard").style.display="none"; $("statsCard").style.display="none"; $("resultCard").style.display="none";
+    return;
+  }
+  $("scopeCard").style.display=""; $("statsCard").style.display=""; $("resultCard").style.display="";
+  var rows=computedRows();
+  renderStats(rows);
+  renderResult(rows);
+}
+
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addFile(fs[i]); e.target.value=""; });
+
+$("scopeSelect").addEventListener("change",function(){ state.scope=this.value; render(); });
+
+$("downloadBtn").addEventListener("click",function(){
+  var rows=computedRows();
+  if(!rows.length) return;
+  var out=[[T[lang].colFile,T[lang].colAll,T[lang].colNoSpace,T[lang].colNoBreak,T[lang].colPages]];
+  var totals={totalAll:0,noSpace:0,noSpaceNoBreak:0};
+  rows.forEach(function(r){
+    totals.totalAll+=r.c.totalAll; totals.noSpace+=r.c.noSpace; totals.noSpaceNoBreak+=r.c.noSpaceNoBreak;
+    out.push([r.name,r.c.totalAll,r.c.noSpace,r.c.noSpaceNoBreak,fmtPages(r.c.pages400)]);
+  });
+  if(rows.length>1){
+    out.push([T[lang].totalLabel,totals.totalAll,totals.noSpace,totals.noSpaceNoBreak,fmtPages(totals.noSpaceNoBreak/400)]);
+  }
+  var csvText=serializeCSV(out);
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="mojisu.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+$("printBtn").addEventListener("click",function(){ window.print(); });
+
+var RELATED=[
+ {href:"../docx-comment/",ja:["文書のあちこちに散らばったWordのコメントを全部一覧に（返信・解決済みも）","コメントの本文・投稿者・日時を一覧化してCSV出力。このツールの文字数にはコメント本文を含みません。"],
+   en:["List every comment scattered across a Word document (incl. replies/resolved)","Lists comment text, author and date as CSV. This character-count tool never counts comment text."]},
+ {href:"../docx-shodaku/",ja:["複数のWordファイルの変更履歴（校閲）を一括で確定","変更履歴が残ったままだと「挿入」も「削除（未確定）」もこのツールの文字数には影響しません。先に確定しておくと数え方が明確になります。"],
+   en:["Accept tracked changes across multiple Word files at once","Unaccepted insertions/deletions don't change this tool's counts either way, but accepting them first makes what's being counted unambiguous."]},
+ {href:"../docx-omoi/",ja:["「Wordファイルが重い」原因を診断：ファイル内訳チェッカー","文字数ではなくファイルサイズが知りたいときは、画像・埋め込みオブジェクトの内訳が分かるこちらを。"],
+   en:["Diagnose why a Word file feels heavy — part-by-part size breakdown","If it's file size rather than character count you need, this breaks it down by images and embedded objects."]},
+ {href:"../sakusha-kesu/",ja:["社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す","文字数を数えた原稿を納品する前に、作成者名などのプロパティを消したいときに。Excel・PowerPointにも対応。"],
+   en:["Remove creator / comment-author names before sending a file out","Before delivering a manuscript whose character count you just checked, strip author metadata. Also covers Excel and PowerPoint."]}
+];
+function renderRelated(){
+  var ja="", en="";
+  RELATED.forEach(function(r){
+    ja+="<li><a href='"+r.href+"'>"+esc(r.ja[0])+"</a> — "+esc(r.ja[1])+"</li>";
+    en+="<li><a href='"+r.href+"'>"+esc(r.en[0])+"</a> — "+esc(r.en[1])+"</li>";
+  });
+  $("relJa").innerHTML=ja; $("relEn").innerHTML=en;
+}
+renderRelated();
+
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
+  render();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var i=0;i<langBtns.length;i++)langBtns[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -2674,6 +2674,34 @@
           "class": "継続（公開直後。python-pptxで作成した実ファイル（直接指定の欧文フォント+埋め込みフォント一致、明示的なテーマ参照の+mn-lt/+mj-ea、無指定テキストの3パターン）をPlaywright（ja/en・390/1280px）でアップロードし、テーマフォント表の「未設定」表示、使用一覧の指定方法（直接指定／テーマ参照）・埋め込み状況・使用箇所（スライド番号・マスター番号、重複なし）・CSV出力を確認。関連5ページ（pptx-omoi/pptx-kakure/pptx-chart-kakure/sakusha-kesu/office-gazou）との双方向リンクをgrepで確認。）"
         }
       ]
+    },
+    {
+      "slug": "docx-mojisu",
+      "title": "Wordの文字数カウントは1ファイルずつ：複数ファイルの文字数を一括集計",
+      "url": "https://tenohira-tools.github.io/docx-mojisu/",
+      "published": "2026-11-05",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "ideas/backlog.md",
+      "why": "backlog1番（最後の1件）。翻訳料・原稿料の見積もりで複数のWordファイルの合計文字数を知りたい需要。Wordの「文字カウント」は1ファイルずつしか出せず、複数ファイルの合計は手計算になる点が勝ち筋。文字数（全体／空白を除く／空白と改行を除く）をファイルごと・合計で一覧化し、見積もりで使われる400字詰め原稿用紙換算枚数も表示。本文のみ／本文＋脚注・文末脚注（既定）／全て（ヘッダー・フッター含む）の3段階で数える範囲を切り替えられる点を数え方の正確さとして明記。",
+      "metrics": [
+        {
+          "date": "2026-11-05T20:14:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "notes": "word/document.xml・header*.xml・footer*.xml・footnotes.xml・endnotes.xmlのみを選択的に解凍（画像等のバイナリパーツはTextDecoderに通さない）。段落（w:p）単位でw:t（本文）・w:tab（タブ）・w:br/w:cr（改行）を走査して文字列化し、サロゲートペア対応でArray.fromで文字数を数える。削除として記録された変更履歴はw:delTextのため元々対象外、挿入はw:t使用のため自然に対象（＝確定後の見た目どおりの文字数）。400字詰め原稿用紙換算は「空白・改行を除く」文字数÷400。",
+      "reviews": [
+        {
+          "date": "2026-11-05",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開直後。独自に手計算した期待値（python-docxで作成し脚注・文末脚注をzipfileで注入した実ファイル、本文に全角スペース・タブ・強制改行・表・未確定の挿入/削除を含む）と、Playwright（ja/en・390/1280px）でのブラウザ表示値が3つの範囲設定（本文のみ／本文+脚注注／全て）すべてで一致することを確認。複数ファイル・不正なファイルのエラー表示、合計行、CSV（BOM付き）、横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）も確認。関連4ページ（docx-comment/docx-shodaku/docx-omoi/sakusha-kesu）との双方向リンクをgrepで確認。"
+        }
+      ]
     }
   ],
   "review_summary_2026-10-24": {
