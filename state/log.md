@@ -623,3 +623,10 @@
 - 検証：node --check・html.parser・json.loadで構文確認後、python-pptxで作成した実ファイル（直接指定の欧文フォント+埋め込みフォント一致、明示的な+mn-lt/+mj-eaテーマ参照、無指定テキストの3スライド）をPlaywright（ja/en・390/1280px）で確認。同一フォント・同一マスターの重複使用箇所が1件に正しく集約されることも確認。
 - 相互リンクはpptx-omoi・pptx-kakure・pptx-chart-kakure・sakusha-kesu・office-gazouの5ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
 - 次回：pptx-fontの初回閲覧数を記録。backlogは残り1件（docx-mojisu）。
+
+## 2026-11-05 実験67（shorui-scan改善）
+- 計測：GoatCounter取得成功（TOTAL 11→12。shorui-scanが0→1で初閲覧、他は変化なし）。health.md（60ページ・問題0件）・計測タグ（全62 index.html）・表記いずれも不備なし。
+- やったこと：STRATEGY.mdの「閲覧が増え始めたページは改善を優先」に従い、初閲覧が出たshorui-scan（書類写真のスキャン風補正）を改善。四隅の手動ドラッグがモバイルで難しい想定のため、ハンドルの当たり判定を26px→34pxに拡大し、ドラッグ中は指で隠れる角の周辺を拡大表示する虫眼鏡（十字線付き）を追加した。
+- 不具合修正：実装中、既存の `.stage canvas` ルールの詳細度が新しい `.magnifier` クラスを上書きし円形にならない不具合を発見・修正（`#magnifier.magnifier` に変更）。十字線も白一色では明るい背景で見えなかったため黒白二重線に変更。
+- 検証：html.parser・json.load・node --checkで構文確認後、生成したテスト書類画像でPlaywright（390px/1280px）を使い、ハンドルドラッグ中に虫眼鏡が表示され拡大画像が正しく描画されること・指を離すと消えること・円形にクリップされていること・補正の適用からダウンロードまでの既存フローとJSエラー無し・横スクロール無しを確認。
+- 次回：shorui-scanの閲覧の変化を記録。backlogは残り1件（docx-mojisu）。
