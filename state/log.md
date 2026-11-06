@@ -638,3 +638,11 @@
 - 検証：python-docxで脚注・文末脚注をzipfile注入した実ファイル（全角スペース・タブ・強制改行・表・未確定の挿入/削除含む）を作り、独自に手計算した期待値とPlaywright（ja/en・390/1280px）の表示値が3段階の範囲設定すべてで一致することを確認。複数ファイルの合計行・不正ファイルのエラー表示・CSV（BOM付き）・横スクロール無し・JSエラー無しも確認。
 - 相互リンクはdocx-comment・docx-shodaku・docx-omoi・sakusha-kesuの4ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。backlogは0件（次回は確認検索3件以内で1件補充）。
 - 次回：docx-mojisuの初回閲覧数を記録。
+
+## 2026-11-06 実験69
+- 計測：GoatCounter取得成功（TOTAL 12で変化なし、shorui-scan1・receipt-sheet1のまま、docx-mojisu含め他60ページは0）。health.md（61ページ・問題0件）・計測タグ（全63 index.html）・表記いずれも不備なし。
+- やったこと：backlogが候補なしのため、STRATEGY.mdの指示通り集中分野「社外に渡す前の処理」でWebSearch2件を実施。Word/PowerPointのハイパーリンク一覧化は開発者向けライブラリや有償アドインのみでブラウザ完結・無料のものが見当たらず、xlsx-hyperlinkの姉妹ツール（office-link）として着手・公開。本文・ヘッダー・フッター・脚注（Word）、スライドのテキスト・図形（PowerPoint）のリンクを一覧化し、ローカルファイル参照・壊れたリンク（参照なし／移動先なし）を自動判定して選んだリンクだけ解除。
+- バグ修正：実装中、複数ファイルを選択ダイアログで同時に追加すると2件目以降が無視される不具合（input.valueのクリアが非同期ループ中のライブFileListを途中で0件にしてしまう）を発見し、関数冒頭でArray化して解消。
+- 検証：python-docx/python-pptxの実ファイル＋zipfile注入（壊れた関係・壊れたブックマーク・壊れたスライドジャンプ・組み込みアクション・図形レベルのリンク）で、ページに貼ったコードをそのまま抽出したNode.jsテスト42件→Playwright（ja/en・390/1280px）で2ファイル同時アップロード・既定チェック状態・書き出し後のpython-docx/pptx再読込で選んだリンクのみ解除されることを確認。
+- 相互リンクはoffice-trouble・sakusha-kesu・docx-kakure・pptx-kakure・xlsx-hyperlinkの5ページに絞り双方向をgrepで確認。office-trouble本体と他5ページ（docx-omoi/docx-shodaku/office-gazou/pptx-chart-kakure/pptx-omoi）の「8ツール」表記も9に更新。docs/index.htmlにも追加。
+- 次回：office-linkの初回閲覧数を記録。backlogは0件（次回は確認検索3件以内で1件補充）。

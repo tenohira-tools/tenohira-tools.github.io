@@ -2702,6 +2702,34 @@
           "class": "継続（公開直後。独自に手計算した期待値（python-docxで作成し脚注・文末脚注をzipfileで注入した実ファイル、本文に全角スペース・タブ・強制改行・表・未確定の挿入/削除を含む）と、Playwright（ja/en・390/1280px）でのブラウザ表示値が3つの範囲設定（本文のみ／本文+脚注注／全て）すべてで一致することを確認。複数ファイル・不正なファイルのエラー表示、合計行、CSV（BOM付き）、横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）も確認。関連4ページ（docx-comment/docx-shodaku/docx-omoi/sakusha-kesu）との双方向リンクをgrepで確認。"
         }
       ]
+    },
+    {
+      "slug": "office-link",
+      "title": "Word・PowerPointのハイパーリンクが開けない・社内専用のリンクが残っているときの一覧・削除ツール",
+      "url": "https://tenohira-tools.github.io/office-link/",
+      "published": "2026-11-06",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "STRATEGY.md集中分野（社外に渡す前の処理）",
+      "why": "backlogが候補なしで空だったため、集中分野「社外に渡す前の処理」でWebSearch2件を実施。WordのハイパーリンクはSpire.Doc等の開発者向けライブラリの解説記事のみ、PowerPointはSlideSpeak（β待機中）・Slidewise（有償アドイン）止まりで、ブラウザ完結・無料で一覧化＋壊れたリンクの判定ができるツールは見当たらないことを確認。xlsx-hyperlink（Excel版）の姉妹ツールとして、社内の共有フォルダ・自分のPCを指す「ローカルファイル」リンクと、参照先relationshipや文書内ジャンプ先が消えた「壊れているリンク」を自動判定し、選んだリンクだけ解除できる点を勝ち筋とした。",
+      "metrics": [
+        {
+          "date": "2026-11-06T17:15:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "notes": "Word: word/document.xml・headerN.xml・footerN.xml・footnotes.xml・endnotes.xmlのw:hyperlinkを走査し、r:id（外部/メール/ローカルファイル判定）とw:anchor（文書内ブックマークの存在確認）を分類。PowerPoint: 各スライドのa:hlinkClickを走査し、テキストランへの付与（a:rPr内）と図形・アクションボタン全体への付与（p:cNvPr内）の両方を検出、ppaction://の組み込みアクション（次へ/前へ/最初/最後等）とhlinksldjumpによるスライド間ジャンプ（参照先スライドの実在確認）も分類。削除はw:hyperlinkタグをテキスト内容を残して unwrap（Wordの「ハイパーリンクの削除」と同じ挙動）、PowerPointはa:hlinkClickタグ自体を除去。いずれも削除後にr:idがそのパート内で他に使われていない場合だけ対応するrelsエントリも削除する設計（部分削除による取りこぼし・過剰削除を避けるため、削除前にr:id参照の残存を正規表現で再確認）。",
+      "reviews": [
+        {
+          "date": "2026-11-06",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開直後。python-docx/python-pptxで作成した実ファイルに、Pythonのzipfileでヘッダー・フッターのリンク、壊れたrelationship（存在しないr:id）、壊れたブックマーク参照、PowerPointの壊れたスライドジャンプ・組み込みアクション・図形レベルのリンクを注入した統合テストファイルを作成。ページに貼り付けたコードをそのまま抽出してNode.jsで実行するテスト（42件）で分類・削除・rels整合性を確認した後、Playwright（ja/en・390/1280px）で2ファイル同時アップロード→既定のチェック状態（ローカルファイル・壊れている系のみ既定チェック）→書き出し→ダウンロードしたファイルをpython-docx/python-pptxで再読込し、選んだリンクのみ解除されテキスト・図形はそのまま残ることを確認。CSV（BOM付き）・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）も確認。テスト中、複数ファイルをファイル選択ダイアログで同時に追加すると2件目以降が無視される実装バグ（input.valueを同期的にクリアする行がhandleFiles内の非同期ループより先に走り、参照していたライブFileListが0件に変わってしまう）を発見し修正。関連5ページ（office-trouble/sakusha-kesu/docx-kakure/pptx-kakure/xlsx-hyperlink）との双方向リンクをgrepで確認、office-trouble本体とその他5ページ（docx-omoi/docx-shodaku/office-gazou/pptx-chart-kakure/pptx-omoi）の「8ツール」表記・相互リンクも9に更新。"
+        }
+      ]
     }
   ],
   "review_summary_2026-10-24": {

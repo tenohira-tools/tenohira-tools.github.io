@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>Word・PowerPointのハイパーリンクが開けない・社内専用のリンクが残っているときの一覧・削除ツール | てのひらツール</title>
+<meta name="description" content="社外に送る前に、Word(.docx)・PowerPoint(.pptx)に貼られたハイパーリンクをまとめて確認したいときに。本文・ヘッダー・フッター・脚注・文末脚注（Word）、スライドのテキストや図形（PowerPoint）のリンクを全部一覧化し、社内の共有フォルダ・自分のPCを指すローカルファイルへのリンクや、参照先が無くなって開けない壊れたリンクを自動で見分けます。選んだリンクだけを解除した新しいファイルをその場で書き出し。ブラウザ内だけで処理し、ファイルは送信されません。Before sending a Word or PowerPoint file outside your company: list every hyperlink in the document or slides, flag links to a local file/network share and broken reference links, and remove the ones you choose — entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/office-link/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1060px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.35rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px;min-width:0}
+.fileCard .fTop{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCard .fName{font-weight:700;word-break:break-all}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.fmt{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.diff{color:var(--diff);border-color:var(--diff);background:var(--diff-bg)}
+.summaryRow{font-size:.88rem;margin:4px 0 10px;color:var(--muted)}
+.toolRow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.toolRow button{font:inherit;font-size:.85rem;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;padding:5px 10px;cursor:pointer}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:640px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;white-space:nowrap}
+td.loc{white-space:nowrap;color:var(--muted)}
+td.txt{word-break:break-all;max-width:260px}
+td.tgt{word-break:break-all;color:var(--muted);max-width:320px;font-size:.82rem}
+tr.k-local_file td.tgt,tr.k-broken_relationship td.tgt,tr.k-broken_anchor td.tgt{color:var(--diff)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;min-height:40px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.errBox{border:1px solid var(--diff);background:var(--diff-bg);color:var(--diff);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">Word・PowerPointのハイパーリンクが開けない・社内専用のリンクが残っているときの一覧・削除ツール</h1>
+    <p class="sub" data-i="sub">社外に送る前に、Word(.docx)・PowerPoint(.pptx)に貼られたハイパーリンクをまとめて確認したいときに。本文・ヘッダー・フッター・脚注・文末脚注（Word）、スライドのテキストや図形（PowerPoint）のリンクを全部一覧化し、社内の共有フォルダ・自分のPCを指す「ローカルファイル」へのリンクや、参照先が無くなって開けない「壊れているリンク」を自動で見分けます。選んだリンクだけを解除した新しいファイルをその場で書き出せます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで処理します。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p><strong data-i="dropzoneStrong">ここにWord・PowerPointファイルをドラッグ＆ドロップ</strong><span data-i="dropzoneRest">、またはクリックして選択</span></p>
+    <p class="hint" data-i="dropzoneHint">.docx / .pptx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".docx,.pptx" multiple style="display:none">
+</section>
+
+<section class="card" id="listSec" style="display:none">
+  <h2 data-i="listHeading">読み込んだファイル</h2>
+  <div class="actions">
+    <button type="button" class="primary" id="csvBtn" disabled data-i="csvBtn">全ファイルの一覧をCSVでダウンロード</button>
+  </div>
+  <div id="fileList" style="margin-top:14px"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にWord(.docx)・PowerPoint(.pptx)ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル可）。</li>
+      <li>各ファイルで見つかったハイパーリンクが一覧表示されます。「ローカルファイル」「壊れている」と判定されたリンクには既定でチェックが入っています。削除したい行にチェックを入れ（全選択・全解除ボタンもあります）、「選んだリンクを解除して書き出す」を押すとダウンロードされます。</li>
+    </ol>
+    <h3>Q. 何を一覧にしますか？</h3>
+    <p>A. Wordは本文・ヘッダー・フッター・脚注・文末脚注、PowerPointは各スライドの本体（テキストの一部に設定されたリンクと、図形・アクションボタン全体に設定されたリンクの両方）に設定された、クリックできるハイパーリンクを一覧にします。</p>
+    <h3>Q. 「ローカルファイル」とはどういうリンクですか？</h3>
+    <p>A. 自分のPCやファイルサーバー上のパス（<code>C:\...</code>、<code>\\サーバー名\...</code>、<code>file:///...</code>）を指すリンクです。社外の相手や別のPCには同じ場所にファイルが無いため、クリックしても開けません。社内で使っている間は気づきにくいため、送信前のチェックの対象にしています。</p>
+    <h3>Q. 「壊れているリンク」とは？</h3>
+    <p>A. 2パターンあります。1つは、リンクの参照情報（relationship）自体が見つからない場合（コピー＆ペーストの際に参照が外れることがあります）。もう1つは、文書内の見出し・ブックマーク（Word）やスライド（PowerPoint）へのジャンプ先が、削除などで無くなっている場合です。</p>
+    <h3>Q. 外部サイトへのリンクやメールへのリンク、文書内で別の場所へ飛ぶリンクも消せますか？</h3>
+    <p>A. はい。一覧には全種類のリンクが表示され、どの行でもチェックを入れて削除できます。ただし「ローカルファイル」「壊れている」以外（外部サイト・メール・文書内ジャンプ等）は通常問題なく動作するリンクのため、既定ではチェックを外しています。</p>
+    <h3>Q. リンクを削除すると、リンクが付いていた文字や図形自体も消えますか？</h3>
+    <p>A. 消えません。リンクの機能（クリックで開く動作）だけを取り除き、文字・図形・書式はそのまま残ります。Wordの「ハイパーリンクの削除」機能と同じ動作です。</p>
+    <h3>Q. すべてのリンクを100%検出できますか？</h3>
+    <p>A. 本文・ヘッダー・フッター・脚注・文末脚注（Word）とスライド本体のテキスト・図形（PowerPoint）を対象にしています。スライドの発表者ノート、文書内に埋め込まれた別のOffice文書の中のリンク、SmartArtの内部データのように特殊な場所にあるリンクは対象外です（見逃しはあっても、安全なリンクを誤って「壊れている」と表示することはない設計です）。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Word(.docx)とPowerPoint(.pptx)です。古い.doc/.ppt形式や、パスワードで保護されたファイルは読み込めません。Excelのハイパーリンクは<a href="../xlsx-hyperlink/">Excel版の一覧・削除ツール</a>をご利用ください。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_リンク整理済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Word (.docx) / PowerPoint (.pptx) files into the box above, or click it to choose (multiple files are fine).</li>
+      <li>Every hyperlink found in each file is listed. Rows flagged as "local file" or "broken" are checked by default. Check the rows you want removed (there are select-all / select-none buttons too), then click "Remove selected links &amp; build" to download the result.</li>
+    </ol>
+    <h3>Q. What exactly does it list?</h3>
+    <p>A. For Word: every clickable hyperlink in the document body, headers, footers, footnotes and endnotes. For PowerPoint: every clickable hyperlink on each slide — both links applied to a piece of text and links applied to a whole shape or action button.</p>
+    <h3>Q. What counts as a "local file" link?</h3>
+    <p>A. A link pointing to a path on your own PC or a file server (<code>C:\...</code>, <code>\\servername\...</code>, <code>file:///...</code>). Someone outside your organization — or even you on a different PC — won't have a file at that same path, so clicking it does nothing. This is easy to miss while you're still inside your own network, which is exactly why it's flagged here before you send the file out.</p>
+    <h3>Q. What counts as a "broken" link?</h3>
+    <p>A. Two cases: the link's underlying relationship record is missing entirely (this can happen after copy-pasting content between files), or the link points to a heading/bookmark (Word) or a slide (PowerPoint) that no longer exists.</p>
+    <h3>Q. Can I also remove links to external websites, email addresses, or jumps to another part of the same file?</h3>
+    <p>A. Yes — every link type appears in the list and any row can be checked for removal. Only "local file" and "broken" rows are checked by default, since the rest (web, email, in-document jumps) normally work fine.</p>
+    <h3>Q. If I remove a link, does the linked text or shape disappear too?</h3>
+    <p>A. No. Only the clickable link behavior is removed; the text, shape and formatting stay exactly as they were — the same result as Word's own "Remove Hyperlink" command.</p>
+    <h3>Q. Does it catch every single link?</h3>
+    <p>A. It covers the document body, headers, footers, footnotes and endnotes (Word) and each slide's text and shapes (PowerPoint). Speaker notes, links inside another Office file embedded within this one, and links buried inside SmartArt's internal data are out of scope — this can mean a rare miss, but it's designed to never mislabel a working link as broken.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Word (.docx) and PowerPoint (.pptx). The older .doc/.ppt formats and password-protected files aren't supported. For Excel hyperlinks, use the <a href="../xlsx-hyperlink/">Excel version of this tool</a>.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_links-cleaned" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../office-trouble/">Word・PowerPointを社外に渡す前のチェックまとめ</a> — 症状から選べる案内ページ。この他8ツールへのリンクも。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に：作成者・最終更新者・コメントの投稿者名を消す</a> — リンク以外に残る個人情報もまとめて消去。</li>
+      <li><a href="../docx-kakure/">社外に渡す前に確認：Wordの「隠れた情報」一括チェック</a> — 変更履歴の編集者名・コメント・隠し文字・ヘッダーフッターの文字をまとめて診断（読み取り専用）。</li>
+      <li><a href="../pptx-kakure/">社外に渡す前に：PowerPointのノート・非表示スライド・コメントを一覧化</a> — ノートはまとめて削除できます。</li>
+      <li><a href="../xlsx-hyperlink/">エクセルのハイパーリンクが開けない・大量にあって消せないときの一覧・削除ツール</a> — このツールのExcel版。全シートのクリック可能なハイパーリンクを一覧化して解除。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../office-trouble/">Word/PowerPoint pre-share checklist</a> — A symptom-based directory linking to this and 8 other tools.</li>
+      <li><a href="../sakusha-kesu/">Before sending a file outside your company: strip the creator, last-modified-by and comment-author names</a> — clears other personal info beyond links.</li>
+      <li><a href="../docx-kakure/">Check a Word file for &quot;hidden&quot; information before sending it outside your company</a> — Track Changes editors, comments, hidden text and header/footer text, all at once (read-only).</li>
+      <li><a href="../pptx-kakure/">Before sharing a PowerPoint file: list every slide's notes, hidden status and comments</a> — notes can be bulk-cleared too.</li>
+      <li><a href="../xlsx-hyperlink/">Hyperlinks that won't open, or too many to remove one by one</a> — The Excel version of this tool: list every clickable hyperlink across every sheet and remove the ones you choose.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"何を一覧にしますか？","acceptedAnswer":{"@type":"Answer","text":"Wordは本文・ヘッダー・フッター・脚注・文末脚注、PowerPointは各スライドのテキストと図形・アクションボタンに設定されたハイパーリンクを一覧にします。"}},
+    {"@type":"Question","name":"「ローカルファイル」とはどういうリンクですか？","acceptedAnswer":{"@type":"Answer","text":"自分のPCやファイルサーバー上のパス（C:\\...、\\\\サーバー名\\...、file:///...）を指すリンクです。社外や別のPCには同じ場所にファイルが無いため開けません。"}},
+    {"@type":"Question","name":"「壊れているリンク」とは？","acceptedAnswer":{"@type":"Answer","text":"リンクの参照情報自体が見つからない場合と、文書内の見出し・ブックマークやスライドへのジャンプ先が無くなっている場合の2パターンです。"}},
+    {"@type":"Question","name":"リンクを削除すると文字や図形も消えますか？","acceptedAnswer":{"@type":"Answer","text":"消えません。リンクの機能だけを取り除き、文字・図形・書式はそのまま残ります（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =====================================================================
+   ZIP read/write — same hand-rolled approach already shipped across
+   xlsx-merge/.../sakusha-kesu (no external libraries; only standard
+   browser APIs). Works for any OOXML zip container.
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =====================================================================
+   Minimal XML tag parser (shared across this site's tools).
+   ===================================================================== */
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function dirName(path){ var i=path.lastIndexOf("/"); return i===-1?"":path.slice(0,i); }
+function baseName(path){ var i=path.lastIndexOf("/"); return i===-1?path:path.slice(i+1); }
+function relsPathFor(path){ var d=dirName(path); return (d?d+"/":"")+"_rels/"+baseName(path)+".rels"; }
+function resolveRelPath(baseDir,target){
+  if(/^\//.test(target)) return target.replace(/^\/+/,"");
+  var baseParts=baseDir?baseDir.split("/"):[];
+  target.split("/").forEach(function(p){
+    if(p===""||p===".") return;
+    if(p==="..") baseParts.pop(); else baseParts.push(p);
+  });
+  return baseParts.join("/");
+}
+function parseRels(xml){
+  return findTags(xml,"Relationship").map(function(t){return {id:t.attrs.Id,type:t.attrs.Type||"",target:t.attrs.Target||"",targetMode:t.attrs.TargetMode||""};});
+}
+function byNameMap(entries){ var m={}; entries.forEach(function(e){m[e.name]=e}); return m; }
+function uniqueStrings(arr){
+  var seen={}, out=[];
+  arr.forEach(function(s){ if(!seen[s]){ seen[s]=true; out.push(s); } });
+  return out;
+}
+
+/* =====================================================================
+   Business logic (hyperlink inspection + removal). Validated with
+   Node.js unit tests against real python-docx/python-pptx fixtures,
+   including header/footer links, broken relationships, broken
+   bookmarks, built-in PowerPoint slide-jump actions and shape-level
+   (whole-shape / action-button) links — see state/log.md.
+   ===================================================================== */
+function classifyTarget(target, targetMode){
+  if(!target) return "unknown";
+  var lower=target.toLowerCase();
+  if(lower.indexOf("mailto:")===0) return "email";
+  if(lower.indexOf("http://")===0 || lower.indexOf("https://")===0) return "web";
+  if(lower.indexOf("file://")===0) return "local_file";
+  if(/^[a-z]:[\\/]/i.test(target)) return "local_file";
+  if(/^\\\\/.test(target)) return "local_file";
+  if(targetMode==="External") return "local_file";
+  return "other";
+}
+function docxPartLabel(name){
+  if(name==="word/document.xml") return "body";
+  if(name==="word/footnotes.xml") return "footnote";
+  if(name==="word/endnotes.xml") return "endnote";
+  var m=/^word\/header(\d+)\.xml$/.exec(name); if(m) return "header"+m[1];
+  var m2=/^word\/footer(\d+)\.xml$/.exec(name); if(m2) return "footer"+m2[1];
+  return name;
+}
+function docxBodyParts(names){
+  return names.filter(function(n){return /^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/i.test(n)});
+}
+function extractHyperlinkText(inner){
+  return findTags(inner,"w:t").map(function(t){return t.inner===null?"":decodeXmlEntities(t.inner)}).join("");
+}
+function collectBookmarkNames(xml){
+  var names={};
+  findTags(xml,"w:bookmarkStart").forEach(function(t){ if(t.attrs["w:name"]) names[t.attrs["w:name"]]=true; });
+  return names;
+}
+function analyzeDocx(entries){
+  var byName=byNameMap(entries);
+  if(!byName["word/document.xml"]) return null;
+  var dec=new TextDecoder("utf-8");
+  var parts=docxBodyParts(Object.keys(byName));
+  var allBookmarks={};
+  parts.forEach(function(n){
+    var b=collectBookmarkNames(dec.decode(byName[n].bytes));
+    Object.keys(b).forEach(function(k){allBookmarks[k]=true});
+  });
+  var links=[], seq=0;
+  parts.forEach(function(partName){
+    var xml=dec.decode(byName[partName].bytes);
+    var relsName=relsPathFor(partName);
+    var rels=byName[relsName]?parseRels(dec.decode(byName[relsName].bytes)):[];
+    var relById={}; rels.forEach(function(r){relById[r.id]=r});
+    findTags(xml,"w:hyperlink").forEach(function(h){
+      var rId=h.attrs["r:id"], anchor=h.attrs["w:anchor"];
+      var text=extractHyperlinkText(h.inner||"");
+      var kind, target;
+      if(rId){
+        var rel=relById[rId];
+        if(!rel){ kind="broken_relationship"; target=""; }
+        else { target=rel.target; kind=classifyTarget(target, rel.targetMode); }
+        if(anchor){ target = target + "#" + anchor; }
+      } else if(anchor){
+        target="#"+anchor;
+        kind = allBookmarks[anchor] ? "internal_anchor" : "broken_anchor";
+      } else {
+        kind="unknown"; target="";
+      }
+      links.push({id:"docx-"+(seq++), file:null, part:partName, partLabel:docxPartLabel(partName),
+        text:text, target:target, kind:kind, rId:rId||null, anchor:anchor||null,
+        start:h.start, end:h.end, innerXml:h.inner||""});
+    });
+  });
+  return {fmt:"docx", links:links};
+}
+function pptxSlidePaths(byName){
+  var dec=new TextDecoder("utf-8");
+  var presXml=dec.decode(byName["ppt/presentation.xml"].bytes);
+  var presRelsName=relsPathFor("ppt/presentation.xml");
+  var presRels=byName[presRelsName]?parseRels(dec.decode(byName[presRelsName].bytes)):[];
+  var relById={}; presRels.forEach(function(r){relById[r.id]=r});
+  return findTags(presXml,"p:sldId").map(function(t){
+    var rel=relById[t.attrs["r:id"]];
+    return rel?resolveRelPath(dirName("ppt/presentation.xml"),rel.target):null;
+  }).filter(Boolean);
+}
+function nearestRunTextFor(xml, hlinkStart){
+  var rTags=findTags(xml,"a:r");
+  for(var i=0;i<rTags.length;i++){
+    var r=rTags[i];
+    if(hlinkStart>=r.start && hlinkStart<=r.end){
+      return findTags(r.inner,"a:t").map(function(t){return t.inner===null?"":decodeXmlEntities(t.inner)}).join("");
+    }
+  }
+  return null;
+}
+function shapeNameFor(xml, hlinkStart){
+  var sps=findTags(xml,"p:sp").concat(findTags(xml,"p:pic")).concat(findTags(xml,"p:grpSp"));
+  var best=null;
+  sps.forEach(function(sp){
+    if(hlinkStart>=sp.start && hlinkStart<=sp.end){
+      if(!best || (sp.end-sp.start)<(best.end-best.start)) best=sp;
+    }
+  });
+  if(!best) return "";
+  var cNvPr=findTags(best.inner,"p:cNvPr")[0];
+  return cNvPr && cNvPr.attrs.name ? cNvPr.attrs.name : "";
+}
+var PPT_BUILTIN_ACTIONS = {
+  "ppaction://hlinksldjump":"internal_jump",
+  "ppaction://hlinkshowjump":"internal_action",
+  "ppaction://hlinknextslide":"internal_action",
+  "ppaction://hlinkprevslide":"internal_action",
+  "ppaction://hlinkfirstslide":"internal_action",
+  "ppaction://hlinklastslide":"internal_action",
+  "ppaction://hlinklastslideviewed":"internal_action",
+  "ppaction://hlinkendshow":"internal_action",
+  "ppaction://noaction":"internal_action"
+};
+function classifyPptAction(action){
+  if(!action) return null;
+  var base=action.split("?")[0];
+  return PPT_BUILTIN_ACTIONS[base] || "internal_action";
+}
+function analyzePptx(entries){
+  var byName=byNameMap(entries);
+  if(!byName["ppt/presentation.xml"]) return null;
+  var dec=new TextDecoder("utf-8");
+  var slidePaths=pptxSlidePaths(byName);
+  var links=[], seq=0;
+  slidePaths.forEach(function(slidePath, idx){
+    if(!byName[slidePath]) return;
+    var xml=dec.decode(byName[slidePath].bytes);
+    var relsName=relsPathFor(slidePath);
+    var rels=byName[relsName]?parseRels(dec.decode(byName[relsName].bytes)):[];
+    var relById={}; rels.forEach(function(r){relById[r.id]=r});
+    findTags(xml,"a:hlinkClick").forEach(function(h){
+      var rId=h.attrs["r:id"], action=h.attrs.action;
+      var runText=nearestRunTextFor(xml, h.start);
+      var shapeName=shapeNameFor(xml,h.start);
+      var text = runText!==null ? runText : ("["+ (shapeName||"図形") +"]");
+      var kind, target;
+      if(rId){
+        var rel=relById[rId];
+        if(!rel){ kind="broken_relationship"; target=""; }
+        else if(/\/slide$/.test(rel.type)){
+          var sp=resolveRelPath(dirName(slidePath), rel.target);
+          kind = byName[sp] ? "internal_jump" : "broken_relationship";
+          target = sp;
+        } else {
+          target=rel.target; kind=classifyTarget(target, rel.targetMode);
+        }
+      } else if(action){
+        kind = classifyPptAction(action) || "unknown";
+        target = action;
+      } else {
+        kind="unknown"; target="";
+      }
+      links.push({id:"pptx-"+(seq++), file:null, slideIndex:idx+1, slidePath:slidePath,
+        text:text, target:target, kind:kind, rId:rId||null, action:action||null,
+        start:h.start, end:h.end, inRun: runText!==null});
+    });
+  });
+  return {fmt:"pptx", links:links};
+}
+function applyRemovals(xml, items){
+  var sorted=items.slice().sort(function(a,b){return b.start-a.start;});
+  sorted.forEach(function(it){
+    xml = xml.slice(0,it.start) + it.replacement + xml.slice(it.end);
+  });
+  return xml;
+}
+function rIdStillUsed(xml, rId){
+  var re=new RegExp('r:id=(["\'])'+rId.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+'\\1');
+  return re.test(xml);
+}
+function removeRelationshipsById(relsXml, idsToRemove){
+  if(!idsToRemove.length) return relsXml;
+  var idSet={}; idsToRemove.forEach(function(id){idSet[id]=true;});
+  var tags=findTags(relsXml,"Relationship");
+  var last=0, out=[];
+  tags.forEach(function(t){
+    out.push(relsXml.slice(last,t.start));
+    if(!idSet[t.attrs.Id]) out.push(relsXml.slice(t.start,t.end));
+    last=t.end;
+  });
+  out.push(relsXml.slice(last));
+  return out.join("");
+}
+function removeDocxHyperlinks(entries, selectedIds, allLinks){
+  var byName=byNameMap(entries);
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var selSet={}; selectedIds.forEach(function(id){selSet[id]=true;});
+  var byPart={};
+  allLinks.forEach(function(l){
+    if(!selSet[l.id]) return;
+    (byPart[l.part]=byPart[l.part]||[]).push(l);
+  });
+  var patched={};
+  Object.keys(byPart).forEach(function(partName){
+    var xml=dec.decode(byName[partName].bytes);
+    var items=byPart[partName].map(function(l){return {start:l.start,end:l.end,replacement:l.innerXml};});
+    xml=applyRemovals(xml, items);
+    patched[partName]=xml;
+    var relsName=relsPathFor(partName);
+    if(byName[relsName]){
+      var relsXml=dec.decode(byName[relsName].bytes);
+      var candidateIds=uniqueStrings(byPart[partName].map(function(l){return l.rId}).filter(Boolean));
+      var toRemove=candidateIds.filter(function(id){return !rIdStillUsed(xml,id);});
+      if(toRemove.length){ patched[relsName]=removeRelationshipsById(relsXml, toRemove); }
+    }
+  });
+  return entries.map(function(e){
+    if(patched[e.name]!==undefined) return {name:e.name, bytes:enc.encode(patched[e.name])};
+    return e;
+  });
+}
+function removePptxHyperlinks(entries, selectedIds, allLinks){
+  var byName=byNameMap(entries);
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var selSet={}; selectedIds.forEach(function(id){selSet[id]=true;});
+  var bySlide={};
+  allLinks.forEach(function(l){
+    if(!selSet[l.id]) return;
+    (bySlide[l.slidePath]=bySlide[l.slidePath]||[]).push(l);
+  });
+  var patched={};
+  Object.keys(bySlide).forEach(function(slidePath){
+    var xml=dec.decode(byName[slidePath].bytes);
+    var items=bySlide[slidePath].map(function(l){return {start:l.start,end:l.end,replacement:""};});
+    xml=applyRemovals(xml, items);
+    patched[slidePath]=xml;
+    var relsName=relsPathFor(slidePath);
+    if(byName[relsName]){
+      var relsXml=dec.decode(byName[relsName].bytes);
+      var candidateIds=uniqueStrings(bySlide[slidePath].map(function(l){return l.rId}).filter(Boolean));
+      var toRemove=candidateIds.filter(function(id){return !rIdStillUsed(xml,id);});
+      if(toRemove.length){ patched[relsName]=removeRelationshipsById(relsXml, toRemove); }
+    }
+  });
+  return entries.map(function(e){
+    if(patched[e.name]!==undefined) return {name:e.name, bytes:enc.encode(patched[e.name])};
+    return e;
+  });
+}
+function detectFormat(entryNames){
+  var has=function(n){return entryNames.indexOf(n)!==-1};
+  if(has("word/document.xml")) return "docx";
+  if(has("ppt/presentation.xml")) return "pptx";
+  return null;
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+var LANG="ja";
+var T={
+ ja:{
+  title:"Word・PowerPointのハイパーリンクが開けない・社内専用のリンクが残っているときの一覧・削除ツール",
+  sub:"社外に送る前に、Word(.docx)・PowerPoint(.pptx)に貼られたハイパーリンクをまとめて確認したいときに。本文・ヘッダー・フッター・脚注・文末脚注（Word）、スライドのテキストや図形（PowerPoint）のリンクを全部一覧化し、社内の共有フォルダ・自分のPCを指す「ローカルファイル」へのリンクや、参照先が無くなって開けない「壊れているリンク」を自動で見分けます。選んだリンクだけを解除した新しいファイルをその場で書き出せます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで処理します。",
+  dropzoneStrong:"ここにWord・PowerPointファイルをドラッグ＆ドロップ", dropzoneRest:"、またはクリックして選択",
+  dropzoneHint:".docx / .pptx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。",
+  listHeading:"読み込んだファイル", csvBtn:"全ファイルの一覧をCSVでダウンロード",
+  remove:"削除", feedback:"フィードバックはこちら",
+  privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。",
+  notOffice:"Word(.docx)・PowerPoint(.pptx)として読み込めませんでした。",
+  noLinks:"ハイパーリンクは見つかりませんでした。",
+  colLoc:"場所", colText:"文字/名前", colTarget:"リンク先", colType:"種類",
+  selAll:"全選択", selNone:"全解除", selSuggest:"問題がありそうな行だけ選択",
+  buildBtn:"選んだリンクを解除して書き出す", building:"書き出し中…",
+  built:"完了：%n%件のリンクを解除したファイルをダウンロードしました。",
+  kinds:{web:"外部サイト",email:"メール",local_file:"ローカルファイル（開けない可能性）",broken_relationship:"壊れている（参照なし）",broken_anchor:"壊れている（移動先なし）",internal_anchor:"文書内の場所へ",internal_jump:"他のスライドへ",internal_action:"既定の操作",unknown:"不明",other:"その他"}
+ },
+ en:{
+  title:"List and remove hyperlinks that won't open, or still point to an internal-only location, in Word/PowerPoint",
+  sub:"Before sending a Word (.docx) or PowerPoint (.pptx) file outside your company, check every hyperlink at once. Lists links in the document body, headers, footers, footnotes and endnotes (Word) or on each slide's text and shapes (PowerPoint), and automatically flags links pointing to a local file/network share or ones that are broken (missing reference or a dead jump target). Remove just the ones you choose and download the result — entirely in your browser.",
+  dropzoneStrong:"Drag and drop Word / PowerPoint files here", dropzoneRest:", or click to choose",
+  dropzoneHint:"Supports .docx / .pptx. Add multiple files at once. Files are processed only on this device.",
+  listHeading:"Loaded files", csvBtn:"Download the combined list as CSV",
+  remove:"Remove", feedback:"Feedback",
+  privacy:"Uploaded files are never sent to a server. Everything happens in this browser.",
+  notOffice:"Could not read this as a Word (.docx) or PowerPoint (.pptx) file.",
+  noLinks:"No hyperlinks were found.",
+  colLoc:"Location", colText:"Text/name", colTarget:"Target", colType:"Type",
+  selAll:"Select all", selNone:"Select none", selSuggest:"Select likely problem rows",
+  buildBtn:"Remove selected links & build", building:"Building…",
+  built:"Done: downloaded a copy with %n% link(s) removed.",
+  kinds:{web:"External site",email:"Email",local_file:"Local file (may not open)",broken_relationship:"Broken (no reference)",broken_anchor:"Broken (missing target)",internal_anchor:"Jump within document",internal_jump:"Jump to another slide",internal_action:"Built-in action",unknown:"Unknown",other:"Other"}
+ }
+};
+var PROBLEM_KINDS={local_file:1,broken_relationship:1,broken_anchor:1};
+
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+var files=[]; // {id, name, bytes, fmt, links, error}
+var fileSeq=0;
+
+function kindLabel(k){ return (T[LANG].kinds[k]||k); }
+function locLabel(f, l){
+  if(f.fmt==="docx") return l.partLabel;
+  return "slide "+l.slideIndex;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
+
+async function handleFiles(fileList){
+  // Snapshot synchronously (before the first `await` below) — the caller
+  // clears <input>.value right after calling this, which would otherwise
+  // truncate this *live* FileList mid-loop and silently drop every file
+  // after the first.
+  fileList = Array.prototype.slice.call(fileList);
+  for(var i=0;i<fileList.length;i++){
+    var f=fileList[i];
+    var rec={id:"f"+(fileSeq++), name:f.name, bytes:null, fmt:null, links:[], error:null, built:null};
+    files.push(rec);
+    try{
+      var buf=new Uint8Array(await f.arrayBuffer());
+      rec.bytes=buf;
+      var entries=await unzipAllEntries(buf);
+      var names=entries.map(function(e){return e.name});
+      var fmt=detectFormat(names);
+      if(!fmt){ rec.error=T[LANG].notOffice; }
+      else {
+        rec.fmt=fmt; rec.entries=entries;
+        var result = fmt==="docx" ? analyzeDocx(entries) : analyzePptx(entries);
+        rec.links = result ? result.links : [];
+        rec.selected = {};
+        rec.links.forEach(function(l){ rec.selected[l.id] = !!PROBLEM_KINDS[l.kind]; });
+      }
+    }catch(e){ rec.error=(e && e.message) || String(e); }
+  }
+  render();
+}
+
+function render(){
+  $("listSec").style.display = files.length ? "" : "none";
+  $("csvBtn").disabled = !files.some(function(f){return f.links && f.links.length});
+  var html="";
+  files.forEach(function(f){
+    html += renderFileCard(f);
+  });
+  $("fileList").innerHTML = html;
+  files.forEach(function(f){ wireFileCard(f); });
+}
+function renderFileCard(f){
+  var t=T[LANG];
+  var h = '<div class="fileCard" data-file="'+f.id+'">';
+  h += '<div class="fTop"><span class="fName">'+escapeHtml(f.name)+'</span>';
+  if(f.fmt) h += '<span class="badge fmt">'+f.fmt+'</span>';
+  h += '<button type="button" class="remove" data-remove="'+f.id+'">&times;</button></div>';
+  if(f.error){ h += '<div class="errBox">'+escapeHtml(f.error)+'</div></div>'; return h; }
+  if(!f.links.length){ h += '<p class="fMeta">'+t.noLinks+'</p></div>'; return h; }
+  var counts={};
+  f.links.forEach(function(l){ counts[l.kind]=(counts[l.kind]||0)+1; });
+  var summary = Object.keys(counts).map(function(k){return kindLabel(k)+" "+counts[k];}).join(" / ");
+  h += '<p class="summaryRow">'+f.links.length+' '+(LANG==="ja"?"件のリンク":"link(s)")+'：'+escapeHtml(summary)+'</p>';
+  h += '<div class="toolRow">';
+  h += '<button type="button" data-act="all" data-file="'+f.id+'">'+t.selAll+'</button>';
+  h += '<button type="button" data-act="none" data-file="'+f.id+'">'+t.selNone+'</button>';
+  h += '<button type="button" data-act="suggest" data-file="'+f.id+'">'+t.selSuggest+'</button>';
+  h += '</div>';
+  h += '<div class="scroll"><table><thead><tr><th></th><th>'+t.colLoc+'</th><th>'+t.colText+'</th><th>'+t.colTarget+'</th><th>'+t.colType+'</th></tr></thead><tbody>';
+  f.links.forEach(function(l){
+    h += '<tr class="k-'+l.kind+'">';
+    h += '<td><input type="checkbox" data-check="'+f.id+'" data-link="'+l.id+'"'+(f.selected[l.id]?' checked':'')+'></td>';
+    h += '<td class="loc">'+escapeHtml(locLabel(f,l))+'</td>';
+    h += '<td class="txt">'+escapeHtml(l.text||"")+'</td>';
+    h += '<td class="tgt">'+escapeHtml(l.target||"")+'</td>';
+    h += '<td>'+kindLabel(l.kind)+'</td>';
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<div class="actions"><button type="button" class="primary" data-build="'+f.id+'">'+t.buildBtn+'</button></div>';
+  h += '<div class="buildMsg"></div>';
+  h += '</div>';
+  return h;
+}
+function wireFileCard(f){
+  var card=document.querySelector('[data-file="'+f.id+'"]');
+  if(!card) return;
+  card.querySelectorAll('[data-check]').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      f.selected[cb.getAttribute('data-link')] = cb.checked;
+    });
+  });
+  var btns=card.querySelectorAll('[data-act]');
+  btns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var act=btn.getAttribute('data-act');
+      f.links.forEach(function(l){
+        if(act==="all") f.selected[l.id]=true;
+        else if(act==="none") f.selected[l.id]=false;
+        else if(act==="suggest") f.selected[l.id]=!!PROBLEM_KINDS[l.kind];
+      });
+      card.querySelectorAll('[data-check]').forEach(function(cb){
+        cb.checked = f.selected[cb.getAttribute('data-link')];
+      });
+    });
+  });
+  var removeBtn=document.querySelector('[data-remove="'+f.id+'"]');
+  if(removeBtn) removeBtn.addEventListener('click', function(){
+    files = files.filter(function(x){return x.id!==f.id});
+    render();
+  });
+  var buildBtn=card.querySelector('[data-build]');
+  if(buildBtn) buildBtn.addEventListener('click', function(){ buildFile(f, buildBtn, card.querySelector('.buildMsg')); });
+}
+async function buildFile(f, btn, msgEl){
+  var t=T[LANG];
+  var selectedIds=f.links.filter(function(l){return f.selected[l.id]}).map(function(l){return l.id});
+  btn.disabled=true; var oldText=btn.textContent; btn.textContent=t.building;
+  try{
+    var newEntries = f.fmt==="docx" ? removeDocxHyperlinks(f.entries, selectedIds, f.links)
+                                     : removePptxHyperlinks(f.entries, selectedIds, f.links);
+    var zipBytes = await buildZip(newEntries);
+    var blob=new Blob([zipBytes],{type:f.fmt==="docx"?"application/vnd.openxmlformats-officedocument.wordprocessingml.document":"application/vnd.openxmlformats-officedocument.presentationml.presentation"});
+    var url=URL.createObjectURL(blob);
+    var dotIdx=f.name.lastIndexOf(".");
+    var base = dotIdx===-1? f.name : f.name.slice(0,dotIdx);
+    var ext = dotIdx===-1? "" : f.name.slice(dotIdx);
+    var outName = base + (LANG==="ja"?"_リンク整理済み":"_links-cleaned") + ext;
+    var a=document.createElement("a"); a.href=url; a.download=outName; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
+    msgEl.innerHTML = '<div class="okBox">'+t.built.replace("%n%", String(selectedIds.length))+'</div>';
+  }catch(e){
+    msgEl.innerHTML = '<div class="errBox">'+escapeHtml((e&&e.message)||String(e))+'</div>';
+  }
+  btn.disabled=false; btn.textContent=oldText;
+}
+function downloadCombinedCsv(){
+  var header = LANG==="ja" ? ["ファイル名","形式","場所","文字/名前","リンク先","種類"] : ["File","Format","Location","Text/name","Target","Type"];
+  var rows=[header];
+  files.forEach(function(f){
+    f.links.forEach(function(l){
+      rows.push([f.name, f.fmt||"", locLabel(f,l), l.text||"", l.target||"", kindLabel(l.kind)]);
+    });
+  });
+  var csvText=serializeCSV(rows);
+  var bytes=new TextEncoder().encode("\uFEFF"+csvText);
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="hyperlinks.csv";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
+}
+
+/* ---- wiring ---- */
+var dropzone=$("dropzone"), fileInput=$("fileInput");
+dropzone.addEventListener("click", function(){ fileInput.click(); });
+dropzone.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fileInput.click(); } });
+["dragenter","dragover"].forEach(function(ev){
+  dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.add("drag"); });
+});
+["dragleave","drop"].forEach(function(ev){
+  dropzone.addEventListener(ev, function(e){ e.preventDefault(); dropzone.classList.remove("drag"); });
+});
+dropzone.addEventListener("drop", function(e){
+  if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener("change", function(){
+  if(fileInput.files && fileInput.files.length) handleFiles(fileInput.files);
+  fileInput.value="";
+});
+$("csvBtn").addEventListener("click", downloadCombinedCsv);
+
+/* ---- language toggle ---- */
+document.querySelectorAll(".lang button").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    LANG = btn.getAttribute("data-lang");
+    document.documentElement.lang = LANG;
+    document.querySelectorAll(".lang button").forEach(function(b){ b.setAttribute("aria-pressed", String(b===btn)); });
+    document.querySelectorAll("[data-i]").forEach(function(el){
+      var key=el.getAttribute("data-i");
+      if(T[LANG][key]!==undefined) el.textContent=T[LANG][key];
+    });
+    render();
+  });
+});
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
