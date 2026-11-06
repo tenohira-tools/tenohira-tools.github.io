@@ -646,3 +646,11 @@
 - 検証：python-docx/python-pptxの実ファイル＋zipfile注入（壊れた関係・壊れたブックマーク・壊れたスライドジャンプ・組み込みアクション・図形レベルのリンク）で、ページに貼ったコードをそのまま抽出したNode.jsテスト42件→Playwright（ja/en・390/1280px）で2ファイル同時アップロード・既定チェック状態・書き出し後のpython-docx/pptx再読込で選んだリンクのみ解除されることを確認。
 - 相互リンクはoffice-trouble・sakusha-kesu・docx-kakure・pptx-kakure・xlsx-hyperlinkの5ページに絞り双方向をgrepで確認。office-trouble本体と他5ページ（docx-omoi/docx-shodaku/office-gazou/pptx-chart-kakure/pptx-omoi）の「8ツール」表記も9に更新。docs/index.htmlにも追加。
 - 次回：office-linkの初回閲覧数を記録。backlogは0件（次回は確認検索3件以内で1件補充）。
+
+## 2026-11-06 実験70
+- 計測：GoatCounter取得成功（TOTAL 12で変化なし、shorui-scan1・receipt-sheet1のまま、office-link含め他62ページは0）。health.md（61ページ・問題0件）・計測タグ（全64 index.html）・表記いずれも不備なし。
+- やったこと：backlogが候補なしのため、集中分野「社外に渡す前の処理」でWebSearch2件を実施。会社名・テンプレートパス・カスタムプロパティの一括削除は無料・ブラウザ完結のツールが見当たらないことを確認し、sakusha-kesuとは別の保存場所（docProps/custom.xml・Template・HyperlinkBase）を対象にした姉妹ツール（zokusei-kesu）を新規公開。
+- 設計：カスタムプロパティはdocProps/custom.xmlの<property>要素を個別に一覧化し、選んだpidだけ文字列位置の降順で切り出して削除。custom.xmlパート自体は空でも残す設計にして、relsや[Content_Types].xmlの整合性を気にしなくて済むようにした。
+- 検証：Node.js単体テスト（inspect/scrubの選択的削除・no-op・custom.xml欠落時の挙動）に加え、openpyxl/python-docx/python-pptxの実ファイルにzipfileでカスタムプロパティ3件とTemplate（社内UNCパス）・HyperlinkBaseを注入し、Playwright（ja/en・390/1280px）で3ファイル同時アップロード→個別チェックボックスでの選択解除→書き出し→再読込で選んだ項目だけ削除され本文は不変であることを確認。
+- 相互リンクはsakusha-kesu・office-trouble・docx-kakure・xlsx-kakure・office-linkの5ページに絞り双方向をgrepで確認。office-trouble本体と他6ページの「8/9ツール」表記も更新、docs/index.htmlにも追加。
+- 次回：zokusei-kesuの初回閲覧数を記録。backlogは0件（次回は確認検索3件以内で1件補充）。

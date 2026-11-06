@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>社外に渡す前に、Excel・Word・PowerPointの「カスタムプロパティ」「テンプレート参照パス」を一覧化・削除 | てのひらツール</title>
+<meta name="description" content="作成者名(sakusha-kesu)だけでは消えない、ファイル内部の「カスタムプロパティ」（会社の独自テンプレートが書き込むクライアント名・承認者・社内プロジェクトコードなど）と、「テンプレートの参照パス」「ハイパーリンクの基準パス」（社内サーバーのフォルダ構成が分かってしまうことがあります）を一覧化し、選んで削除します。Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)に対応、複数ファイル一括処理。ファイルはサーバーに送らずブラウザの中だけで処理します。Beyond author names: list and remove the custom properties and template/hyperlink-base paths hidden inside Excel/Word/PowerPoint files before sharing them, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/zokusei-kesu/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.fileCard .fTop{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCard .fName{font-weight:700;word-break:break-all}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.fmt{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.detectBox{font-size:.9rem;margin:6px 0 10px}
+.detectBox .row{display:flex;gap:6px;flex-wrap:wrap;margin:3px 0}
+.detectBox .k{color:var(--muted);min-width:11em}
+.detectBox .v{word-break:break-all}
+.detectBox .v.empty{color:var(--muted)}
+.optRow{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0}
+.optRow label{display:flex;align-items:center;gap:6px}
+.optRow label.disabled{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.86rem;margin:8px 0}
+th,td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;white-space:nowrap}
+td.val{word-break:break-all}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;min-height:40px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.errBox{border:1px solid var(--diff);background:var(--diff-bg);color:var(--diff);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">社外に渡す前に、Excel・Word・PowerPointの「カスタムプロパティ」「テンプレート参照パス」を一覧化・削除</h1>
+    <p class="sub" data-i="sub">作成者名・最終更新者・会社名を消しても、ファイルの内部にはまだ「カスタムプロパティ」（会社の独自テンプレートが自動で書き込む、クライアント名・承認者・社内プロジェクトコードなどの独自項目）や、「テンプレートの参照パス」「ハイパーリンクの基準パス」（社内サーバーのフォルダ構成が分かってしまう場合があります）が残っていることがあります。Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)からこれらを一覧表示し、選んだものだけを削除した新しいファイルを書き出します。複数ファイルを一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで処理します。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p><strong data-i="dropzoneStrong">ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ</strong><span data-i="dropzoneRest">、またはクリックして選択</span></p>
+    <p class="hint" data-i="dropzoneHint">.xlsx / .xlsm / .docx / .pptx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm,.docx,.pptx" multiple style="display:none">
+</section>
+
+<section class="card" id="listSec" style="display:none">
+  <h2 data-i="listHeading">読み込んだファイル</h2>
+  <div id="fileList"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel/Word/PowerPointファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル可）。</li>
+      <li>見つかった「カスタムプロパティ」が表に一覧表示されます。消したい項目にチェックを入れたまま（既定でチェック済み）、テンプレート参照パス・ハイパーリンクの基準パスも消したい場合はチェックを入れ、「書き出す」を押すとダウンロードされます。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. 「カスタムプロパティ」とは何ですか？なぜ気づきにくいのですか？</h3>
+    <p>A. Excel/Word/PowerPointのファイル内部（docProps/custom.xml）に保存される、ファイルの「情報」画面で「プロパティの詳細を表示」→「カスタム」タブを開かないと見えない独自項目です。会社や部署で用意された共通テンプレートから文書を作ると、クライアント名・承認者・プロジェクトコード・社内の文書管理システムが振った番号などが、作成者が気づかないまま自動的に書き込まれていることがあります。見た目には一切表示されないため、社外に送る前に見落としやすい情報です。</p>
+    <h3>Q. 「テンプレートの参照パス」「ハイパーリンクの基準パス」とは？</h3>
+    <p>A. ファイルの詳細プロパティ（docProps/app.xml）に保存される項目です。「テンプレート」は、その文書を作るときに使った雛形ファイル（.dotx/.potx/.xltx）の名前や場所で、社内サーバーの共有フォルダを指すパス（例：\\\\社内サーバー名\\テンプレート\\…）がそのまま残っていることがあります。「ハイパーリンクの基準パス」は、文書内の相対リンクの基準になるフォルダのパスで、同様に社内のフォルダ構成が分かってしまう場合があります。</p>
+    <h3>Q. 作成者名を消すツール（sakusha-kesu）と何が違いますか？</h3>
+    <p>A. sakusha-kesuは「作成者」「最終更新者」「会社名」「所属部門」「コメントの投稿者名」という、人物・組織名に関する項目を消します。このツールはそれとは別の保存場所にある「カスタムプロパティ」「テンプレート参照パス」「ハイパーリンクの基準パス」を対象にしており、互いに重複しません。両方を使うとより安心です。</p>
+    <h3>Q. カスタムプロパティの値が消えても、文書の内容は変わりませんか？</h3>
+    <p>A. 変わりません。消すのはdocProps/custom.xml・docProps/app.xmlに保存されたプロパティ情報だけで、本文・セルの値・数式・画像・書式など、文書そのものの内容は一切変更されません。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. Excel(.xlsx/.xlsm)、Word(.docx)、PowerPoint(.pptx)です。古い.xls/.doc/.ppt形式や、パスワードで保護されたファイルは読み込めません。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は別の新しいファイルとしてダウンロードされます（ファイル名の末尾に「_プロパティ削除済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・個人を特定しない形で数えるGoatCounterの通信のみ発生します。入力内容は端末の外に送られません）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Excel/Word/PowerPoint files into the box above, or click it to choose (multiple files are fine).</li>
+      <li>Every custom property found is listed in a table. Keep the boxes checked (checked by default) for the ones you want removed, optionally check the template-path / hyperlink-base boxes too, and click "Build" to download the result. Your original file is untouched.</li>
+    </ol>
+    <h3>Q. What are "custom properties", and why are they easy to miss?</h3>
+    <p>A. They're arbitrary name/value fields stored inside the file (docProps/custom.xml), only visible from File &gt; Info &gt; "Show All Properties" &gt; the "Custom" tab — nowhere near the document's visible content. A shared company template can silently write a client name, an approver, a project code or an internal document-management ID into these fields without the author ever noticing, which makes them easy to overlook before sending a file outside the company.</p>
+    <h3>Q. What are the "template reference path" and "hyperlink base path"?</h3>
+    <p>A. Both live in the file's extended properties (docProps/app.xml). "Template" records the name/location of the template (.dotx/.potx/.xltx) used to create the document, and can still contain a path to an internal file server (e.g. \\\\server-name\\templates\\...). "HyperlinkBase" is the base folder that relative links in the document resolve against, and can likewise reveal internal folder structure.</p>
+    <h3>Q. How is this different from the author-name tool (sakusha-kesu)?</h3>
+    <p>A. sakusha-kesu clears person/organization fields: creator, last-modified-by, Company, Manager and comment-author names. This tool targets a different storage location — custom properties, the template path and the hyperlink base path — so the two don't overlap. Using both together is the most thorough.</p>
+    <h3>Q. Does removing a custom property change the document's content?</h3>
+    <p>A. No. Only the property data in docProps/custom.xml and docProps/app.xml is removed; the document's actual content — text, cell values, formulas, images, formatting — is left completely untouched.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Excel (.xlsx/.xlsm), Word (.docx) and PowerPoint (.pptx). The older .xls/.doc/.ppt formats and password-protected files are not supported.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file (with "_properties_removed" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter — nothing you type or upload ever leaves your device).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — 人物・組織名に関する項目はこちら。このツールとは保存場所が別で重複しません。</li>
+      <li><a href="../office-trouble/">Word・PowerPointを社外に渡す前のチェックまとめ</a> — 症状から選べる案内ページ。この他の関連ツールへのリンクも。</li>
+      <li><a href="../docx-kakure/">社外に渡す前に確認：Wordの「隠れた情報」一括チェック</a> — 変更履歴・コメント・隠し文字・ヘッダーフッターをまとめて診断（読み取り専用）。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — 非表示シート・コメント・外部リンク・名前定義などをまとめて診断（読み取り専用）。</li>
+      <li><a href="../office-link/">Word・PowerPointのハイパーリンク一覧・削除ツール</a> — 本文・スライドに貼られたハイパーリンクのうち、社内の共有フォルダを指すものや壊れているものを検出・削除。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../sakusha-kesu/">Before sharing: strip creator, last-modified-by and comment-author names</a> — the person/organization fields, stored separately from this tool's targets, so the two don't overlap.</li>
+      <li><a href="../office-trouble/">Word/PowerPoint pre-share checklist</a> — a symptom-based directory linking to this and other related tools.</li>
+      <li><a href="../docx-kakure/">Check a Word file for "hidden" information before sending it outside your company</a> — Track Changes editors, comments, hidden text and header/footer text (read-only).</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for "hidden" information before sending it outside your company</a> — hidden sheets, comments, external links and defined names (read-only).</li>
+      <li><a href="../office-link/">List and remove hyperlinks in Word/PowerPoint</a> — flags links to an internal file server/share or ones that are broken.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「カスタムプロパティ」とは何ですか？","acceptedAnswer":{"@type":"Answer","text":"docProps/custom.xmlに保存される独自の項目で、ファイルの詳細プロパティの「カスタム」タブでしか見えません。会社のテンプレートがクライアント名や承認者などを自動で書き込んでいる場合があります。"}},
+    {"@type":"Question","name":"作成者名を消すツール（sakusha-kesu）と何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"sakusha-kesuは人物・組織名の項目を消します。このツールはカスタムプロパティとテンプレート参照パス・ハイパーリンクの基準パスを対象とし、保存場所が別で重複しません。"}},
+    {"@type":"Question","name":"文書の内容は変わりませんか？","acceptedAnswer":{"@type":"Answer","text":"変わりません。消すのはプロパティ情報だけで、本文・セルの値・数式・画像・書式などはそのまま残ります。"}},
+    {"@type":"Question","name":"元のファイルは変更されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。変更後の内容は新しいファイルとしてダウンロードされ、元のファイルは変更されません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =====================================================================
+   ZIP read/write — same hand-rolled approach already shipped across
+   xlsx-merge/xlsx-suushiki/xlsx-namae/.../sakusha-kesu (no external
+   libraries; only standard browser APIs). Works for any OOXML zip
+   container (xlsx/docx/pptx all share the same ZIP structure).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =====================================================================
+   Minimal XML tag parser (shared across this site's xlsx- and office- tools).
+   ===================================================================== */
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function xmlEscapeText(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]}); }
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function setTagsInnerText(xml,tagName,placeholderFn){
+  var tags=findTags(xml,tagName);
+  if(!tags.length) return {xml:xml,values:[]};
+  var out=[],last=0,values=[];
+  tags.forEach(function(t,idx){
+    var oldVal=t.inner===null?"":t.inner;
+    values.push(decodeXmlEntities(oldVal));
+    out.push(xml.slice(last,t.start));
+    if(t.selfClose){ out.push(t.openText); }
+    else{
+      var newVal=placeholderFn(decodeXmlEntities(oldVal),idx);
+      out.push(t.openText,xmlEscapeText(newVal),"</"+tagName+">");
+    }
+    last=t.end;
+  });
+  out.push(xml.slice(last));
+  return {xml:out.join(""),values:values};
+}
+
+/* =====================================================================
+   Format detection + inspection + scrub (business logic; verified with
+   Node.js unit tests + python-docx/openpyxl/python-pptx fixture files
+   before publishing — see state/log.md).
+   ===================================================================== */
+function detectFormat(entryNames){
+  var has=function(n){return entryNames.indexOf(n)!==-1};
+  if(has("xl/workbook.xml")) return "xlsx";
+  if(has("word/document.xml")) return "docx";
+  if(has("ppt/presentation.xml")) return "pptx";
+  return null;
+}
+function parseVtValue(inner){
+  if(!inner) return {type:"",value:""};
+  var m=inner.match(/<(vt:[A-Za-z0-9_-]+)(?:\s[^>]*)?\/>/);
+  if(m) return {type:m[1],value:""};
+  m=inner.match(/<(vt:[A-Za-z0-9_-]+)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/);
+  if(m) return {type:m[1],value:decodeXmlEntities(m[2])};
+  return {type:"",value:decodeXmlEntities(inner)};
+}
+var VT_LABEL_JA={"vt:lpwstr":"文字列","vt:lpstr":"文字列","vt:bstr":"文字列","vt:bool":"真偽値","vt:i1":"数値","vt:i2":"数値","vt:i4":"数値","vt:i8":"数値","vt:r4":"数値","vt:r8":"数値","vt:cy":"数値","vt:filetime":"日時","vt:error":"エラー値"};
+var VT_LABEL_EN={"vt:lpwstr":"Text","vt:lpstr":"Text","vt:bstr":"Text","vt:bool":"Boolean","vt:i1":"Number","vt:i2":"Number","vt:i4":"Number","vt:i8":"Number","vt:r4":"Number","vt:r8":"Number","vt:cy":"Number","vt:filetime":"Date/time","vt:error":"Error"};
+function vtTypeLabel(t,lang){ var map=lang==="en"?VT_LABEL_EN:VT_LABEL_JA; return map[t]||(lang==="en"?"Unknown":"不明"); }
+function inspect(entries){
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var names=entries.map(function(e){return e.name});
+  var fmt=detectFormat(names);
+  if(!fmt) return null;
+  var dec=new TextDecoder("utf-8");
+  var app=byName["docProps/app.xml"]?dec.decode(byName["docProps/app.xml"].bytes):"";
+  var custom=byName["docProps/custom.xml"]?dec.decode(byName["docProps/custom.xml"].bytes):"";
+  var templateTag=findTags(app,"Template")[0];
+  var hyperlinkBaseTag=findTags(app,"HyperlinkBase")[0];
+  var props=[];
+  if(custom){
+    findTags(custom,"property").forEach(function(t){
+      var vt=parseVtValue(t.inner);
+      props.push({pid:t.attrs.pid||"", name:t.attrs.name||"", type:vt.type, value:vt.value});
+    });
+  }
+  return {fmt:fmt,
+    hasApp:!!byName["docProps/app.xml"],
+    hasCustom:!!byName["docProps/custom.xml"],
+    template: templateTag?decodeXmlEntities(templateTag.inner||""):"",
+    hyperlinkBase: hyperlinkBaseTag?decodeXmlEntities(hyperlinkBaseTag.inner||""):"",
+    customProps: props};
+}
+function scrub(entries,opts){
+  // opts: {clearTemplate:bool, clearHyperlinkBase:bool, removePids:[...]}
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var patched={};
+  if((opts.clearTemplate||opts.clearHyperlinkBase) && byName["docProps/app.xml"]){
+    var app=dec.decode(byName["docProps/app.xml"].bytes);
+    if(opts.clearTemplate) app=setTagsInnerText(app,"Template",function(){return ""}).xml;
+    if(opts.clearHyperlinkBase) app=setTagsInnerText(app,"HyperlinkBase",function(){return ""}).xml;
+    patched["docProps/app.xml"]=app;
+  }
+  if(opts.removePids && opts.removePids.length && byName["docProps/custom.xml"]){
+    var custom=dec.decode(byName["docProps/custom.xml"].bytes);
+    var removeSet={}; opts.removePids.forEach(function(p){removeSet[String(p)]=true});
+    var tags=findTags(custom,"property").filter(function(t){return removeSet[String(t.attrs.pid)]});
+    tags.sort(function(a,b){return b.start-a.start});
+    tags.forEach(function(t){ custom=custom.slice(0,t.start)+custom.slice(t.end); });
+    patched["docProps/custom.xml"]=custom;
+  }
+  return entries.map(function(e){
+    if(patched[e.name]!==undefined) return {name:e.name, bytes:enc.encode(patched[e.name])};
+    return e;
+  });
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+var FMT_LABEL={xlsx:"Excel",docx:"Word",pptx:"PowerPoint"};
+
+var T={
+ ja:{
+  title:"社外に渡す前に、Excel・Word・PowerPointの「カスタムプロパティ」「テンプレート参照パス」を一覧化・削除",
+  sub:"作成者名・最終更新者・会社名を消しても、ファイルの内部にはまだ「カスタムプロパティ」（会社の独自テンプレートが自動で書き込む、クライアント名・承認者・社内プロジェクトコードなどの独自項目）や、「テンプレートの参照パス」「ハイパーリンクの基準パス」（社内サーバーのフォルダ構成が分かってしまう場合があります）が残っていることがあります。Excel(.xlsx/.xlsm)・Word(.docx)・PowerPoint(.pptx)からこれらを一覧表示し、選んだものだけを削除した新しいファイルを書き出します。複数ファイルを一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで処理します。元のファイルは変更しません。",
+  dropzoneStrong:"ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ",dropzoneRest:"、またはクリックして選択",
+  dropzoneHint:".xlsx / .xlsm / .docx / .pptx に対応。複数ファイルを同時に追加できます。ファイルは選択した端末の中だけで処理されます。",
+  listHeading:"読み込んだファイル",
+  kCustom:"カスタムプロパティ",kTemplate:"テンプレート参照パス",kHyperlinkBase:"ハイパーリンクの基準パス",
+  none:"（設定なし）",noneCustom:"（カスタムプロパティなし）",
+  thSel:"",thName:"名前",thType:"種類",thValue:"値",
+  optTemplate:"テンプレート参照パスを消す",optHyperlinkBase:"ハイパーリンクの基準パスを消す",
+  selectAll:"すべて選択",selectNone:"すべて解除",
+  buildBtn:"選んだ項目を削除して書き出す",buildBtnBusy:"書き出し中…",
+  doneMsg:"ダウンロードしました：",
+  errBad:"読み込めませんでした（.xlsx/.xlsm/.docx/.pptx以外の形式か、パスワード保護、または壊れたファイルの可能性があります）",
+  loadingLabel:"読み込み中…",removeLabel:"削除",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{
+  title:"Before sharing: list and remove custom properties and the template reference path from Excel/Word/PowerPoint",
+  sub:"Even after clearing the creator, last-modified-by and Company fields, a file can still carry \"custom properties\" (a client name, an approver, a project code or similar — often written silently by a shared company template) and a \"template reference path\" or \"hyperlink base path\" that can reveal your internal file-server folder structure. This tool lists all of these across Excel (.xlsx/.xlsm), Word (.docx) and PowerPoint (.pptx) files and builds a copy with only the ones you choose removed. Process multiple files at once. Files are never uploaded — everything happens inside this browser. Your originals are untouched.",
+  dropzoneStrong:"Drag and drop Excel/Word/PowerPoint files here",dropzoneRest:", or click to choose",
+  dropzoneHint:".xlsx / .xlsm / .docx / .pptx supported. Add multiple files at once. Everything happens on this device.",
+  listHeading:"Loaded files",
+  kCustom:"Custom properties",kTemplate:"Template reference path",kHyperlinkBase:"Hyperlink base path",
+  none:"(not set)",noneCustom:"(no custom properties)",
+  thSel:"",thName:"Name",thType:"Type",thValue:"Value",
+  optTemplate:"Clear the template reference path",optHyperlinkBase:"Clear the hyperlink base path",
+  selectAll:"Select all",selectNone:"Deselect all",
+  buildBtn:"Remove selected items and build the file",buildBtnBusy:"Building…",
+  doneMsg:"Downloaded: ",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm/.docx/.pptx, may be password-protected, or may be corrupted)",
+  loadingLabel:"Loading…",removeLabel:"Remove",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var files=[]; // {id,name,size,loading,error,info,entries,opts,outName,building}
+var seq=0;
+
+function addFiles(fileList){
+  Array.prototype.slice.call(fileList).forEach(function(file){
+    var id=++seq;
+    var rec={id:id,name:file.name,size:file.size,loading:true,error:"",info:null,entries:null,
+      opts:{clearTemplate:false,clearHyperlinkBase:false,removePids:{}},outName:"",building:false};
+    files.push(rec);
+    render();
+    (async function(){
+      try{
+        var buf=await file.arrayBuffer();
+        var entries=await unzipAllEntries(new Uint8Array(buf));
+        var info=inspect(entries);
+        if(!info) throw new Error("NOT_SUPPORTED");
+        rec.loading=false; rec.entries=entries; rec.info=info;
+        rec.opts.clearTemplate=!!info.template;
+        rec.opts.clearHyperlinkBase=!!info.hyperlinkBase;
+        info.customProps.forEach(function(p){ rec.opts.removePids[p.pid]=true; });
+      }catch(e){
+        rec.loading=false; rec.error=T[lang].errBad;
+      }
+      render();
+    })();
+  });
+}
+function removeFile(id){ files=files.filter(function(r){return r.id!==id}); render(); }
+
+async function buildOne(rec){
+  rec.building=true; render();
+  try{
+    var removePids=Object.keys(rec.opts.removePids).filter(function(pid){return rec.opts.removePids[pid]});
+    var cleaned=scrub(rec.entries,{clearTemplate:rec.opts.clearTemplate,clearHyperlinkBase:rec.opts.clearHyperlinkBase,removePids:removePids});
+    var outBytes=await buildZip(cleaned);
+    var dot=rec.name.lastIndexOf(".");
+    var base=dot>0?rec.name.slice(0,dot):rec.name, ext=dot>0?rec.name.slice(dot):"";
+    var suffix=lang==="ja"?"_プロパティ削除済み":"_properties_removed";
+    var outName=base+suffix+ext;
+    var blob=new Blob([outBytes],{type:"application/octet-stream"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=outName; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },1000);
+    rec.outName=outName;
+  }catch(e){
+    rec.error=T[lang].errBad;
+  }
+  rec.building=false; render();
+}
+
+function fieldRow(k,v,emptyLabel){
+  var cls=v?"v":"v empty";
+  return '<div class="row"><span class="k">'+k+'：</span><span class="'+cls+'">'+(v?esc(v):emptyLabel)+'</span></div>';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function customTableHtml(rec){
+  var t=T[lang], info=rec.info;
+  if(!info.customProps.length) return fieldRow(t.kCustom,"",t.noneCustom);
+  var rows=info.customProps.map(function(p){
+    var checked=rec.opts.removePids[p.pid]?"checked":"";
+    return '<tr><td><input type="checkbox" data-prop="1" data-id="'+rec.id+'" data-pid="'+esc(String(p.pid))+'" '+checked+'></td>'
+      +'<td>'+esc(p.name||"")+'</td><td>'+esc(vtTypeLabel(p.type,lang))+'</td><td class="val">'+esc(p.value||"")+'</td></tr>';
+  }).join("");
+  return '<div class="row"><span class="k">'+t.kCustom+'（'+info.customProps.length+'）：</span></div>'
+    +'<p><button type="button" class="remove" data-selall="'+rec.id+'" data-val="1">'+t.selectAll+'</button> '
+    +'<button type="button" class="remove" data-selall="'+rec.id+'" data-val="0">'+t.selectNone+'</button></p>'
+    +'<table><thead><tr><th>'+t.thSel+'</th><th>'+t.thName+'</th><th>'+t.thType+'</th><th>'+t.thValue+'</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>';
+}
+
+function fileCardHtml(rec){
+  var t=T[lang];
+  if(rec.loading) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+t.loadingLabel+'</span></div></div>';
+  if(rec.error) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div><p class="errBox">'+t.errBad+'</p></div>';
+  var info=rec.info;
+  var html='<div class="fileCard">'
+    +'<div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="badge fmt">'+FMT_LABEL[info.fmt]+'</span>'
+    +'<span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div>'
+    +'<div class="detectBox">'
+    +fieldRow(t.kTemplate,info.template,t.none)
+    +fieldRow(t.kHyperlinkBase,info.hyperlinkBase,t.none)
+    +'</div>'
+    +'<div class="optRow">'
+    +'<label class="'+(info.template?'':'disabled')+'"><input type="checkbox" data-opt="clearTemplate" data-id="'+rec.id+'" '+(rec.opts.clearTemplate?'checked':'')+' '+(info.template?'':'disabled')+'>'+t.optTemplate+'</label>'
+    +'<label class="'+(info.hyperlinkBase?'':'disabled')+'"><input type="checkbox" data-opt="clearHyperlinkBase" data-id="'+rec.id+'" '+(rec.opts.clearHyperlinkBase?'checked':'')+' '+(info.hyperlinkBase?'':'disabled')+'>'+t.optHyperlinkBase+'</label>'
+    +'</div>'
+    +'<div class="detectBox">'+customTableHtml(rec)+'</div>'
+    +'<p><button type="button" class="primary" data-build="'+rec.id+'" '+(rec.building?'disabled':'')+'>'+(rec.building?t.buildBtnBusy:t.buildBtn)+'</button></p>'
+    +(rec.outName?'<p class="okBox">'+t.doneMsg+esc(rec.outName)+'</p>':'')
+    +'</div>';
+  return html;
+}
+
+function render(){
+  var t=T[lang];
+  document.documentElement.lang=lang;
+  $("listSec").style.display=files.length?"block":"none";
+  $("fileList").innerHTML=files.map(fileCardHtml).join("");
+  document.querySelectorAll("[data-i]").forEach(function(el){
+    var k=el.getAttribute("data-i"); if(t[k]!==undefined) el.textContent=t[k];
+  });
+}
+
+document.addEventListener("click",function(e){
+  var rm=e.target.getAttribute && e.target.getAttribute("data-remove");
+  if(rm){ removeFile(parseInt(rm,10)); return; }
+  var bd=e.target.getAttribute && e.target.getAttribute("data-build");
+  if(bd){ var rec=files.filter(function(r){return r.id===parseInt(bd,10)})[0]; if(rec) buildOne(rec); return; }
+  var sa=e.target.getAttribute && e.target.getAttribute("data-selall");
+  if(sa){
+    var rec2=files.filter(function(r){return r.id===parseInt(sa,10)})[0];
+    if(rec2){
+      var val=e.target.getAttribute("data-val")==="1";
+      Object.keys(rec2.opts.removePids).forEach(function(pid){ rec2.opts.removePids[pid]=val; });
+      render();
+    }
+    return;
+  }
+});
+document.addEventListener("change",function(e){
+  var optName=e.target.getAttribute && e.target.getAttribute("data-opt");
+  if(optName){
+    var id=parseInt(e.target.getAttribute("data-id"),10);
+    var rec=files.filter(function(r){return r.id===id})[0];
+    if(rec){ rec.opts[optName]=e.target.checked; }
+    return;
+  }
+  var isProp=e.target.getAttribute && e.target.getAttribute("data-prop");
+  if(isProp){
+    var id2=parseInt(e.target.getAttribute("data-id"),10);
+    var pid=e.target.getAttribute("data-pid");
+    var rec2=files.filter(function(r){return r.id===id2})[0];
+    if(rec2){ rec2.opts.removePids[pid]=e.target.checked; }
+  }
+});
+
+var dz=$("dropzone"), fi=$("fileInput");
+dz.addEventListener("click",function(){ fi.click(); });
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fi.click(); } });
+fi.addEventListener("change",function(){ if(fi.files.length) addFiles(fi.files); fi.value=""; });
+["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add("drag"); }); });
+["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove("drag"); }); });
+dz.addEventListener("drop",function(e){ if(e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+document.querySelectorAll(".lang button").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    lang=btn.getAttribute("data-lang");
+    document.querySelectorAll(".lang button").forEach(function(b){ b.setAttribute("aria-pressed", b===btn?"true":"false"); });
+    render();
+  });
+});
+
+render();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

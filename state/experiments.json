@@ -2719,6 +2719,10 @@
         {
           "date": "2026-11-06T17:15:00Z",
           "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        },
+        {
+          "date": "2026-11-06T20:16:33Z",
+          "note": "今回から計測対象に加わったが累計0（公開から数時間）。"
         }
       ],
       "notes": "Word: word/document.xml・headerN.xml・footerN.xml・footnotes.xml・endnotes.xmlのw:hyperlinkを走査し、r:id（外部/メール/ローカルファイル判定）とw:anchor（文書内ブックマークの存在確認）を分類。PowerPoint: 各スライドのa:hlinkClickを走査し、テキストランへの付与（a:rPr内）と図形・アクションボタン全体への付与（p:cNvPr内）の両方を検出、ppaction://の組み込みアクション（次へ/前へ/最初/最後等）とhlinksldjumpによるスライド間ジャンプ（参照先スライドの実在確認）も分類。削除はw:hyperlinkタグをテキスト内容を残して unwrap（Wordの「ハイパーリンクの削除」と同じ挙動）、PowerPointはa:hlinkClickタグ自体を除去。いずれも削除後にr:idがそのパート内で他に使われていない場合だけ対応するrelsエントリも削除する設計（部分削除による取りこぼし・過剰削除を避けるため、削除前にr:id参照の残存を正規表現で再確認）。",
@@ -2728,6 +2732,34 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。python-docx/python-pptxで作成した実ファイルに、Pythonのzipfileでヘッダー・フッターのリンク、壊れたrelationship（存在しないr:id）、壊れたブックマーク参照、PowerPointの壊れたスライドジャンプ・組み込みアクション・図形レベルのリンクを注入した統合テストファイルを作成。ページに貼り付けたコードをそのまま抽出してNode.jsで実行するテスト（42件）で分類・削除・rels整合性を確認した後、Playwright（ja/en・390/1280px）で2ファイル同時アップロード→既定のチェック状態（ローカルファイル・壊れている系のみ既定チェック）→書き出し→ダウンロードしたファイルをpython-docx/python-pptxで再読込し、選んだリンクのみ解除されテキスト・図形はそのまま残ることを確認。CSV（BOM付き）・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）も確認。テスト中、複数ファイルをファイル選択ダイアログで同時に追加すると2件目以降が無視される実装バグ（input.valueを同期的にクリアする行がhandleFiles内の非同期ループより先に走り、参照していたライブFileListが0件に変わってしまう）を発見し修正。関連5ページ（office-trouble/sakusha-kesu/docx-kakure/pptx-kakure/xlsx-hyperlink）との双方向リンクをgrepで確認、office-trouble本体とその他5ページ（docx-omoi/docx-shodaku/office-gazou/pptx-chart-kakure/pptx-omoi）の「8ツール」表記・相互リンクも9に更新。"
+        }
+      ]
+    },
+    {
+      "slug": "zokusei-kesu",
+      "title": "社外に渡す前に、Excel・Word・PowerPointの「カスタムプロパティ」「テンプレート参照パス」を一覧化・削除",
+      "url": "https://tenohira-tools.github.io/zokusei-kesu/",
+      "published": "2026-11-06",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "STRATEGY.md集中分野（社外に渡す前の処理）",
+      "why": "backlogが候補なしで空だったため、集中分野「社外に渡す前の処理」でWebSearch2件を実施。「会社名・テンプレートパス・カスタムプロパティの一括削除」はWindows専用シェアウェア（ゼロから始めるプロパティ等）のみでブラウザ完結・無料のツールは見当たらないことを確認。既存のsakusha-kesu（作成者・最終更新者・会社名・コメント投稿者名を消す）とは異なる保存場所——docProps/custom.xml（会社の独自テンプレートが書き込むクライアント名・承認者・社内プロジェクトコードなど）、docProps/app.xmlのTemplate（テンプレート参照パス）・HyperlinkBase（ハイパーリンクの基準パス、いずれも社内サーバーのフォルダ構成が分かってしまう場合がある）——を対象にし、互いに重複しない姉妹ツールとして設計。カスタムプロパティは個別に一覧化して選んだものだけ削除できる点を勝ち筋とした。",
+      "metrics": [
+        {
+          "date": "2026-11-06T20:31:24Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "notes": "docProps/custom.xmlの<property fmtid pid name><vt:*>値</vt:*></property>構造を解析し、pid・name・型（vt:lpwstr等）・値を一覧化。削除は選んだpidの<property>要素を文字列位置の降順で切り出すだけで済み、relsや[Content_Types].xmlは一切変更しない設計（custom.xmlパート自体は空になっても残すため、関連パーツの整合性を気にしなくて良い）。docProps/app.xmlのTemplate・HyperlinkBaseは既存のsetTagsInnerTextで空文字に。sakusha-kesu・docx-kakure・xlsx-kakure・office-link・office-troubleのZIP+XML処理・ユーティリティ関数をそのまま再利用し、新規実装はdocProps/custom.xml・Template・HyperlinkBaseの解析・削除ロジックのみ。",
+      "reviews": [
+        {
+          "date": "2026-11-06",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開直後。Node.js単体テスト（parseVtValue・inspect・scrubの選択的削除・no-op・custom.xml欠落時の挙動）に加え、openpyxl/python-docx/python-pptxで作成した実ファイルにPythonのzipfileでdocProps/custom.xml（カスタムプロパティ3種）とTemplate（社内サーバーのUNCパス）・HyperlinkBaseを注入した統合テストファイルを作成。Playwright（ja/en・390/1280px）で3ファイル同時アップロード→検出表示（パス・カスタムプロパティ一覧）確認→個別チェックボックスでの選択解除（Template維持・HyperlinkBase削除・特定プロパティのみ保持）→一括選択/解除ボタン→書き出し→ダウンロードしたファイルをopenpyxl/python-docx/python-pptxで再読込し、選んだ項目だけが削除され本文・セル値・スライドタイトルは不変であることを確認。横スクロール無し・JSエラー無しも確認。"
         }
       ]
     }
