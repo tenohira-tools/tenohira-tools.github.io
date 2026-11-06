@@ -31,7 +31,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [交通費精算書メーカー｜区間・金額を入力してその場で集計・印刷](https://tenohira-tools.github.io/kotsuhi-seisan/)
 - [Excel・Word・PowerPointの画像をまとめて保存：zip変換せず一括抽出](https://tenohira-tools.github.io/office-gazou/)
 - [Word・PowerPointのハイパーリンクが開けない・社内専用のリンクが残っているときの一覧・削除ツール](https://tenohira-tools.github.io/office-link/)
-- [Word・PowerPointを社外に渡す前のチェックまとめ｜症状から探す9ツール](https://tenohira-tools.github.io/office-trouble/)
+- [Word・PowerPointを社外に渡す前のチェックまとめ｜症状から探す10ツール](https://tenohira-tools.github.io/office-trouble/)
 - [「グラフのデータを編集」で元の表が丸ごと見える：PowerPointグラフの埋め込みExcel診断ツール](https://tenohira-tools.github.io/pptx-chart-kakure/)
 - [別のPCで文字化け・レイアウト崩れする原因を確認：PowerPointの使用フォント一覧（スライド・マスター別、テーマフォント解決）](https://tenohira-tools.github.io/pptx-font/)
 - [社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除](https://tenohira-tools.github.io/pptx-kakure/)
@@ -72,4 +72,5 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [「数値が文字列として保存されています」(緑の三角)を列ごと一括で数値に変換](https://tenohira-tools.github.io/xlsx-suuchika/)
 - [引き継いだExcelの数式を一覧に：棚卸し・エラーチェックツール](https://tenohira-tools.github.io/xlsx-suushiki/)
 - [図形が勝手に増えた・見えない図形が残っている：全シート一覧・選んだ図形だけ削除](https://tenohira-tools.github.io/xlsx-zukei/)
+- [社外に渡す前に、Excel・Word・PowerPointの「カスタムプロパティ」「テンプレート参照パス」を一覧化・削除](https://tenohira-tools.github.io/zokusei-kesu/)
 <!-- tools:end -->
