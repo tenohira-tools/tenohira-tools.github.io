@@ -661,3 +661,11 @@
 - 検証：LibreOffice UNO APIで作成した「新規」マクロの書き出しが本物のvbaProject.binを生成しないことを確認した上で、openpyxl/python-docx/python-pptxの実ファイルにzipfileでOOXML仕様通りのvbaProject.bin・Content_Types・rels差分を注入。Pythonで同じ文字列編集ロジックのプロトタイプを先に組み、openpyxl等での再読込とLibreOffice headless変換の両方で正しさを確認してからJavaScriptへ1:1で移植。Playwright（ja/en・390/1280px）でマクロ入り3形式＋マクロ無しファイルを同時アップロードし、検出表示・削除・ダウンロード後の再読込・PDF変換まで確認。
 - 相互リンクはoffice-trouble・sakusha-kesu・zokusei-kesu・office-link・xlsx-kakureの5ページに絞り双方向をgrepで確認。office-trouble本体とsakusha-kesu/office-link/docx-kakureの「9/10ツール」表記も10/11に更新、docs/index.htmlにも追加。
 - 次回：macro-kesuの初回閲覧数を記録。backlogは0件（次回は確認検索3件以内で1件補充）。
+
+## 2026-11-07 週次レビュー
+- 計測：GoatCounter全64ページ取得成功。全体10→12（今週+2）、トップ+1・shorui-scan+1のみ。他62ページは0。
+- 点検：今週の新規11本＋改善3本を本番で表示確認（390/1280px・JSエラー・横スクロール・計測タグ）し問題なし。
+- 実ファイルで3本を動作確認。docx-mojisuの2列目がWordの文字数と段落数ぶんずれる定義だったため修正。
+- xlsx-bunkatsuはプログラム製xlsxで他シート参照の数式が値にならない（FAQ記載済み）。表示の改善をbacklog7位に。
+- 方針：閲覧の出た2ページはどちらも書類・レシート写真。来週は写真系を優先、Office細目の新規は停止、新規は1日1本。
+- backlog10件を補充（WebSearch3件）。site:検索は依然0件。次回：60日判定（11-22〜）の準備。

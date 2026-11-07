@@ -74,6 +74,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開45日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -162,6 +168,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開45日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -240,6 +252,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開45日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -398,6 +416,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開44日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -542,6 +566,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開43日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -604,6 +634,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開43日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -674,6 +710,12 @@
           "views_this_week": 1,
           "views_total": 1,
           "class": "継続・注視（個別ページで唯一の閲覧。1件のため伸びとは断定せず、来週の改善候補1位）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 1,
+          "class": "注視・関連強化（今週+0、累計1。閲覧の出た分野の中心。撮影日時順の並べ替えを来週の改善候補に）"
         }
       ]
     },
@@ -731,6 +773,12 @@
           "views_this_week": 1,
           "views_total": 1,
           "class": "継続・注視（初めて閲覧（累計1）。STRATEGY.mdの『閲覧が増え始めたページは改善を優先』に従い、新規公開より本ページの改善を今回の作業にした。四隅の手動ドラッグがモバイルで難しい点を想定し、ハンドルの当たり判定を26px→34pxに拡大し、ドラッグ中は指で隠れる角の周辺を拡大表示する虫眼鏡（十字線付き、黒白二重線で背景を問わず視認可）を追加。Playwright（390px/1280px）で、生成テスト画像のアップロード→ハンドルドラッグ中に虫眼鏡が表示され実際の画像内容が拡大描画されること・離すと消えること・補正の適用まで一連の動作とJSエラー無し・横スクロール無しを確認。CSS特異性の問題（.stage canvas が .magnifier の border-radius:50%を上書きしていた）を見つけて修正済み。"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 1,
+          "views_total": 1,
+          "class": "伸び始め・優先改善（今週+1、累計1。閲覧が出た2ページはどちらも書類・レシート写真の処理。来週は影除去・連続補正の改善を最優先）"
         }
       ]
     },
@@ -782,6 +830,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開39日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -843,6 +897,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開39日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -898,6 +958,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開38日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -958,6 +1024,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開37日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1009,6 +1081,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開37日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1060,6 +1138,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開36日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1111,6 +1195,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開36日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1162,6 +1252,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開35日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1210,6 +1306,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開35日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1254,6 +1356,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開34日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1298,6 +1406,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開34日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1342,6 +1456,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開33日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1390,6 +1510,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開31日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1434,6 +1560,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開31日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1482,6 +1614,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開30日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1526,6 +1664,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続・閲覧0が長い（公開30日・公開以来0。未インデックスが主因で判定不能。60日判定は11-22〜）"
         }
       ]
     },
@@ -1574,6 +1718,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開29日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1622,6 +1772,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開29日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1665,6 +1821,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開28日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1712,6 +1874,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開27日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1751,6 +1919,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開27日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1790,6 +1964,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開26日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1829,6 +2009,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開26日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1868,6 +2054,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開25日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1912,6 +2104,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開25日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1945,6 +2143,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開21日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -1978,6 +2182,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開20日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2011,6 +2221,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開20日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2044,6 +2260,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開19日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2081,6 +2303,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開19日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2114,6 +2342,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開18日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2147,6 +2381,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開16日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2180,6 +2420,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（閲覧0・未インデックスで判定不能。60日判定11-22〜）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開15日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2207,6 +2453,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開14日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2234,6 +2486,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開13日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2262,6 +2520,12 @@
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）",
           "note": "openpyxl/pandas製のファイル（xmlns:rがsheet要素ごと）で書き出しが壊れる不具合を修正"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開12日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2293,6 +2557,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開12日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2320,6 +2590,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開11日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2347,6 +2623,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開10日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2374,6 +2656,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開9日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2401,6 +2689,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開9日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2429,6 +2723,12 @@
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）",
           "note": "未使用レイアウトの割合表記を「ファイル内データ量の約◯%」に明確化"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開8日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2456,6 +2756,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開8日・公開以来0、未インデックス）"
         }
       ]
     },
@@ -2483,6 +2789,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2510,6 +2822,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2537,6 +2855,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開7日以内・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2564,6 +2888,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後・本番で実ファイル動作確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2591,6 +2921,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。8ツールへの相互リンク・言語切替・横スクロール無しをPlaywrightで確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2618,6 +2954,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。commentsExtended.xmlの返信・解決済み判定、本文/ヘッダー/フッター/脚注/文末脚注の対象の文章抽出、CSVのBOM・エスケープ、言語切替・横スクロール無しをNode単体テスト＋python-docxで作った実ファイル＋Playwrightで確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2645,6 +2987,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。rPh/phoneticPrの検出・削除をPythonでzipfile直接注入した実ファイル（共有文字列1件・インライン文字列1件・ふりがな無しセル1件）で検証し、削除後にopenpyxlで再読込して文字が変わらずrPh/phoneticPrが消えていることを確認。Playwright（ja/en・390/1280px）で一覧表示・CSV出力・削除済みファイルのダウンロード・横スクロール無し・JSエラー無しを確認済み）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2672,6 +3020,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。python-pptxで作成した実ファイル（直接指定の欧文フォント+埋め込みフォント一致、明示的なテーマ参照の+mn-lt/+mj-ea、無指定テキストの3パターン）をPlaywright（ja/en・390/1280px）でアップロードし、テーマフォント表の「未設定」表示、使用一覧の指定方法（直接指定／テーマ参照）・埋め込み状況・使用箇所（スライド番号・マスター番号、重複なし）・CSV出力を確認。関連5ページ（pptx-omoi/pptx-kakure/pptx-chart-kakure/sakusha-kesu/office-gazou）との双方向リンクをgrepで確認。）"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2700,6 +3054,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。独自に手計算した期待値（python-docxで作成し脚注・文末脚注をzipfileで注入した実ファイル、本文に全角スペース・タブ・強制改行・表・未確定の挿入/削除を含む）と、Playwright（ja/en・390/1280px）でのブラウザ表示値が3つの範囲設定（本文のみ／本文+脚注注／全て）すべてで一致することを確認。複数ファイル・不正なファイルのエラー表示、合計行、CSV（BOM付き）、横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）も確認。関連4ページ（docx-comment/docx-shodaku/docx-omoi/sakusha-kesu）との双方向リンクをgrepで確認。"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）。週次レビューの本番点検で、2列目がWordの『文字数（スペースを含める）』と段落数ぶんずれる定義だったため『改行を除く（スペースを含める）』に修正"
         }
       ]
     },
@@ -2732,6 +3092,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。python-docx/python-pptxで作成した実ファイルに、Pythonのzipfileでヘッダー・フッターのリンク、壊れたrelationship（存在しないr:id）、壊れたブックマーク参照、PowerPointの壊れたスライドジャンプ・組み込みアクション・図形レベルのリンクを注入した統合テストファイルを作成。ページに貼り付けたコードをそのまま抽出してNode.jsで実行するテスト（42件）で分類・削除・rels整合性を確認した後、Playwright（ja/en・390/1280px）で2ファイル同時アップロード→既定のチェック状態（ローカルファイル・壊れている系のみ既定チェック）→書き出し→ダウンロードしたファイルをpython-docx/python-pptxで再読込し、選んだリンクのみ解除されテキスト・図形はそのまま残ることを確認。CSV（BOM付き）・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）も確認。テスト中、複数ファイルをファイル選択ダイアログで同時に追加すると2件目以降が無視される実装バグ（input.valueを同期的にクリアする行がhandleFiles内の非同期ループより先に走り、参照していたライブFileListが0件に変わってしまう）を発見し修正。関連5ページ（office-trouble/sakusha-kesu/docx-kakure/pptx-kakure/xlsx-hyperlink）との双方向リンクをgrepで確認、office-trouble本体とその他5ページ（docx-omoi/docx-shodaku/office-gazou/pptx-chart-kakure/pptx-omoi）の「8ツール」表記・相互リンクも9に更新。"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2760,6 +3126,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。Node.js単体テスト（parseVtValue・inspect・scrubの選択的削除・no-op・custom.xml欠落時の挙動）に加え、openpyxl/python-docx/python-pptxで作成した実ファイルにPythonのzipfileでdocProps/custom.xml（カスタムプロパティ3種）とTemplate（社内サーバーのUNCパス）・HyperlinkBaseを注入した統合テストファイルを作成。Playwright（ja/en・390/1280px）で3ファイル同時アップロード→検出表示（パス・カスタムプロパティ一覧）確認→個別チェックボックスでの選択解除（Template維持・HyperlinkBase削除・特定プロパティのみ保持）→一括選択/解除ボタン→書き出し→ダウンロードしたファイルをopenpyxl/python-docx/python-pptxで再読込し、選んだ項目だけが削除され本文・セル値・スライドタイトルは不変であることを確認。横スクロール無し・JSエラー無しも確認。"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     },
@@ -2788,6 +3160,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開直後。LibreOffice UNO APIで作成したマクロ付きドキュメントの書き出しが本物のvbaProject.binを生成しないことを確認した上で、openpyxl/python-docx/python-pptxで作成した実ファイルにPythonのzipfileでOOXML仕様通りのvbaProject.bin（xlsmは+署名ファイルも）・Content_Types・rels差分を注入した統合テストファイルを作成。まずPython側で同じ文字列編集ロジックのプロトタイプを組んで除去結果をopenpyxl/python-docx/python-pptxの再読込とLibreOffice headless変換（PDF書き出し）の両方で検証してから、同じロジックをJavaScriptに1:1で移植。Playwright（ja/en・390/1280px）で4ファイル（マクロ入り3形式＋マクロ無しxlsx）同時アップロード→検出表示（容量・署名の有無・ActiveXコントロール件数）確認→マクロ無しファイルはビルドボタンが出ないことを確認→3ファイルを削除・ダウンロード→ダウンロードしたファイルがvbaProjectパートを含まずopenpyxl/python-docx/python-pptxで再読込でき、LibreOffice headlessでもPDF変換できることを確認。横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）、英語切替も確認。関連5ページ（office-trouble/sakusha-kesu/zokusei-kesu/office-link/xlsx-kakure）との双方向リンクを確認し、office-trouble本体とsakusha-kesu/office-link/docx-kakureの「9/10ツール」表記も10/11に更新、docs/index.htmlにも追加。"
+        },
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（今週公開・閲覧0）"
         }
       ]
     }
@@ -2803,5 +3181,13 @@
     ],
     "zero_long": "上記以外の個別51ページ（公開以来0。最古は09-23公開の38日）",
     "note": "未インデックスが6週続き、閲覧0は全ページ共通の原因によるもの。撤退は集中分野外の2本のみ（済）、他は60日判定まで継続。"
+  },
+  "review_summary_2026-11-07": {
+    "growing": [
+      "shorui-scan（今週+1・累計1、11-05）",
+      "receipt-sheet（累計1・10-29、今週+0）"
+    ],
+    "zero_long": "上記以外の個別62ページ（公開以来0。公開30日超は36ページ、最古は09-23公開の45日）。今週公開の11本（Word/PPT/Excelの社外前処理）も0",
+    "note": "閲覧が出た2ページはどちらも『スマホで撮った書類・レシート写真の処理』。件数は小さいが唯一の信号のため、来週はこの分野の改善・関連ツールを優先し、Office細目の新規追加は止める。撤退は60日判定（11-22〜）で再検討。"
   }
 }

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
 <title>Wordの文字数カウントは1ファイルずつ：複数ファイルの文字数を一括集計（原稿用紙換算も） | てのひらツール</title>
-<meta name="description" content="翻訳料・原稿料の見積もりで、複数のWordファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を見て手で足す手間なく、まとめてアップロードするだけで文字数（全体／空白を除く／空白と改行を除く）とファイルごとの合計、400字詰め原稿用紙換算枚数を一括表示・CSV出力します。ファイルはサーバーに送信されません。Count characters across multiple Word files at once for a translation or writing quote — with/without spaces and line breaks, plus a 400-character manuscript-page estimate. Nothing is uploaded.">
+<meta name="description" content="翻訳料・原稿料の見積もりで、複数のWordファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を見て手で足す手間なく、まとめてアップロードするだけで文字数（全体／スペース込み／スペース・改行を除く。Wordの文字カウントと同じ考え方）とファイルごとの合計、400字詰め原稿用紙換算枚数を一括表示・CSV出力します。ファイルはサーバーに送信されません。Count characters across multiple Word files at once for a translation or writing quote — with/without spaces and line breaks, plus a 400-character manuscript-page estimate. Nothing is uploaded.">
 <link rel="canonical" href="https://tenohira-tools.github.io/docx-mojisu/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b}
@@ -78,7 +78,7 @@ html[lang=en] .en-only{display:block}
 <header>
   <div>
     <h1 data-i="title">Wordの文字数カウントは1ファイルずつ：複数ファイルの文字数を一括集計</h1>
-    <p class="sub" data-i="sub">翻訳料・原稿料の見積もりで、複数のWord(.docx)ファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を確認し手で足す手間なく、まとめてアップロードするだけで文字数（全体／空白を除く／空白と改行を除く）をファイルごと・合計で一覧表示し、400字詰め原稿用紙換算枚数も表示します。ファイルはサーバーに送信されません。</p>
+    <p class="sub" data-i="sub">翻訳料・原稿料の見積もりで、複数のWord(.docx)ファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を確認し手で足す手間なく、まとめてアップロードするだけで文字数（全体／スペース込み／スペース・改行を除く。Wordの文字カウントと同じ考え方）をファイルごと・合計で一覧表示し、400字詰め原稿用紙換算枚数も表示します。ファイルはサーバーに送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -136,14 +136,14 @@ html[lang=en] .en-only{display:block}
       <li>合計欄と、ファイルごとの一覧で文字数を確認します。</li>
       <li>「CSVでダウンロード」で保存するか、「この一覧を印刷」でそのまま印刷します。CSVはExcelでそのまま開けます。</li>
     </ol>
-    <h3>Q. 「文字数（全体）」「空白を除く」「空白・改行を除く」はそれぞれ何を数えていますか？</h3>
-    <p>A. 「全体」は半角・全角スペース、タブ、改行（段落の区切りや強制改行）もすべて1文字として数えた文字数です。「空白を除く」はそこから半角・全角スペースとタブを除いた数、「空白・改行を除く」はさらに改行（段落の区切り・強制改行）も除いた数です。見積もりの文字単価は「空白・改行を除く」文字数で計算することが多いため、この列を基準にしてください。絵文字など2文字分のコード単位を使う文字も、見た目どおり1文字として数えます。</p>
+    <h3>Q. 「文字数（全体）」「改行を除く（スペースを含める）」「スペース・改行を除く」はそれぞれ何を数えていますか？</h3>
+    <p>A. 「全体」は半角・全角スペース、タブ、改行（段落の区切りや強制改行）もすべて1文字として数えた文字数です。「改行を除く（スペースを含める）」はそこから改行だけを除いた数で、Wordの文字カウントの「文字数（スペースを含める）」と同じ考え方です（Wordは段落記号を数えません）。「スペース・改行を除く」はさらに半角・全角スペースとタブも除いた数で、Wordの「文字数（スペースを含めない）」と同じ考え方です。見積もりの文字単価は「スペース・改行を除く」文字数で計算することが多いため、この列を基準にしてください。絵文字など2文字分のコード単位を使う文字も、見た目どおり1文字として数えます。</p>
     <h3>Q. 「400字詰め原稿用紙換算」はどう計算していますか？</h3>
-    <p>A. 「空白・改行を除く」文字数を400で割った枚数です（1行20字×20行の原稿用紙が基準）。小数点以下1桁で表示し、端数の扱いはファイルによって運用が異なるため四捨五入・切り上げは行わず、割った値そのものを表示します。</p>
+    <p>A. 「スペース・改行を除く」文字数を400で割った枚数です（1行20字×20行の原稿用紙が基準）。小数点以下1桁で表示し、端数の扱いはファイルによって運用が異なるため四捨五入・切り上げは行わず、割った値そのものを表示します。</p>
     <h3>Q. 「数える範囲」で結果が変わるのはなぜですか？どれを選べばいいですか？</h3>
     <p>A. ヘッダー・フッターはページごとに同じ内容が繰り返されますが、ファイル内にはその内容が1回だけ保存されています。脚注・文末脚注は、本文に含めるかどうかで見積もりの考え方が分かれる部分です。原稿・翻訳の対象が本文だけなら「本文のみ」、脚注も翻訳対象なら「本文＋脚注・文末脚注」（既定）、ヘッダー・フッターの文言も対象にする場合だけ「全て」を選んでください。セクションごとに違うヘッダー・フッターが設定されているファイルでは、実際に使われているページ数ぶん重複して数えているわけではない点にご注意ください（ファイル内に保存されている内容を1回ずつ数えます）。</p>
     <h3>Q. Wordの「文字カウント」ダイアログの数字と違うのはなぜですか？</h3>
-    <p>A. Wordは内部の計算方法を公開していないため、改行や特殊な要素の扱いが完全には一致しないことがあります。このツールは本ページに書いた数え方（スペース・タブ・改行の扱い）をそのまま適用するため、表示される数字の意味を確認できます。コメントの本文、変更履歴で「削除」として記録され未確定の文字は対象外です（確定済みとして表示される文字のみ数えます）。</p>
+    <p>A. 「改行を除く（スペースを含める）」「スペース・改行を除く」はWordの数え方に合わせていますが、Wordは内部の計算方法を公開していないため、特殊な要素（数式・テキストボックス・フィールドなど）の扱いで完全には一致しないことがあります。「文字数（全体）」は改行も1文字として数えるため、Wordの表示より段落の数だけ多くなります。コメントの本文、変更履歴で「削除」として記録され未確定の文字は対象外です（確定済みとして表示される文字のみ数えます）。</p>
     <h3>Q. 複数ファイルの合計はどこで見られますか？</h3>
     <p>A. 「合計（選んだ全ファイル）」に、追加した全ファイルを合算した数字を表示します。ファイルごとの数字は下の一覧とCSVに含まれます。</p>
     <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
@@ -160,7 +160,7 @@ html[lang=en] .en-only{display:block}
       <li>Click "Download as CSV" to save, or "Print this list" to print it directly. The CSV opens directly in Excel.</li>
     </ol>
     <h3>Q. What exactly do "all characters", "excl. spaces" and "excl. spaces/breaks" count?</h3>
-    <p>A. "All characters" counts every half/full-width space, tab and line break (paragraph boundary or a manual line break) as one character each. "Excl. spaces" removes half/full-width spaces and tabs. "Excl. spaces/breaks" also removes line breaks. Quote rates are usually based on the "excl. spaces/breaks" figure, so use that column as your baseline. Characters using surrogate pairs (like many emoji) are still counted as one character each, matching how they look.</p>
+    <p>A. "All characters" counts every half/full-width space, tab and line break (paragraph boundary or a manual line break) as one character each. "Excl. breaks (with spaces)" removes only line breaks, matching Word's "Characters (with spaces)" (Word doesn't count paragraph marks). "Excl. spaces/breaks" also removes half/full-width spaces and tabs, matching Word's "Characters (no spaces)". Quote rates are usually based on the "excl. spaces/breaks" figure, so use that column as your baseline. Characters using surrogate pairs (like many emoji) are still counted as one character each, matching how they look.</p>
     <h3>Q. How is the "400-char manuscript page" estimate calculated?</h3>
     <p>A. The "excl. spaces/breaks" count divided by 400 (a standard Japanese manuscript page: 20 characters × 20 lines). Shown to one decimal place with no rounding, since conventions for rounding up vary.</p>
     <h3>Q. Why does the result change with the scope setting — which should I pick?</h3>
@@ -197,10 +197,10 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"「文字数（全体）」「空白を除く」「空白・改行を除く」はそれぞれ何を数えていますか？","acceptedAnswer":{"@type":"Answer","text":"「全体」はスペース・タブ・改行もすべて1文字として数えます。「空白を除く」は半角・全角スペースとタブを除いた数、「空白・改行を除く」はさらに改行も除いた数です。見積もりの文字単価は「空白・改行を除く」文字数で計算することが多いです。"}},
-    {"@type":"Question","name":"「400字詰め原稿用紙換算」はどう計算していますか？","acceptedAnswer":{"@type":"Answer","text":"「空白・改行を除く」文字数を400で割った枚数（1行20字×20行が基準）です。小数点以下1桁で表示し、四捨五入・切り上げは行いません。"}},
+    {"@type":"Question","name":"「文字数（全体）」「改行を除く（スペースを含める）」「スペース・改行を除く」はそれぞれ何を数えていますか？","acceptedAnswer":{"@type":"Answer","text":"「全体」はスペース・タブ・改行もすべて1文字として数えます。「改行を除く（スペースを含める）」は改行だけを除いた数でWordの「文字数（スペースを含める）」と同じ考え方、「スペース・改行を除く」はさらにスペースとタブも除いた数でWordの「文字数（スペースを含めない）」と同じ考え方です。見積もりの文字単価は「スペース・改行を除く」文字数で計算することが多いです。"}},
+    {"@type":"Question","name":"「400字詰め原稿用紙換算」はどう計算していますか？","acceptedAnswer":{"@type":"Answer","text":"「スペース・改行を除く」文字数を400で割った枚数（1行20字×20行が基準）です。小数点以下1桁で表示し、四捨五入・切り上げは行いません。"}},
     {"@type":"Question","name":"「数える範囲」で結果が変わるのはなぜですか？どれを選べばいいですか？","acceptedAnswer":{"@type":"Answer","text":"本文のみ／本文＋脚注・文末脚注（既定）／本文＋脚注・文末脚注＋ヘッダー・フッター、から選べます。原稿・翻訳の対象に合わせて選んでください。ヘッダー・フッターはページ数分ではなく、ファイルに保存されている内容を1回ずつ数えます。"}},
-    {"@type":"Question","name":"Wordの「文字カウント」ダイアログの数字と違うのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"Wordは数え方を公開していないため完全には一致しないことがあります。このツールはページに書いた数え方をそのまま適用し、コメント本文や未確定の削除文字は対象外です。"}},
+    {"@type":"Question","name":"Wordの「文字カウント」ダイアログの数字と違うのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"2列目・3列目はWordの「スペースを含める／含めない」に合わせていますが、Wordは数え方を公開していないため特殊な要素で完全には一致しないことがあります。「全体」は改行も数えるため段落の数だけ多くなります。コメント本文や未確定の削除文字は対象外です。"}},
     {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで読み込み・解析されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
   ]
 }
@@ -334,9 +334,9 @@ function partsToText(parasArrays){
 
 function countsFromText(text){
   var totalAll=Array.from(text).length;
-  var noSpaceText=text.replace(/[ 　\t]/g,"");
-  var noSpace=Array.from(noSpaceText).length;
-  var noSpaceNoBreakText=noSpaceText.replace(/\n/g,"");
+  var noBreakText=text.replace(/\n/g,"");
+  var noSpace=Array.from(noBreakText).length;
+  var noSpaceNoBreakText=noBreakText.replace(/[ 　\t]/g,"");
   var noSpaceNoBreak=Array.from(noSpaceNoBreakText).length;
   return {totalAll:totalAll,noSpace:noSpace,noSpaceNoBreak:noSpaceNoBreak,pages400:noSpaceNoBreak/400};
 }
@@ -365,7 +365,7 @@ function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).
    ===================================================================== */
 var T={
  ja:{title:"Wordの文字数カウントは1ファイルずつ：複数ファイルの文字数を一括集計",
-  sub:"翻訳料・原稿料の見積もりで、複数のWord(.docx)ファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を確認し手で足す手間なく、まとめてアップロードするだけで文字数（全体／空白を除く／空白と改行を除く）をファイルごと・合計で一覧表示し、400字詰め原稿用紙換算枚数も表示します。ファイルはサーバーに送信されません。",
+  sub:"翻訳料・原稿料の見積もりで、複数のWord(.docx)ファイルの合計文字数を知りたいときに。1ファイルずつ開いて「文字カウント」を確認し手で足す手間なく、まとめてアップロードするだけで文字数（全体／スペース込み／スペース・改行を除く。Wordの文字カウントと同じ考え方）をファイルごと・合計で一覧表示し、400字詰め原稿用紙換算枚数も表示します。ファイルはサーバーに送信されません。",
   dropzoneText:"ここにWord(.docx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
   dropzoneHint:"文字数を数えるだけで、ファイルの書き換えは行いません。選択した端末の中だけで処理されます。",
   fileListHeading:"追加したファイル",
@@ -373,9 +373,9 @@ var T={
   scopeBody:"本文のみ",scopeBodyNotes:"本文＋脚注・文末脚注（既定）",scopeAll:"本文＋脚注・文末脚注＋ヘッダー・フッター",
   scopeHint:"コメント・変更履歴で削除された文字は数えません（挿入として記録された文字は本文として数えます）。表の中の文字も本文として数えます。",
   statsHeading:"合計（選んだ全ファイル）",
-  statAll:"文字数（全体）",statNoSpace:"空白を除く",statNoBreak:"空白・改行を除く",statPages:"400字詰め原稿用紙換算",
+  statAll:"文字数（全体）",statNoSpace:"改行を除く（スペースを含める）",statNoBreak:"スペース・改行を除く",statPages:"400字詰め原稿用紙換算",
   resultHeading:"ファイルごとの文字数",
-  colFile:"ファイル",colAll:"文字数（全体）",colNoSpace:"空白を除く",colNoBreak:"空白・改行を除く",colPages:"400字詰め原稿用紙換算",
+  colFile:"ファイル",colAll:"文字数（全体）",colNoSpace:"改行を除く（スペースを含める）",colNoBreak:"スペース・改行を除く",colPages:"400字詰め原稿用紙換算",
   totalLabel:"合計",
   downloadBtn:"この一覧をCSVでダウンロード",
   printBtn:"この一覧を印刷",
@@ -392,9 +392,9 @@ var T={
   scopeBody:"Body only",scopeBodyNotes:"Body + footnotes/endnotes (default)",scopeAll:"Body + footnotes/endnotes + headers/footers",
   scopeHint:"Text in comments, or recorded as an unaccepted tracked deletion, is never counted (text recorded as a tracked insertion is counted as body text). Table text counts as body text.",
   statsHeading:"Combined total (all added files)",
-  statAll:"All characters",statNoSpace:"Excl. spaces",statNoBreak:"Excl. spaces/breaks",statPages:"400-char manuscript pages",
+  statAll:"All characters",statNoSpace:"Excl. breaks (with spaces)",statNoBreak:"Excl. spaces/breaks",statPages:"400-char manuscript pages",
   resultHeading:"Per-file character counts",
-  colFile:"File",colAll:"All characters",colNoSpace:"Excl. spaces",colNoBreak:"Excl. spaces/breaks",colPages:"400-char pages",
+  colFile:"File",colAll:"All characters",colNoSpace:"Excl. breaks (with spaces)",colNoBreak:"Excl. spaces/breaks",colPages:"400-char pages",
   totalLabel:"Total",
   downloadBtn:"Download this list as CSV",
   printBtn:"Print this list",

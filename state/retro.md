@@ -325,3 +325,6 @@
 
 ## 2026-11-07（新規実験：macro-kesu）
 - 気づいた点：LibreOffice（UNO API）で新規に書いたBasicマクロは`VBACompatibilityMode`を立てても.xlsm/.docm/.pptm書き出し時に本物のvbaProject.binへ変換されない（既存のvbaProject.binを保持したまま再保存する場合と、ゼロから書いたマクロを新規にVBA形式へ変換する場合は別の経路らしい）。マクロ関連のテストファイルは、python-docx/openpyxl/python-pptxで作った実ファイルにOOXML仕様通りの文字列（Content_Types・relsの該当エントリ）をzipfileで注入する方が確実で早い。削除ロジックはJS実装の前にPythonで同じ文字列編集のプロトタイプを組み、LibreOffice headless変換で正しさを検証してから1:1で移植すると手戻りが無かった。
+
+## 2026-11-07（週次レビュー）
+- 気づいた点：今週は11本すべてOffice細目で、各回が実ファイル検証を丁寧にこなしている一方、閲覧は写真系の2ページにしか出ていない。量産の質より「どこに作るか」の選び方で差が出る段階に入った。件数表記（○ツール）の一斉更新が今週も3回あり、件数を書かない運用に切り替える。
