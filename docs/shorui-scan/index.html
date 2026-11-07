@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
-<title>書類写真のスキャン風補正｜四隅をドラッグして台形補正・白黒くっきり化 | てのひらツール</title>
-<meta name="description" content="スマホで撮った書類・領収書の写真の四隅をドラッグするだけで台形補正し、白黒くっきり化してスキャンしたような見た目にします。JPEG保存や複数枚をまとめたPDF出力にも対応。写真はこの端末の中だけで処理され、外部には送信されません。Straighten a photographed document by dragging its four corners, then export as JPEG or a multi-page PDF — entirely in your browser.">
+<title>書類写真のスキャン風補正｜四隅をドラッグして台形補正・影を消して白く・白黒くっきり化 | てのひらツール</title>
+<meta name="description" content="スマホで撮った書類・領収書の写真の四隅をドラッグするだけで台形補正し、影のムラを消して紙を白くする仕上げや、白黒くっきり化でスキャンしたような見た目にします。JPEG保存や複数枚をまとめたPDF出力にも対応。写真はこの端末の中だけで処理され、外部には送信されません。Straighten a photographed document by dragging its four corners, flatten shadows to whiten the page, then export as JPEG or a multi-page PDF — entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/shorui-scan/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
@@ -74,7 +74,7 @@ html[lang=en] .en-only{display:block}
 <header>
   <div>
     <h1 data-i="title">書類写真のスキャン風補正</h1>
-    <p class="sub" data-i="sub">斜めに撮った書類・領収書の写真の四隅をドラッグして台形補正し、白黒くっきり化します。処理はすべてこの端末の中だけで行われます。</p>
+    <p class="sub" data-i="sub">斜めに撮った書類・領収書の写真の四隅をドラッグして台形補正し、影のムラを消して白くする仕上げや白黒くっきり化ができます。処理はすべてこの端末の中だけで行われます。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -143,15 +143,17 @@ html[lang=en] .en-only{display:block}
     <ol>
       <li>書類・領収書を撮った写真をドラッグ＆ドロップ、またはタップして選択します。</li>
       <li>緑の点を書類の四隅にドラッグで合わせます。写真が横倒しの場合は「90度回転」で向きを直せます。</li>
-      <li>「仕上がり」からカラー・グレースケール・白黒くっきりを選び、「補正を適用」を押します。台形の歪みが補正され、四角い1枚の画像になります。</li>
+      <li>「仕上がり」からカラー・影を消す（白く）・グレースケール・白黒くっきりを選び、「補正を適用」を押します。台形の歪みが補正され、四角い1枚の画像になります。</li>
       <li>その場でJPEGとしてダウンロードするか、「文書一覧に追加」で複数枚をまとめ、最後に1つのPDFとしてダウンロードできます。</li>
     </ol>
     <h3>Q. 写真はどこかにアップロードされますか？</h3>
-    <p>A. されません。写真の内容はこの端末のブラウザの中だけで処理され、台形補正やPDFの組み立ても含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。</p>
+    <p>A. されません。写真の内容はこの端末のブラウザの中だけで処理され、台形補正やPDFの組み立ても含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しないアクセス数の計測のみ行っています。GoatCounterというサービスを使い、入力内容は端末の外に送られません）。</p>
     <h3>Q. 四隅を自動で検出してくれますか？</h3>
     <p>A. いいえ、自動検出は行っていません。書類の背景や照明によって自動検出の精度が安定しないため、確実に合わせられる手動ドラッグのみに絞っています。ズームして細かく合わせたい場合は、ブラウザの拡大表示もあわせてご利用ください。</p>
+    <h3>Q. 片側だけ暗く写ってしまった写真の影を消せますか？</h3>
+    <p>A. 「影を消す（白く）」を選ぶと、写真全体の明るさのムラをやわらかく推定し、そのムラで割ることで紙の地色をできるだけ均一な白に揃えます。照明のムラや手・スマホの影で片側だけ暗くなった写真でも、文字の濃さはムラに対する比率として保たれるため、影を飛ばしつつ文字は読みやすいまま残ります。色は保持されるので、スタンプやマーカーの色も消えません。</p>
     <h3>Q. 「白黒くっきり」はどんな処理ですか？OCR（文字認識）はできますか？</h3>
-    <p>A. 白黒くっきりは、グレースケール化した上で明暗の分布を自動で調整（オートレベル補正）し、紙面の陰影を飛ばして文字を読みやすくする処理です。文字の認識（OCR）やテキスト化は行っておらず、見た目を整えるだけの機能です。</p>
+    <p>A. 白黒くっきりは、グレースケール化した上で写真全体の明暗の分布を自動で調整（オートレベル補正）し、紙面の陰影を飛ばして文字を読みやすくする処理です。「影を消す（白く）」と異なり画像全体で一律に調整するため、片側だけ強く影が落ちた写真には「影を消す（白く）」の方が向いています。どちらも文字の認識（OCR）やテキスト化は行っておらず、見た目を整えるだけの機能です。</p>
     <h3>Q. iPhoneの写真（HEIC形式）が読み込めません。</h3>
     <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
     <h3>Q. 複数ページの書類をまとめられますか？</h3>
@@ -164,15 +166,17 @@ html[lang=en] .en-only{display:block}
     <ol>
       <li>Drag and drop a photo of a document or receipt, or tap to choose one.</li>
       <li>Drag the four green dots onto the document's corners. Use "Rotate 90°" first if the photo is sideways.</li>
-      <li>Pick a finish (color / grayscale / crisp black &amp; white) and click "Apply correction" to straighten the perspective into a clean rectangle.</li>
+      <li>Pick a finish (color / remove shadow (whiten) / grayscale / crisp black &amp; white) and click "Apply correction" to straighten the perspective into a clean rectangle.</li>
       <li>Download it as a JPEG right away, or add it to a list and combine several pages into one PDF at the end.</li>
     </ol>
     <h3>Q. Are my photos uploaded anywhere?</h3>
-    <p>A. No. Everything — the perspective correction and PDF assembly — happens inside this browser on your device; nothing is sent to a server (only anonymous, cookie-free page-view counts are collected for this page).</p>
+    <p>A. No. Everything — the perspective correction and PDF assembly — happens inside this browser on your device; nothing is sent to a server (only anonymous, cookie-free page-view counts are collected for this page, via GoatCounter; nothing you type or upload ever leaves your device).</p>
     <h3>Q. Does it detect the corners automatically?</h3>
     <p>A. No, corners are placed manually by dragging. Automatic detection isn't reliable across different backgrounds and lighting, so this tool keeps to a simple, predictable manual adjustment. Zoom in with your browser for finer placement if needed.</p>
+    <h3>Q. Can it remove a shadow that falls across only one side of the photo?</h3>
+    <p>A. Yes — pick "Remove shadow (whiten)". It estimates a soft, blurred map of the photo's overall brightness and divides each pixel by that map, flattening lighting unevenness so the paper's background becomes roughly uniform white, even when a hand, phone or lamp casts a shadow over just part of the page. Text stays legible because its darkness is preserved relative to the local background, and colors (stamps, highlighter) are kept intact.</p>
     <h3>Q. What does "crisp black &amp; white" do? Does it do OCR (text recognition)?</h3>
-    <p>A. It converts the image to grayscale and automatically stretches the brightness levels to flatten shadows and make text easier to read. There is no text recognition (OCR) — it only improves the visual appearance.</p>
+    <p>A. It converts the image to grayscale and automatically stretches the brightness levels across the whole photo to flatten shadows and make text easier to read. Unlike "Remove shadow (whiten)", which corrects unevenness locally, this adjusts the whole image uniformly, so a photo shadowed on just one side is better handled by "Remove shadow (whiten)". Neither does text recognition (OCR) — both only improve the visual appearance.</p>
     <h3>Q. My iPhone photos (HEIC) won't load.</h3>
     <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
     <h3>Q. Can I combine multiple pages?</h3>
@@ -215,7 +219,8 @@ html[lang=en] .en-only{display:block}
   "mainEntity": [
     {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、台形補正やPDFの組み立ても含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}},
     {"@type":"Question","name":"四隅を自動で検出してくれますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ、手動でのドラッグのみに対応しています。背景や照明によって自動検出の精度が安定しないため、確実な手動調整に絞っています。"}},
-    {"@type":"Question","name":"「白黒くっきり」はどんな処理ですか？OCRはできますか？","acceptedAnswer":{"@type":"Answer","text":"グレースケール化した上で明暗の分布を自動調整する処理で、文字認識（OCR）は行っていません。見た目を整えるだけの機能です。"}},
+    {"@type":"Question","name":"片側だけ暗く写ってしまった写真の影を消せますか？","acceptedAnswer":{"@type":"Answer","text":"「影を消す（白く）」を選ぶと、写真全体の明るさのムラを推定してそれで割ることで、紙の地色をできるだけ均一な白に揃えます。片側だけ影が落ちた写真でも文字は読みやすいまま残り、色も保持されます。"}},
+    {"@type":"Question","name":"「白黒くっきり」はどんな処理ですか？OCRはできますか？","acceptedAnswer":{"@type":"Answer","text":"グレースケール化した上で明暗の分布を自動調整する処理で、文字認識（OCR）は行っていません。見た目を整えるだけの機能です。片側だけ影が強い写真には「影を消す（白く）」の方が向いています。"}},
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。写真の見た目を整えるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}}
   ]
 }
@@ -308,9 +313,65 @@ function warpPerspective(srcCanvas, corners, outW, outH){
   return out;
 }
 
-/* グレースケール／白黒くっきり（オートレベル）フィルタ */
+/* 段階的な縮小（ミップマップ的に半分ずつ縮める）で、モアレの少ない滑らかな縮小画像を作る */
+function downscaleSmooth(canvas, targetW, targetH){
+  var cur=canvas, cw=canvas.width, ch=canvas.height;
+  while(cw>targetW*2 && ch>targetH*2){
+    cw=Math.max(targetW, Math.round(cw/2));
+    ch=Math.max(targetH, Math.round(ch/2));
+    var tmp=document.createElement("canvas");
+    tmp.width=cw; tmp.height=ch;
+    var tctx=tmp.getContext("2d");
+    tctx.imageSmoothingEnabled=true;
+    if("imageSmoothingQuality" in tctx) tctx.imageSmoothingQuality="high";
+    tctx.drawImage(cur,0,0,cw,ch);
+    cur=tmp;
+  }
+  var out=document.createElement("canvas");
+  out.width=targetW; out.height=targetH;
+  var octx=out.getContext("2d");
+  octx.imageSmoothingEnabled=true;
+  if("imageSmoothingQuality" in octx) octx.imageSmoothingQuality="high";
+  octx.drawImage(cur,0,0,targetW,targetH);
+  return out;
+}
+
+/* 影を消す（背景を白くする）：画像を大きくぼかした「局所的な明るさの地図」を作り、
+   各画素をその地図の値で割って明るさのムラ（影）を均し、紙の地色を白に揃える。
+   文字など地図より暗い部分は比率に応じて暗いまま残るため、影を飛ばしつつ文字は読める。 */
+function removeShadow(canvas){
+  var ctx=canvas.getContext("2d");
+  var w=canvas.width, h=canvas.height;
+  var longSide=Math.max(w,h);
+  var bgLong=Math.max(24, Math.round(longSide/40)); /* 影のムラのスケールに合わせた縮小サイズ */
+  var bw=Math.max(12, Math.round(w*bgLong/longSide));
+  var bh=Math.max(12, Math.round(h*bgLong/longSide));
+  var small=downscaleSmooth(canvas, bw, bh);
+  var bgFull=document.createElement("canvas");
+  bgFull.width=w; bgFull.height=h;
+  var bctx=bgFull.getContext("2d");
+  bctx.imageSmoothingEnabled=true;
+  if("imageSmoothingQuality" in bctx) bctx.imageSmoothingQuality="high";
+  bctx.drawImage(small,0,0,w,h);
+  var bgData=bctx.getImageData(0,0,w,h).data;
+  var img=ctx.getImageData(0,0,w,h);
+  var d=img.data;
+  var WHITE=248; /* 完全な255ではなく少し余裕を持たせ、白飛びを抑える */
+  for(var i=0;i<d.length;i+=4){
+    for(var c=0;c<3;c++){
+      var bg=bgData[i+c]; if(bg<24) bg=24;
+      var v=d[i+c]*WHITE/bg;
+      if(v<0)v=0; if(v>255)v=255;
+      d[i+c]=v;
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+/* グレースケール／白黒くっきり（オートレベル）／影を消す フィルタ */
 function applyFilter(canvas, mode){
   if(mode==="color") return;
+  if(mode==="shadow"){ removeShadow(canvas); return; }
   var ctx=canvas.getContext("2d");
   var w=canvas.width, h=canvas.height;
   var img=ctx.getImageData(0,0,w,h);
@@ -430,6 +491,7 @@ function buildPdf(pages){
 var MAX_DIM=1600, MARGIN=24;
 var FILTER_OPTS=[
   {key:"color",ja:"カラー",en:"Color"},
+  {key:"shadow",ja:"影を消す（白く）",en:"Remove shadow (whiten)"},
   {key:"gray",ja:"グレースケール",en:"Grayscale"},
   {key:"bw",ja:"白黒くっきり",en:"Crisp B&W"}
 ];
