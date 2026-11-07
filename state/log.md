@@ -654,3 +654,10 @@
 - 検証：Node.js単体テスト（inspect/scrubの選択的削除・no-op・custom.xml欠落時の挙動）に加え、openpyxl/python-docx/python-pptxの実ファイルにzipfileでカスタムプロパティ3件とTemplate（社内UNCパス）・HyperlinkBaseを注入し、Playwright（ja/en・390/1280px）で3ファイル同時アップロード→個別チェックボックスでの選択解除→書き出し→再読込で選んだ項目だけ削除され本文は不変であることを確認。
 - 相互リンクはsakusha-kesu・office-trouble・docx-kakure・xlsx-kakure・office-linkの5ページに絞り双方向をgrepで確認。office-trouble本体と他6ページの「8/9ツール」表記も更新、docs/index.htmlにも追加。
 - 次回：zokusei-kesuの初回閲覧数を記録。backlogは0件（次回は確認検索3件以内で1件補充）。
+
+## 2026-11-07 実験71
+- 計測：GoatCounter取得成功（TOTAL 12で変化なし、shorui-scan1・receipt-sheet1のまま、他62ページは0）。health.md（63ページ・問題0件）・計測タグ（全66 index.html）・表記いずれも不備なし。
+- やったこと：backlogが候補なしのため、集中分野「社外に渡す前の処理」でWebSearch3件を実施。マクロ(VBA)入りファイルの削除はオンライン変換サイト（アップロード必須）か手作業の「名前を付けて保存」のみで、ブラウザ完結・複数ファイル一括の無料ツールが見当たらないことを確認し、新規公開（macro-kesu）。xlsm/docm/pptmのvbaProject.bin等を検出・削除してxlsx/docx/pptxに変換（コードの中身は解析せず、容量・署名の有無のみ表示）。
+- 検証：LibreOffice UNO APIで作成した「新規」マクロの書き出しが本物のvbaProject.binを生成しないことを確認した上で、openpyxl/python-docx/python-pptxの実ファイルにzipfileでOOXML仕様通りのvbaProject.bin・Content_Types・rels差分を注入。Pythonで同じ文字列編集ロジックのプロトタイプを先に組み、openpyxl等での再読込とLibreOffice headless変換の両方で正しさを確認してからJavaScriptへ1:1で移植。Playwright（ja/en・390/1280px）でマクロ入り3形式＋マクロ無しファイルを同時アップロードし、検出表示・削除・ダウンロード後の再読込・PDF変換まで確認。
+- 相互リンクはoffice-trouble・sakusha-kesu・zokusei-kesu・office-link・xlsx-kakureの5ページに絞り双方向をgrepで確認。office-trouble本体とsakusha-kesu/office-link/docx-kakureの「9/10ツール」表記も10/11に更新、docs/index.htmlにも追加。
+- 次回：macro-kesuの初回閲覧数を記録。backlogは0件（次回は確認検索3件以内で1件補充）。

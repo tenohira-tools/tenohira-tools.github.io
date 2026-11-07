@@ -13,6 +13,8 @@
 
 ### 実施済みの記録
 
+（2026-11-07実施済み：新規：Excel・Word・PowerPointのマクロ（VBA）削除ツール（macro-kesu）を公開。backlog候補なしのため確認検索3件を実施して着手。xlsm/docm/pptmのvbaProject.binを検出・削除してxlsx/docx/pptxに変換、オンライン変換サイトへのアップロードが不要な点が勝ち筋。）
+
 （2026-11-06実施済み：新規：Excel・Word・PowerPointの「カスタムプロパティ」「テンプレート参照パス」一覧・削除ツール（zokusei-kesu）を公開。backlog候補なしのため確認検索2件を実施して着手。sakusha-kesuとは別の保存場所（docProps/custom.xml・Template・HyperlinkBase）が対象で重複しない姉妹ツール。）
 
 （2026-11-06実施済み：新規：Word・PowerPointのハイパーリンク一覧・削除ツール（office-link）を公開。backlog候補なしのため確認検索2件を実施して着手。xlsx-hyperlinkの姉妹ツールで、ローカルファイル参照・壊れたリンクを自動判定。）

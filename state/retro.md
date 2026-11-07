@@ -322,3 +322,6 @@
 
 ## 2026-11-06（新規実験：zokusei-kesu）
 - 気づいた点：JSファイル内のブロックコメント（`/* ... */`）に「xlsx-*/office-*」のような説明文を書くと、`*/`の2文字が意図せずコメントを途中で終わらせてJS構文エラーになる。コードから抜き出したコメント文に製品名・パス名をワイルドカードで書くときは、`*/`の並びができないか確認する（今回は`node --check`で抽出テストをした際に発覚、元のファイルにも同じ不具合があった）。また、docProps/custom.xmlは削除時にrelsや[Content_Types].xmlを一切触らず「空でも元のパートを残す」設計にすることで、他のOOXMLパーツとの整合性チェックが不要になり実装・検証が大幅に単純化できた。
+
+## 2026-11-07（新規実験：macro-kesu）
+- 気づいた点：LibreOffice（UNO API）で新規に書いたBasicマクロは`VBACompatibilityMode`を立てても.xlsm/.docm/.pptm書き出し時に本物のvbaProject.binへ変換されない（既存のvbaProject.binを保持したまま再保存する場合と、ゼロから書いたマクロを新規にVBA形式へ変換する場合は別の経路らしい）。マクロ関連のテストファイルは、python-docx/openpyxl/python-pptxで作った実ファイルにOOXML仕様通りの文字列（Content_Types・relsの該当エントリ）をzipfileで注入する方が確実で早い。削除ロジックはJS実装の前にPythonで同じ文字列編集のプロトタイプを組み、LibreOffice headless変換で正しさを検証してから1:1で移植すると手戻りが無かった。

@@ -2762,6 +2762,34 @@
           "class": "継続（公開直後。Node.js単体テスト（parseVtValue・inspect・scrubの選択的削除・no-op・custom.xml欠落時の挙動）に加え、openpyxl/python-docx/python-pptxで作成した実ファイルにPythonのzipfileでdocProps/custom.xml（カスタムプロパティ3種）とTemplate（社内サーバーのUNCパス）・HyperlinkBaseを注入した統合テストファイルを作成。Playwright（ja/en・390/1280px）で3ファイル同時アップロード→検出表示（パス・カスタムプロパティ一覧）確認→個別チェックボックスでの選択解除（Template維持・HyperlinkBase削除・特定プロパティのみ保持）→一括選択/解除ボタン→書き出し→ダウンロードしたファイルをopenpyxl/python-docx/python-pptxで再読込し、選んだ項目だけが削除され本文・セル値・スライドタイトルは不変であることを確認。横スクロール無し・JSエラー無しも確認。"
         }
       ]
+    },
+    {
+      "slug": "macro-kesu",
+      "title": "社外に渡す前に、Excel・Word・PowerPointのマクロ（VBA）を削除してxlsx/docx/pptxに変換",
+      "url": "https://tenohira-tools.github.io/macro-kesu/",
+      "published": "2026-11-07",
+      "status": "継続",
+      "lang": [
+        "ja",
+        "en"
+      ],
+      "source": "STRATEGY.md集中分野（社外に渡す前の処理）",
+      "why": "backlogが候補なしで空だったため、集中分野「社外に渡す前の処理」でWebSearch3件を実施。「マクロ削除」はオンライン変換サイト（アップロードが必要）かExcelの「名前を付けて保存」手順の紹介のみで、ブラウザ完結・アップロード不要で複数ファイルを一括処理できる無料ツールは見当たらないことを確認（有償デスクトップソフトSysTools VBA Macro Removerの存在が需要の裏付け）。マクロ(VBA)プロジェクトの中身（コード）までは解析せず、OOXMLのZIP構造上でvbaProject.bin等のパートを検出・削除し、[Content_Types].xml・relsを整合させて通常形式に変換する方針とし、他のkesu系ツール（sakusha-kesu/zokusei-kesu）と同じZIP+XML処理を再利用できる点を勝ち筋とした。",
+      "metrics": [
+        {
+          "date": "2026-11-07T17:34:00Z",
+          "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+        }
+      ],
+      "notes": "xl/word/ppt各フォルダのvbaProject.bin・vbaProjectSignature.binの有無・容量を検出して一覧表示（コード内容は解析しない）。削除時は[Content_Types].xmlの該当Overrideを除去し、メインパート（workbook.xml/document.xml/presentation.xml）のContentTypeをmacroEnabled系から通常形式に書き換え、rels内のvbaProject関連Relationshipを除去した上で拡張子をxlsm→xlsx等に変更。ActiveXコントロールは図形の配置情報と結び付くため削除せず件数のみ参考表示。sakusha-kesu/zokusei-kesuと同じZIP読み書き・XMLタグパーサーを再利用し、新規実装はvbaProject検出・Content_Types/relsの書き換えロジックのみ。",
+      "reviews": [
+        {
+          "date": "2026-11-07",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "継続（公開直後。LibreOffice UNO APIで作成したマクロ付きドキュメントの書き出しが本物のvbaProject.binを生成しないことを確認した上で、openpyxl/python-docx/python-pptxで作成した実ファイルにPythonのzipfileでOOXML仕様通りのvbaProject.bin（xlsmは+署名ファイルも）・Content_Types・rels差分を注入した統合テストファイルを作成。まずPython側で同じ文字列編集ロジックのプロトタイプを組んで除去結果をopenpyxl/python-docx/python-pptxの再読込とLibreOffice headless変換（PDF書き出し）の両方で検証してから、同じロジックをJavaScriptに1:1で移植。Playwright（ja/en・390/1280px）で4ファイル（マクロ入り3形式＋マクロ無しxlsx）同時アップロード→検出表示（容量・署名の有無・ActiveXコントロール件数）確認→マクロ無しファイルはビルドボタンが出ないことを確認→3ファイルを削除・ダウンロード→ダウンロードしたファイルがvbaProjectパートを含まずopenpyxl/python-docx/python-pptxで再読込でき、LibreOffice headlessでもPDF変換できることを確認。横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）、英語切替も確認。関連5ページ（office-trouble/sakusha-kesu/zokusei-kesu/office-link/xlsx-kakure）との双方向リンクを確認し、office-trouble本体とsakusha-kesu/office-link/docx-kakureの「9/10ツール」表記も10/11に更新、docs/index.htmlにも追加。"
+        }
+      ]
     }
   ],
   "review_summary_2026-10-24": {

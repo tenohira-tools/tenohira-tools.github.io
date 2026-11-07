@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>社外に渡す前に、Excel・Word・PowerPointのマクロ（VBA）を削除してxlsx/docx/pptxに変換 | てのひらツール</title>
+<meta name="description" content="マクロ(VBA)入りのExcel(.xlsm)・Word(.docm)・PowerPoint(.pptm)ファイルから、マクロだけを取り除いた.xlsx/.docx/.pptxを書き出します。見つかったマクロの概要（容量・デジタル署名の有無）を確認してから削除。「名前を付けて保存」を1本ずつ行う手間や、オンライン変換サイトへファイルをアップロードする必要もなく、複数ファイルを一括処理できます。ファイルはサーバーに送らずブラウザの中だけで処理します。Strip VBA macros from Excel/Word/PowerPoint files and get a clean .xlsx/.docx/.pptx back — multiple files at once, entirely in your browser, no upload.">
+<link rel="canonical" href="https://tenohira-tools.github.io/macro-kesu/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--diff-bg:#fbeae7}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--diff-bg:#3a2420}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:1020px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.4rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.1rem;margin:0 0 12px}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+label{font-size:.92rem}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.fileCard .fTop{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCard .fName{font-weight:700;word-break:break-all}
+.fileCard .fMeta{color:var(--muted);font-size:.85rem}
+.fileCard button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:.74rem;margin-right:4px;margin-bottom:2px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.fmt{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+.badge.sig{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.detectBox{font-size:.9rem;margin:6px 0 10px}
+.detectBox .row{display:flex;gap:6px;flex-wrap:wrap;margin:3px 0}
+.detectBox .k{color:var(--muted);min-width:11em}
+.detectBox .v{word-break:break-all}
+.detectBox .v.empty{color:var(--muted)}
+.optRow{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0}
+.optRow label{display:flex;align-items:center;gap:6px}
+.optRow label.disabled{color:var(--muted)}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:10px 18px;cursor:pointer;min-height:40px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.okBox{border:1px solid var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.warnBox{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;margin:12px 0}
+.errBox{border:1px solid var(--diff);background:var(--diff-bg);color:var(--diff);border-radius:10px;padding:8px 12px;font-size:.88rem;margin:8px 0 0}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">社外に渡す前に、Excel・Word・PowerPointのマクロ（VBA）を削除してxlsx/docx/pptxに変換</h1>
+    <p class="sub" data-i="sub">マクロ(VBA)入りのファイル（.xlsm/.docm/.pptm）を社外に送る前に、マクロだけを取り除いた通常形式（.xlsx/.docx/.pptx）に変換します。アプリで1本ずつ「名前を付けて保存」し直す手間や、オンライン変換サイトへファイルをアップロードする必要もありません。見つかったマクロの概要（容量・デジタル署名の有無）を確認してから削除し、複数ファイルを一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで処理します。元のファイルは変更しません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+    <p><strong data-i="dropzoneStrong">ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ</strong><span data-i="dropzoneRest">、またはクリックして選択</span></p>
+    <p class="hint" data-i="dropzoneHint">マクロ入りの.xlsm / .docm / .pptm に対応。複数ファイルを同時に追加できます（.xlsx/.docx/.pptxを入れた場合はマクロが無い旨を表示します）。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsm,.docm,.pptm,.xlsx,.docx,.pptx" multiple style="display:none">
+</section>
+
+<section class="card" id="listSec" style="display:none">
+  <h2 data-i="listHeading">読み込んだファイル</h2>
+  <div id="fileList"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>上の枠にExcel/Word/PowerPointファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイル可）。</li>
+      <li>マクロ（VBAプロジェクト）が見つかると、容量とデジタル署名の有無が表示されます。「マクロを削除する」にチェックが入った状態（既定）で「削除して書き出す」を押すと、マクロを取り除いた.xlsx/.docx/.pptxがダウンロードされます。元のファイルはそのまま残ります。</li>
+    </ol>
+    <h3>Q. 「名前を付けて保存」でマクロなし形式にするのと何が違いますか？</h3>
+    <p>A. Excel・Word・PowerPointで1本ずつファイルを開き、形式を選んで保存し直す操作と同じ結果が得られますが、このツールは複数ファイルを一度にまとめて処理できます。また、オンラインのファイル形式変換サイトのようにファイルをサーバーへアップロードする必要がなく、常にこのブラウザの中だけで処理されるため、社外秘のファイルでも安心して使えます。</p>
+    <h3>Q. マクロを削除すると、見た目や内容は変わりますか？</h3>
+    <p>A. 表・文章・スライドの内容、書式、画像などは変更しません。削除されるのはマクロ（VBAプロジェクトとそのデジタル署名）だけです。ただし、マクロで動いていたボタンや自動処理は、マクロ本体が無くなるため動作しなくなります。マクロに結び付けられたボタン図形自体は残りますが、押しても何も起こらなくなります。</p>
+    <h3>Q. 「ActiveXコントロール」も削除されますか？</h3>
+    <p>A. いいえ。フォームのボタンやテキストボックスなどのActiveXコントロールは、図形としての配置情報と結び付いているため、このツールでは削除せずそのまま残します（見つかった場合は件数だけ表示します）。コントロールに割り当てられたマクロの実行だけが無効になります。</p>
+    <h3>Q. マクロの中身（コード）を確認することはできますか？</h3>
+    <p>A. このツールではコードの内容までは表示しません。マクロ（VBAプロジェクト）が存在するかどうかと、その概要（データ容量、デジタル署名の有無）だけを確認できます。中身を見るには、Excel/Word/PowerPointの「Visual Basic Editor」（Alt+F11）を使ってください。</p>
+    <h3>Q. 対応しているファイル形式は？</h3>
+    <p>A. マクロ有効の形式としてExcel(.xlsm)、Word(.docm)、PowerPoint(.pptm)に対応し、それぞれ.xlsx/.docx/.pptxに変換します。マクロ有効のテンプレート形式（.xltm/.dotm/.potm）やスライドショー形式（.ppsm）、古い.xls/.doc/.ppt形式、パスワードで保護されたファイルは対応していません。すでにマクロの無い.xlsx/.docx/.pptxを読み込んだ場合は、マクロが見つからない旨を表示します。</p>
+    <h3>Q. 元のファイルは変更されますか？</h3>
+    <p>A. いいえ。読み込んだファイルはブラウザのメモリ上でのみ扱われ、変更後の内容は拡張子の異なる新しいファイルとしてダウンロードされます（ファイル名の末尾に「_マクロ削除済み」を付けます）。元のファイルを直接上書きすることはありません。</p>
+    <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
+    <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・解析・書き換えが行われます（サイト全体の閲覧数をCookieなし・個人を特定しない形で数えるGoatCounterの通信のみ発生します。入力内容は端末の外に送られません）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop Excel/Word/PowerPoint files into the box above, or click it to choose (multiple files are fine).</li>
+      <li>If a macro (VBA project) is found, its size and whether it's digitally signed are shown. With "Remove the macro" checked (the default), click "Remove and build" to download a clean .xlsx/.docx/.pptx. Your original file is untouched.</li>
+    </ol>
+    <h3>Q. How is this different from "Save As" a macro-free format in the app?</h3>
+    <p>A. The result is the same as opening each file in Excel/Word/PowerPoint and saving it again as the non-macro format, but this tool can process several files at once. It also never uploads your file to a server the way an online file-conversion site would — everything always happens inside this browser, so it's safe to use on confidential files too.</p>
+    <h3>Q. Does removing the macro change the content or appearance?</h3>
+    <p>A. No — the tables, text, slides, formatting and images are left untouched. Only the macro (the VBA project and its digital signature) is removed. Buttons or automated steps that relied on the macro will stop working once the macro code itself is gone; a button shape linked to a macro stays in place but does nothing when clicked.</p>
+    <h3>Q. Are ActiveX controls removed too?</h3>
+    <p>A. No. Form controls such as ActiveX buttons or text boxes are tied to their shape placement, so this tool leaves them in place (it only reports how many were found). Only the ability to run a macro from them is lost.</p>
+    <h3>Q. Can I see the macro's actual code?</h3>
+    <p>A. This tool doesn't show the code itself — only whether a macro (VBA project) exists and its summary (data size, whether it's digitally signed). To read the code, use the Visual Basic Editor (Alt+F11) in Excel/Word/PowerPoint.</p>
+    <h3>Q. Which file formats are supported?</h3>
+    <p>A. Macro-enabled Excel (.xlsm), Word (.docm) and PowerPoint (.pptm), converted to .xlsx/.docx/.pptx respectively. Macro-enabled templates (.xltm/.dotm/.potm), the slideshow format (.ppsm), the older .xls/.doc/.ppt formats, and password-protected files are not supported. A file that's already macro-free (.xlsx/.docx/.pptx) will simply be reported as having no macro.</p>
+    <h3>Q. Is my original file modified?</h3>
+    <p>A. No. The file you load is only ever held in your browser's memory; the result is downloaded as a new file with a different extension (with "_macro_removed" appended to the name). Your original file is never overwritten.</p>
+    <h3>Q. Is it safe to use this on my files?</h3>
+    <p>A. Yes. Files are never uploaded to a server — everything is read, analyzed and rewritten inside your browser (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter — nothing you type or upload ever leaves your device).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../office-trouble/">Word・PowerPointを社外に渡す前のチェックまとめ</a> — 症状から選べる案内ページ。この他の関連ツールへのリンクも。</li>
+      <li><a href="../sakusha-kesu/">社外に渡す前に、作成者・最終更新者・コメントの投稿者名を消す</a> — 人物・組織名に関する項目はこちら。このツールとは保存場所が別で重複しません。</li>
+      <li><a href="../zokusei-kesu/">社外に渡す前に、カスタムプロパティ・テンプレート参照パスを一覧化・削除</a> — 作成者名を消しても残る独自項目・社内パスはこちら。</li>
+      <li><a href="../office-link/">Word・PowerPointのハイパーリンク一覧・削除ツール</a> — 社内の共有フォルダを指すリンクや壊れたリンクを検出・削除。</li>
+      <li><a href="../xlsx-kakure/">社外に送る前に確認：Excelの「隠れた情報」一括チェック</a> — 非表示シート・コメント・外部リンク・名前定義などをまとめて診断（読み取り専用）。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../office-trouble/">Word/PowerPoint pre-share checklist</a> — a symptom-based directory linking to this and other related tools.</li>
+      <li><a href="../sakusha-kesu/">Before sharing: strip creator, last-modified-by and comment-author names</a> — the person/organization fields, stored separately from this tool's targets.</li>
+      <li><a href="../zokusei-kesu/">Before sharing: list and remove custom properties / template reference path</a> — leftover custom fields and internal paths a shared template can write.</li>
+      <li><a href="../office-link/">List and remove hyperlinks in Word/PowerPoint</a> — flags links to an internal file server/share or ones that are broken.</li>
+      <li><a href="../xlsx-kakure/">Check an Excel file for "hidden" information before sending it outside your company</a> — hidden sheets, comments, external links and defined names (read-only).</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"「名前を付けて保存」でマクロなし形式にするのと何が違いますか？","acceptedAnswer":{"@type":"Answer","text":"結果は同じですが、複数ファイルを一度にまとめて処理でき、オンライン変換サイトのようにファイルをサーバーへアップロードする必要がありません。常にブラウザの中だけで処理されます。"}},
+    {"@type":"Question","name":"マクロを削除すると内容は変わりますか？","acceptedAnswer":{"@type":"Answer","text":"表・文章・スライドの内容や書式、画像は変更しません。削除されるのはマクロ本体とその署名だけです。マクロに依存するボタンや自動処理は動作しなくなります。"}},
+    {"@type":"Question","name":"ActiveXコントロールも削除されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。図形としての配置情報と結び付いているため削除せず残します。見つかった件数だけ表示します。"}},
+    {"@type":"Question","name":"対応しているファイル形式は？","acceptedAnswer":{"@type":"Answer","text":"マクロ有効のExcel(.xlsm)・Word(.docm)・PowerPoint(.pptm)で、それぞれ.xlsx/.docx/.pptxに変換します。テンプレート形式・スライドショー形式・古い.xls/.doc/.ppt・パスワード保護ファイルは対応していません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =====================================================================
+   ZIP read/write — same hand-rolled approach already shipped across
+   xlsx-merge/xlsx-suushiki/xlsx-namae/.../sakusha-kesu/zokusei-kesu (no
+   external libraries; only standard browser APIs). Works for any OOXML
+   zip container (xlsx/docx/pptx all share the same ZIP structure).
+   ===================================================================== */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =====================================================================
+   Minimal XML tag parser (shared across this site's xlsx- and office- tools).
+   ===================================================================== */
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function xmlEscapeAttr(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+/* Remove or rewrite self-closing attribute tags (Override/Relationship) in
+   one pass: matchFn(attrs) selects tags; buildFn(attrs) returns the new tag
+   text, or null/undefined to delete the tag entirely. */
+function editAttrTags(xml,tagName,matchFn,buildFn){
+  var tags=findTags(xml,tagName).filter(function(t){return matchFn(t.attrs)});
+  if(!tags.length) return xml;
+  tags.sort(function(a,b){return b.start-a.start});
+  tags.forEach(function(t){
+    var repl=buildFn?buildFn(t.attrs):null;
+    xml=xml.slice(0,t.start)+(repl||"")+xml.slice(t.end);
+  });
+  return xml;
+}
+
+/* =====================================================================
+   Format detection + inspection + scrub (business logic; verified with a
+   Python prototype of the same string edits against openpyxl/python-docx/
+   python-pptx fixture files with a synthetic VBA project injected via
+   zipfile — see state/log.md).
+   ===================================================================== */
+function detectFormat(entryNames){
+  var has=function(n){return entryNames.indexOf(n)!==-1};
+  if(has("xl/workbook.xml")) return "xlsx";
+  if(has("word/document.xml")) return "docx";
+  if(has("ppt/presentation.xml")) return "pptx";
+  return null;
+}
+var FOLDER={xlsx:"xl",docx:"word",pptx:"ppt"};
+var MAIN_PART={xlsx:"xl/workbook.xml",docx:"word/document.xml",pptx:"ppt/presentation.xml"};
+var RELS_PART={xlsx:"xl/_rels/workbook.xml.rels",docx:"word/_rels/document.xml.rels",pptx:"ppt/_rels/presentation.xml.rels"};
+var NORMAL_CT={
+  xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
+  docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
+  pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"};
+var MACRO_CT={
+  xlsx:"application/vnd.ms-excel.sheet.macroEnabled.main+xml",
+  docx:"application/vnd.ms-word.document.macroEnabled.main+xml",
+  pptx:"application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml"};
+var EXT_OUT={xlsx:"xlsx",docx:"docx",pptx:"pptx"};
+
+function inspect(entries){
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var names=entries.map(function(e){return e.name});
+  var fmt=detectFormat(names);
+  if(!fmt) return null;
+  var folder=FOLDER[fmt];
+  var vbaPath=folder+"/vbaProject.bin";
+  var sigPath=folder+"/vbaProjectSignature.bin";
+  var vbaEntry=byName[vbaPath];
+  var activeXRe=new RegExp("^"+folder+"/(?:[a-zA-Z0-9]+/)?activeX/activeX\\d+\\.xml$");
+  var activeXCount=names.filter(function(n){return activeXRe.test(n)}).length;
+  return {fmt:fmt, folder:folder, vbaPath:vbaPath, sigPath:sigPath,
+    hasVba: !!vbaEntry, vbaSize: vbaEntry?vbaEntry.bytes.length:0,
+    hasSig: !!byName[sigPath], activeXCount: activeXCount};
+}
+function scrub(entries,fmt){
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8"), enc=new TextEncoder();
+  var folder=FOLDER[fmt], vbaPath=folder+"/vbaProject.bin", sigPath=folder+"/vbaProjectSignature.bin";
+  var mainPart=MAIN_PART[fmt], relsPath=RELS_PART[fmt];
+  var patched={};
+  if(byName["[Content_Types].xml"]){
+    var ct=dec.decode(byName["[Content_Types].xml"].bytes);
+    ct=editAttrTags(ct,"Override",function(a){return a.PartName==="/"+vbaPath || a.PartName==="/"+sigPath},null);
+    ct=editAttrTags(ct,"Override",function(a){return a.PartName==="/"+mainPart},function(a){
+      return '<Override PartName="'+xmlEscapeAttr(a.PartName)+'" ContentType="'+NORMAL_CT[fmt]+'"/>';
+    });
+    patched["[Content_Types].xml"]=ct;
+  }
+  if(byName[relsPath]){
+    var rels=dec.decode(byName[relsPath].bytes);
+    rels=editAttrTags(rels,"Relationship",function(a){return a.Target==="vbaProject.bin" || a.Target==="vbaProjectSignature.bin"},null);
+    patched[relsPath]=rels;
+  }
+  return entries
+    .filter(function(e){ return e.name!==vbaPath && e.name!==sigPath; })
+    .map(function(e){ return patched[e.name]!==undefined ? {name:e.name, bytes:enc.encode(patched[e.name])} : e; });
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(1)+" KB";
+  return (n/1024/1024).toFixed(2)+" MB";
+}
+var FMT_LABEL={xlsx:"Excel",docx:"Word",pptx:"PowerPoint"};
+var EXT_RENAME={xlsm:"xlsx",docm:"docx",pptm:"pptx",xlsx:"xlsx",docx:"docx",pptx:"pptx"};
+
+var T={
+ ja:{
+  title:"社外に渡す前に、Excel・Word・PowerPointのマクロ（VBA）を削除してxlsx/docx/pptxに変換",
+  sub:"マクロ(VBA)入りのファイル（.xlsm/.docm/.pptm）を社外に送る前に、マクロだけを取り除いた通常形式（.xlsx/.docx/.pptx）に変換します。アプリで1本ずつ「名前を付けて保存」し直す手間や、オンライン変換サイトへファイルをアップロードする必要もありません。見つかったマクロの概要（容量・デジタル署名の有無）を確認してから削除し、複数ファイルを一括処理できます。ファイルはサーバーに送らず、すべてこのブラウザの中だけで処理します。元のファイルは変更しません。",
+  dropzoneStrong:"ここにExcel・Word・PowerPointファイルをドラッグ＆ドロップ",dropzoneRest:"、またはクリックして選択",
+  dropzoneHint:"マクロ入りの.xlsm / .docm / .pptm に対応。複数ファイルを同時に追加できます（.xlsx/.docx/.pptxを入れた場合はマクロが無い旨を表示します）。ファイルは選択した端末の中だけで処理されます。",
+  listHeading:"読み込んだファイル",
+  kVba:"マクロ(VBAプロジェクト)",kSig:"デジタル署名",kActiveX:"ActiveXコントロール",
+  vbaFound:"あり（約",vbaFoundAfter:"）",vbaNone:"見つかりませんでした",
+  sigYes:"あり",sigNo:"なし",activeXNote:"件（参考情報、削除対象外）",
+  optRemove:"マクロ(VBA)を削除する",
+  warnText:"マクロは完全に削除され、元に戻せません。マクロに依存するボタンや自動処理は動作しなくなります（ボタン自体は残ります）。表・文章・スライドの内容や書式は変更しません。",
+  buildBtn:"削除して書き出す",buildBtnBusy:"書き出し中…",
+  doneMsg:"ダウンロードしました：",
+  errBad:"読み込めませんでした（.xlsx/.xlsm/.docx/.docm/.pptx/.pptm以外の形式か、パスワード保護、または壊れたファイルの可能性があります）",
+  loadingLabel:"読み込み中…",removeLabel:"削除",
+  feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{
+  title:"Before sharing: strip VBA macros from Excel/Word/PowerPoint and get a clean xlsx/docx/pptx",
+  sub:"Before sending a macro-enabled file (.xlsm/.docm/.pptm) outside your company, convert it to the plain format (.xlsx/.docx/.pptx) with just the macro removed. No need to open each file in the app and \"Save As\" one by one, and no uploading to an online conversion site. See a summary of the macro found (size, whether it's digitally signed) before removing it, and process multiple files at once. Files are never uploaded — everything happens inside this browser. Your originals are untouched.",
+  dropzoneStrong:"Drag and drop Excel/Word/PowerPoint files here",dropzoneRest:", or click to choose",
+  dropzoneHint:"Macro-enabled .xlsm / .docm / .pptm supported. Add multiple files at once (an .xlsx/.docx/.pptx will simply be reported as having no macro). Everything happens on this device.",
+  listHeading:"Loaded files",
+  kVba:"Macro (VBA project)",kSig:"Digital signature",kActiveX:"ActiveX controls",
+  vbaFound:"Found (about ",vbaFoundAfter:")",vbaNone:"Not found",
+  sigYes:"Yes",sigNo:"No",activeXNote:" found (informational only, not removed)",
+  optRemove:"Remove the macro (VBA)",
+  warnText:"The macro is removed completely and cannot be undone. Buttons or automated steps that relied on it will stop working (the button shape itself stays). The document's content and formatting are left unchanged.",
+  buildBtn:"Remove and build",buildBtnBusy:"Building…",
+  doneMsg:"Downloaded: ",
+  errBad:"Could not read this file (it may not be .xlsx/.xlsm/.docx/.docm/.pptx/.pptm, may be password-protected, or may be corrupted)",
+  loadingLabel:"Loading…",removeLabel:"Remove",
+  feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+
+var files=[]; // {id,name,size,loading,error,info,entries,opts,outName,building}
+var seq=0;
+
+function addFiles(fileList){
+  Array.prototype.slice.call(fileList).forEach(function(file){
+    var id=++seq;
+    var rec={id:id,name:file.name,size:file.size,loading:true,error:"",info:null,entries:null,
+      opts:{removeMacro:false},outName:"",building:false};
+    files.push(rec);
+    render();
+    (async function(){
+      try{
+        var buf=await file.arrayBuffer();
+        var entries=await unzipAllEntries(new Uint8Array(buf));
+        var info=inspect(entries);
+        if(!info) throw new Error("NOT_SUPPORTED");
+        rec.loading=false; rec.entries=entries; rec.info=info;
+        rec.opts.removeMacro=info.hasVba;
+      }catch(e){
+        rec.loading=false; rec.error=T[lang].errBad;
+      }
+      render();
+    })();
+  });
+}
+function removeFile(id){ files=files.filter(function(r){return r.id!==id}); render(); }
+
+async function buildOne(rec){
+  rec.building=true; render();
+  try{
+    var cleaned=rec.opts.removeMacro ? scrub(rec.entries,rec.info.fmt) : rec.entries;
+    var outBytes=await buildZip(cleaned);
+    var dot=rec.name.lastIndexOf(".");
+    var base=dot>0?rec.name.slice(0,dot):rec.name;
+    var origExt=dot>0?rec.name.slice(dot+1).toLowerCase():"";
+    var outExt=EXT_RENAME[origExt]||EXT_OUT[rec.info.fmt];
+    var suffix=lang==="ja"?"_マクロ削除済み":"_macro_removed";
+    var outName=base+suffix+"."+outExt;
+    var blob=new Blob([outBytes],{type:"application/octet-stream"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=outName; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },1000);
+    rec.outName=outName;
+  }catch(e){
+    rec.error=T[lang].errBad;
+  }
+  rec.building=false; render();
+}
+
+function fieldRow(k,v){
+  return '<div class="row"><span class="k">'+k+'：</span><span class="v">'+v+'</span></div>';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function fileCardHtml(rec){
+  var t=T[lang];
+  if(rec.loading) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+t.loadingLabel+'</span></div></div>';
+  if(rec.error) return '<div class="fileCard"><div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div><p class="errBox">'+t.errBad+'</p></div>';
+  var info=rec.info;
+  var vbaRow=fieldRow(t.kVba, info.hasVba ? (esc(t.vbaFound)+esc(fmtBytes(info.vbaSize))+esc(t.vbaFoundAfter)) : '<span class="v empty">'+esc(t.vbaNone)+'</span>');
+  var extraRows="";
+  if(info.hasVba){
+    extraRows+=fieldRow(t.kSig, info.hasSig ? '<span class="badge sig">'+esc(t.sigYes)+'</span>' : esc(t.sigNo));
+  }
+  if(info.activeXCount>0){
+    extraRows+=fieldRow(t.kActiveX, info.activeXCount+esc(t.activeXNote));
+  }
+  var html='<div class="fileCard">'
+    +'<div class="fTop"><span class="fName">'+esc(rec.name)+'</span><span class="badge fmt">'+FMT_LABEL[info.fmt]+'</span>'
+    +'<span class="fMeta">'+fmtBytes(rec.size)+'</span>'
+    +'<button type="button" class="remove" data-remove="'+rec.id+'">'+t.removeLabel+'</button></div>'
+    +'<div class="detectBox">'+vbaRow+extraRows+'</div>';
+  if(info.hasVba){
+    html+='<div class="optRow"><label><input type="checkbox" data-opt="removeMacro" data-id="'+rec.id+'" '+(rec.opts.removeMacro?'checked':'')+'>'+t.optRemove+'</label></div>'
+      +'<p class="warnBox">'+esc(t.warnText)+'</p>'
+      +'<p><button type="button" class="primary" data-build="'+rec.id+'" '+((rec.building||!rec.opts.removeMacro)?'disabled':'')+'>'+(rec.building?t.buildBtnBusy:t.buildBtn)+'</button></p>';
+  }
+  html+=(rec.outName?'<p class="okBox">'+t.doneMsg+esc(rec.outName)+'</p>':'')
+    +'</div>';
+  return html;
+}
+
+function render(){
+  var t=T[lang];
+  document.documentElement.lang=lang;
+  $("listSec").style.display=files.length?"block":"none";
+  $("fileList").innerHTML=files.map(fileCardHtml).join("");
+  document.querySelectorAll("[data-i]").forEach(function(el){
+    var k=el.getAttribute("data-i"); if(t[k]!==undefined) el.textContent=t[k];
+  });
+}
+
+document.addEventListener("click",function(e){
+  var rm=e.target.getAttribute && e.target.getAttribute("data-remove");
+  if(rm){ removeFile(parseInt(rm,10)); return; }
+  var bd=e.target.getAttribute && e.target.getAttribute("data-build");
+  if(bd){ var rec=files.filter(function(r){return r.id===parseInt(bd,10)})[0]; if(rec) buildOne(rec); return; }
+});
+document.addEventListener("change",function(e){
+  var optName=e.target.getAttribute && e.target.getAttribute("data-opt");
+  if(optName){
+    var id=parseInt(e.target.getAttribute("data-id"),10);
+    var rec=files.filter(function(r){return r.id===id})[0];
+    if(rec){ rec.opts[optName]=e.target.checked; render(); }
+  }
+});
+
+var dz=$("dropzone"), fi=$("fileInput");
+dz.addEventListener("click",function(){ fi.click(); });
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fi.click(); } });
+fi.addEventListener("change",function(){ if(fi.files.length) addFiles(fi.files); fi.value=""; });
+["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add("drag"); }); });
+["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove("drag"); }); });
+dz.addEventListener("drop",function(e){ if(e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+document.querySelectorAll(".lang button").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    lang=btn.getAttribute("data-lang");
+    document.querySelectorAll(".lang button").forEach(function(b){ b.setAttribute("aria-pressed", b===btn?"true":"false"); });
+    render();
+  });
+});
+
+render();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
