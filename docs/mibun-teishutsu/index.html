@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>身分証明書の表と裏を1枚にまとめ、透かし入りで保存｜本人確認書類の提出用コピー作成 | てのひらツール</title>
+<meta name="description" content="運転免許証・マイナンバーカード・健康保険証などの表と裏の写真を1枚のA4にまとめ、「○○提出用」のような透かし文字を入れてPDFまたはJPEGで保存できる無料ツール。写真はこの端末の中だけで処理され、外部には送信されません。Combine the front and back photos of an ID card onto one sheet with a repeating watermark, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/mibun-teishutsu/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--bad:#f19a9d;--bad-bg:#3a2022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.3rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.optlabel{color:var(--muted);font-size:.88rem;margin:14px 0 6px}
+.optlabel:first-child{margin-top:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{font:inherit;font-size:.9rem;font-weight:600;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;min-height:36px}
+.opts button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.sides{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+@media (max-width:560px){.sides{grid-template-columns:1fr}}
+.side h3{font-size:.95rem;margin:0 0 8px;color:var(--muted)}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:22px 12px;text-align:center;color:var(--muted);cursor:pointer;font-size:.88rem}
+.drop.over{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.drop input{display:none}
+.thumb{margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:8px}
+.thumb img{width:100%;max-height:160px;object-fit:contain;border-radius:6px;background:#ddd;display:block}
+.thumb .meta{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.85rem;min-width:0}
+.thumb .meta .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.thumb .meta button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:.95rem;flex:none}
+.thumb .meta button.rm{color:var(--bad)}
+.err{color:var(--bad);font-size:.85rem;margin-top:8px}
+.status{margin-top:10px;font-size:.9rem;color:var(--muted)}
+.watermarkRow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+.watermarkRow input[type=text]{font:inherit;font-size:.95rem;flex:1 1 220px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--bg);color:var(--fg)}
+.rangeRow{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:.88rem;color:var(--muted)}
+.rangeRow input[type=range]{flex:1;accent-color:var(--accent)}
+.previewWrap{display:flex;justify-content:center;margin-top:4px}
+.previewWrap canvas{max-width:100%;border:1px solid var(--line);border-radius:6px;background:#fff;display:block}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:10px 16px;cursor:pointer;min-height:40px}
+button.secondary:disabled{opacity:.4;cursor:not-allowed}
+.summary{margin-top:10px;font-size:.9rem;color:var(--muted)}
+.note{margin-top:10px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.88rem}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">身分証明書の表と裏を1枚にまとめ、透かし入りで保存</h1>
+    <p class="sub" data-i="sub">運転免許証・マイナンバーカード・健康保険証などの表と裏の写真を1枚のA4にまとめ、「○○提出用」のような透かし文字を入れてPDF・JPEGで保存します。処理はすべてこの端末の中だけで行われます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="h_source">写真を追加</h2>
+  <div class="sides">
+    <div class="side">
+      <h3 data-i="sideFront">表面</h3>
+      <div class="drop" id="dropFront">
+        <span data-i="dropTextFront">ここに写真をドラッグ、またはクリックして選択</span>
+        <input type="file" id="fileFront" accept="image/*">
+      </div>
+      <div id="thumbFront"></div>
+    </div>
+    <div class="side">
+      <h3 data-i="sideBack">裏面</h3>
+      <div class="drop" id="dropBack">
+        <span data-i="dropTextBack">ここに写真をドラッグ、またはクリックして選択</span>
+        <input type="file" id="fileBack" accept="image/*">
+      </div>
+      <div id="thumbBack"></div>
+    </div>
+  </div>
+  <p class="note" data-i="formatNote">JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。斜めに撮った写真は、先に「書類写真のスキャン風補正」で四隅を合わせておくと仕上がりがきれいです。</p>
+</section>
+
+<section class="card">
+  <h2 data-i="h_watermark">透かし文字の設定</h2>
+  <div class="watermarkRow">
+    <input type="text" id="wmText" placeholder="例：〇〇提出用" maxlength="40">
+  </div>
+  <p class="optlabel" data-i="densityLabel">透かしの密度</p>
+  <div class="opts" id="densityOpts"></div>
+  <div class="rangeRow">
+    <span data-i="opacityLabel">濃さ</span>
+    <input type="range" id="opacityRange" min="10" max="60" value="30">
+    <span id="opacityValue">30%</span>
+  </div>
+</section>
+
+<section class="card" id="previewCard" style="display:none">
+  <h2 data-i="h_preview">プレビュー</h2>
+  <div class="previewWrap"><canvas id="previewCanvas"></canvas></div>
+  <div class="row">
+    <button type="button" class="primary" id="savePdfBtn" data-i="savePdfBtn">PDFで保存</button>
+    <button type="button" class="secondary" id="saveJpegBtn" data-i="saveJpegBtn">JPEGで保存</button>
+  </div>
+  <div class="summary" id="summary"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>表面・裏面の写真をそれぞれドラッグ＆ドロップ、またはタップして選択します（向きが違う場合は回転ボタンで直せます）。</li>
+      <li>「○○提出用」など、入れたい透かし文字を入力します（空欄のままなら透かしなしで結合されます）。</li>
+      <li>密度（薄め・標準・濃め）と濃さを調整し、プレビューで仕上がりを確認します。</li>
+      <li>「PDFで保存」または「JPEGで保存」でダウンロードします。</li>
+    </ol>
+    <h3>Q. 写真はどこかにアップロードされますか？</h3>
+    <p>A. されません。写真の内容はこの端末のブラウザの中だけで処理され、PDF・JPEGの作成も含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。</p>
+    <h3>Q. この透かしを入れれば、どの提出先でも安全に使えますか？</h3>
+    <p>A. 保証するものではありません。マスキングの要否・透かしの要否・有効期限内であることなど、求められる形式は提出先によって異なります。このツールは表裏をまとめて透かし文字を入れる補助ツールであり、法的な助言を行うものではありません。提出前に必ず提出先の指示を確認してください。マイナンバー（個人番号）が写っている面を求められていない場合は、提出先の案内に従って別途マスキングするなどの対応をご検討ください。</p>
+    <h3>Q. 透かし文字に日本語を使えますか？</h3>
+    <p>A. 使えます。このツールは透かし文字を画像として写真の上に描画してからPDF・JPEGを作るため、日本語を含む文字をそのまま表示できます（PDF内のテキストとしては埋め込まれません）。</p>
+    <h3>Q. 写真の向きが違います。</h3>
+    <p>A. それぞれの写真の下にある回転ボタンで90度ずつ回転できます。</p>
+    <h3>Q. iPhoneの写真（HEIC形式）が読み込めません。</h3>
+    <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop (or tap to choose) the front and back photos of your ID document. Rotate buttons fix sideways photos.</li>
+      <li>Type the watermark text you want, such as "For submission only" (leave it blank for no watermark).</li>
+      <li>Adjust the density (light/standard/dense) and opacity, and check the preview.</li>
+      <li>Click "Save as PDF" or "Save as JPEG" to download.</li>
+    </ol>
+    <h3>Q. Are my photos uploaded anywhere?</h3>
+    <p>A. No. Everything happens inside this browser on your device, including building the PDF/JPEG; nothing is sent to a server (only anonymous, cookie-free page-view counts are collected for this page).</p>
+    <h3>Q. Does adding this watermark make it safe to submit anywhere?</h3>
+    <p>A. No guarantee. Requirements such as masking certain fields, whether a watermark is needed, and validity dates vary by recipient. This tool only combines the two sides and overlays watermark text — it is not legal advice. Always check the recipient's own instructions before submitting, and consider masking sensitive fields (such as Japan's My Number) separately if the recipient doesn't require that side.</p>
+    <h3>Q. Can the watermark text be in Japanese?</h3>
+    <p>A. Yes. The watermark is drawn as part of the image before the PDF/JPEG is built, so any text your browser can render works (it is not embedded as selectable PDF text).</p>
+    <h3>Q. The photo orientation looks wrong.</h3>
+    <p>A. Use the rotate button under each photo to turn it 90° at a time.</p>
+    <h3>Q. My iPhone photos (HEIC) won't load.</h3>
+    <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../shorui-scan/">書類写真のスキャン風補正</a> — 斜めに撮った写真は先にこちらで四隅を合わせて台形補正・影のムラを消しておくと仕上がりがきれいです。</li>
+      <li><a href="../receipt-sheet/">領収書まとめ台紙メーカー</a> — 複数枚の写真をA4にまとめてPDF化する姉妹ツール（領収書・レシート向け）。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../shorui-scan/">Document Scan Correction</a> — Straighten a crooked photo and flatten shadows before combining it here.</li>
+      <li><a href="../receipt-sheet/">Receipt Sheet Maker</a> — The sister tool for arranging multiple receipt photos onto a printable PDF sheet.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">写真の内容はサーバーに送信されません。PDF・JPEGの生成もこの端末のブラウザだけで行われます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、PDF・JPEGの作成も含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}},
+    {"@type":"Question","name":"この透かしを入れれば、どの提出先でも安全に使えますか？","acceptedAnswer":{"@type":"Answer","text":"保証するものではありません。求められる形式は提出先によって異なるため、提出前に必ず提出先の指示を確認してください。本ツールは法的な助言を行うものではありません。"}},
+    {"@type":"Question","name":"透かし文字に日本語を使えますか？","acceptedAnswer":{"@type":"Answer","text":"使えます。透かし文字は画像として写真の上に描画してからPDF・JPEGを作るため、日本語を含む文字をそのまま表示できます。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =========================================================
+   PDF生成（外部ライブラリ不使用の自作実装、1ページ1枚の画像のみ）
+   ========================================================= */
+function pdfEscape(str){ return String(str).replace(/([\\()])/g,"\\$1"); }
+function pad10(n){ var s=String(Math.round(n)); while(s.length<10) s="0"+s; return s; }
+function buildPdf(pages){
+  var enc = new TextEncoder();
+  function toBytes(str){ return enc.encode(str); }
+  var chunks=[]; var offset=0; var objOffsets=[];
+  function push(bytesOrStr){
+    var b = (typeof bytesOrStr==="string") ? toBytes(bytesOrStr) : bytesOrStr;
+    chunks.push(b); offset += b.length;
+  }
+  function beginObj(num){ objOffsets[num]=offset; push(num+" 0 obj\n"); }
+  function endObj(){ push("endobj\n"); }
+
+  push("%PDF-1.4\n");
+  push(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+
+  var CATALOG=1, PAGES=2;
+  var nextObj = 3;
+  var pageObjNums=[], pageContentNums=[], pageImageObjNums=[];
+  pages.forEach(function(p){
+    pageObjNums.push(nextObj++);
+    pageContentNums.push(nextObj++);
+    var arr=[]; p.images.forEach(function(){ arr.push(nextObj++); });
+    pageImageObjNums.push(arr);
+  });
+
+  beginObj(CATALOG);
+  push("<< /Type /Catalog /Pages "+PAGES+" 0 R >>\n");
+  endObj();
+
+  beginObj(PAGES);
+  push("<< /Type /Pages /Kids ["+pageObjNums.map(function(n){return n+" 0 R"}).join(" ")+"] /Count "+pages.length+" >>\n");
+  endObj();
+
+  pages.forEach(function(p,pi){
+    var pageNum=pageObjNums[pi], contentNum=pageContentNums[pi], imgNums=pageImageObjNums[pi];
+    beginObj(pageNum);
+    var xobjEntries = p.images.map(function(im,ii){return "/Im"+ii+" "+imgNums[ii]+" 0 R"}).join(" ");
+    push("<< /Type /Page /Parent "+PAGES+" 0 R /MediaBox [0 0 "+p.width+" "+p.height+"] "+
+      "/Resources << /XObject << "+xobjEntries+" >> >> "+
+      "/Contents "+contentNum+" 0 R >>\n");
+    endObj();
+
+    var cs=[];
+    cs.push("q\n");
+    p.images.forEach(function(im,ii){
+      cs.push("q\n");
+      cs.push(im.drawW.toFixed(2)+" 0 0 "+im.drawH.toFixed(2)+" "+im.x.toFixed(2)+" "+im.y.toFixed(2)+" cm\n");
+      cs.push("/Im"+ii+" Do\n");
+      cs.push("Q\n");
+    });
+    cs.push("Q\n");
+    var contentBytes = toBytes(cs.join(""));
+
+    beginObj(contentNum);
+    push("<< /Length "+contentBytes.length+" >>\nstream\n");
+    push(contentBytes);
+    push("\nendstream\n");
+    endObj();
+
+    p.images.forEach(function(im,ii){
+      beginObj(imgNums[ii]);
+      push("<< /Type /XObject /Subtype /Image /Width "+im.w+" /Height "+im.h+
+        " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "+im.jpeg.length+" >>\nstream\n");
+      push(im.jpeg);
+      push("\nendstream\n");
+      endObj();
+    });
+  });
+
+  var xrefStart = offset;
+  var count = nextObj;
+  push("xref\n0 "+count+"\n");
+  push(pad10(0)+" 65535 f \n");
+  for(var i=1;i<count;i++){ push(pad10(objOffsets[i])+" 00000 n \n"); }
+  push("trailer\n<< /Size "+count+" /Root "+CATALOG+" 0 R >>\nstartxref\n"+xrefStart+"\n%%EOF");
+
+  var total=0; chunks.forEach(function(c){total+=c.length});
+  var out=new Uint8Array(total); var p2=0;
+  chunks.forEach(function(c){out.set(c,p2);p2+=c.length});
+  return out;
+}
+
+/* =========================================================
+   レイアウト計算（テストしやすいよう純関数に分離）
+   ========================================================= */
+var PAGE_W=1240, PAGE_H=1754; // A4相当（150dpi目安）の描画解像度
+var PT_W=595.28, PT_H=841.89; // PDFページサイズ（pt）
+var MARGIN=50, GUTTER=26, LABEL_H=34;
+
+function computeSideBoxes(pageW,pageH,margin,gutter,labelH){
+  var innerW = pageW - margin*2;
+  var cellH = (pageH - margin*2 - gutter - labelH*2)/2;
+  var top = { label:{x:margin,y:margin,w:innerW,h:labelH}, photo:{x:margin,y:margin+labelH,w:innerW,h:cellH} };
+  var bottomY = margin+labelH+cellH+gutter;
+  var bottom = { label:{x:margin,y:bottomY,w:innerW,h:labelH}, photo:{x:margin,y:bottomY+labelH,w:innerW,h:cellH} };
+  return { front: top, back: bottom };
+}
+function fitContain(imgW,imgH,box){
+  if(imgW<=0||imgH<=0) return {x:box.x,y:box.y,w:0,h:0};
+  var scale = Math.min(box.w/imgW, box.h/imgH);
+  var w = imgW*scale, h = imgH*scale;
+  var x = box.x + (box.w-w)/2;
+  var y = box.y + (box.h-h)/2;
+  return {x:x,y:y,w:w,h:h};
+}
+var DENSITY_FACTORS={light:1.9,normal:1.25,dense:0.8};
+function watermarkMetrics(pageW,text,fontSizeRatio,density,ctxForMeasure){
+  var fontSize = Math.max(14, Math.round(pageW*fontSizeRatio));
+  var factor = DENSITY_FACTORS[density]||DENSITY_FACTORS.normal;
+  var textW = fontSize*Math.max(2,String(text).length)*0.56; // measureTextが使えない環境向けの概算
+  if(ctxForMeasure){
+    try{ ctxForMeasure.font=fontSize+"px sans-serif"; textW=Math.max(textW, ctxForMeasure.measureText(text).width); }catch(e){}
+  }
+  var stepX = Math.max(fontSize*2, textW*factor);
+  var stepY = stepX*0.62;
+  return { fontSize:fontSize, stepX:stepX, stepY:stepY };
+}
+
+/* =========================================================
+   画像読み込み（receipt-sheet / shorui-scanと同じ方式）
+   ========================================================= */
+function loadViaImgTag(file){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){ resolve(img); };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error("img-load-failed")); };
+    img.src=url;
+  });
+}
+function getBitmapSize(bmp){
+  if("naturalWidth" in bmp) return {w:bmp.naturalWidth, h:bmp.naturalHeight};
+  return {w:bmp.width, h:bmp.height};
+}
+async function loadImageEntry(file){
+  var bmp=null, err=null;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }
+  catch(e1){
+    try{ bmp = await createImageBitmap(file); }
+    catch(e2){
+      try{ bmp = await loadViaImgTag(file); }
+      catch(e3){ err = T[lang].loadError; }
+    }
+  }
+  var size = bmp ? getBitmapSize(bmp) : {w:0,h:0};
+  return { name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, error: err || (size.w===0?T[lang].loadError:null) };
+}
+function rotatedSize(entry){
+  if(entry.rotate%180===90) return {w:entry.h,h:entry.w};
+  return {w:entry.w,h:entry.h};
+}
+function drawRotated(ctx, bmp, entryW, entryH, rotate, dx, dy, dw, dh){
+  ctx.save();
+  ctx.translate(dx+dw/2, dy+dh/2);
+  ctx.rotate(rotate*Math.PI/180);
+  var rs = (rotate%180===90) ? {w:dh,h:dw} : {w:dw,h:dh};
+  ctx.drawImage(bmp, -rs.w/2, -rs.h/2, rs.w, rs.h);
+  ctx.restore();
+}
+
+/* =========================================================
+   状態・UI
+   ========================================================= */
+var DENSITY_OPTS=[
+  {key:"light",ja:"薄め",en:"Light"},
+  {key:"normal",ja:"標準",en:"Standard"},
+  {key:"dense",ja:"濃め",en:"Dense"}
+];
+var lang="ja";
+var state={ front:null, back:null, density:"normal", opacity:30, wmText:"" };
+
+var T={
+  ja:{
+    title:"身分証明書の表と裏を1枚にまとめ、透かし入りで保存",
+    sub:"運転免許証・マイナンバーカード・健康保険証などの表と裏の写真を1枚のA4にまとめ、「○○提出用」のような透かし文字を入れてPDF・JPEGで保存します。処理はすべてこの端末の中だけで行われます。",
+    h_source:"写真を追加", sideFront:"表面", sideBack:"裏面",
+    dropTextFront:"ここに写真をドラッグ、またはクリックして選択", dropTextBack:"ここに写真をドラッグ、またはクリックして選択",
+    formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。斜めに撮った写真は、先に「書類写真のスキャン風補正」で四隅を合わせておくと仕上がりがきれいです。",
+    h_watermark:"透かし文字の設定", densityLabel:"透かしの密度", opacityLabel:"濃さ",
+    h_preview:"プレビュー", savePdfBtn:"PDFで保存", saveJpegBtn:"JPEGで保存",
+    loadError:"読み込めませんでした", rotateTitle:"回転", removeTitle:"削除",
+    summaryText:function(hasF,hasB){
+      if(hasF&&hasB) return "表面・裏面とも読み込み済みです。";
+      if(hasF) return "裏面の写真もあわせて追加してください。";
+      if(hasB) return "表面の写真もあわせて追加してください。";
+      return "表面・裏面の写真を追加してください。";
+    },
+    building:"作成中…", donePdf:"PDFを作成しました。ダウンロードを確認してください。", doneJpeg:"JPEGを作成しました。ダウンロードを確認してください。"
+  },
+  en:{
+    title:"Combine the front and back of an ID document onto one page, with a watermark",
+    sub:"Combine the front and back photos of an ID card (driver's licence, My Number card, health insurance card, etc.) onto one A4 page with a repeating watermark such as \"For submission only\", then save as PDF or JPEG. Everything happens in this browser.",
+    h_source:"Add photos", sideFront:"Front", sideBack:"Back",
+    dropTextFront:"Drag and drop, or click to choose", dropTextBack:"Drag and drop, or click to choose",
+    formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser. For a crooked photo, straighten it first with \"Document Scan Correction\".",
+    h_watermark:"Watermark text", densityLabel:"Density", opacityLabel:"Opacity",
+    h_preview:"Preview", savePdfBtn:"Save as PDF", saveJpegBtn:"Save as JPEG",
+    loadError:"Could not load", rotateTitle:"Rotate", removeTitle:"Remove",
+    summaryText:function(hasF,hasB){
+      if(hasF&&hasB) return "Both sides are loaded.";
+      if(hasF) return "Add the back photo too.";
+      if(hasB) return "Add the front photo too.";
+      return "Add the front and back photos.";
+    },
+    building:"Building…", donePdf:"PDF created. Check your download.", doneJpeg:"JPEG created. Check your download."
+  }
+};
+
+/* ---------- サイド（表／裏）のカード描画 ---------- */
+function renderSide(key){
+  var entry = state[key];
+  var wrap = $(key==="front" ? "thumbFront" : "thumbBack");
+  wrap.innerHTML="";
+  if(!entry) return;
+  if(entry.error){
+    var p=document.createElement("p"); p.className="err"; p.textContent=entry.name+" — "+entry.error;
+    wrap.appendChild(p);
+    return;
+  }
+  var box=document.createElement("div"); box.className="thumb";
+  var img=document.createElement("img"); img.alt="";
+  var c=document.createElement("canvas");
+  var rs=rotatedSize(entry);
+  var SZ=320; var scale=Math.min(SZ/rs.w, SZ/rs.h, 1);
+  c.width=Math.max(1,Math.round(rs.w*scale)); c.height=Math.max(1,Math.round(rs.h*scale));
+  var ctx=c.getContext("2d");
+  try{ drawRotated(ctx, entry.bitmap, entry.w, entry.h, entry.rotate, 0,0,c.width,c.height); }catch(e){}
+  img.src=c.toDataURL("image/jpeg",0.8);
+  box.appendChild(img);
+  var meta=document.createElement("div"); meta.className="meta";
+  var name=document.createElement("span"); name.className="name"; name.textContent=entry.name;
+  meta.appendChild(name);
+  var rotBtn=document.createElement("button"); rotBtn.type="button"; rotBtn.textContent="⟳"; rotBtn.title=T[lang].rotateTitle;
+  rotBtn.addEventListener("click",function(){ entry.rotate=(entry.rotate+90)%360; renderAll(); });
+  meta.appendChild(rotBtn);
+  var rmBtn=document.createElement("button"); rmBtn.type="button"; rmBtn.textContent="✕"; rmBtn.title=T[lang].removeTitle; rmBtn.className="rm";
+  rmBtn.addEventListener("click",function(){ state[key]=null; renderAll(); });
+  meta.appendChild(rmBtn);
+  box.appendChild(meta);
+  wrap.appendChild(box);
+}
+
+/* ---------- 合成キャンバス描画（プレビュー・書き出し共通） ---------- */
+function composePage(){
+  var c=document.createElement("canvas");
+  c.width=PAGE_W; c.height=PAGE_H;
+  var ctx=c.getContext("2d");
+  ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,PAGE_W,PAGE_H);
+  ctx.strokeStyle="#cfcfc8"; ctx.lineWidth=2;
+  var boxes=computeSideBoxes(PAGE_W,PAGE_H,MARGIN,GUTTER,LABEL_H);
+
+  function drawSide(key,box,labelJa,labelEn){
+    ctx.fillStyle="#6b6b66";
+    ctx.font="bold "+Math.round(LABEL_H*0.55)+"px sans-serif";
+    ctx.textBaseline="middle";
+    ctx.fillText(lang==="ja"?labelJa:labelEn, box.label.x, box.label.y+box.label.h/2);
+    ctx.strokeRect(box.photo.x, box.photo.y, box.photo.w, box.photo.h);
+    var entry=state[key];
+    if(entry && entry.bitmap && !entry.error){
+      var rs=rotatedSize(entry);
+      var fit=fitContain(rs.w, rs.h, box.photo);
+      try{ drawRotated(ctx, entry.bitmap, entry.w, entry.h, entry.rotate, fit.x, fit.y, fit.w, fit.h); }catch(e){}
+    }
+  }
+  drawSide("front", boxes.front, "表面 / Front", "Front");
+  drawSide("back", boxes.back, "裏面 / Back", "Back");
+
+  var text=(state.wmText||"").trim();
+  if(text){
+    var m=watermarkMetrics(PAGE_W, text, 0.052, state.density, ctx);
+    ctx.save();
+    ctx.globalAlpha = state.opacity/100;
+    ctx.fillStyle="#808080";
+    ctx.font=m.fontSize+"px sans-serif";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.translate(PAGE_W/2, PAGE_H/2);
+    ctx.rotate(-30*Math.PI/180);
+    var diag=Math.sqrt(PAGE_W*PAGE_W+PAGE_H*PAGE_H);
+    for(var y=-diag; y<diag; y+=m.stepY){
+      for(var x=-diag; x<diag; x+=m.stepX){
+        ctx.fillText(text, x, y);
+      }
+    }
+    ctx.restore();
+  }
+  return c;
+}
+
+function renderPreview(){
+  var hasF = !!(state.front && state.front.bitmap && !state.front.error);
+  var hasB = !!(state.back && state.back.bitmap && !state.back.error);
+  var card=$("previewCard");
+  if(!hasF && !hasB){ card.style.display="none"; return; }
+  card.style.display="";
+  var full=composePage();
+  var canvas=$("previewCanvas");
+  var DISPLAY_W=300;
+  canvas.width=Math.round(DISPLAY_W*2); canvas.height=Math.round(DISPLAY_W*(PAGE_H/PAGE_W)*2);
+  canvas.style.width=DISPLAY_W+"px"; canvas.style.height=Math.round(DISPLAY_W*(PAGE_H/PAGE_W))+"px";
+  var ctx=canvas.getContext("2d");
+  ctx.drawImage(full,0,0,canvas.width,canvas.height);
+  $("summary").textContent=T[lang].summaryText(hasF,hasB);
+  $("savePdfBtn").disabled = !(hasF||hasB);
+  $("saveJpegBtn").disabled = !(hasF||hasB);
+}
+
+function canvasToBlob(canvas, type, quality){
+  return new Promise(function(resolve){ canvas.toBlob(resolve, type, quality); });
+}
+function triggerDownload(blob, filename){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+}
+async function savePdf(){
+  var btn=$("savePdfBtn"); btn.disabled=true;
+  var status=$("summary");
+  status.textContent=T[lang].building;
+  try{
+    var full=composePage();
+    var blob=await canvasToBlob(full,"image/jpeg",0.9);
+    var buf=await blob.arrayBuffer();
+    var jpegBytes=new Uint8Array(buf);
+    var pages=[{ width:PT_W, height:PT_H, images:[{jpeg:jpegBytes, w:full.width, h:full.height, drawW:PT_W, drawH:PT_H, x:0, y:0}] }];
+    var pdfBytes=buildPdf(pages);
+    triggerDownload(new Blob([pdfBytes],{type:"application/pdf"}), "mibun-teishutsu.pdf");
+    status.textContent=T[lang].donePdf;
+  } finally { btn.disabled=false; renderPreview(); }
+}
+async function saveJpeg(){
+  var btn=$("saveJpegBtn"); btn.disabled=true;
+  var status=$("summary");
+  status.textContent=T[lang].building;
+  try{
+    var full=composePage();
+    var blob=await canvasToBlob(full,"image/jpeg",0.92);
+    triggerDownload(blob, "mibun-teishutsu.jpg");
+    status.textContent=T[lang].doneJpeg;
+  } finally { btn.disabled=false; renderPreview(); }
+}
+
+/* ---------- 設定ボタン群 ---------- */
+function buildOptButtons(container, items, isActive, onPick){
+  container.innerHTML="";
+  items.forEach(function(item,i){
+    var b=document.createElement("button");
+    b.type="button";
+    b.textContent=item[lang];
+    b.setAttribute("aria-pressed", isActive(item,i)?"true":"false");
+    b.addEventListener("click",function(){ onPick(item,i); renderAll(); });
+    container.appendChild(b);
+  });
+}
+function renderOptButtons(){
+  buildOptButtons($("densityOpts"), DENSITY_OPTS, function(item){return item.key===state.density}, function(item){ state.density=item.key; });
+}
+
+function renderAll(){
+  renderSide("front");
+  renderSide("back");
+  renderOptButtons();
+  renderPreview();
+}
+
+/* ---------- ファイル追加 ---------- */
+async function addFile(key, file){
+  if(!file) return;
+  var entry = await loadImageEntry(file);
+  state[key]=entry;
+  renderAll();
+}
+
+/* ---------- イベント配線 ---------- */
+function wireDrop(dropId, inputId, key){
+  var dropZone=$(dropId), fileInput=$(inputId);
+  dropZone.addEventListener("click",function(){fileInput.click()});
+  fileInput.addEventListener("change",function(){
+    if(fileInput.files && fileInput.files[0]) addFile(key, fileInput.files[0]);
+    fileInput.value="";
+  });
+  ["dragenter","dragover"].forEach(function(ev){
+    dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.add("over")});
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.remove("over")});
+  });
+  dropZone.addEventListener("drop",function(e){
+    var dt=e.dataTransfer;
+    if(dt && dt.files && dt.files[0]) addFile(key, dt.files[0]);
+  });
+}
+wireDrop("dropFront","fileFront","front");
+wireDrop("dropBack","fileBack","back");
+
+$("wmText").addEventListener("input",function(){ state.wmText=$("wmText").value; renderPreview(); });
+$("opacityRange").addEventListener("input",function(){
+  state.opacity=parseInt($("opacityRange").value,10);
+  $("opacityValue").textContent=state.opacity+"%";
+  renderPreview();
+});
+$("savePdfBtn").addEventListener("click",function(){ savePdf(); });
+$("saveJpegBtn").addEventListener("click",function(){ saveJpeg(); });
+
+/* ---------- 言語切替 ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
+  $("fileFront").parentNode.querySelector("span").textContent=T[lang].dropTextFront;
+  $("fileBack").parentNode.querySelector("span").textContent=T[lang].dropTextBack;
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  renderAll();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0; li<langBtns.length; li++){
+  langBtns[li].addEventListener("click",function(){ lang=this.getAttribute("data-lang"); applyLang(); });
+}
+
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
