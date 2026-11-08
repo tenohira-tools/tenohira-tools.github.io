@@ -120,8 +120,10 @@ html[lang=en] .en-only{display:block}
   <label class="chk"><input type="checkbox" id="detailChk"><span data-i="detailChkLabel">各写真に日付・支払先・金額を入力する（任意）</span></label>
   <div class="thumbs" id="thumbList"></div>
   <div class="row">
+    <button type="button" class="secondary" id="sortDateBtn" data-i="sortDateBtn">撮影日時順に並べ替え</button>
     <button type="button" class="secondary" id="clearBtn" data-i="clearBtn">すべてクリア</button>
   </div>
+  <p class="status" id="sortStatus"></p>
 </section>
 
 <section class="card" id="previewCard" style="display:none">
@@ -165,6 +167,8 @@ html[lang=en] .en-only{display:block}
     <p>A. 現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。</p>
     <h3>Q. 何枚まで対応していますか？</h3>
     <p>A. 枚数に上限は設けていませんが、写真が多くなるほど処理に時間がかかり、生成されるPDFのファイルサイズも大きくなります。数十枚を超える場合は、複数回に分けて作成することをおすすめします。</p>
+    <h3>Q. 日付の古い順に並べ替えたい（スマホで撮った順）。</h3>
+    <p>A. 「撮影日時順に並べ替え」ボタンで、写真に記録されている撮影日時（EXIFのDateTimeOriginal）の古い順に自動で並べ替えます。EXIF情報が無い写真（スクリーンショット、一度加工・送信してEXIFが失われた画像など）は、代わりにファイルの更新日時を使います。SNSやチャットで転送した写真は更新日時が転送時刻になっている場合があるため、正確な順番にならないときは一覧の↑↓ボタンで手動調整してください。並べ替え後にボタン横へ、EXIFを使えた枚数とファイルの更新日時で代用した枚数を表示します。</p>
   </div>
   <div class="en-only">
     <h2>How to use &amp; FAQ</h2>
@@ -186,6 +190,8 @@ html[lang=en] .en-only{display:block}
     <p>A. Only auto-numbering (1, 2, 3…) is supported inside the PDF, since it's generated without embedding a Japanese font, so free-text Japanese captions can't be rendered there. If you want to record a date, payee, or amount, turn on "Enter date / payee / amount for each photo" in the photo list, then use the "Print itemized list" button to print an A4 sheet with the same numbers as the PDF using your browser's own print feature (which renders Japanese text natively). Everything stays on this device.</p>
     <h3>Q. Is there a limit on how many photos?</h3>
     <p>A. No hard limit, but more photos means more processing time and a larger PDF file. For dozens of photos, consider splitting into a few runs.</p>
+    <h3>Q. Can I sort photos into the order they were taken?</h3>
+    <p>A. The "Sort by date taken" button reorders the list from oldest to newest using each photo's EXIF capture time (DateTimeOriginal). When a photo has no EXIF data (screenshots, or photos that lost it after editing/forwarding), its file's last-modified date is used instead. Forwarded photos sometimes have a modified date that reflects when they were sent rather than taken, so check the order and use the ↑↓ buttons to fix it if needed. The message next to the button shows how many photos used EXIF versus the fallback.</p>
   </div>
 </section>
 
@@ -225,7 +231,8 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、PDFの生成も含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}},
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。複数の写真を1枚のPDFに並べるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}},
     {"@type":"Question","name":"iPhoneの写真（HEIC形式）が読み込めません。","acceptedAnswer":{"@type":"Answer","text":"HEIC形式の読み込みはブラウザに依存します。読み込めない場合は、写真の設定を「互換性優先（JPEG）」にするか、JPEGとして書き出してからお試しください。"}},
-    {"@type":"Question","name":"キャプションに好きな文字を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。"}}
+    {"@type":"Question","name":"キャプションに好きな文字を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。"}},
+    {"@type":"Question","name":"日付の古い順に並べ替えたい（スマホで撮った順）。","acceptedAnswer":{"@type":"Answer","text":"「撮影日時順に並べ替え」ボタンで、写真のEXIF撮影日時の古い順に自動で並べ替えます。EXIFが無い写真はファイルの更新日時を代わりに使い、必要なら↑↓ボタンで手動調整できます。"}}
   ]
 }
 </script>
@@ -423,7 +430,9 @@ var T={
     summaryText:function(n,pages,perPage){return "写真 "+n+"枚 → "+pages+"ページ（1ページ"+perPage+"枚）"},
     building:"PDFを作成中…", done:function(pages){return "PDFを作成しました（"+pages+"ページ）。ダウンロードを確認してください。"},
     rotateTitle:"回転", upTitle:"上へ", downTitle:"下へ", removeTitle:"削除",
-    pageLabel:function(i,n){return (i)+" / "+n+" ページ目"}
+    pageLabel:function(i,n){return (i)+" / "+n+" ページ目"},
+    sortDateBtn:"撮影日時順に並べ替え",
+    sortedMsg:function(n,exifN){return "撮影日時順に並べ替えました（"+n+"枚、EXIFの撮影日時を使用："+exifN+"枚／ファイルの更新日時で代用："+(n-exifN)+"枚）";}
   },
   en:{
     title:"Receipt Sheet Maker",
@@ -446,9 +455,91 @@ var T={
     summaryText:function(n,pages,perPage){return n+" photo(s) → "+pages+" page(s) ("+perPage+" per page)"},
     building:"Building PDF…", done:function(pages){return "PDF created ("+pages+" page(s)). Check your download."},
     rotateTitle:"Rotate", upTitle:"Move up", downTitle:"Move down", removeTitle:"Remove",
-    pageLabel:function(i,n){return "Page "+i+" / "+n}
+    pageLabel:function(i,n){return "Page "+i+" / "+n},
+    sortDateBtn:"Sort by date taken",
+    sortedMsg:function(n,exifN){return "Sorted "+n+" photo(s) by date taken (EXIF: "+exifN+", file's modified date: "+(n-exifN)+")";}
   }
 };
+
+/* ---------- EXIF撮影日時（自作の最小パーサー。外部ライブラリ不使用） ---------- */
+function readIfd(dv, tiffStart, ifdOffset, little){
+  var tags={};
+  if(ifdOffset+2 > dv.byteLength) return {tags:tags};
+  var count = dv.getUint16(ifdOffset, little);
+  for(var i=0;i<count;i++){
+    var entryOffset = ifdOffset+2+i*12;
+    if(entryOffset+12 > dv.byteLength) break;
+    var tag = dv.getUint16(entryOffset, little);
+    var type = dv.getUint16(entryOffset+2, little);
+    var num = dv.getUint32(entryOffset+4, little);
+    var valueOffsetField = entryOffset+8;
+    try{
+      if(type===2){ // ASCII
+        var dataOffset = (num<=4) ? valueOffsetField : (tiffStart + dv.getUint32(valueOffsetField, little));
+        var bytes=[];
+        for(var j=0;j<num && (dataOffset+j)<dv.byteLength;j++){
+          var b = dv.getUint8(dataOffset+j);
+          if(b===0) break;
+          bytes.push(b);
+        }
+        tags[tag] = String.fromCharCode.apply(null, bytes);
+      } else if(type===3){ // SHORT
+        tags[tag] = dv.getUint16(valueOffsetField, little);
+      } else if(type===4){ // LONG（ExifIFDポインタ等）
+        tags[tag] = dv.getUint32(valueOffsetField, little);
+      }
+    }catch(e){}
+  }
+  return {tags:tags};
+}
+function parseExifDateString(str){
+  var m = /^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(str||"");
+  if(!m) return null;
+  var d = new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]);
+  return isNaN(d.getTime()) ? null : d;
+}
+function parseTiffDate(dv, tiffStart){
+  var byteOrder = dv.getUint16(tiffStart, false);
+  var little = byteOrder===0x4949; // 'II'
+  if(byteOrder!==0x4949 && byteOrder!==0x4D4D) return null;
+  var ifd0Offset = dv.getUint32(tiffStart+4, little);
+  var ifd0 = readIfd(dv, tiffStart, tiffStart+ifd0Offset, little);
+  var dto=null;
+  var exifIfdPtr = ifd0.tags[0x8769];
+  if(exifIfdPtr!=null){
+    var exifIfd = readIfd(dv, tiffStart, tiffStart+exifIfdPtr, little);
+    dto = exifIfd.tags[0x9003]; // DateTimeOriginal
+  }
+  var str = dto || ifd0.tags[0x0132]; // 無ければ DateTime（更新日時系）
+  return str ? parseExifDateString(str) : null;
+}
+function parseExifDateFromJpeg(buffer){
+  try{
+    var dv = new DataView(buffer);
+    if(dv.byteLength<4 || dv.getUint16(0,false)!==0xFFD8) return null; // JPEGでなければ対象外
+    var offset=2;
+    while(offset+4<=dv.byteLength){
+      if(dv.getUint8(offset)!==0xFF) break;
+      var marker=dv.getUint8(offset+1);
+      if(marker===0xD8){ offset+=2; continue; }
+      if(marker===0xD9 || marker===0xDA) break; // EOI／スキャン開始、以降にヘッダ情報は無い
+      if(marker>=0xD0 && marker<=0xD7){ offset+=2; continue; }
+      var segLen = dv.getUint16(offset+2, false);
+      if(marker===0xE1 && offset+10<=dv.byteLength &&
+         dv.getUint32(offset+4,false)===0x45786966 && dv.getUint16(offset+8,false)===0x0000){
+        return parseTiffDate(dv, offset+10);
+      }
+      offset += 2+segLen;
+    }
+  }catch(e){}
+  return null;
+}
+async function getExifCaptureDate(file){
+  try{
+    var head = await file.slice(0, 131072).arrayBuffer();
+    return parseExifDateFromJpeg(head);
+  }catch(e){ return null; }
+}
 
 /* ---------- 画像読み込み ---------- */
 function loadViaImgTag(file){
@@ -476,7 +567,10 @@ async function loadImageEntry(file){
     }
   }
   var size = bmp ? getBitmapSize(bmp) : {w:0,h:0};
-  return { id:uid++, name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, error: err || (size.w===0?T[lang].loadError:null), date:"", payee:"", amount:"" };
+  var exifDate = await getExifCaptureDate(file);
+  var sortTime = exifDate ? exifDate.getTime() : file.lastModified;
+  var dateSource = exifDate ? "exif" : "file";
+  return { id:uid++, name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, error: err || (size.w===0?T[lang].loadError:null), date:"", payee:"", amount:"", sortTime:sortTime, dateSource:dateSource };
 }
 
 /* ---------- 回転を反映した実効サイズ ---------- */
@@ -827,6 +921,16 @@ function renderAll(){
   renderOptButtons();
 }
 
+/* ---------- 撮影日時順に並べ替え ---------- */
+function sortFilesByDate(){
+  if(state.files.length===0) return;
+  var exifN=0;
+  state.files.forEach(function(f){ if(f.dateSource==="exif") exifN++; });
+  state.files.sort(function(a,b){ return (a.sortTime||0)-(b.sortTime||0); });
+  renderAll();
+  $("sortStatus").textContent = T[lang].sortedMsg(state.files.length, exifN);
+}
+
 /* ---------- ファイル追加 ---------- */
 async function addFiles(fileList){
   var files=Array.prototype.slice.call(fileList);
@@ -870,9 +974,11 @@ $("detailChk").addEventListener("change",function(){
   renderAll();
 });
 $("printListBtn").addEventListener("click",function(){ printItemizedList(); });
+$("sortDateBtn").addEventListener("click",function(){ sortFilesByDate(); });
 $("clearBtn").addEventListener("click",function(){
   state.files=[];
   $("loadStatus").textContent="";
+  $("sortStatus").textContent="";
   renderAll();
 });
 $("makePdfBtn").addEventListener("click",function(){ makeAndDownloadPdf(); });

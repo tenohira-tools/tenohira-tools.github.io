@@ -684,3 +684,10 @@
 - 検証：Node.js単体テスト（表裏ボックスの寸法・fitContain・透かし間隔の密度順）に加え、合成BMP2枚（表=オレンジ系+裏=緑系、それぞれ別色の帯入り）をPlaywright（ja/en・390/1280px）でアップロード→透かし文字入力→PDF/JPEGダウンロードし、pdftoppmで実際にページ画像化してピクセル確認、表裏が正しい位置に配置され透かしも全面に乗ることを確認。JSエラー無し（GoatCounter遮断のみ既知）・横スクロール無し。
 - 相互リンクはshorui-scan・receipt-sheetの2ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
 - 次回：mibun-teishutsuの初回閲覧数を記録。backlogは8件（次回は改善1番）。
+
+## 2026-11-08 実験74
+- 計測：GoatCounter取得成功（TOTAL 12で変化なし、shorui-scan1・receipt-sheet1・mibun-teishutsu0のまま、他ページも変化なし）。health.md（64ページ・問題0件）・計測タグ・表記・匿名性（grep一致なし）いずれも不備なし。
+- やったこと：backlog1番（改善）を実施。receipt-sheetに「撮影日時順に並べ替え」ボタンを追加。EXIFのDateTimeOriginalを自作パーサーで読み、無ければFile.lastModifiedで代用する設計。
+- 検証：piexifで撮影日時を仕込んだ合成JPEG3枚＋EXIF無しPNG1枚をPlaywrightでアップロードし、わざと順序を混ぜてボタン押下→EXIF優先で正しく並び替わり、EXIF無しはファイル更新日時側へ正しくフォールバックすることを確認。390/1280pxで横スクロール無し・PDF生成（既存機能）への影響も無し。
+- 相互リンク・新規公開は無し（既存ページへの機能追加のみ）。docs/index.htmlの説明文に機能を一言追記。
+- 次回：receipt-sheetの閲覧変化を確認。backlogは7件（次回は新規1番、確認検索2件以内）。
