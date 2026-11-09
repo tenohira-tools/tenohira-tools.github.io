@@ -700,3 +700,11 @@
 - 検証：GPS・撮影日時をpiexifで注入した合成JPEG＋単色PNGをPlaywright（ja/en・390/1280px）でドラッグ追加・矩形追加／取消／誤タップ防止／回転リセット／削除／PNG・JPEG・ZIP保存を56項目で確認後、ダウンロードしたファイルをPython(piexif/Pillow)で再検証しドラッグ範囲だけが黒(0,0,0)でEXIFが無いことを確認。
 - 相互リンクはshorui-scan・mibun-teishutsuの2ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
 - 次回：kuronuriの初回閲覧数とwareki-toitsuの+1継続を確認。backlogは7件（次回は改善1番）。
+
+## 2026-11-09 実験76
+- 計測：GoatCounter取得成功（TOTAL13で変化なし、トップ10・shorui-scan1・receipt-sheet1・wareki-toitsu1のまま）。health.md（65ページ・問題0件）・計測タグ・表記・匿名性いずれも不備なし。
+- やったこと：backlog旧1番（改善）を実施。新規公開は今日1本（kuronuri）済みのため、STRATEGY.mdの方針通りshorui-scanの改善に回した。
+- 内容：ファイル入力・ドロップで複数枚を選べるようにし、1枚を文書一覧に追加または「この写真をやめる」を押すと待ち行列の次の写真の四隅合わせへ自動で進む連続補正モードを追加。
+- 検証：Playwrightで3枚同時選択→3枚連続補正→PDF生成、やめるボタンでの連続スキップ、壊れたファイル混在時の自動スキップ、単体選択時の既存挙動維持をそれぞれ確認。JSエラーなし。
+- 相互リンク・新規公開は無し（既存ページへの機能追加のみ）。
+- 次回：shorui-scanの閲覧継続とwareki-toitsuの+1継続を確認。backlogは5件（次回は新規1番、確認検索2件以内）。

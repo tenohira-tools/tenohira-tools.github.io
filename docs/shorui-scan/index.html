@@ -86,15 +86,16 @@ html[lang=en] .en-only{display:block}
   <h2 data-i="h_source">写真を追加</h2>
   <div class="drop" id="dropZone">
     <span data-i="dropText">ここに写真をドラッグ＆ドロップ、またはクリックして選択</span>
-    <input type="file" id="fileInput" accept="image/*">
+    <input type="file" id="fileInput" accept="image/*" multiple>
   </div>
-  <p class="note" data-i="formatNote">JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。1回につき1枚を補正します（複数枚は補正後にリストへ追加できます）。</p>
+  <p class="note" data-i="formatNote">JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。複数枚まとめて選択・ドロップすると、1枚ずつ補正→自動で次の写真へと進み、最後にまとめてPDFにできます。</p>
   <p class="status" id="loadStatus"></p>
 </section>
 
 <section class="card" id="editCard" style="display:none">
   <h2 data-i="h_edit">四隅を書類の角に合わせる</h2>
   <p class="optlabel" data-i="dragHint">緑の点をドラッグして、書類の四隅に正確に合わせてください。</p>
+  <p class="status" id="queueStatus"></p>
   <div class="stageWrap"><div class="stage" id="stage">
     <canvas id="srcCanvas"></canvas>
     <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon id="quadPoly" points=""></polygon></svg>
@@ -157,7 +158,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. iPhoneの写真（HEIC形式）が読み込めません。</h3>
     <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
     <h3>Q. 複数ページの書類をまとめられますか？</h3>
-    <p>A. はい。1枚ずつ補正して「文書一覧に追加」を繰り返すと、最後に「まとめてPDFをダウンロード」で複数ページのPDFとして書き出せます。</p>
+    <p>A. はい。ファイル選択やドラッグ＆ドロップで複数枚をまとめて渡すと、1枚を補正して「文書一覧に追加」を押すたびに次の写真の四隅合わせへ自動で進みます。全ページ分を繰り返したら、最後に「まとめてPDFをダウンロード」で複数ページのPDFとして書き出せます。</p>
     <h3>Q. これは電子帳簿保存法などの要件を満たすことを保証しますか？</h3>
     <p>A. いいえ。本ツールは写真の見た目を整える補助ツールであり、保存要件の充足を保証するものではありません。複数の書類を1つのPDFにまとめると取引ごとの検索性が下がる場合があるため、税務上の保存が目的の場合は、姉妹ツールの「<a href="../shohyo-rename/">証憑ファイル名整理ツール</a>」で取引ごとにファイルを分けて保存することをおすすめします。正式な保存要件は国税庁の資料や顧問税理士など専門家にご確認ください。本ツールは税務・法律上の助言を行うものではありません。</p>
   </div>
@@ -180,7 +181,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. My iPhone photos (HEIC) won't load.</h3>
     <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
     <h3>Q. Can I combine multiple pages?</h3>
-    <p>A. Yes. Correct each photo and click "Add to document list" for each one, then use "Download combined PDF" to get a multi-page PDF.</p>
+    <p>A. Yes. Choose or drop several photos at once, and clicking "Add to document list" after each correction automatically opens the next photo's corner editor. Repeat for every page, then use "Download combined PDF" to get a multi-page PDF.</p>
     <h3>Q. Does this guarantee compliance with Japan's electronic bookkeeping law?</h3>
     <p>A. No. This tool only improves how a photo looks; it does not guarantee any legal record-keeping requirement. Bundling documents into one PDF can make individual transactions harder to search, so for tax records use the companion "<a href="../shohyo-rename/">receipt filename organizer</a>" to keep files separate instead. Check official guidance or a tax professional for actual requirements — this is not tax or legal advice.</p>
   </div>
@@ -506,15 +507,17 @@ var state={
   corners:null,             // [{x,y}...] 元画像ピクセル座標、TL,TR,BR,BL
   filterMode:"bw",
   resultCanvas:null,
-  docs:[]                   // {id,name,thumbUrl,jpegBytes,w,h}
+  docs:[],                  // {id,name,thumbUrl,jpegBytes,w,h}
+  queue:[]                  // 複数選択・複数ドロップした残りのファイル
 };
+var pendingQueueNote="";
 
 var T={
   ja:{
     title:"書類写真のスキャン風補正",
     sub:"斜めに撮った書類・領収書の写真の四隅をドラッグして台形補正し、白黒くっきり化します。処理はすべてこの端末の中だけで行われます。",
     h_source:"写真を追加", dropText:"ここに写真をドラッグ＆ドロップ、またはクリックして選択",
-    formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。1回につき1枚を補正します（複数枚は補正後にリストへ追加できます）。",
+    formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。複数枚まとめて選択・ドロップすると、1枚ずつ補正→自動で次の写真へと進み、最後にまとめてPDFにできます。",
     h_edit:"四隅を書類の角に合わせる", dragHint:"緑の点をドラッグして、書類の四隅に正確に合わせてください。",
     rotateBtn:"90度回転", resetCornersBtn:"四隅をリセット",
     filterLabel:"仕上がり", applyBtn:"補正を適用", cancelEditBtn:"この写真をやめる",
@@ -524,6 +527,7 @@ var T={
     loadError:"読み込めませんでした",
     applying:"補正を適用中…", applied:"補正が完了しました。",
     addedToList:function(n){return "文書一覧に追加しました（現在"+n+"件）。"},
+    queueRemaining:function(n){return "このあと自動で次の写真に進みます（残り"+n+"枚）。"},
     pdfSummary:function(n){return "文書 "+n+"件をPDFにまとめます。"},
     buildingPdf:"PDFを作成中…", pdfDone:function(n){return "PDFを作成しました（"+n+"ページ）。ダウンロードを確認してください。"},
     removeTitle:"削除"
@@ -532,7 +536,7 @@ var T={
     title:"Document Scan Correction",
     sub:"Drag the four corners of a photographed document or receipt to straighten it, then clean it up like a scan. Everything happens in this browser.",
     h_source:"Add a photo", dropText:"Drag and drop a photo here, or click to choose",
-    formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser. Correct one photo at a time — add each result to a list to combine into a PDF.",
+    formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser. Select or drop several photos at once: it corrects one, then automatically moves to the next, so you can combine them all into one PDF at the end.",
     h_edit:"Align the corners", dragHint:"Drag the green dots onto the document's four corners.",
     rotateBtn:"Rotate 90°", resetCornersBtn:"Reset corners",
     filterLabel:"Finish", applyBtn:"Apply correction", cancelEditBtn:"Discard this photo",
@@ -542,6 +546,7 @@ var T={
     loadError:"Could not load",
     applying:"Applying correction…", applied:"Correction complete.",
     addedToList:function(n){return "Added to the document list ("+n+" so far).";},
+    queueRemaining:function(n){return "It will automatically move to the next photo after this ("+n+" more).";},
     pdfSummary:function(n){return n+" document(s) will be combined into a PDF."},
     buildingPdf:"Building PDF…", pdfDone:function(n){return "PDF created ("+n+" page(s)). Check your download."},
     removeTitle:"Remove"
@@ -601,6 +606,33 @@ function openEditor(canvas){
   $("applyStatus").textContent="";
   renderHandles();
   hideMagnifier();
+  updateQueueStatus();
+}
+
+/* ---------- 複数ファイルの待ち行列 ---------- */
+function updateQueueStatus(){
+  var el=$("queueStatus");
+  if(!el) return;
+  var parts=[];
+  if(pendingQueueNote){ parts.push(pendingQueueNote); pendingQueueNote=""; }
+  if(state.queue.length>0) parts.push(T[lang].queueRemaining(state.queue.length));
+  el.textContent=parts.join(" ");
+}
+function enqueueFiles(fileList){
+  var arr=Array.prototype.slice.call(fileList||[]);
+  if(!arr.length) return;
+  state.queue=arr.slice(1);
+  handleFile(arr[0]);
+}
+function openNextOrReturn(){
+  if(state.queue.length>0){
+    var next=state.queue.shift();
+    handleFile(next);
+  } else {
+    $("editCard").style.display="none";
+    $("resultCard").style.display="none";
+    $("dropCard").style.display="";
+  }
 }
 
 /* ---------- ファイル追加 ---------- */
@@ -608,9 +640,17 @@ async function handleFile(file){
   $("loadStatus").textContent="…";
   var bmp;
   try{ bmp=await loadImageBitmapOrImg(file); }
-  catch(e){ $("loadStatus").textContent=T[lang].loadError; return; }
+  catch(e){
+    $("loadStatus").textContent=T[lang].loadError+"（"+file.name+"）";
+    openNextOrReturn();
+    return;
+  }
   var size=bitmapSize(bmp);
-  if(!size.w||!size.h){ $("loadStatus").textContent=T[lang].loadError; return; }
+  if(!size.w||!size.h){
+    $("loadStatus").textContent=T[lang].loadError+"（"+file.name+"）";
+    openNextOrReturn();
+    return;
+  }
   var c=document.createElement("canvas");
   c.width=size.w; c.height=size.h;
   c.getContext("2d").drawImage(bmp,0,0,size.w,size.h);
@@ -732,9 +772,15 @@ async function addResultToList(){
   var thumbUrl=canvas.toDataURL("image/jpeg",0.5);
   state.docs.push({ id:uid++, name:"scan-"+state.docs.length+1+".jpg", jpegBytes:new Uint8Array(buf), w:canvas.width, h:canvas.height, thumbUrl:thumbUrl });
   renderList();
-  $("resultCard").style.display="none";
-  $("dropCard").style.display="";
-  $("loadStatus").textContent=T[lang].addedToList(state.docs.length);
+  var addedMsg=T[lang].addedToList(state.docs.length);
+  if(state.queue.length>0){
+    pendingQueueNote=addedMsg;
+    openNextOrReturn();
+  } else {
+    $("resultCard").style.display="none";
+    $("dropCard").style.display="";
+    $("loadStatus").textContent=addedMsg;
+  }
 }
 
 /* ---------- 一覧の描画 ---------- */
@@ -812,7 +858,7 @@ var dropZone=$("dropZone");
 var fileInput=$("fileInput");
 dropZone.addEventListener("click",function(){fileInput.click()});
 fileInput.addEventListener("change",function(){
-  if(fileInput.files && fileInput.files.length) handleFile(fileInput.files[0]);
+  if(fileInput.files && fileInput.files.length) enqueueFiles(fileInput.files);
   fileInput.value="";
 });
 ["dragenter","dragover"].forEach(function(ev){
@@ -823,7 +869,7 @@ fileInput.addEventListener("change",function(){
 });
 dropZone.addEventListener("drop",function(e){
   var dt=e.dataTransfer;
-  if(dt && dt.files && dt.files.length) handleFile(dt.files[0]);
+  if(dt && dt.files && dt.files.length) enqueueFiles(dt.files);
 });
 
 $("rotateBtn").addEventListener("click", rotateSrc);
@@ -834,8 +880,7 @@ $("resetCornersBtn").addEventListener("click", function(){
 $("applyBtn").addEventListener("click", applyCorrection);
 $("cancelEditBtn").addEventListener("click", function(){
   state.srcCanvas=null; state.corners=null;
-  $("editCard").style.display="none";
-  $("dropCard").style.display="";
+  openNextOrReturn();
 });
 $("downloadJpegBtn").addEventListener("click", async function(){
   var blob=await canvasToBlob(state.resultCanvas,"image/jpeg",0.92);
@@ -862,6 +907,7 @@ function applyLang(){
   for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
   renderFilterOpts();
   renderList();
+  updateQueueStatus();
 }
 var langBtns=document.querySelectorAll(".lang button");
 for(var li=0; li<langBtns.length; li++){
