@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>写真の一部をドラッグで黒塗り（マスキング）して保存｜身分証・書類の番号や住所を隠す | てのひらツール</title>
+<meta name="description" content="写真の一部を黒い帯で完全に塗りつぶして保存できる無料ツール。身分証明書の番号・住所・QRコードなどを隠したいときに。ぼかし・モザイクと違い復元できない不透明な黒塗りで、保存時にEXIFの位置情報なども含まれません。処理はこの端末のブラウザ内だけで行われます。Black out part of a photo (not blur) and strip EXIF data such as GPS location, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/kuronuri/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--bad:#f19a9d;--bad-bg:#3a2022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.3rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:22px 12px;text-align:center;color:var(--muted);cursor:pointer;font-size:.9rem}
+.drop.over{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.drop input{display:none}
+.note{margin-top:10px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.88rem}
+.hint{color:var(--muted);font-size:.9rem;margin:0 0 14px}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 14px}
+.fileHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.fileHead .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem;color:var(--muted)}
+.fileBtns{display:flex;gap:6px;flex:none}
+.fileBtns button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;min-width:34px;height:32px;padding:0 8px;cursor:pointer;font-size:.85rem}
+.fileBtns button.rm{color:var(--bad)}
+.canvasWrap{display:flex;justify-content:center;background:#20201e;border-radius:8px;padding:6px}
+.canvasWrap canvas{max-width:100%;height:auto;display:block;cursor:crosshair;touch-action:none;user-select:none;border-radius:4px}
+.status{margin:8px 0 0;font-size:.88rem;color:var(--muted)}
+.err{color:var(--bad);font-size:.9rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:9px 14px;cursor:pointer;min-height:40px;font-size:.92rem}
+.exportRow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">写真の一部をドラッグで黒塗りして保存</h1>
+    <p class="sub" data-i="sub">身分証明書の番号・住所・QRコードなど、見せたくない部分をドラッグで黒く塗りつぶしてから保存します。ぼかしやモザイクと違い、元の情報を復元できない不透明な黒塗りです。保存時にEXIFの撮影日時・位置情報なども含まれません。写真はこの端末の中だけで処理されます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="h_source">写真を追加</h2>
+  <div class="drop" id="drop">
+    <span data-i="dropText">ここに写真をドラッグ、またはクリックして選択（複数可）</span>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+  </div>
+  <p class="note" data-i="formatNote">JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。</p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="h_edit">黒塗りする範囲をドラッグで選択</h2>
+  <p class="hint" data-i="hintText">写真の上でドラッグすると、その範囲が黒く塗りつぶされます。何度でも追加できます。</p>
+  <div id="fileList"></div>
+</section>
+
+<section class="card" id="exportCard" style="display:none">
+  <h2 data-i="h_export">まとめてダウンロード</h2>
+  <div class="exportRow">
+    <button type="button" class="primary" id="zipBtn" data-i="zipBtn">すべてZIPでダウンロード（JPEG）</button>
+    <span class="status" id="zipStatus"></span>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>写真をドラッグ＆ドロップ、またはタップして追加します（複数枚まとめて追加できます）。</li>
+      <li>隠したい範囲を写真の上でドラッグすると、黒い帯で塗りつぶされます。何個でも追加できます。</li>
+      <li>間違えた場合は「直前の黒塗りを取り消す」または「すべて消す」でやり直せます。</li>
+      <li>写真ごとに「PNGで保存」「JPEGで保存」でダウンロード、複数枚は「すべてZIPでダウンロード」でまとめて保存できます。</li>
+    </ol>
+    <h3>Q. ぼかしやモザイクではなく黒塗りなのはなぜですか？</h3>
+    <p>A. ぼかし・モザイクは元の画素の情報がうっすら残るため、強力な処理で復元される可能性があると言われています。このツールは完全に不透明な黒い四角で上から塗りつぶすため、元の情報は保存後の画像データに残りません。番号や住所など、完全に隠したい情報には黒塗りを使ってください。</p>
+    <h3>Q. 位置情報（GPSなどのEXIF）は消えますか？</h3>
+    <p>A. 消えます。写真は一度キャンバスに描き直してから新しいファイルとして保存するため、撮影日時・カメラ情報・GPS位置情報などのEXIF情報は保存後のファイルに含まれません（これは意図的な削除機能ではなく、描き直す仕組み上、元のファイルの付加情報が引き継がれない設計によるものです）。</p>
+    <h3>Q. 写真はどこかにアップロードされますか？</h3>
+    <p>A. されません。写真の内容はこの端末のブラウザの中だけで処理され、黒塗り・保存のいずれも外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。</p>
+    <h3>Q. 黒塗りを間違えてしまいました。</h3>
+    <p>A. 各写真の「↩」ボタンで直前に追加した黒塗りを1つ取り消せます。「すべて消す」でその写真の黒塗りを全部やり直せます。写真を回転すると、その写真の黒塗りはリセットされます。</p>
+    <h3>Q. 対応している画像形式は？</h3>
+    <p>A. 読み込みはJPEG・PNG・WebPに対応しています。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。保存はPNGまたはJPEGから選べます（複数枚のZIP保存はJPEGになります）。</p>
+    <h3>Q. この黒塗りをすれば提出先で必ず受け付けてもらえますか？</h3>
+    <p>A. 保証するものではありません。マスキングが必要な範囲は提出先の指示によって異なります（例：マイナンバーカードは個人番号（マイナンバー）部分を隠すよう求められることが多いですが、提出先の案内によります）。本ツールは黒塗り作業を補助するものであり、法的な助言を行うものではありません。保存後は拡大して隠したい範囲が確実に隠れているか必ず確認してください。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Add photos by drag-and-drop or tap (you can add several at once).</li>
+      <li>Drag over the area you want to hide — it's filled with an opaque black bar. Add as many as you like.</li>
+      <li>Made a mistake? Use "Undo last" or "Clear all" to redo it.</li>
+      <li>Download each photo as PNG or JPEG, or download all of them at once as a ZIP.</li>
+    </ol>
+    <h3>Q. Why black bars instead of blur or pixelation?</h3>
+    <p>A. Blurring or pixelating leaves faint traces of the original pixels behind, which strong recovery techniques can sometimes exploit. This tool paints a fully opaque black rectangle over the area, so the original information is not present in the saved image at all. Use this for anything you need to hide completely, such as ID numbers or addresses.</p>
+    <h3>Q. Does it remove location data (GPS / EXIF)?</h3>
+    <p>A. Yes. Photos are redrawn onto a canvas and saved as a new file, so metadata such as the shooting time, camera model and GPS location is not carried over to the saved file. This isn't a dedicated "delete metadata" feature — it's simply how redrawing an image onto a canvas works.</p>
+    <h3>Q. Are my photos uploaded anywhere?</h3>
+    <p>A. No. Everything happens inside this browser on your device; nothing is sent to a server (only anonymous, cookie-free page-view counts are collected for this page).</p>
+    <h3>Q. I made a mistake with the black bars.</h3>
+    <p>A. Each photo has an "↩" button to undo the last black bar, and a "Clear all" button to remove them all. Rotating a photo resets its black bars.</p>
+    <h3>Q. Which image formats are supported?</h3>
+    <p>A. JPEG, PNG and WebP can be loaded. HEIC (iPhone) may not load depending on your browser. You can save as PNG or JPEG (the ZIP download uses JPEG).</p>
+    <h3>Q. Does this guarantee my photo will be accepted wherever I submit it?</h3>
+    <p>A. No guarantee. Required masking varies by recipient (for example, Japan's My Number card is often required to have its personal number hidden, but check the recipient's own instructions). This tool only helps with the blacking-out itself and is not legal advice. Always zoom in after saving to confirm the area is fully hidden.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../shorui-scan/">書類写真のスキャン風補正</a> — 斜めに撮った写真は先にこちらで四隅を合わせて台形補正・影のムラを消しておくと、黒塗りの位置も合わせやすくなります。</li>
+      <li><a href="../mibun-teishutsu/">身分証明書の表裏まとめ・透かし入りツール</a> — 黒塗りした表裏の写真を1枚のA4にまとめ、透かし文字を入れて提出用に整える姉妹ツール。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../shorui-scan/">Document Scan Correction</a> — Straighten a crooked photo and flatten shadows first, so your black bars line up cleanly.</li>
+      <li><a href="../mibun-teishutsu/">ID Front/Back Combiner</a> — Combine your redacted front/back photos onto one A4 page with a watermark for submission.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">写真の内容はサーバーに送信されません。黒塗り・保存はこの端末のブラウザだけで行われ、保存したファイルにはEXIF（撮影日時・位置情報など）も含まれません。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"ぼかしやモザイクではなく黒塗りなのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"ぼかし・モザイクは元の画素の情報がうっすら残るため、強力な処理で復元される可能性があると言われています。このツールは完全に不透明な黒い四角で上から塗りつぶすため、元の情報は保存後の画像データに残りません。"}},
+    {"@type":"Question","name":"位置情報（GPSなどのEXIF）は消えますか？","acceptedAnswer":{"@type":"Answer","text":"消えます。写真は一度キャンバスに描き直してから新しいファイルとして保存するため、撮影日時・カメラ情報・GPS位置情報などのEXIF情報は保存後のファイルに含まれません。"}},
+    {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+var MAX_DIM=2000;
+
+/* =========================================================
+   画像読み込み（shorui-scan / mibun-teishutsuと同じ方式）
+   ========================================================= */
+function loadViaImgTag(file){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){ resolve(img); };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error("img-load-failed")); };
+    img.src=url;
+  });
+}
+function getBitmapSize(bmp){
+  if("naturalWidth" in bmp) return {w:bmp.naturalWidth, h:bmp.naturalHeight};
+  return {w:bmp.width, h:bmp.height};
+}
+async function loadImageEntry(file){
+  var bmp=null, err=null;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }
+  catch(e1){
+    try{ bmp = await createImageBitmap(file); }
+    catch(e2){
+      try{ bmp = await loadViaImgTag(file); }
+      catch(e3){ err = T[lang].loadError; }
+    }
+  }
+  var size = bmp ? getBitmapSize(bmp) : {w:0,h:0};
+  return { name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, rects:[],
+    dragging:false, dragStart:null, dragCur:null, dragStartClient:null,
+    error: err || (size.w===0?T[lang].loadError:null) };
+}
+function rotatedSize(entry){
+  if(entry.rotate%180===90) return {w:entry.h,h:entry.w};
+  return {w:entry.w,h:entry.h};
+}
+function drawRotated(ctx, bmp, entryW, entryH, rotate, dx, dy, dw, dh){
+  ctx.save();
+  ctx.translate(dx+dw/2, dy+dh/2);
+  ctx.rotate(rotate*Math.PI/180);
+  var rs = (rotate%180===90) ? {w:dh,h:dw} : {w:dw,h:dh};
+  ctx.drawImage(bmp, -rs.w/2, -rs.h/2, rs.w, rs.h);
+  ctx.restore();
+}
+function computeWorkCanvas(entry){
+  var rs=rotatedSize(entry);
+  var scale=Math.min(1, MAX_DIM/Math.max(rs.w,rs.h));
+  var w=Math.max(1,Math.round(rs.w*scale)), h=Math.max(1,Math.round(rs.h*scale));
+  var c=document.createElement("canvas"); c.width=w; c.height=h;
+  var ctx=c.getContext("2d");
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,w,h);
+  try{ drawRotated(ctx, entry.bitmap, entry.w, entry.h, entry.rotate, 0,0,w,h); }catch(e){}
+  entry.workCanvas=c;
+  entry.rects=[];
+}
+
+/* =========================================================
+   ZIP生成（xlsx-zukei等と同じ自作実装）
+   ========================================================= */
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =========================================================
+   状態・言語
+   ========================================================= */
+var lang="ja";
+var state={ files:[] };
+
+var T={
+  ja:{
+    title:"写真の一部をドラッグで黒塗りして保存",
+    sub:"身分証明書の番号・住所・QRコードなど、見せたくない部分をドラッグで黒く塗りつぶしてから保存します。ぼかしやモザイクと違い、元の情報を復元できない不透明な黒塗りです。保存時にEXIFの撮影日時・位置情報なども含まれません。写真はこの端末の中だけで処理されます。",
+    h_source:"写真を追加", dropText:"ここに写真をドラッグ、またはクリックして選択（複数可）",
+    formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。",
+    h_edit:"黒塗りする範囲をドラッグで選択", hintText:"写真の上でドラッグすると、その範囲が黒く塗りつぶされます。何度でも追加できます。",
+    rotateTitle:"回転", undoTitle:"直前の黒塗りを取り消す", clearTitle:"すべて消す", removeTitle:"この写真を削除",
+    statusText:function(n){ return n===0 ? "黒塗りはまだありません。写真の上をドラッグして範囲を選んでください。" : n+"個の黒塗りを追加しました。"; },
+    pngBtn:"PNGで保存", jpegBtn:"JPEGで保存",
+    h_export:"まとめてダウンロード", zipBtn:"すべてZIPでダウンロード（JPEG）",
+    zipBuilding:"作成中…", zipDone:"ZIPを作成しました。ダウンロードを確認してください。", zipNone:"対象の写真がありません。",
+    loadError:"読み込めませんでした"
+  },
+  en:{
+    title:"Black out part of a photo and save",
+    sub:"Drag over the parts you want to hide — an ID number, address, QR code — to cover them with an opaque black bar before saving. Unlike blur or pixelation, the original can't be recovered. EXIF data such as shooting time and GPS location is also not carried over when saving. Everything happens in this browser.",
+    h_source:"Add photos", dropText:"Drag and drop, or click to choose (multiple allowed)",
+    formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser.",
+    h_edit:"Drag to select the area to black out", hintText:"Drag over the photo to cover that area with a black bar. Add as many as you like.",
+    rotateTitle:"Rotate", undoTitle:"Undo last black bar", clearTitle:"Clear all", removeTitle:"Remove this photo",
+    statusText:function(n){ return n===0 ? "No black bars yet — drag over the photo to add one." : n+" black bar(s) added."; },
+    pngBtn:"Save as PNG", jpegBtn:"Save as JPEG",
+    h_export:"Download all", zipBtn:"Download all as ZIP (JPEG)",
+    zipBuilding:"Building…", zipDone:"ZIP created. Check your download.", zipNone:"No photos to include.",
+    loadError:"Could not load"
+  }
+};
+
+/* ---------- 描画（キャンバス） ---------- */
+function redraw(entry, canvasEl){
+  var wc=entry.workCanvas;
+  if(!wc) return;
+  canvasEl.width=wc.width; canvasEl.height=wc.height;
+  var ctx=canvasEl.getContext("2d");
+  ctx.drawImage(wc,0,0);
+  ctx.fillStyle="#000";
+  entry.rects.forEach(function(r){ ctx.fillRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0); });
+  if(entry.dragging && entry.dragStart && entry.dragCur){
+    var x0=Math.min(entry.dragStart.x,entry.dragCur.x), x1=Math.max(entry.dragStart.x,entry.dragCur.x);
+    var y0=Math.min(entry.dragStart.y,entry.dragCur.y), y1=Math.max(entry.dragStart.y,entry.dragCur.y);
+    ctx.fillRect(x0,y0,x1-x0,y1-y0);
+  }
+}
+
+/* ---------- ポインター操作（ドラッグで矩形を黒塗り） ---------- */
+function wirePointer(entry, canvasEl, updateStatus){
+  function ptFromEvent(e){
+    var rect=canvasEl.getBoundingClientRect();
+    var x=(e.clientX-rect.left)/rect.width*canvasEl.width;
+    var y=(e.clientY-rect.top)/rect.height*canvasEl.height;
+    x=Math.min(Math.max(x,0),canvasEl.width);
+    y=Math.min(Math.max(y,0),canvasEl.height);
+    return {x:x,y:y};
+  }
+  canvasEl.addEventListener("pointerdown", function(e){
+    entry.dragging=true;
+    entry.dragStart=ptFromEvent(e);
+    entry.dragCur=entry.dragStart;
+    entry.dragStartClient={x:e.clientX,y:e.clientY};
+    try{ canvasEl.setPointerCapture(e.pointerId); }catch(err){}
+    redraw(entry, canvasEl);
+    e.preventDefault();
+  });
+  canvasEl.addEventListener("pointermove", function(e){
+    if(!entry.dragging) return;
+    entry.dragCur=ptFromEvent(e);
+    redraw(entry, canvasEl);
+  });
+  function finish(e){
+    if(!entry.dragging) return;
+    entry.dragging=false;
+    var moved=Math.hypot(e.clientX-entry.dragStartClient.x, e.clientY-entry.dragStartClient.y);
+    if(moved>=6){
+      var x0=Math.min(entry.dragStart.x,entry.dragCur.x), x1=Math.max(entry.dragStart.x,entry.dragCur.x);
+      var y0=Math.min(entry.dragStart.y,entry.dragCur.y), y1=Math.max(entry.dragStart.y,entry.dragCur.y);
+      if((x1-x0)>=4 && (y1-y0)>=4){ entry.rects.push({x0:x0,y0:y0,x1:x1,y1:y1}); }
+    }
+    entry.dragStart=null; entry.dragCur=null; entry.dragStartClient=null;
+    redraw(entry, canvasEl);
+    updateStatus();
+  }
+  canvasEl.addEventListener("pointerup", finish);
+  canvasEl.addEventListener("pointercancel", function(){
+    entry.dragging=false; entry.dragStart=null; entry.dragCur=null;
+    redraw(entry, canvasEl);
+  });
+}
+
+/* ---------- ダウンロード ---------- */
+function triggerDownload(blob, filename){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+}
+function baseName(name){
+  return (name||"photo").replace(/\.[a-zA-Z0-9]+$/,"") || "photo";
+}
+function downloadOne(entry,type){
+  if(!entry._canvas) return;
+  var mime = type==="png" ? "image/png" : "image/jpeg";
+  var ext = type==="png" ? "png" : "jpg";
+  var q = type==="jpeg" ? 0.92 : undefined;
+  entry._canvas.toBlob(function(blob){
+    if(!blob) return;
+    triggerDownload(blob, baseName(entry.name)+"_kuronuri."+ext);
+  }, mime, q);
+}
+async function downloadZip(){
+  var btn=$("zipBtn"); var status=$("zipStatus");
+  btn.disabled=true; status.textContent=T[lang].zipBuilding;
+  try{
+    var used={}, files=[];
+    for(var i=0;i<state.files.length;i++){
+      var entry=state.files[i];
+      if(entry.error || !entry._canvas) continue;
+      var blob = await new Promise(function(res){ entry._canvas.toBlob(res,"image/jpeg",0.92); });
+      if(!blob) continue;
+      var buf = await blob.arrayBuffer();
+      var name = baseName(entry.name)+"_kuronuri.jpg";
+      var n=2;
+      while(used[name]){ name=baseName(entry.name)+"_kuronuri_"+n+".jpg"; n++; }
+      used[name]=true;
+      files.push({name:name, bytes:new Uint8Array(buf)});
+    }
+    if(!files.length){ status.textContent=T[lang].zipNone; return; }
+    var zipBytes = await buildZip(files);
+    triggerDownload(new Blob([zipBytes],{type:"application/zip"}), "kuronuri.zip");
+    status.textContent=T[lang].zipDone;
+  } finally { btn.disabled=false; }
+}
+
+/* ---------- カードUI構築 ---------- */
+function mkBtn(symbol,title,onClick){
+  var b=document.createElement("button"); b.type="button"; b.textContent=symbol; b.title=title;
+  b.addEventListener("click",onClick);
+  return b;
+}
+function mkTextBtn(text,onClick){
+  var b=document.createElement("button"); b.type="button"; b.textContent=text;
+  b.addEventListener("click",onClick);
+  return b;
+}
+function buildCard(entry){
+  var card=document.createElement("div"); card.className="fileCard";
+  var head=document.createElement("div"); head.className="fileHead";
+  var nameEl=document.createElement("span"); nameEl.className="name"; nameEl.textContent=entry.name;
+  head.appendChild(nameEl);
+  var btns=document.createElement("div"); btns.className="fileBtns";
+  if(!entry.error){
+    btns.appendChild(mkBtn("⟳", T[lang].rotateTitle, function(){ entry.rotate=(entry.rotate+90)%360; computeWorkCanvas(entry); renderAll(); }));
+    btns.appendChild(mkBtn("↩", T[lang].undoTitle, function(){ entry.rects.pop(); renderAll(); }));
+    btns.appendChild(mkTextBtn(T[lang].clearTitle, function(){ entry.rects=[]; renderAll(); }));
+  }
+  var rmBtn=mkBtn("✕", T[lang].removeTitle, function(){
+    var idx=state.files.indexOf(entry);
+    if(idx>=0) state.files.splice(idx,1);
+    renderAll();
+  });
+  rmBtn.classList.add("rm");
+  btns.appendChild(rmBtn);
+  head.appendChild(btns);
+  card.appendChild(head);
+
+  if(entry.error){
+    var p=document.createElement("p"); p.className="err"; p.textContent=entry.name+" — "+entry.error;
+    card.appendChild(p);
+    return card;
+  }
+
+  var wrap=document.createElement("div"); wrap.className="canvasWrap";
+  var canvasEl=document.createElement("canvas");
+  wrap.appendChild(canvasEl);
+  card.appendChild(wrap);
+  entry._canvas=canvasEl;
+
+  var status=document.createElement("p"); status.className="status";
+  card.appendChild(status);
+  function updateStatus(){ status.textContent=T[lang].statusText(entry.rects.length); }
+  updateStatus();
+
+  var row=document.createElement("div"); row.className="row";
+  var pngBtn=document.createElement("button"); pngBtn.type="button"; pngBtn.className="secondary"; pngBtn.textContent=T[lang].pngBtn;
+  pngBtn.addEventListener("click", function(){ downloadOne(entry,"png"); });
+  var jpgBtn=document.createElement("button"); jpgBtn.type="button"; jpgBtn.className="secondary"; jpgBtn.textContent=T[lang].jpegBtn;
+  jpgBtn.addEventListener("click", function(){ downloadOne(entry,"jpeg"); });
+  row.appendChild(pngBtn); row.appendChild(jpgBtn);
+  card.appendChild(row);
+
+  redraw(entry, canvasEl);
+  wirePointer(entry, canvasEl, updateStatus);
+  return card;
+}
+
+function renderAll(){
+  var listCard=$("listCard"), exportCard=$("exportCard"), fileList=$("fileList");
+  fileList.innerHTML="";
+  if(state.files.length===0){ listCard.style.display="none"; exportCard.style.display="none"; return; }
+  listCard.style.display="";
+  exportCard.style.display = state.files.length>=2 ? "" : "none";
+  $("zipStatus").textContent="";
+  state.files.forEach(function(entry){ fileList.appendChild(buildCard(entry)); });
+}
+
+/* ---------- ファイル追加 ---------- */
+async function addOneFile(file){
+  var entry=await loadImageEntry(file);
+  if(!entry.error) computeWorkCanvas(entry);
+  state.files.push(entry);
+  renderAll();
+}
+async function addFiles(fileList){
+  /* 1件ずつ順番に読み込む（並列だと画像デコードの完了順がファイル順と
+     入れ替わり、追加した順番と表示順がずれることがあるため） */
+  var arr = Array.prototype.slice.call(fileList);
+  for(var i=0;i<arr.length;i++){ await addOneFile(arr[i]); }
+}
+
+/* ---------- イベント配線 ---------- */
+function wireDrop(){
+  var dropZone=$("drop"), fileInput=$("fileInput");
+  dropZone.addEventListener("click", function(){ fileInput.click(); });
+  fileInput.addEventListener("change", function(){
+    if(fileInput.files && fileInput.files.length) addFiles(fileInput.files);
+    fileInput.value="";
+  });
+  ["dragenter","dragover"].forEach(function(ev){
+    dropZone.addEventListener(ev,function(e){ e.preventDefault(); dropZone.classList.add("over"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    dropZone.addEventListener(ev,function(e){ e.preventDefault(); dropZone.classList.remove("over"); });
+  });
+  dropZone.addEventListener("drop", function(e){
+    var dt=e.dataTransfer;
+    if(dt && dt.files && dt.files.length) addFiles(dt.files);
+  });
+}
+wireDrop();
+$("zipBtn").addEventListener("click", function(){ downloadZip(); });
+
+/* ---------- 言語切替 ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){ var k=els[i].getAttribute("data-i"); if(T[lang][k]!==undefined) els[i].innerHTML=T[lang][k]; }
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++) bs[m].setAttribute("aria-pressed", bs[m].getAttribute("data-lang")===lang?"true":"false");
+  renderAll();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0; li<langBtns.length; li++){
+  langBtns[li].addEventListener("click", function(){ lang=this.getAttribute("data-lang"); applyLang(); });
+}
+
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
