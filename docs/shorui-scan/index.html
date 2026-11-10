@@ -107,8 +107,10 @@ html[lang=en] .en-only{display:block}
   </div></div>
   <div class="row">
     <button type="button" class="secondary" id="rotateBtn" data-i="rotateBtn">90度回転</button>
+    <button type="button" class="secondary" id="autoDetectBtn" data-i="autoDetectBtn">四隅を自動検出</button>
     <button type="button" class="secondary" id="resetCornersBtn" data-i="resetCornersBtn">四隅をリセット</button>
   </div>
+  <p class="status" id="autoDetectStatus"></p>
   <p class="optlabel" data-i="filterLabel">仕上がり</p>
   <div class="opts" id="filterOpts"></div>
   <div class="row">
@@ -150,7 +152,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. 写真はどこかにアップロードされますか？</h3>
     <p>A. されません。写真の内容はこの端末のブラウザの中だけで処理され、台形補正やPDFの組み立ても含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しないアクセス数の計測のみ行っています。GoatCounterというサービスを使い、入力内容は端末の外に送られません）。</p>
     <h3>Q. 四隅を自動で検出してくれますか？</h3>
-    <p>A. いいえ、自動検出は行っていません。書類の背景や照明によって自動検出の精度が安定しないため、確実に合わせられる手動ドラッグのみに絞っています。ズームして細かく合わせたい場合は、ブラウザの拡大表示もあわせてご利用ください。</p>
+    <p>A. 「四隅を自動検出」を押すと、写真のコントラストから四隅の候補位置を推定して緑の点を移動します。背景や照明によっては正確に合わないことがあるため、あくまで手動調整の出発点としての候補です。検出に十分な手がかりが無い場合は何も動かさず、その旨を表示します。移動後も、結果は必ず確認し、ズレていれば手でドラッグして合わせてください。</p>
     <h3>Q. 片側だけ暗く写ってしまった写真の影を消せますか？</h3>
     <p>A. 「影を消す（白く）」を選ぶと、写真全体の明るさのムラをやわらかく推定し、そのムラで割ることで紙の地色をできるだけ均一な白に揃えます。照明のムラや手・スマホの影で片側だけ暗くなった写真でも、文字の濃さはムラに対する比率として保たれるため、影を飛ばしつつ文字は読みやすいまま残ります。色は保持されるので、スタンプやマーカーの色も消えません。</p>
     <h3>Q. 「白黒くっきり」はどんな処理ですか？OCR（文字認識）はできますか？</h3>
@@ -173,7 +175,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. Are my photos uploaded anywhere?</h3>
     <p>A. No. Everything — the perspective correction and PDF assembly — happens inside this browser on your device; nothing is sent to a server (only anonymous, cookie-free page-view counts are collected for this page, via GoatCounter; nothing you type or upload ever leaves your device).</p>
     <h3>Q. Does it detect the corners automatically?</h3>
-    <p>A. No, corners are placed manually by dragging. Automatic detection isn't reliable across different backgrounds and lighting, so this tool keeps to a simple, predictable manual adjustment. Zoom in with your browser for finer placement if needed.</p>
+    <p>A. Clicking "Auto-detect corners" estimates candidate corner positions from contrast in the photo and moves the green dots there. This is only a starting point — accuracy varies with background and lighting, so always check the result and drag to adjust if it's off. If there isn't enough contrast to find a confident guess, nothing moves and a message says so.</p>
     <h3>Q. Can it remove a shadow that falls across only one side of the photo?</h3>
     <p>A. Yes — pick "Remove shadow (whiten)". It estimates a soft, blurred map of the photo's overall brightness and divides each pixel by that map, flattening lighting unevenness so the paper's background becomes roughly uniform white, even when a hand, phone or lamp casts a shadow over just part of the page. Text stays legible because its darkness is preserved relative to the local background, and colors (stamps, highlighter) are kept intact.</p>
     <h3>Q. What does "crisp black &amp; white" do? Does it do OCR (text recognition)?</h3>
@@ -225,7 +227,7 @@ html[lang=en] .en-only{display:block}
   "@type": "FAQPage",
   "mainEntity": [
     {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、台形補正やPDFの組み立ても含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}},
-    {"@type":"Question","name":"四隅を自動で検出してくれますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ、手動でのドラッグのみに対応しています。背景や照明によって自動検出の精度が安定しないため、確実な手動調整に絞っています。"}},
+    {"@type":"Question","name":"四隅を自動で検出してくれますか？","acceptedAnswer":{"@type":"Answer","text":"「四隅を自動検出」ボタンで候補位置に移動できますが、あくまで手動調整の出発点です。背景や照明によっては正確に合わないため、移動後は必ず確認し、ズレていれば手でドラッグして合わせてください。"}},
     {"@type":"Question","name":"片側だけ暗く写ってしまった写真の影を消せますか？","acceptedAnswer":{"@type":"Answer","text":"「影を消す（白く）」を選ぶと、写真全体の明るさのムラを推定してそれで割ることで、紙の地色をできるだけ均一な白に揃えます。片側だけ影が落ちた写真でも文字は読みやすいまま残り、色も保持されます。"}},
     {"@type":"Question","name":"「白黒くっきり」はどんな処理ですか？OCRはできますか？","acceptedAnswer":{"@type":"Answer","text":"グレースケール化した上で明暗の分布を自動調整する処理で、文字認識（OCR）は行っていません。見た目を整えるだけの機能です。片側だけ影が強い写真には「影を消す（白く）」の方が向いています。"}},
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。写真の見た目を整えるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}}
@@ -341,6 +343,97 @@ function downscaleSmooth(canvas, targetW, targetH){
   if("imageSmoothingQuality" in octx) octx.imageSmoothingQuality="high";
   octx.drawImage(cur,0,0,targetW,targetH);
   return out;
+}
+
+/* 四隅の自動検出（簡易Harrisコーナー検出）：
+   縮小・グレースケール化した画像の勾配（Sobel）から構造テンソルを求め、
+   画像を中心で分けた4つの象限それぞれで最も「コーナーらしい」点を1つ探す。
+   書類の角は縁全体の長いエッジが交差するため、背景の模様や文字の角より
+   スコアが高くなりやすい。どの象限でも十分なスコアが得られない場合や
+   結果の四角形が小さすぎる場合は null を返し、呼び出し側は既定値のままにする。 */
+function detectCorners(srcCanvas){
+  var sw=srcCanvas.width, sh=srcCanvas.height;
+  var WORK=360;
+  var scale=Math.min(1, WORK/Math.max(sw,sh));
+  var dw=Math.max(40, Math.round(sw*scale)), dh=Math.max(40, Math.round(sh*scale));
+  var small=downscaleSmooth(srcCanvas, dw, dh);
+  var data=small.getContext("2d").getImageData(0,0,dw,dh).data;
+  var n=dw*dh;
+  var gray=new Float32Array(n);
+  for(var i=0;i<n;i++){
+    var o=i*4;
+    gray[i]=0.299*data[o]+0.587*data[o+1]+0.114*data[o+2];
+  }
+  function at(x,y){
+    if(x<0)x=0; if(x>dw-1)x=dw-1; if(y<0)y=0; if(y>dh-1)y=dh-1;
+    return gray[y*dw+x];
+  }
+  var gx=new Float32Array(n), gy=new Float32Array(n);
+  for(var y=0;y<dh;y++){
+    for(var x=0;x<dw;x++){
+      var idx=y*dw+x;
+      gx[idx]=(at(x+1,y-1)+2*at(x+1,y)+at(x+1,y+1))-(at(x-1,y-1)+2*at(x-1,y)+at(x-1,y+1));
+      gy[idx]=(at(x-1,y+1)+2*at(x,y+1)+at(x+1,y+1))-(at(x-1,y-1)+2*at(x,y-1)+at(x+1,y-1));
+    }
+  }
+  var ix2=new Float32Array(n), iy2=new Float32Array(n), ixy=new Float32Array(n);
+  for(i=0;i<n;i++){ ix2[i]=gx[i]*gx[i]; iy2[i]=gy[i]*gy[i]; ixy[i]=gx[i]*gy[i]; }
+  function boxBlur(src){
+    var r=2, tmp=new Float32Array(n), out=new Float32Array(n);
+    for(y=0;y<dh;y++){
+      var sum=0, base=y*dw;
+      for(x=-r;x<=r;x++) sum+=src[base+Math.min(Math.max(x,0),dw-1)];
+      for(x=0;x<dw;x++){
+        tmp[base+x]=sum/(2*r+1);
+        var addX=Math.min(x+r+1,dw-1), subX=Math.max(x-r,0);
+        sum+=src[base+addX]-src[base+subX];
+      }
+    }
+    for(x=0;x<dw;x++){
+      var sum2=0;
+      for(y=-r;y<=r;y++) sum2+=tmp[Math.min(Math.max(y,0),dh-1)*dw+x];
+      for(y=0;y<dh;y++){
+        out[y*dw+x]=sum2/(2*r+1);
+        var addY=Math.min(y+r+1,dh-1), subY=Math.max(y-r,0);
+        sum2+=tmp[addY*dw+x]-tmp[subY*dw+x];
+      }
+    }
+    return out;
+  }
+  var bIx2=boxBlur(ix2), bIy2=boxBlur(iy2), bIxy=boxBlur(ixy);
+  var score=new Float32Array(n), k=0.04;
+  var globalMax=0;
+  for(i=0;i<n;i++){
+    var det=bIx2[i]*bIy2[i]-bIxy[i]*bIxy[i];
+    var tr=bIx2[i]+bIy2[i];
+    var s=det-k*tr*tr;
+    score[i]=s;
+    if(s>globalMax) globalMax=s;
+  }
+  if(globalMax<=0) return null;
+  var cx=dw/2, cy=dh/2;
+  var quads=[
+    {x0:0,x1:cx,y0:0,y1:cy},
+    {x0:cx,x1:dw,y0:0,y1:cy},
+    {x0:cx,x1:dw,y0:cy,y1:dh},
+    {x0:0,x1:cx,y0:cy,y1:dh}
+  ];
+  var pts=[];
+  for(var qi=0; qi<4; qi++){
+    var q=quads[qi], best=-Infinity, bx=0, by=0;
+    for(y=Math.floor(q.y0); y<Math.ceil(q.y1); y++){
+      for(x=Math.floor(q.x0); x<Math.ceil(q.x1); x++){
+        var sc=score[y*dw+x];
+        if(sc>best){ best=sc; bx=x; by=y; }
+      }
+    }
+    if(best<globalMax*0.08) return null;
+    pts.push({ x:bx/scale, y:by/scale });
+  }
+  var area=Math.abs((pts[1].x-pts[0].x)*(pts[2].y-pts[0].y)-(pts[2].x-pts[0].x)*(pts[1].y-pts[0].y))/2
+         + Math.abs((pts[2].x-pts[0].x)*(pts[3].y-pts[0].y)-(pts[3].x-pts[0].x)*(pts[2].y-pts[0].y))/2;
+  if(area < sw*sh*0.15) return null;
+  return pts; /* TL,TR,BR,BL（元画像ピクセル座標） */
 }
 
 /* 影を消す（背景を白くする）：画像を大きくぼかした「局所的な明るさの地図」を作り、
@@ -521,7 +614,9 @@ var T={
     h_source:"写真を追加", dropText:"ここに写真をドラッグ＆ドロップ、またはクリックして選択",
     formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。複数枚まとめて選択・ドロップすると、1枚ずつ補正→自動で次の写真へと進み、最後にまとめてPDFにできます。",
     h_edit:"四隅を書類の角に合わせる", dragHint:"緑の点をドラッグして、書類の四隅に正確に合わせてください。",
-    rotateBtn:"90度回転", resetCornersBtn:"四隅をリセット",
+    rotateBtn:"90度回転", autoDetectBtn:"四隅を自動検出", resetCornersBtn:"四隅をリセット",
+    autoDetectOk:"自動検出した位置に移動しました。ズレがあれば緑の点を手で調整してください。",
+    autoDetectFail:"検出できませんでした。緑の点を手でドラッグして四隅に合わせてください。",
     filterLabel:"仕上がり", applyBtn:"補正を適用", cancelEditBtn:"この写真をやめる",
     h_result:"補正結果", downloadJpegBtn:"JPEGをダウンロード", addToListBtn:"文書一覧に追加（PDF用）", redoBtn:"この写真をやり直す",
     h_list:"文書一覧（PDFにまとめる）", makePdfBtn:"まとめてPDFをダウンロード", clearListBtn:"一覧をクリア",
@@ -540,7 +635,9 @@ var T={
     h_source:"Add a photo", dropText:"Drag and drop a photo here, or click to choose",
     formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser. Select or drop several photos at once: it corrects one, then automatically moves to the next, so you can combine them all into one PDF at the end.",
     h_edit:"Align the corners", dragHint:"Drag the green dots onto the document's four corners.",
-    rotateBtn:"Rotate 90°", resetCornersBtn:"Reset corners",
+    rotateBtn:"Rotate 90°", autoDetectBtn:"Auto-detect corners", resetCornersBtn:"Reset corners",
+    autoDetectOk:"Moved to the detected position. Drag the green dots to fix any gap.",
+    autoDetectFail:"Couldn't detect the corners. Drag the green dots onto them manually.",
     filterLabel:"Finish", applyBtn:"Apply correction", cancelEditBtn:"Discard this photo",
     h_result:"Result", downloadJpegBtn:"Download JPEG", addToListBtn:"Add to document list", redoBtn:"Redo this photo",
     h_list:"Document list (combine into PDF)", makePdfBtn:"Download combined PDF", clearListBtn:"Clear list",
@@ -606,6 +703,7 @@ function openEditor(canvas){
   $("resultCard").style.display="none";
   $("editCard").style.display="";
   $("applyStatus").textContent="";
+  $("autoDetectStatus").textContent="";
   renderHandles();
   hideMagnifier();
   updateQueueStatus();
@@ -875,9 +973,20 @@ dropZone.addEventListener("drop",function(e){
 });
 
 $("rotateBtn").addEventListener("click", rotateSrc);
+$("autoDetectBtn").addEventListener("click", function(){
+  var result=detectCorners(state.srcCanvas);
+  if(result){
+    state.corners=result;
+    renderHandles();
+    $("autoDetectStatus").textContent=T[lang].autoDetectOk;
+  } else {
+    $("autoDetectStatus").textContent=T[lang].autoDetectFail;
+  }
+});
 $("resetCornersBtn").addEventListener("click", function(){
   state.corners=defaultCorners(state.srcCanvas.width, state.srcCanvas.height);
   renderHandles();
+  $("autoDetectStatus").textContent="";
 });
 $("applyBtn").addEventListener("click", applyCorrection);
 $("cancelEditBtn").addEventListener("click", function(){
