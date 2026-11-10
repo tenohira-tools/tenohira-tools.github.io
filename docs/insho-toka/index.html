@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%23b23a2e%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>はんこ・サインの写真を透明なPNGにする｜背景を消して朱色・黒に統一 | てのひらツール</title>
+<meta name="description" content="印影（はんこ）や手書きサインを撮った写真から、背景だけを透明にしたPNG画像を作る無料ツール。朱色・黒など好きな色に統一し、余白も自動でトリミングします。しきい値をスライダーで動かしながら結果をその場で確認できます。アップロード不要、処理はこの端末のブラウザ内だけで行われます。Turn a photo of a hanko stamp impression or handwritten signature into a transparent PNG, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/insho-toka/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#b23a2e;--accent-bg:#f7e7e3;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#f0978a;--accent-bg:#3a2320;--warn:#f0c46a;--warn-bg:#3a2f16;--bad:#f19a9d;--bad-bg:#3a2022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.3rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:22px 12px;text-align:center;color:var(--muted);cursor:pointer;font-size:.9rem}
+.drop.over{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.drop input{display:none}
+.note{margin-top:10px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.88rem}
+.hint{color:var(--muted);font-size:.9rem;margin:0 0 14px}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 14px;min-width:0}
+.fileHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.fileHead .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem;color:var(--muted)}
+.fileBtns{display:flex;gap:6px;flex:none}
+.fileBtns button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;min-width:34px;height:32px;padding:0 8px;cursor:pointer;font-size:.85rem}
+.fileBtns button.rm{color:var(--bad)}
+.canvasRow{display:flex;flex-wrap:wrap;gap:10px}
+.canvasCol{flex:1 1 220px;min-width:0}
+.canvasCol .capt{font-size:.8rem;color:var(--muted);margin:0 0 4px}
+.canvasWrap{display:flex;justify-content:center;background:#20201e;border-radius:8px;padding:6px;min-width:0}
+.canvasWrap.checker{background-image:linear-gradient(45deg,#d8d8d4 25%,transparent 25%),linear-gradient(-45deg,#d8d8d4 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d8d8d4 75%),linear-gradient(-45deg,transparent 75%,#d8d8d4 75%);background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0;background-color:#fff}
+.canvasWrap canvas{max-width:100%;height:auto;display:block;border-radius:4px}
+.status{margin:8px 0 0;font-size:.88rem;color:var(--muted)}
+.warnText{margin:8px 0 0;font-size:.88rem;color:var(--warn)}
+.err{color:var(--bad);font-size:.9rem}
+.ctrlRow{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-top:12px}
+.ctrl{display:flex;flex-direction:column;gap:3px;font-size:.85rem;color:var(--muted);flex:1 1 150px;min-width:140px}
+.ctrl input[type=range]{width:100%}
+.ctrl .val{color:var(--fg);font-weight:600}
+.colorRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.swatchBtn{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.swatchBtn.active{border-color:var(--fg)}
+.colorRow input[type=color]{width:34px;height:30px;border:1px solid var(--line);border-radius:6px;padding:0;background:none;cursor:pointer}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:9px 14px;cursor:pointer;min-height:40px;font-size:.92rem}
+.exportRow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">はんこ・サインの写真を透明なPNGにする</h1>
+    <p class="sub" data-i="sub">印影（はんこ）や手書きサインを撮った写真から背景だけを透明にし、朱色・黒など好きな色に統一したPNG画像を作ります。しきい値を動かしながら結果をその場で確認できます。余白は自動でトリミング。写真はこの端末のブラウザ内だけで処理されます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="h_source">写真を追加</h2>
+  <div class="drop" id="drop">
+    <span data-i="dropText">ここに写真をドラッグ、またはクリックして選択（複数可）</span>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+  </div>
+  <p class="note" data-i="formatNote">印影（はんこ）や手書きサインが写った、白っぽい紙の写真を想定しています。JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。</p>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2 data-i="h_edit">しきい値・色を調整して透明PNGに</h2>
+  <p class="hint" data-i="hintText">「検出のしきい値」を動かして、はんこ・サインの形だけがきれいに残るように調整してください。数値が小さいほど薄い部分まで検出しますが、紙のムラも拾いやすくなります。</p>
+  <div id="fileList"></div>
+</section>
+
+<section class="card" id="exportCard" style="display:none">
+  <h2 data-i="h_export">まとめてダウンロード</h2>
+  <div class="exportRow">
+    <button type="button" class="primary" id="zipBtn" data-i="zipBtn">すべてZIPでダウンロード（PNG）</button>
+    <span class="status" id="zipStatus"></span>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>はんこの印影や手書きサインが写った写真を追加します（複数枚まとめて追加できます）。紙全体ではなく、印影・サインの周りだけが写った写真のほうが調整しやすいです。</li>
+      <li>「検出のしきい値」スライダーを動かし、紙の背景が消えて形だけ残るように調整します。写真の明るさのムラは自動でおおまかに補正されますが、強い影が残る場合はしきい値を上げてください。</li>
+      <li>仕上がりの色（朱色・黒・カスタム）を選びます。</li>
+      <li>「余白」スライダーで、切り出す範囲のまわりの余白の広さを調整します。</li>
+      <li>「PNGで保存」でダウンロード、複数枚は「すべてZIPでダウンロード」でまとめて保存できます。</li>
+    </ol>
+    <h3>Q. どうして色を朱色や黒に統一するのですか？</h3>
+    <p>A. 写真で撮った印影は照明や紙の色の影響で朱色がくすんだり暗く沈んだりし、手書きサインの黒もグレーっぽく写ることがあります。背景を透明にするだけでなく、インク部分の色を1色に統一することで、書類やスライドに貼り付けたときに色味がそろい、見た目がきれいになります。</p>
+    <h3>Q. 検出の精度はどのくらい正確ですか？</h3>
+    <p>A. 完璧ではありません。写真全体のおおまかな明るさのムラを補正したうえで、周囲の紙の色から大きく外れた部分をインクとして検出していますが、影が強い・紙にシワや汚れがある・光が反射している写真では、余分な部分が入ったり、薄い部分が消えたりすることがあります。結果の透明PNGのプレビューを確認しながら、しきい値を調整してください。</p>
+    <h3>Q. 写真はどこかにアップロードされますか？</h3>
+    <p>A. されません。写真の内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。</p>
+    <h3>Q. 1枚の写真に複数の印影やサインが写っている場合はどうなりますか？</h3>
+    <p>A. 検出できた部分をすべて囲む1つの範囲として、まとめて1枚の透明PNGになります。1つずつ別の画像として切り出したい場合は、あらかじめ写真を分けて（または撮り直して）1枚に1つだけ写るようにしてから追加してください。</p>
+    <h3>Q. 対応している画像形式は？</h3>
+    <p>A. 読み込みはJPEG・PNG・WebPに対応しています。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。保存は透明度を持つPNG形式のみです。</p>
+    <h3>Q. この透明PNGを公的な提出書類の印影として使えますか？</h3>
+    <p>A. 保証するものではありません。実印・銀行印などの印影の取り扱いは提出先の規則によって大きく異なります。本ツールは画像の加工を補助するだけで、法的な助言を行うものではありません。用途に応じて提出先の指示を必ず確認してください。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Add a photo of a hanko stamp impression or a handwritten signature (you can add several at once). A close-up photo of just the mark is easier to adjust than a photo of the whole page.</li>
+      <li>Move the "Detection threshold" slider until the paper background disappears and only the mark remains. Overall lighting unevenness is corrected automatically, but raise the threshold if a strong shadow remains.</li>
+      <li>Pick the output color (vermillion, black, or a custom color).</li>
+      <li>Adjust the "Margin" slider to control how much space is kept around the cropped result.</li>
+      <li>Download as PNG, or download several at once as a ZIP.</li>
+    </ol>
+    <h3>Q. Why unify the color to vermillion or black?</h3>
+    <p>A. A photographed stamp impression often looks dull or dark depending on lighting and paper color, and a handwritten signature's black can look grayish. Beyond just making the background transparent, unifying the ink to one solid color gives a clean, consistent look when pasted into a document or slide.</p>
+    <h3>Q. How accurate is the detection?</h3>
+    <p>A. Not perfect. It roughly corrects overall lighting unevenness first, then treats anything that differs enough from the surrounding paper color as ink. Strong shadows, wrinkled or stained paper, and glare can cause extra bits to be included or faint parts to be missed. Check the live preview and adjust the threshold as needed.</p>
+    <h3>Q. Are my photos uploaded anywhere?</h3>
+    <p>A. No. Everything happens inside this browser on your device; nothing is sent to a server (only anonymous, cookie-free page-view counts are collected for this page).</p>
+    <h3>Q. What if one photo has more than one stamp or signature?</h3>
+    <p>A. Everything detected is combined into a single bounding area and saved as one transparent PNG. If you want them as separate images, split or re-photograph them one at a time first.</p>
+    <h3>Q. Which image formats are supported?</h3>
+    <p>A. JPEG, PNG and WebP can be loaded. HEIC (iPhone) may not load depending on your browser. Output is always PNG, to keep transparency.</p>
+    <h3>Q. Can I use this result as an official seal impression on a legal document?</h3>
+    <p>A. No guarantee is made. Rules for handling seal impressions (such as a registered personal or bank seal) vary a lot by recipient. This tool only helps with the image processing and is not legal advice — always check the recipient's own requirements.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../shorui-scan/">書類写真のスキャン風補正</a> — 斜めに撮った写真や影のムラは先にこちらで補正しておくと、はんこ・サインの検出もきれいになります。</li>
+      <li><a href="../mibun-teishutsu/">身分証明書の表裏まとめ・透かし入りツール</a> — 作成した透明PNGを、提出用の書類や透かし入りのまとめページに貼り込みたいときに。</li>
+      <li><a href="../kuronuri/">写真の一部をドラッグで黒塗り</a> — 書類の番号・住所など、はんこ・サイン以外の部分を隠したいときに。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../shorui-scan/">Document Scan Correction</a> — Straighten a crooked photo and flatten shadows first for cleaner detection here.</li>
+      <li><a href="../mibun-teishutsu/">ID Front/Back Watermark Tool</a> — Paste the transparent PNG you made here into a document or watermarked sheet.</li>
+      <li><a href="../kuronuri/">Black Out Part of a Photo</a> — Hide a number or address elsewhere on the same document.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">写真の内容はサーバーに送信されません。透明PNGの作成はこの端末のブラウザだけで行われます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"どうして色を朱色や黒に統一するのですか？","acceptedAnswer":{"@type":"Answer","text":"写真で撮った印影は照明や紙の色の影響で色がくすむことがあり、手書きサインの黒もグレーっぽく写ることがあります。背景を透明にするだけでなく、インク部分の色を1色に統一することで見た目がきれいになります。"}},
+    {"@type":"Question","name":"検出の精度はどのくらい正確ですか？","acceptedAnswer":{"@type":"Answer","text":"完璧ではありません。写真全体の明るさのムラを補正したうえで、周囲の紙の色から外れた部分をインクとして検出しますが、影や汚れが強い写真では誤検出が起きることがあります。プレビューを見ながらしきい値を調整してください。"}},
+    {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+var MAX_DIM=1600;
+var FEATHER=28;
+var PRESET_RED="#c23a1d";
+var PRESET_BLACK="#121212";
+
+/* =========================================================
+   画像読み込み（shorui-scan / kuronuriと同じ方式）
+   ========================================================= */
+function loadViaImgTag(file){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){ resolve(img); };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error("img-load-failed")); };
+    img.src=url;
+  });
+}
+function getBitmapSize(bmp){
+  if("naturalWidth" in bmp) return {w:bmp.naturalWidth, h:bmp.naturalHeight};
+  return {w:bmp.width, h:bmp.height};
+}
+async function loadImageEntry(file){
+  var bmp=null, err=null;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }
+  catch(e1){
+    try{ bmp = await createImageBitmap(file); }
+    catch(e2){
+      try{ bmp = await loadViaImgTag(file); }
+      catch(e3){ err = T[lang].loadError; }
+    }
+  }
+  var size = bmp ? getBitmapSize(bmp) : {w:0,h:0};
+  return { name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0,
+    sensitivity:55, padding:14, color:PRESET_RED, emptyResult:false,
+    error: err || (size.w===0?T[lang].loadError:null) };
+}
+function rotatedSize(entry){
+  if(entry.rotate%180===90) return {w:entry.h,h:entry.w};
+  return {w:entry.w,h:entry.h};
+}
+function drawRotated(ctx, bmp, entryW, entryH, rotate, dx, dy, dw, dh){
+  ctx.save();
+  ctx.translate(dx+dw/2, dy+dh/2);
+  ctx.rotate(rotate*Math.PI/180);
+  var rs = (rotate%180===90) ? {w:dh,h:dw} : {w:dw,h:dh};
+  ctx.drawImage(bmp, -rs.w/2, -rs.h/2, rs.w, rs.h);
+  ctx.restore();
+}
+function computeWorkCanvas(entry){
+  var rs=rotatedSize(entry);
+  var scale=Math.min(1, MAX_DIM/Math.max(rs.w,rs.h));
+  var w=Math.max(1,Math.round(rs.w*scale)), h=Math.max(1,Math.round(rs.h*scale));
+  var c=document.createElement("canvas"); c.width=w; c.height=h;
+  var ctx=c.getContext("2d");
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,w,h);
+  try{ drawRotated(ctx, entry.bitmap, entry.w, entry.h, entry.rotate, 0,0,w,h); }catch(e){}
+  entry.workCanvas=c;
+}
+
+/* =========================================================
+   段階的な縮小（shorui-scanの「影を消す」と同じミップマップ的手法）で
+   局所的な「背景色の地図」を作り、各画素との色の距離を測る。
+   背景（紙）はおおむね均一な色、印影・サインはそこから大きく外れた色、
+   という前提で、影のムラがあっても背景だけを狂いにくく推定できる。
+   ========================================================= */
+function downscaleSmooth(canvas, targetW, targetH){
+  var cur=canvas, cw=canvas.width, ch=canvas.height;
+  while(cw>targetW*2 && ch>targetH*2){
+    cw=Math.max(targetW, Math.round(cw/2));
+    ch=Math.max(targetH, Math.round(ch/2));
+    var tmp=document.createElement("canvas");
+    tmp.width=cw; tmp.height=ch;
+    var tctx=tmp.getContext("2d");
+    tctx.imageSmoothingEnabled=true;
+    if("imageSmoothingQuality" in tctx) tctx.imageSmoothingQuality="high";
+    tctx.drawImage(cur,0,0,cw,ch);
+    cur=tmp;
+  }
+  var out=document.createElement("canvas");
+  out.width=targetW; out.height=targetH;
+  var octx=out.getContext("2d");
+  octx.imageSmoothingEnabled=true;
+  if("imageSmoothingQuality" in octx) octx.imageSmoothingQuality="high";
+  octx.drawImage(cur,0,0,targetW,targetH);
+  return out;
+}
+function computeDistMap(entry){
+  var c=entry.workCanvas;
+  var w=c.width, h=c.height;
+  var longSide=Math.max(w,h);
+  var bgLong=Math.max(20, Math.round(longSide/18)); /* 紙のムラのスケールに合わせた縮小サイズ */
+  var bw=Math.max(10, Math.round(w*bgLong/longSide));
+  var bh=Math.max(10, Math.round(h*bgLong/longSide));
+  var small=downscaleSmooth(c, bw, bh);
+  var bgFull=document.createElement("canvas");
+  bgFull.width=w; bgFull.height=h;
+  var bctx=bgFull.getContext("2d");
+  bctx.imageSmoothingEnabled=true;
+  if("imageSmoothingQuality" in bctx) bctx.imageSmoothingQuality="high";
+  bctx.drawImage(small,0,0,w,h);
+  var bgData=bctx.getImageData(0,0,w,h).data;
+  var img=c.getContext("2d").getImageData(0,0,w,h).data;
+  var n=w*h;
+  var dist=new Float32Array(n);
+  var maxDist=0;
+  for(var i=0;i<n;i++){
+    var o=i*4;
+    var dr=img[o]-bgData[o], dg=img[o+1]-bgData[o+1], db=img[o+2]-bgData[o+2];
+    var d=Math.sqrt(dr*dr+dg*dg+db*db);
+    dist[i]=d;
+    if(d>maxDist) maxDist=d;
+  }
+  entry.distMap={w:w,h:h,dist:dist,maxDist:maxDist};
+}
+
+/* ---------- しきい値・色・余白を適用して透明PNGを作る ---------- */
+function hexToRgb(hex){
+  var m=/^#?([0-9a-f]{6})$/i.exec(hex||"");
+  if(!m) return {r:0,g:0,b:0};
+  var v=parseInt(m[1],16);
+  return {r:(v>>16)&255,g:(v>>8)&255,b:v&255};
+}
+function applyMask(entry){
+  var dm=entry.distMap;
+  if(!dm) return;
+  var w=dm.w, h=dm.h, dist=dm.dist;
+  var low=entry.sensitivity, high=low+FEATHER;
+  var rgb=hexToRgb(entry.color);
+  var out=document.createElement("canvas");
+  out.width=w; out.height=h;
+  var octx=out.getContext("2d");
+  var img=octx.createImageData(w,h);
+  var d=img.data;
+  var minX=w, minY=h, maxX=-1, maxY=-1;
+  var EPS=6;
+  for(var y=0;y<h;y++){
+    for(var x=0;x<w;x++){
+      var i=y*w+x, o=i*4;
+      var v=dist[i];
+      var a = v<=low?0 : (v>=high?255 : Math.round((v-low)/FEATHER*255));
+      d[o]=rgb.r; d[o+1]=rgb.g; d[o+2]=rgb.b; d[o+3]=a;
+      if(a>=EPS){
+        if(x<minX)minX=x; if(x>maxX)maxX=x;
+        if(y<minY)minY=y; if(y>maxY)maxY=y;
+      }
+    }
+  }
+  octx.putImageData(img,0,0);
+  entry.outCanvas=out;
+
+  if(maxX<minX || maxY<minY){
+    entry.emptyResult=true;
+    entry.resultCanvas=null;
+    return;
+  }
+  entry.emptyResult=false;
+  var pad=entry.padding;
+  var x0=Math.max(0,minX-pad), y0=Math.max(0,minY-pad);
+  var x1=Math.min(w-1,maxX+pad), y1=Math.min(h-1,maxY+pad);
+  var rw=x1-x0+1, rh=y1-y0+1;
+  var res=document.createElement("canvas");
+  res.width=rw; res.height=rh;
+  var rctx=res.getContext("2d");
+  rctx.drawImage(out, x0,y0,rw,rh, 0,0,rw,rh);
+  entry.resultCanvas=res;
+}
+function recompute(entry){
+  computeWorkCanvas(entry);
+  computeDistMap(entry);
+  applyMask(entry);
+}
+
+/* =========================================================
+   ZIP生成（kuronuri等と同じ自作実装）
+   ========================================================= */
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =========================================================
+   状態・言語
+   ========================================================= */
+var lang="ja";
+var state={ files:[] };
+
+var T={
+  ja:{
+    title:"はんこ・サインの写真を透明なPNGにする",
+    sub:"印影（はんこ）や手書きサインを撮った写真から背景だけを透明にし、朱色・黒など好きな色に統一したPNG画像を作ります。しきい値を動かしながら結果をその場で確認できます。余白は自動でトリミング。写真はこの端末のブラウザ内だけで処理されます。",
+    h_source:"写真を追加", dropText:"ここに写真をドラッグ、またはクリックして選択（複数可）",
+    formatNote:"印影（はんこ）や手書きサインが写った、白っぽい紙の写真を想定しています。JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。",
+    h_edit:"しきい値・色を調整して透明PNGに", hintText:"「検出のしきい値」を動かして、はんこ・サインの形だけがきれいに残るように調整してください。数値が小さいほど薄い部分まで検出しますが、紙のムラも拾いやすくなります。",
+    rotateTitle:"回転", removeTitle:"この写真を削除",
+    origCapt:"元の写真", resultCapt:"変換後（透明PNG）",
+    thresholdLabel:"検出のしきい値", paddingLabel:"余白",
+    colorLabel:"仕上がりの色", colorRed:"朱色", colorBlack:"黒", colorCustom:"カスタム",
+    emptyMsg:"検出できませんでした。しきい値を下げてみてください。",
+    okMsg:"検出できました。プレビューを確認して、必要ならしきい値を調整してください。",
+    pngBtn:"PNGで保存",
+    h_export:"まとめてダウンロード", zipBtn:"すべてZIPでダウンロード（PNG）",
+    zipBuilding:"作成中…", zipDone:"ZIPを作成しました。ダウンロードを確認してください。", zipNone:"対象の写真がありません。",
+    loadError:"読み込めませんでした"
+  },
+  en:{
+    title:"Turn a hanko or signature photo into a transparent PNG",
+    sub:"Make the background of a photographed hanko stamp impression or handwritten signature transparent, and unify the ink color (vermillion, black, or a custom color). Adjust the threshold and check the live preview. The result is auto-cropped with a margin. Everything happens in this browser.",
+    h_source:"Add photos", dropText:"Drag and drop, or click to choose (multiple allowed)",
+    formatNote:"Works best with a close-up photo of a stamp impression or signature on light-colored paper. JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser.",
+    h_edit:"Adjust the threshold and color", hintText:"Move the \"Detection threshold\" slider until only the stamp or signature shape remains. A lower value catches fainter marks but also more paper noise.",
+    rotateTitle:"Rotate", removeTitle:"Remove this photo",
+    origCapt:"Original photo", resultCapt:"Result (transparent PNG)",
+    thresholdLabel:"Detection threshold", paddingLabel:"Margin",
+    colorLabel:"Output color", colorRed:"Vermillion", colorBlack:"Black", colorCustom:"Custom",
+    emptyMsg:"Nothing detected — try lowering the threshold.",
+    okMsg:"Detected. Check the preview and adjust the threshold if needed.",
+    pngBtn:"Save as PNG",
+    h_export:"Download all", zipBtn:"Download all as ZIP (PNG)",
+    zipBuilding:"Building…", zipDone:"ZIP created. Check your download.", zipNone:"No photos to include.",
+    loadError:"Could not load"
+  }
+};
+
+/* ---------- ダウンロード ---------- */
+function triggerDownload(blob, filename){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+}
+function baseName(name){
+  return (name||"insho").replace(/\.[a-zA-Z0-9]+$/,"") || "insho";
+}
+function downloadOne(entry){
+  if(!entry.resultCanvas) return;
+  entry.resultCanvas.toBlob(function(blob){
+    if(!blob) return;
+    triggerDownload(blob, baseName(entry.name)+"_insho.png");
+  }, "image/png");
+}
+async function downloadZip(){
+  var btn=$("zipBtn"); var status=$("zipStatus");
+  btn.disabled=true; status.textContent=T[lang].zipBuilding;
+  try{
+    var used={}, files=[];
+    for(var i=0;i<state.files.length;i++){
+      var entry=state.files[i];
+      if(entry.error || entry.emptyResult || !entry.resultCanvas) continue;
+      var blob = await new Promise(function(res){ entry.resultCanvas.toBlob(res,"image/png"); });
+      if(!blob) continue;
+      var buf = await blob.arrayBuffer();
+      var name = baseName(entry.name)+"_insho.png";
+      var n=2;
+      while(used[name]){ name=baseName(entry.name)+"_insho_"+n+".png"; n++; }
+      used[name]=true;
+      files.push({name:name, bytes:new Uint8Array(buf)});
+    }
+    if(!files.length){ status.textContent=T[lang].zipNone; return; }
+    var zipBytes = await buildZip(files);
+    triggerDownload(new Blob([zipBytes],{type:"application/zip"}), "insho-toka.zip");
+    status.textContent=T[lang].zipDone;
+  } finally { btn.disabled=false; }
+}
+
+/* ---------- カードUI構築 ---------- */
+function mkBtn(symbol,title,onClick){
+  var b=document.createElement("button"); b.type="button"; b.textContent=symbol; b.title=title;
+  b.addEventListener("click",onClick);
+  return b;
+}
+function redrawCard(entry){
+  if(entry._origCanvas && entry.workCanvas){
+    entry._origCanvas.width=entry.workCanvas.width;
+    entry._origCanvas.height=entry.workCanvas.height;
+    entry._origCanvas.getContext("2d").drawImage(entry.workCanvas,0,0);
+  }
+  if(entry._resultCanvas){
+    if(entry.resultCanvas){
+      entry._resultCanvas.width=entry.resultCanvas.width;
+      entry._resultCanvas.height=entry.resultCanvas.height;
+      entry._resultCanvas.getContext("2d").drawImage(entry.resultCanvas,0,0);
+      entry._resultCanvas.style.display="";
+    } else {
+      entry._resultCanvas.style.display="none";
+    }
+  }
+  if(entry._status){
+    entry._status.textContent = entry.emptyResult ? T[lang].emptyMsg : T[lang].okMsg;
+    entry._status.className = entry.emptyResult ? "warnText" : "status";
+  }
+  if(entry._pngBtn) entry._pngBtn.disabled = !entry.resultCanvas;
+}
+function onRecompute(entry){
+  recompute(entry);
+  redrawCard(entry);
+}
+function onRemask(entry){
+  applyMask(entry);
+  redrawCard(entry);
+}
+function buildCard(entry){
+  var card=document.createElement("div"); card.className="fileCard";
+  var head=document.createElement("div"); head.className="fileHead";
+  var nameEl=document.createElement("span"); nameEl.className="name"; nameEl.textContent=entry.name;
+  head.appendChild(nameEl);
+  var btns=document.createElement("div"); btns.className="fileBtns";
+  if(!entry.error){
+    btns.appendChild(mkBtn("⟳", T[lang].rotateTitle, function(){ entry.rotate=(entry.rotate+90)%360; onRecompute(entry); }));
+  }
+  var rmBtn=mkBtn("✕", T[lang].removeTitle, function(){
+    var idx=state.files.indexOf(entry);
+    if(idx>=0) state.files.splice(idx,1);
+    renderAll();
+  });
+  rmBtn.classList.add("rm");
+  btns.appendChild(rmBtn);
+  head.appendChild(btns);
+  card.appendChild(head);
+
+  if(entry.error){
+    var p=document.createElement("p"); p.className="err"; p.textContent=entry.name+" — "+entry.error;
+    card.appendChild(p);
+    return card;
+  }
+
+  var cRow=document.createElement("div"); cRow.className="canvasRow";
+  var origCol=document.createElement("div"); origCol.className="canvasCol";
+  var origCapt=document.createElement("p"); origCapt.className="capt"; origCapt.textContent=T[lang].origCapt;
+  var origWrap=document.createElement("div"); origWrap.className="canvasWrap";
+  var origCanvas=document.createElement("canvas");
+  origWrap.appendChild(origCanvas); origCol.appendChild(origCapt); origCol.appendChild(origWrap);
+  entry._origCanvas=origCanvas;
+
+  var resCol=document.createElement("div"); resCol.className="canvasCol";
+  var resCapt=document.createElement("p"); resCapt.className="capt"; resCapt.textContent=T[lang].resultCapt;
+  var resWrap=document.createElement("div"); resWrap.className="canvasWrap checker";
+  var resCanvas=document.createElement("canvas");
+  resWrap.appendChild(resCanvas); resCol.appendChild(resCapt); resCol.appendChild(resWrap);
+  entry._resultCanvas=resCanvas;
+
+  cRow.appendChild(origCol); cRow.appendChild(resCol);
+  card.appendChild(cRow);
+
+  var status=document.createElement("p"); status.className="status";
+  card.appendChild(status);
+  entry._status=status;
+
+  var ctrlRow=document.createElement("div"); ctrlRow.className="ctrlRow";
+
+  var thCtrl=document.createElement("div"); thCtrl.className="ctrl";
+  var thLabel=document.createElement("label"); thLabel.textContent=T[lang].thresholdLabel+"：";
+  var thVal=document.createElement("span"); thVal.className="val"; thVal.textContent=entry.sensitivity;
+  thLabel.appendChild(thVal);
+  var thRange=document.createElement("input"); thRange.type="range"; thRange.min="8"; thRange.max="180"; thRange.step="1"; thRange.value=entry.sensitivity;
+  thRange.addEventListener("input", function(){ entry.sensitivity=parseInt(thRange.value,10); thVal.textContent=entry.sensitivity; onRemask(entry); });
+  thCtrl.appendChild(thLabel); thCtrl.appendChild(thRange);
+
+  var padCtrl=document.createElement("div"); padCtrl.className="ctrl";
+  var padLabel=document.createElement("label"); padLabel.textContent=T[lang].paddingLabel+"：";
+  var padVal=document.createElement("span"); padVal.className="val"; padVal.textContent=entry.padding+"px";
+  padLabel.appendChild(padVal);
+  var padRange=document.createElement("input"); padRange.type="range"; padRange.min="0"; padRange.max="60"; padRange.step="2"; padRange.value=entry.padding;
+  padRange.addEventListener("input", function(){ entry.padding=parseInt(padRange.value,10); padVal.textContent=entry.padding+"px"; onRemask(entry); });
+  padCtrl.appendChild(padLabel); padCtrl.appendChild(padRange);
+
+  var colorCtrl=document.createElement("div"); colorCtrl.className="ctrl";
+  var colorLabel=document.createElement("label"); colorLabel.textContent=T[lang].colorLabel+"：";
+  colorCtrl.appendChild(colorLabel);
+  var colorRow=document.createElement("div"); colorRow.className="colorRow";
+  var picker=document.createElement("input"); picker.type="color"; picker.value=entry.color;
+  function markActive(){
+    redSw.classList.toggle("active", entry.color.toLowerCase()===PRESET_RED);
+    blackSw.classList.toggle("active", entry.color.toLowerCase()===PRESET_BLACK);
+  }
+  var redSw=document.createElement("button"); redSw.type="button"; redSw.className="swatchBtn"; redSw.style.background=PRESET_RED; redSw.title=T[lang].colorRed;
+  redSw.addEventListener("click", function(){ entry.color=PRESET_RED; picker.value=PRESET_RED; markActive(); onRemask(entry); });
+  var blackSw=document.createElement("button"); blackSw.type="button"; blackSw.className="swatchBtn"; blackSw.style.background=PRESET_BLACK; blackSw.title=T[lang].colorBlack;
+  blackSw.addEventListener("click", function(){ entry.color=PRESET_BLACK; picker.value=PRESET_BLACK; markActive(); onRemask(entry); });
+  picker.title=T[lang].colorCustom;
+  picker.addEventListener("input", function(){ entry.color=picker.value; markActive(); onRemask(entry); });
+  colorRow.appendChild(redSw); colorRow.appendChild(blackSw); colorRow.appendChild(picker);
+  colorCtrl.appendChild(colorRow);
+  markActive();
+
+  ctrlRow.appendChild(thCtrl); ctrlRow.appendChild(padCtrl); ctrlRow.appendChild(colorCtrl);
+  card.appendChild(ctrlRow);
+
+  var row=document.createElement("div"); row.className="row";
+  var pngBtn=document.createElement("button"); pngBtn.type="button"; pngBtn.className="secondary"; pngBtn.textContent=T[lang].pngBtn;
+  pngBtn.addEventListener("click", function(){ downloadOne(entry); });
+  entry._pngBtn=pngBtn;
+  row.appendChild(pngBtn);
+  card.appendChild(row);
+
+  recompute(entry);
+  redrawCard(entry);
+  return card;
+}
+
+function renderAll(){
+  var listCard=$("listCard"), exportCard=$("exportCard"), fileList=$("fileList");
+  fileList.innerHTML="";
+  if(state.files.length===0){ listCard.style.display="none"; exportCard.style.display="none"; return; }
+  listCard.style.display="";
+  exportCard.style.display = state.files.length>=2 ? "" : "none";
+  $("zipStatus").textContent="";
+  state.files.forEach(function(entry){ fileList.appendChild(buildCard(entry)); });
+}
+
+/* ---------- ファイル追加 ---------- */
+async function addOneFile(file){
+  var entry=await loadImageEntry(file);
+  state.files.push(entry);
+  renderAll();
+}
+async function addFiles(fileList){
+  /* 1件ずつ順番に読み込む（並列だとデコード完了順がファイル順と入れ替わることがあるため） */
+  var arr = Array.prototype.slice.call(fileList);
+  for(var i=0;i<arr.length;i++){ await addOneFile(arr[i]); }
+}
+
+/* ---------- イベント配線 ---------- */
+function wireDrop(){
+  var dropZone=$("drop"), fileInput=$("fileInput");
+  dropZone.addEventListener("click", function(){ fileInput.click(); });
+  fileInput.addEventListener("change", function(){
+    if(fileInput.files && fileInput.files.length) addFiles(fileInput.files);
+    fileInput.value="";
+  });
+  ["dragenter","dragover"].forEach(function(ev){
+    dropZone.addEventListener(ev,function(e){ e.preventDefault(); dropZone.classList.add("over"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    dropZone.addEventListener(ev,function(e){ e.preventDefault(); dropZone.classList.remove("over"); });
+  });
+  dropZone.addEventListener("drop", function(e){
+    var dt=e.dataTransfer;
+    if(dt && dt.files && dt.files.length) addFiles(dt.files);
+  });
+}
+wireDrop();
+$("zipBtn").addEventListener("click", function(){ downloadZip(); });
+
+/* ---------- 言語切替 ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){ var k=els[i].getAttribute("data-i"); if(T[lang][k]!==undefined) els[i].innerHTML=T[lang][k]; }
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++) bs[m].setAttribute("aria-pressed", bs[m].getAttribute("data-lang")===lang?"true":"false");
+  renderAll();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0; li<langBtns.length; li++){
+  langBtns[li].addEventListener("click", function(){ lang=this.getAttribute("data-lang"); applyLang(); });
+}
+
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
