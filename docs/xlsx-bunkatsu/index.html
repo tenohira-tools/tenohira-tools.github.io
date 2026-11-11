@@ -522,7 +522,7 @@ function processSheetFormulas(sheetXmlText, keptNameLower, applyConvert){
     }
   });
   var edits=[];
-  var stats={formulaTotal:0,crossSheetCount:0,convertedCount:0,leftCount:0,unknownCount:0};
+  var stats={formulaTotal:0,crossSheetCount:0,convertedCount:0,leftCount:0,unknownCount:0,noValueCount:0};
   cells.forEach(function(c){
     if(c.inner===null) return;
     var fTags=findTags(c.inner,"f");
@@ -534,9 +534,18 @@ function processSheetFormulas(sheetXmlText, keptNameLower, applyConvert){
     if(textForDetect===undefined || textForDetect===null){ stats.unknownCount++; return; }
     if(!formulaReferencesOtherSheet(textForDetect,keptNameLower)) return;
     stats.crossSheetCount++;
+    /* A formula cell has no cached <v> when the workbook was last saved
+       without recalculating (common in openpyxl/pandas-written files).
+       Such a cell can never be converted to a value — only re-opening in
+       a real spreadsheet app and recalculating produces one — so this is
+       tracked independently of the convert option below and surfaced to
+       the user in the sheet list (noValueCount), not just counted into
+       leftCount (which also covers "user turned the option off"). */
+    var vTags=findTags(c.inner,"v");
+    var hasValue = vTags.length>0 && !!vTags[0].inner;
+    if(!hasValue) stats.noValueCount++;
     if(applyConvert){
-      var vTags=findTags(c.inner,"v");
-      if(vTags.length && vTags[0].inner){
+      if(hasValue){
         var cInnerAbs=c.start+c.openText.length;
         edits.push({start:cInnerAbs+f.start,end:cInnerAbs+f.end,text:""});
         stats.convertedCount++;
@@ -744,7 +753,7 @@ var T={
   statSheets:"シート数",statSelected:"選択中",statCrossSheet:"他シート参照の数式があるシート",
   selectAllBtn:"全て選択",selectNoneBtn:"全て解除",
   colPick:"",colIndex:"#",colSheet:"シート名",colState:"状態",colFormula:"数式",
-  formulaCrossBadge:"他シート参照あり",formulaNone:"なし",
+  formulaCrossBadge:"他シート参照あり",formulaNone:"なし",formulaNoValueBadge:"値に変換できない数式あり",
   resultMsgOk:"選んだシートを、それぞれ独立したExcelファイルに分割します。2つ以上選ぶと1つのZIPにまとめてダウンロードします。",
   crossNote:"注意：選択中のシートの一部に、他のシートを参照する数式があります。下のオプションで「値に変換」を外すと、分割後のファイルを開いて再計算した際に#REF!エラーになることがあります。",
   convertLabel:"他のシートを参照する数式を、今の計算結果の値に変換してから保存する（推奨）",
@@ -764,7 +773,7 @@ var T={
   statSheets:"Sheets",statSelected:"Selected",statCrossSheet:"Sheets with cross-sheet formulas",
   selectAllBtn:"Select all",selectNoneBtn:"Select none",
   colPick:"",colIndex:"#",colSheet:"Sheet name",colState:"State",colFormula:"Formulas",
-  formulaCrossBadge:"has cross-sheet refs",formulaNone:"None",
+  formulaCrossBadge:"has cross-sheet refs",formulaNone:"None",formulaNoValueBadge:"some can't convert to a value",
   resultMsgOk:"Builds a standalone Excel file for each sheet you select. Two or more download together as one ZIP.",
   crossNote:"Note: some selected sheets have formulas referencing other sheets. If you turn off \"convert to values\" below, those may become #REF! errors once the split file recalculates.",
   convertLabel:"Convert formulas referencing other sheets to their current value before saving (recommended)",
@@ -838,6 +847,7 @@ function renderStats(){
     var stateBadge = s.state==="visible" ? "<span class='badge ok'>"+esc(STATE_LABEL[lang][s.state])+"</span>" : "<span class='badge warn'>"+esc(STATE_LABEL[lang][s.state])+"</span>";
     var formulaCell = s.stats.crossSheetCount>0
       ? "<span class='badge warn'>"+esc(T[lang].formulaCrossBadge)+" ("+s.stats.crossSheetCount+"/"+s.stats.formulaTotal+")</span>"
+        +(s.stats.noValueCount>0 ? "<br><span class='badge warn'>"+esc(T[lang].formulaNoValueBadge)+" ("+s.stats.noValueCount+")</span>" : "")
       : (s.stats.formulaTotal>0 ? s.stats.formulaTotal : "<span class='badge'>"+esc(T[lang].formulaNone)+"</span>");
     rowsH+="<tr><td class='center'><input type='checkbox' class='sheetChk' data-idx='"+i+"'"+checked+"></td><td class='center'>"+(i+1)+"</td><td>"+esc(s.name)+"</td><td>"+stateBadge+"</td><td>"+formulaCell+"</td></tr>";
   });

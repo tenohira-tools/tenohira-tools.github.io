@@ -2864,6 +2864,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（今週公開・閲覧0）"
+        },
+        {
+          "date": "2026-11-11",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "改善（backlog1番：計算結果が保存されていない数式（openpyxl等のプログラム製ファイル）は値に変換できず数式のまま残るため、シート一覧に「値に変換できない数式あり」の件数バッジを追加表示。既存のFAQ記載に表示を合わせた。processSheetFormulasにnoValueCountを追加し、変換オプションのon/offに関わらず常に算出。Python(openpyxl)で手組みした実ファイル（他シート参照の数式2件、うち1件だけzipfileでキャッシュ値を注入）をPlaywright（ja/en・390/1280px）でアップロードし、バッジが(1)で正しく表示されること、ダウンロードしたファイルをopenpyxlで再読込しキャッシュ値ありの数式だけ値に変換・無しは数式のまま残ることを確認。JSエラーなし（GoatCounter遮断のみ既知）・横スクロールなし。"
         }
       ]
     },
