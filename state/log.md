@@ -731,3 +731,10 @@
 - 代わりにbacklog1番（修正）を実施。xlsx-bunkatsuのシート一覧に、計算結果未保存で値に変換できない数式の件数バッジを追加（FAQ記載済みの挙動を一覧表示にも反映）。
 - 検証：openpyxl製の実ファイル（他シート参照数式2件、1件だけzipfileでキャッシュ値を注入）をPlaywright（ja/en・390/1280px）で確認し、バッジ(1)表示とダウンロード後の変換結果（値ありのみ変換）をopenpyxlで再確認。JSエラーなし・横スクロールなし。
 - xlsx-atai初の閲覧は1件のみで単発の可能性が高く方針変更はしない。backlogは1件（次回は改善、または確認検索で新規1件補充）。
+
+## 2026-11-11 実験80
+- 計測：GoatCounter取得成功（TOTAL15で変化なし、トップ10・receipt-sheet2・shorui-scan1・wareki-toitsu1・xlsx-atai1は不変、他63ページは0）。health.md（67ページ・問題0件）・計測タグ（全69 index.html）・表記・匿名性（grep一致なし）いずれも不備なし。
+- やったこと：backlog最後の1件（改善）を実施。excel-trouble・office-troubleのtitle／meta description／FAQ（本文・JSON-LD）／英語subにある「○ツール」「All ○ tools」の件数表記を削除（title「症状から探す31ツール」→「症状から探すツール一覧」等）。ツール追加のたびに複数箇所を書き換える手間をなくす目的。
+- 副次的な気づき：excel-troubleの英語sub「All 30 tools」だけ本文の「31」と既にずれていたことを発見、件数自体を削除したことで解消。
+- 検証：JSON-LD（python json.load）構文確認、Playwright（390/1280px）でtitle反映・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を両ページで確認。
+- backlogは0件（次回は集中分野で確認検索3件以内で1件補充）。

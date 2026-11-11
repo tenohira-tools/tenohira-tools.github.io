@@ -2051,6 +2051,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（公開26日・公開以来0、未インデックス）"
+        },
+        {
+          "date": "2026-11-11",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "改善（backlog1番：ツール数が増えるたびにexcel-trouble・office-troubleのtitle/meta description/FAQ（本文・JSON-LD）/英語subにある「○ツール」「○ free tools」の件数表記を書き換える手間が続いていたため、両ページから件数表記を削除。「症状から探す31ツール」→「症状から探すツール一覧」、「無料ツール31個への案内」→「無料ツールへの案内」、英語subの「All 30/11 tools」→「All tools」などに変更。機能・掲載ツール自体は変更なし。副次的に、excel-troubleの英語subだけ「30」のまま（本文は31）という既存の表記ずれも今回の削除で解消。"
         }
       ]
     },
@@ -2969,6 +2975,12 @@
           "views_this_week": 0,
           "views_total": 0,
           "class": "継続（今週公開・閲覧0）"
+        },
+        {
+          "date": "2026-11-11",
+          "views_this_week": 0,
+          "views_total": 0,
+          "class": "改善（backlog1番：ツール数が増えるたびにexcel-trouble・office-troubleのtitle/meta description/FAQ（本文・JSON-LD）/英語subにある「○ツール」「○ free tools」の件数表記を書き換える手間が続いていたため、両ページから件数表記を削除。「症状から探す31ツール」→「症状から探すツール一覧」、「無料ツール31個への案内」→「無料ツールへの案内」、英語subの「All 30/11 tools」→「All tools」などに変更。機能・掲載ツール自体は変更なし。副次的に、excel-troubleの英語subだけ「30」のまま（本文は31）という既存の表記ずれも今回の削除で解消。"
         }
       ]
     },
