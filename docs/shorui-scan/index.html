@@ -161,6 +161,8 @@ html[lang=en] .en-only{display:block}
     <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
     <h3>Q. 複数ページの書類をまとめられますか？</h3>
     <p>A. はい。ファイル選択やドラッグ＆ドロップで複数枚をまとめて渡すと、1枚を補正して「文書一覧に追加」を押すたびに次の写真の四隅合わせへ自動で進みます。全ページ分を繰り返したら、最後に「まとめてPDFをダウンロード」で複数ページのPDFとして書き出せます。</p>
+    <h3>Q. 撮影した順番と違うページ順になってしまいました。直せますか？</h3>
+    <p>A. はい。「文書一覧」の各行にある「↑」「↓」ボタンでその場で順番を入れ替えられます（一覧の一番上が、PDFの1ページ目になります）。撮り直す必要はありません。</p>
     <h3>Q. これは電子帳簿保存法などの要件を満たすことを保証しますか？</h3>
     <p>A. いいえ。本ツールは写真の見た目を整える補助ツールであり、保存要件の充足を保証するものではありません。複数の書類を1つのPDFにまとめると取引ごとの検索性が下がる場合があるため、税務上の保存が目的の場合は、姉妹ツールの「<a href="../shohyo-rename/">証憑ファイル名整理ツール</a>」で取引ごとにファイルを分けて保存することをおすすめします。正式な保存要件は国税庁の資料や顧問税理士など専門家にご確認ください。本ツールは税務・法律上の助言を行うものではありません。</p>
   </div>
@@ -184,6 +186,8 @@ html[lang=en] .en-only{display:block}
     <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
     <h3>Q. Can I combine multiple pages?</h3>
     <p>A. Yes. Choose or drop several photos at once, and clicking "Add to document list" after each correction automatically opens the next photo's corner editor. Repeat for every page, then use "Download combined PDF" to get a multi-page PDF.</p>
+    <h3>Q. The pages ended up in the wrong order. Can I fix that?</h3>
+    <p>A. Yes — use the "↑"/"↓" buttons on each row in the document list to reorder pages right there (the top row becomes page 1 of the PDF). No need to redo any scan.</p>
     <h3>Q. Does this guarantee compliance with Japan's electronic bookkeeping law?</h3>
     <p>A. No. This tool only improves how a photo looks; it does not guarantee any legal record-keeping requirement. Bundling documents into one PDF can make individual transactions harder to search, so for tax records use the companion "<a href="../shohyo-rename/">receipt filename organizer</a>" to keep files separate instead. Check official guidance or a tax professional for actual requirements — this is not tax or legal advice.</p>
   </div>
@@ -627,7 +631,7 @@ var T={
     queueRemaining:function(n){return "このあと自動で次の写真に進みます（残り"+n+"枚）。"},
     pdfSummary:function(n){return "文書 "+n+"件をPDFにまとめます。"},
     buildingPdf:"PDFを作成中…", pdfDone:function(n){return "PDFを作成しました（"+n+"ページ）。ダウンロードを確認してください。"},
-    removeTitle:"削除"
+    removeTitle:"削除", moveUpTitle:"上へ移動", moveDownTitle:"下へ移動"
   },
   en:{
     title:"Document Scan Correction",
@@ -648,7 +652,7 @@ var T={
     queueRemaining:function(n){return "It will automatically move to the next photo after this ("+n+" more).";},
     pdfSummary:function(n){return n+" document(s) will be combined into a PDF."},
     buildingPdf:"Building PDF…", pdfDone:function(n){return "PDF created ("+n+" page(s)). Check your download."},
-    removeTitle:"Remove"
+    removeTitle:"Remove", moveUpTitle:"Move up", moveDownTitle:"Move down"
   }
 };
 
@@ -900,7 +904,29 @@ function renderList(){
     var name=document.createElement("div"); name.className="name"; name.textContent=doc.w+"×"+doc.h+"px";
     row.appendChild(name);
     var btns=document.createElement("div"); btns.className="btns";
-    var rm=document.createElement("button"); rm.type="button"; rm.textContent="✕"; rm.className="rm"; rm.title=T[lang].removeTitle;
+    var up=document.createElement("button"); up.type="button"; up.textContent="↑"; up.title=T[lang].moveUpTitle; up.setAttribute("aria-label",T[lang].moveUpTitle);
+    up.disabled=(i===0);
+    up.addEventListener("click",function(){
+      var idx2=state.docs.indexOf(doc);
+      if(idx2>0){
+        state.docs.splice(idx2,1);
+        state.docs.splice(idx2-1,0,doc);
+        renderList();
+      }
+    });
+    btns.appendChild(up);
+    var down=document.createElement("button"); down.type="button"; down.textContent="↓"; down.title=T[lang].moveDownTitle; down.setAttribute("aria-label",T[lang].moveDownTitle);
+    down.disabled=(i===state.docs.length-1);
+    down.addEventListener("click",function(){
+      var idx2=state.docs.indexOf(doc);
+      if(idx2>=0 && idx2<state.docs.length-1){
+        state.docs.splice(idx2,1);
+        state.docs.splice(idx2+1,0,doc);
+        renderList();
+      }
+    });
+    btns.appendChild(down);
+    var rm=document.createElement("button"); rm.type="button"; rm.textContent="✕"; rm.className="rm"; rm.title=T[lang].removeTitle; rm.setAttribute("aria-label",T[lang].removeTitle);
     rm.addEventListener("click",function(){
       var idx2=state.docs.indexOf(doc);
       if(idx2>=0) state.docs.splice(idx2,1);

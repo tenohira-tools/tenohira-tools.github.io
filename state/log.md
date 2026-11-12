@@ -738,3 +738,9 @@
 - 副次的な気づき：excel-troubleの英語sub「All 30 tools」だけ本文の「31」と既にずれていたことを発見、件数自体を削除したことで解消。
 - 検証：JSON-LD（python json.load）構文確認、Playwright（390/1280px）でtitle反映・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を両ページで確認。
 - backlogは0件（次回は集中分野で確認検索3件以内で1件補充）。
+
+## 2026-11-12 実験81
+- 計測：GoatCounter取得成功（TOTAL15→16・+1、shorui-scanが1→2に増加。他はトップ10・receipt-sheet2・wareki-toitsu1・xlsx-atai1で不変、残り63ページは0）。health.md（67ページ・問題0件）・計測タグ（全69 index.html）・表記・匿名性（grep一致なし）いずれも不備なし。
+- やったこと：唯一増加したshorui-scanの改善を優先。文書一覧（PDFにまとめる前のページ一覧）の各行に「↑」「↓」の並べ替えボタンを追加し、撮影・補正順とPDFに入れたいページ順が違う場合でもやり直さずその場で入れ替えられるようにした。先頭／末尾では該当ボタンを無効化。FAQ（ja/en）に使い方を追記。
+- 検証：Playwright（390/1280px）で色違いの合成画像3枚を文書一覧に追加し、下へ移動→元に戻す動作、境界での無効化、横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。JSON-LD（python json.load）構文確認も実施。
+- backlogは0件（次回は集中分野で確認検索3件以内で1件補充してから新規着手、またはreceipt-sheet等の改善）。
