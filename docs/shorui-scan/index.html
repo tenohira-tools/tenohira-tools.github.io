@@ -42,6 +42,8 @@ h2{font-size:1.05rem;margin:0 0 12px}
 #magnifier.magnifier{position:absolute;width:112px;height:112px;max-width:112px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.45);pointer-events:none;z-index:5;display:none;background:#222}
 .stageWrap{overflow-x:auto}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+label.chk{display:inline-flex;align-items:center;gap:6px;font-size:.9rem;cursor:pointer}
+label.chk input{width:18px;height:18px;accent-color:var(--accent)}
 button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
 button.primary:disabled{opacity:.4;cursor:not-allowed}
 button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
@@ -133,6 +135,7 @@ html[lang=en] .en-only{display:block}
 <section class="card" id="listCard" style="display:none">
   <h2 data-i="h_list">文書一覧（PDFにまとめる）</h2>
   <div class="thumbs" id="thumbList"></div>
+  <label class="chk"><input type="checkbox" id="pageNumChk"><span data-i="pageNumChkLabel">各ページの右下にページ番号を入れる</span></label>
   <div class="row">
     <button type="button" class="primary" id="makePdfBtn" data-i="makePdfBtn">まとめてPDFをダウンロード</button>
     <button type="button" class="secondary" id="clearListBtn" data-i="clearListBtn">一覧をクリア</button>
@@ -163,6 +166,8 @@ html[lang=en] .en-only{display:block}
     <p>A. はい。ファイル選択やドラッグ＆ドロップで複数枚をまとめて渡すと、1枚を補正して「文書一覧に追加」を押すたびに次の写真の四隅合わせへ自動で進みます。全ページ分を繰り返したら、最後に「まとめてPDFをダウンロード」で複数ページのPDFとして書き出せます。</p>
     <h3>Q. 撮影した順番と違うページ順になってしまいました。直せますか？</h3>
     <p>A. はい。「文書一覧」の各行にある「↑」「↓」ボタンでその場で順番を入れ替えられます（一覧の一番上が、PDFの1ページ目になります）。撮り直す必要はありません。</p>
+    <h3>Q. ページ番号（ノンブル）を入れられますか？</h3>
+    <p>A. はい。「文書一覧」の「各ページの右下にページ番号を入れる」にチェックを入れてPDFを書き出すと、各ページの右下に「1 / 3」のような現在のページ番号と全体のページ数が印字されます。契約書や提出書類など、複数ページの順序をあとで確認したい場合にお使いください（数字のみのため日本語フォントの埋め込みは不要です）。</p>
     <h3>Q. これは電子帳簿保存法などの要件を満たすことを保証しますか？</h3>
     <p>A. いいえ。本ツールは写真の見た目を整える補助ツールであり、保存要件の充足を保証するものではありません。複数の書類を1つのPDFにまとめると取引ごとの検索性が下がる場合があるため、税務上の保存が目的の場合は、姉妹ツールの「<a href="../shohyo-rename/">証憑ファイル名整理ツール</a>」で取引ごとにファイルを分けて保存することをおすすめします。正式な保存要件は国税庁の資料や顧問税理士など専門家にご確認ください。本ツールは税務・法律上の助言を行うものではありません。</p>
   </div>
@@ -188,6 +193,8 @@ html[lang=en] .en-only{display:block}
     <p>A. Yes. Choose or drop several photos at once, and clicking "Add to document list" after each correction automatically opens the next photo's corner editor. Repeat for every page, then use "Download combined PDF" to get a multi-page PDF.</p>
     <h3>Q. The pages ended up in the wrong order. Can I fix that?</h3>
     <p>A. Yes — use the "↑"/"↓" buttons on each row in the document list to reorder pages right there (the top row becomes page 1 of the PDF). No need to redo any scan.</p>
+    <h3>Q. Can I add page numbers?</h3>
+    <p>A. Yes — check "Add a page number to the bottom-right of each page" in the document list before downloading the PDF, and each page gets a "1 / 3"-style number (current page / total pages) printed in its bottom-right corner. Handy for contracts or submissions where you'll later need to confirm the page order (it's digits only, so no Japanese font needs to be embedded).</p>
     <h3>Q. Does this guarantee compliance with Japan's electronic bookkeeping law?</h3>
     <p>A. No. This tool only improves how a photo looks; it does not guarantee any legal record-keeping requirement. Bundling documents into one PDF can make individual transactions harder to search, so for tax records use the companion "<a href="../shohyo-rename/">receipt filename organizer</a>" to keep files separate instead. Check official guidance or a tax professional for actual requirements — this is not tax or legal advice.</p>
   </div>
@@ -234,6 +241,7 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"四隅を自動で検出してくれますか？","acceptedAnswer":{"@type":"Answer","text":"「四隅を自動検出」ボタンで候補位置に移動できますが、あくまで手動調整の出発点です。背景や照明によっては正確に合わないため、移動後は必ず確認し、ズレていれば手でドラッグして合わせてください。"}},
     {"@type":"Question","name":"片側だけ暗く写ってしまった写真の影を消せますか？","acceptedAnswer":{"@type":"Answer","text":"「影を消す（白く）」を選ぶと、写真全体の明るさのムラを推定してそれで割ることで、紙の地色をできるだけ均一な白に揃えます。片側だけ影が落ちた写真でも文字は読みやすいまま残り、色も保持されます。"}},
     {"@type":"Question","name":"「白黒くっきり」はどんな処理ですか？OCRはできますか？","acceptedAnswer":{"@type":"Answer","text":"グレースケール化した上で明暗の分布を自動調整する処理で、文字認識（OCR）は行っていません。見た目を整えるだけの機能です。片側だけ影が強い写真には「影を消す（白く）」の方が向いています。"}},
+    {"@type":"Question","name":"ページ番号（ノンブル）を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「文書一覧」の「各ページの右下にページ番号を入れる」にチェックを入れてPDFを書き出すと、各ページの右下に「1 / 3」のような現在のページ番号と全体のページ数が印字されます。"}},
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。写真の見た目を整えるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}}
   ]
 }
@@ -522,7 +530,15 @@ function fitContain(imgW,imgH,box){
   var w=imgW*scale, h=imgH*scale;
   return { x:box.x+(box.w-w)/2, y:box.y+(box.h-h)/2, w:w, h:h };
 }
-function buildPdf(pages){
+var HELV_WIDTH={"0":.556,"1":.556,"2":.556,"3":.556,"4":.556,"5":.556,"6":.556,"7":.556,"8":.556,"9":.556," ":.278,"/":.278};
+function helveticaTextWidth(str,size){
+  var w=0;
+  for(var i=0;i<str.length;i++){ w+=(HELV_WIDTH[str[i]]!==undefined?HELV_WIDTH[str[i]]:.6); }
+  return w*size;
+}
+function buildPdf(pages,opts){
+  opts=opts||{};
+  var addPageNum=!!opts.pageNumbers;
   var enc=new TextEncoder();
   function toBytes(str){ return enc.encode(str); }
   var chunks=[], offset=0, objOffsets=[];
@@ -538,6 +554,7 @@ function buildPdf(pages){
 
   var CATALOG=1, PAGES=2;
   var nextObj=3;
+  var FONT=addPageNum?(nextObj++):null;
   var pageObjNums=[], pageContentNums=[], pageImageObjNums=[];
   pages.forEach(function(p){
     pageObjNums.push(nextObj++);
@@ -553,14 +570,29 @@ function buildPdf(pages){
   push("<< /Type /Pages /Kids ["+pageObjNums.map(function(n){return n+" 0 R"}).join(" ")+"] /Count "+pages.length+" >>\n");
   endObj();
 
+  if(addPageNum){
+    beginObj(FONT);
+    push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\n");
+    endObj();
+  }
+
   pages.forEach(function(p,pi){
     var pageNum=pageObjNums[pi], contentNum=pageContentNums[pi], imgNum=pageImageObjNums[pi];
+    var resources="/XObject << /Im0 "+imgNum+" 0 R >>"+(addPageNum?(" /Font << /F1 "+FONT+" 0 R >>"):"");
     beginObj(pageNum);
     push("<< /Type /Page /Parent "+PAGES+" 0 R /MediaBox [0 0 "+p.width+" "+p.height+"] "+
-      "/Resources << /XObject << /Im0 "+imgNum+" 0 R >> >> /Contents "+contentNum+" 0 R >>\n");
+      "/Resources << "+resources+" >> /Contents "+contentNum+" 0 R >>\n");
     endObj();
 
     var cs="q\n"+p.drawW.toFixed(2)+" 0 0 "+p.drawH.toFixed(2)+" "+p.x.toFixed(2)+" "+p.y.toFixed(2)+" cm\n/Im0 Do\nQ\n";
+    if(addPageNum){
+      var label=(pi+1)+" / "+pages.length;
+      var fontSize=10;
+      var tw=helveticaTextWidth(label,fontSize);
+      var tx=Math.max(4, p.width-16-tw);
+      var ty=14;
+      cs+="BT /F1 "+fontSize+" Tf "+tx.toFixed(2)+" "+ty.toFixed(2)+" Td ("+pdfEscape(label)+") Tj ET\n";
+    }
     var contentBytes=toBytes(cs);
     beginObj(contentNum);
     push("<< /Length "+contentBytes.length+" >>\nstream\n");
@@ -624,6 +656,7 @@ var T={
     filterLabel:"仕上がり", applyBtn:"補正を適用", cancelEditBtn:"この写真をやめる",
     h_result:"補正結果", downloadJpegBtn:"JPEGをダウンロード", addToListBtn:"文書一覧に追加（PDF用）", redoBtn:"この写真をやり直す",
     h_list:"文書一覧（PDFにまとめる）", makePdfBtn:"まとめてPDFをダウンロード", clearListBtn:"一覧をクリア",
+    pageNumChkLabel:"各ページの右下にページ番号を入れる",
     feedback:"フィードバックはこちら", privacy:"写真の内容はサーバーに送信されません。台形補正・白黒化・PDFの生成もこの端末のブラウザだけで行われます。",
     loadError:"読み込めませんでした",
     applying:"補正を適用中…", applied:"補正が完了しました。",
@@ -645,6 +678,7 @@ var T={
     filterLabel:"Finish", applyBtn:"Apply correction", cancelEditBtn:"Discard this photo",
     h_result:"Result", downloadJpegBtn:"Download JPEG", addToListBtn:"Add to document list", redoBtn:"Redo this photo",
     h_list:"Document list (combine into PDF)", makePdfBtn:"Download combined PDF", clearListBtn:"Clear list",
+    pageNumChkLabel:"Add a page number to the bottom-right of each page",
     feedback:"Feedback", privacy:"Photos are never sent to a server. Correction, filtering and PDF creation all happen in this browser.",
     loadError:"Could not load",
     applying:"Applying correction…", applied:"Correction complete.",
@@ -952,7 +986,7 @@ async function makeAndDownloadPdf(){
       var fit=fitContain(doc.w, doc.h, box);
       return { width:page.w, height:page.h, jpeg:doc.jpegBytes, imgW:doc.w, imgH:doc.h, x:fit.x, y:fit.y, drawW:fit.w, drawH:fit.h };
     });
-    var pdfBytes=buildPdf(pages);
+    var pdfBytes=buildPdf(pages,{pageNumbers:$("pageNumChk").checked});
     var blob=new Blob([pdfBytes],{type:"application/pdf"});
     var url=URL.createObjectURL(blob);
     var a=document.createElement("a");
