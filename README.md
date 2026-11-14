@@ -32,6 +32,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [交通費精算書メーカー｜区間・金額を入力してその場で集計・印刷](https://tenohira-tools.github.io/kotsuhi-seisan/)
 - [写真の一部をドラッグで黒塗り（マスキング）して保存｜身分証・書類の番号や住所を隠す](https://tenohira-tools.github.io/kuronuri/)
 - [社外に渡す前に、Excel・Word・PowerPointのマクロ（VBA）を削除してxlsx/docx/pptxに変換](https://tenohira-tools.github.io/macro-kesu/)
+- [名刺の写真を実寸サイズでA4にまとめて印刷｜複数枚の名刺を撮って整理・コピー保管](https://tenohira-tools.github.io/meishi-matome/)
 - [身分証明書の表と裏を1枚にまとめ、透かし入りで保存｜本人確認書類の提出用コピー作成](https://tenohira-tools.github.io/mibun-teishutsu/)
 - [Excel・Word・PowerPointの画像をまとめて保存：zip変換せず一括抽出](https://tenohira-tools.github.io/office-gazou/)
 - [Word・PowerPointのハイパーリンクが開けない・社内専用のリンクが残っているときの一覧・削除ツール](https://tenohira-tools.github.io/office-link/)
