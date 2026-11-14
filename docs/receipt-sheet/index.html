@@ -103,6 +103,7 @@ html[lang=en] .en-only{display:block}
   <div class="opts" id="gridOpts"></div>
   <p class="optlabel" data-i="captionLabel">番号の表示</p>
   <label class="chk"><input type="checkbox" id="captionChk" checked><span data-i="captionChkLabel">各写真の下に通し番号を印字する</span></label>
+  <label class="chk"><input type="checkbox" id="pageNumChk"><span data-i="pageNumChkLabel">各ページの下部にページ番号（1 / 3）を印字する</span></label>
 </section>
 
 <section class="card">
@@ -169,6 +170,8 @@ html[lang=en] .en-only{display:block}
     <p>A. 枚数に上限は設けていませんが、写真が多くなるほど処理に時間がかかり、生成されるPDFのファイルサイズも大きくなります。数十枚を超える場合は、複数回に分けて作成することをおすすめします。</p>
     <h3>Q. 日付の古い順に並べ替えたい（スマホで撮った順）。</h3>
     <p>A. 「撮影日時順に並べ替え」ボタンで、写真に記録されている撮影日時（EXIFのDateTimeOriginal）の古い順に自動で並べ替えます。EXIF情報が無い写真（スクリーンショット、一度加工・送信してEXIFが失われた画像など）は、代わりにファイルの更新日時を使います。SNSやチャットで転送した写真は更新日時が転送時刻になっている場合があるため、正確な順番にならないときは一覧の↑↓ボタンで手動調整してください。並べ替え後にボタン横へ、EXIFを使えた枚数とファイルの更新日時で代用した枚数を表示します。</p>
+    <h3>Q. ページ番号（ノンブル）を入れられますか？</h3>
+    <p>A. はい。「並べ方の設定」の「各ページの下部にページ番号を印字する」にチェックを入れてPDFを作成すると、各ページの右下に「1 / 3」のような現在のページ番号と全体のページ数が印字されます。複数ページになったPDFを提出・保管する際に、順序やページ数の確認に使えます（数字のみのため日本語フォントの埋め込みは不要です）。</p>
   </div>
   <div class="en-only">
     <h2>How to use &amp; FAQ</h2>
@@ -192,6 +195,8 @@ html[lang=en] .en-only{display:block}
     <p>A. No hard limit, but more photos means more processing time and a larger PDF file. For dozens of photos, consider splitting into a few runs.</p>
     <h3>Q. Can I sort photos into the order they were taken?</h3>
     <p>A. The "Sort by date taken" button reorders the list from oldest to newest using each photo's EXIF capture time (DateTimeOriginal). When a photo has no EXIF data (screenshots, or photos that lost it after editing/forwarding), its file's last-modified date is used instead. Forwarded photos sometimes have a modified date that reflects when they were sent rather than taken, so check the order and use the ↑↓ buttons to fix it if needed. The message next to the button shows how many photos used EXIF versus the fallback.</p>
+    <h3>Q. Can I add page numbers?</h3>
+    <p>A. Yes. Turn on "Add a page number to the bottom of each page" in the layout settings before creating the PDF, and each page gets a "1 / 3"-style current page / total pages printed at the bottom-right. Handy for checking order and page count when submitting or filing a multi-page PDF (digits only, so no Japanese font needs to be embedded).</p>
   </div>
 </section>
 
@@ -232,7 +237,8 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。複数の写真を1枚のPDFに並べるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}},
     {"@type":"Question","name":"iPhoneの写真（HEIC形式）が読み込めません。","acceptedAnswer":{"@type":"Answer","text":"HEIC形式の読み込みはブラウザに依存します。読み込めない場合は、写真の設定を「互換性優先（JPEG）」にするか、JPEGとして書き出してからお試しください。"}},
     {"@type":"Question","name":"キャプションに好きな文字を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。"}},
-    {"@type":"Question","name":"日付の古い順に並べ替えたい（スマホで撮った順）。","acceptedAnswer":{"@type":"Answer","text":"「撮影日時順に並べ替え」ボタンで、写真のEXIF撮影日時の古い順に自動で並べ替えます。EXIFが無い写真はファイルの更新日時を代わりに使い、必要なら↑↓ボタンで手動調整できます。"}}
+    {"@type":"Question","name":"日付の古い順に並べ替えたい（スマホで撮った順）。","acceptedAnswer":{"@type":"Answer","text":"「撮影日時順に並べ替え」ボタンで、写真のEXIF撮影日時の古い順に自動で並べ替えます。EXIFが無い写真はファイルの更新日時を代わりに使い、必要なら↑↓ボタンで手動調整できます。"}},
+    {"@type":"Question","name":"ページ番号（ノンブル）を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「各ページの下部にページ番号を印字する」にチェックを入れてPDFを作成すると、各ページの右下に「1 / 3」のような現在のページ番号と全体のページ数が印字されます。"}}
   ]
 }
 </script>
@@ -285,6 +291,12 @@ function pageCount(imageCount, perPage){
 }
 function pdfEscape(str){
   return String(str).replace(/([\\()])/g,"\\$1");
+}
+var HELV_WIDTH={"0":.556,"1":.556,"2":.556,"3":.556,"4":.556,"5":.556,"6":.556,"7":.556,"8":.556,"9":.556," ":.278,"/":.278};
+function helveticaTextWidth(str,size){
+  var w=0;
+  for(var i=0;i<str.length;i++){ w+=(HELV_WIDTH[str[i]]!==undefined?HELV_WIDTH[str[i]]:.6); }
+  return w*size;
 }
 function pad10(n){
   var s=String(Math.round(n));
@@ -414,6 +426,7 @@ var T={
     sub:"領収書をまとめてPDFに。レシート・領収書の写真を並べ方を選ぶだけでA4のPDFにまとめて整列します。処理はすべてこの端末の中だけで行われます。",
     h_layout:"並べ方の設定", orientLabel:"用紙の向き", gridLabel:"1ページの枚数",
     captionLabel:"番号の表示", captionChkLabel:"各写真の下に通し番号を印字する",
+    pageNumChkLabel:"各ページの下部にページ番号（1 / 3）を印字する",
     h_source:"写真を追加", dropText:"ここに写真をドラッグ＆ドロップ、またはクリックして選択（複数可）",
     formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。うまく読み込めない場合はFAQをご覧ください。",
     h_list:"写真一覧（並び替え・回転）", clearBtn:"すべてクリア",
@@ -439,6 +452,7 @@ var T={
     sub:"Arrange multiple receipt photos onto a printable A4 PDF sheet. Everything happens in this browser.",
     h_layout:"Layout settings", orientLabel:"Page orientation", gridLabel:"Photos per page",
     captionLabel:"Numbering", captionChkLabel:"Print a running number under each photo",
+    pageNumChkLabel:"Add a page number (1 / 3) to the bottom of each page",
     h_source:"Add photos", dropText:"Drag and drop photos here, or click to choose (multiple allowed)",
     formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser — see the FAQ if it fails.",
     h_list:"Photo list (reorder / rotate)", clearBtn:"Clear all",
@@ -844,6 +858,11 @@ async function makeAndDownloadPdf(){
           var label=String(gi+1);
           texts.push({x:cell.captionBox.x+cell.captionBox.w/2-3*label.length, y:cell.captionBox.y+cell.captionBox.h/2-3, size:9, str:label});
         }
+      }
+      if($("pageNumChk").checked){
+        var pnLabel=(pi+1)+" / "+totalPages, pnSize=9;
+        var pnW=helveticaTextWidth(pnLabel,pnSize);
+        texts.push({x:layout.pageSize.width-MARGIN-pnW, y:MARGIN/2-3, size:pnSize, str:pnLabel});
       }
       pages.push({width:layout.pageSize.width, height:layout.pageSize.height, images:images, rects:rects, texts:texts});
     }
