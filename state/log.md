@@ -1,5 +1,14 @@
 # 実行ログ
 
+## 2026-11-15 実験85：名刺の写真を見ながら連絡先ファイル(vCard)をまとめて作成（meishi-vcard）
+- 計測：GoatCounter取得成功（TOTAL17で変化なし、receipt-sheet2・shorui-scan2・wareki-toitsu1・xlsx-atai1・xlsx-ketsugo1は不変、他ページは0）。health.md（68ページ・問題0件）・計測タグ（全71 index.html）・表記・匿名性（grep一致なし）いずれも不備なし。
+- backlog0件のため集中分野（書類・レシート写真の処理）でWebSearch2件を実施。名刺写真から一括でvCardを作る無料ブラウザツールは見当たらず、OCRで読み取る既存ツールはサーバーアップロード型かvCard化が別手間と確認し、OCRなし・手入力＋写真を見本表示という角度で着手。
+- やったこと：名刺の写真を見本として見ながら氏名・ふりがな・会社名・電話・メール・住所等を手入力し、スマホの連絡先に取り込めるvCard(.vcf)を作るツール（docs/meishi-vcard/）を公開。日本の連絡先アプリが読むふりがな拡張項目(X-PHONETIC-LAST/FIRST-NAME)と、名刺写真を連絡先画像として埋め込む機能(PHOTO)で差別化。書き出しは個人ごと・全員まとめた1ファイル・ZIPの3種、氏名未入力のカードは除外。
+- 不具合修正：見出し「入力（N件）」のdata-i属性が子要素cardCountを言語切替時に消してしまい以後全操作が止まる不具合をPlaywrightで発見、prefix/suffixを別spanに分離して解消。
+- 検証：vCard生成コアをNode.js単体テスト45件→Python標準vobjectで実際にパースし氏名・ふりがな・電話・住所・特殊文字・埋め込み写真(500バイト一致)を確認→Playwright（ja/en・390/1280px）で60項目（アップロード・氏名なし除外・写真なし追加削除・全件まとめvCard・ZIP・言語切替）を確認、JSエラー・横スクロールいずれも無し。
+- 内部リンクはmeishi-matome・shorui-scan・kuronuriの3ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
+- 次回：meishi-vcardの初回閲覧を記録。backlogは0件（次回は集中分野で確認検索3件以内で1件補充するか、閲覧のあるページの改善を優先）。
+
 ## 2026-10-24 週次レビュー
 - 計測：GoatCounter累計9（今週+1・トップのみ）、個別42ページは公開以来0。Google相当・Bingのsite:検索も0件。
 - 点検：今週公開・更新の12ページを本番で確認（390/1280px、JSエラー・横はみ出し無し）。

@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>名刺の写真を見ながら連絡先ファイル(vCard)をまとめて作成｜OCRなし・手入力で複数名刺をスマホの連絡先に一括登録 | てのひらツール</title>
+<meta name="description" content="撮った名刺の写真を見ながら、氏名・ふりがな・会社名・電話番号などをその場で入力し、スマートフォンの連絡先にそのまま取り込めるvCard(.vcf)ファイルをまとめて作成する無料ツール。文字認識(OCR)は使わないため誤読の心配がなく、名刺の写真そのものを連絡先の画像として保存することもできます。入力内容・写真はこの端末の中だけで処理され、外部には送信されません。Fill in contact details for each business card photo by hand (no OCR) and export them as vCard files you can import straight into your phone's contacts, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/meishi-vcard/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--bad:#f19a9d;--bad-bg:#3a2022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.3rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.drop input{display:none}
+.status{margin-top:10px;font-size:.9rem;color:var(--muted)}
+.note{margin-top:10px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.88rem}
+label.chk{display:inline-flex;align-items:center;gap:6px;font-size:.9rem;cursor:pointer}
+label.chk input{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.cardsWrap{display:flex;flex-direction:column;gap:14px;margin-top:4px}
+.ccard{border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.chead{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.chead img{width:72px;height:72px;object-fit:cover;border-radius:8px;background:var(--bg);border:1px solid var(--line);flex:none}
+.chead .noimg{width:72px;height:72px;border-radius:8px;background:var(--bg);border:1px dashed var(--line);flex:none;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;text-align:center}
+.chead .info{flex:1;min-width:0}
+.chead .fname{font-size:.85rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chead .btns{display:flex;gap:4px;flex:none}
+.chead button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:.95rem}
+.chead button.rm{color:var(--bad)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
+.fgrid .full{grid-column:1/-1}
+.fitem{min-width:0}
+.fitem label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+.fitem input,.fitem textarea{width:100%;min-width:0;font:inherit;font-size:.92rem;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg)}
+.fitem textarea{resize:vertical;min-height:2.4em}
+.cfoot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.filePreview{font-size:.82rem;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.warnTag{color:var(--warn);font-size:.8rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
+button.secondary:disabled{opacity:.4;cursor:not-allowed}
+.summary{margin-top:10px;font-size:.9rem;color:var(--muted)}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">名刺の写真を見ながら連絡先ファイル(vCard)をまとめて作成</h1>
+    <p class="sub" data-i="sub">名刺の写真を見ながら、氏名・ふりがな・会社名・電話番号などをその場で入力し、スマートフォンの連絡先にそのまま取り込めるvCard(.vcf)ファイルを作成します。文字認識(OCR)は使わないため誤読の心配がありません。入力内容や写真はこの端末の中だけで処理されます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="h_source">名刺の写真を追加</h2>
+  <div class="drop" id="dropZone">
+    <span data-i="dropText">ここに名刺の写真をドラッグ＆ドロップ、またはクリックして選択（複数可）</span>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+  </div>
+  <p class="note" data-i="formatNote">JPEG・PNG・WebPに対応。写真は入力中の見本として使うだけで、文字を自動では読み取りません（OCRなし）。写真が無くても「写真なしで1件追加」から入力できます。</p>
+  <p class="status" id="loadStatus"></p>
+  <div class="row">
+    <button type="button" class="secondary" id="addBlankBtn" data-i="addBlankBtn">写真なしで1件追加</button>
+    <label class="chk"><input type="checkbox" id="embedChk" checked><span data-i="embedChkLabel">名刺の写真を連絡先の画像として保存する</span></label>
+  </div>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2><span data-i="h_list_prefix">入力（</span><span id="cardCount">0</span><span data-i="h_list_suffix">件）</span></h2>
+  <div class="cardsWrap" id="cardsWrap"></div>
+  <div class="row">
+    <button type="button" class="secondary" id="clearBtn" data-i="clearBtn">すべてクリア</button>
+  </div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="h_out">書き出し</h2>
+  <div class="row">
+    <button type="button" class="primary" id="mergedBtn" data-i="mergedBtn">全件を1つのvCardファイルでダウンロード（一括インポート用）</button>
+  </div>
+  <div class="row">
+    <button type="button" class="secondary" id="zipBtn" data-i="zipBtn">1件ずつのファイルをZIPでダウンロード</button>
+  </div>
+  <div class="summary" id="summary"></div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>名刺の写真をドラッグ＆ドロップ、またはタップして選択します（写真が無い場合は「写真なしで1件追加」も使えます）。</li>
+      <li>各カードに表示された写真を見ながら、氏名・ふりがな・会社名・電話番号・メールなどを入力します。入力した内容はこの端末の中だけに保持され、どこにも送信されません。</li>
+      <li>1件だけ使いたい場合は各カードの「この1件を保存」、全員分をまとめてスマホに取り込みたい場合は「全件を1つのvCardファイルでダウンロード」を使います。</li>
+      <li>作成した.vcfファイルをスマートフォンで開く（またはメール等で自分に送って開く）と、連絡先への追加画面が表示されます。</li>
+    </ol>
+    <h3>Q. 文字は自動で読み取ってもらえますか？（OCR機能はありますか）</h3>
+    <p>A. いいえ。このツールは文字認識（OCR）を行いません。名刺の写真はあくまで入力時に見る見本としてその場に表示するだけで、氏名や電話番号などはすべて手で入力します。OCRの誤読を心配する必要がない代わりに、入力の手間はそのまま残ります。レシートの金額・日付をOCRで読み取る機能についても、精度の面から現時点では搭載していません。</p>
+    <h3>Q. 名刺の写真や入力した内容はどこかに送信されますか？</h3>
+    <p>A. されません。写真の表示、入力内容の保持、vCardファイルの作成まで、すべてこの端末のブラウザの中だけで行われます（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。ページを閉じる、または再読み込みすると入力内容は消えるため、途中で全員分のファイルを作ってから閉じることをおすすめします。</p>
+    <h3>Q. 「ふりがな」はどの連絡先アプリで使われますか？</h3>
+    <p>A. 読み（ふりがな）はvCardの拡張項目（X-PHONETIC-LAST-NAME／X-PHONETIC-FIRST-NAME）として保存します。iPhone標準の連絡先アプリやGoogleコンタクトはこの項目を読み取り、五十音順の並び替え用の読みとして使えることを確認しています。対応していないアプリではふりがな項目が単に無視されます（名前自体は通常どおり表示されます）。</p>
+    <h3>Q. 名刺の写真をそのまま連絡先の画像に設定できますか？</h3>
+    <p>A. できます。「名刺の写真を連絡先の画像として保存する」にチェックが入っていると、各vCardに写真データ（縮小したJPEG）を埋め込みます。連絡先アプリに取り込むと、その名刺の写真がそのまま連絡先の画像として設定されます（取り込み後に連絡先アプリ側で画像の切り取り範囲を調整できる場合があります）。写真が無いカードには設定されません。</p>
+    <h3>Q. 「全件を1つのvCardファイル」と「ZIP」はどう違いますか？</h3>
+    <p>A. 「全件を1つのvCardファイル」は、全員分の連絡先を1つの.vcfファイルにまとめたものです。iPhoneの連絡先アプリやGoogleコンタクトの多くは、この形式のファイルを開くだけで全員を一度にまとめて取り込めます（取り込み前に件数の確認画面が出ます）。「ZIP」は1人1ファイルの.vcfに分けてZIPにまとめたもので、特定の1人だけを誰かに共有したい場合などに使います。</p>
+    <h3>Q. 氏名を入力していないカードはどうなりますか？</h3>
+    <p>A. 書き出しの対象から除外されます（一覧にはそのまま残り、後から入力すれば次回の書き出しに含まれます）。会社名だけ分かっていて氏名が未定の名刺は、ひとまず会社名を氏名欄に入れておくなど、分かる範囲で入力してください。</p>
+    <h3>Q. 電話番号のハイフンなどは自動で整えられますか？</h3>
+    <p>A. いいえ。入力した文字をそのままvCardに書き込みます（ハイフンの追加・削除や桁数のチェックは行いません）。見た目を統一したい場合は、入力時にハイフンの位置をそろえて入力してください。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop business card photos, or tap to choose them (or use "Add one without a photo").</li>
+      <li>Looking at each card's photo, type in the name, phonetic reading, company, phone numbers, email, etc. Everything you type stays on this device and is never sent anywhere.</li>
+      <li>Use each card's "Save this one" button for a single contact, or "Download all as one vCard file" to import everyone into your phone at once.</li>
+      <li>Open the resulting .vcf file on your phone (or email it to yourself) to see the "add to contacts" screen.</li>
+    </ol>
+    <h3>Q. Does it read the text automatically (OCR)?</h3>
+    <p>A. No. This tool does not perform OCR. The business card photo is shown only as a visual reference while you type; every field is entered by hand. You avoid OCR misreads, but you still have to type the details yourself.</p>
+    <h3>Q. Are my photos or the details I type sent anywhere?</h3>
+    <p>A. No. Displaying the photo, holding what you type, and building the vCard file all happen inside this browser on your device (only anonymous, cookie-free page-view counts are collected for this page). Reloading or closing the page clears what you've entered, so finish and download before you close it.</p>
+    <h3>Q. Which contact apps use the phonetic reading field?</h3>
+    <p>A. The reading is stored as vCard's X-PHONETIC-LAST-NAME / X-PHONETIC-FIRST-NAME extension fields. iPhone's built-in Contacts app and Google Contacts both read this and use it for kana-based sorting. Apps that don't support it simply ignore the field; the name itself still displays normally.</p>
+    <h3>Q. Can the card photo itself become the contact's photo?</h3>
+    <p>A. Yes. With "Save the card photo as the contact's image" checked, each vCard embeds a resized JPEG of the photo. When imported, that photo becomes the contact's picture (some apps let you adjust the crop after importing). Cards with no photo get none.</p>
+    <h3>Q. What's the difference between the single merged file and the ZIP?</h3>
+    <p>A. The single vCard file bundles everyone into one .vcf; most phone contact apps can open it and import everyone at once (usually after a confirmation screen showing how many contacts). The ZIP instead contains one .vcf per person, useful when you want to share just one contact with someone.</p>
+    <h3>Q. What happens to a card with no name entered?</h3>
+    <p>A. It's left out of both downloads (it stays in the list, so filling in the name later includes it next time). If you only know the company name, you could put that in the name field for now.</p>
+    <h3>Q. Does it reformat phone numbers (hyphens etc.)?</h3>
+    <p>A. No. Whatever you type is written into the vCard as-is, with no added/removed hyphens or digit checks.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../meishi-matome/">名刺の写真を実寸サイズでA4にまとめて印刷</a> — 名刺を紙のまま保管・コピーしたいときはこちら（連絡先ファイルではなく印刷用のPDFを作成します）。</li>
+      <li><a href="../shorui-scan/">書類写真のスキャン風補正</a> — 名刺の四隅をドラッグして輪郭ぎりぎりまで切り出し、まっすぐ・見やすくしてから本ツールに読み込ませると見本として見やすくなります。</li>
+      <li><a href="../kuronuri/">写真の一部をドラッグで黒塗り（マスキング）</a> — 名刺に書かれた個人の携帯番号など、連絡先の画像に写したくない部分を先に黒塗りしたいときに。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../meishi-matome/">Print Business Card Photos at True Size on A4</a> — For keeping a paper copy instead of a contact file (builds a printable PDF, not a vCard).</li>
+      <li><a href="../shorui-scan/">Document Scan Correction</a> — Straighten and crop the card photo first so it's easier to read as a reference while typing.</li>
+      <li><a href="../kuronuri/">Photo Black-Out (Masking) Tool</a> — Black out a personal number on the card before it becomes the contact photo.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">写真と入力内容はサーバーに送信されません。vCardファイルの作成もこの端末のブラウザだけで行われます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"文字は自動で読み取ってもらえますか？（OCR機能はありますか）","acceptedAnswer":{"@type":"Answer","text":"いいえ。このツールは文字認識（OCR）を行いません。名刺の写真は入力時に見る見本として表示するだけで、氏名や電話番号などはすべて手で入力します。"}},
+    {"@type":"Question","name":"名刺の写真や入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の表示、入力内容の保持、vCardファイルの作成まで、すべてこの端末のブラウザの中だけで行われます（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。ページを閉じると入力内容は消えます。"}},
+    {"@type":"Question","name":"「ふりがな」はどの連絡先アプリで使われますか？","acceptedAnswer":{"@type":"Answer","text":"読みはvCardの拡張項目（X-PHONETIC-LAST-NAME／X-PHONETIC-FIRST-NAME）として保存します。iPhone標準の連絡先アプリやGoogleコンタクトはこの項目を読み取り、五十音順の並び替え用の読みとして使えます。対応していないアプリでは単に無視されます。"}},
+    {"@type":"Question","name":"名刺の写真をそのまま連絡先の画像に設定できますか？","acceptedAnswer":{"@type":"Answer","text":"できます。チェックを入れると各vCardに縮小したJPEG画像を埋め込み、取り込むとその写真が連絡先の画像として設定されます。写真が無いカードには設定されません。"}},
+    {"@type":"Question","name":"「全件を1つのvCardファイル」と「ZIP」はどう違いますか？","acceptedAnswer":{"@type":"Answer","text":"1つのvCardファイルは全員分を1つの.vcfにまとめたもので、スマートフォンで開くと全員を一度に取り込めます。ZIPは1人1ファイルに分けたもので、特定の1人だけを共有したい場合に使います。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* =========================================================
+   ZIP書き出し（deflate-raw圧縮）：既存のxlsx系ツールのbuildZipを
+   {name,bytes}配列を受け取る汎用形のまま流用（xlsxパーツではなく.vcfを格納）
+   ========================================================= */
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+
+/* =========================================================
+   vCard生成（新規実装）
+   ========================================================= */
+function vEsc(s){
+  return String(s==null?"":s)
+    .replace(/\\/g,"\\\\")
+    .replace(/\r\n|\r|\n/g,"\\n")
+    .replace(/,/g,"\\,")
+    .replace(/;/g,"\\;");
+}
+function foldLine(line){
+  var bytes=new TextEncoder().encode(line);
+  if(bytes.length<=75) return line;
+  var parts=[]; var i=0; var cap=75;
+  while(i<bytes.length){
+    var end=Math.min(i+cap, bytes.length);
+    while(end<bytes.length && (bytes[end]&0xC0)===0x80) end--;
+    if(end<=i) end=i+1;
+    parts.push(bytes.slice(i,end));
+    i=end;
+    cap=74;
+  }
+  var dec=new TextDecoder();
+  return parts.map(function(p,idx){ return (idx===0?"":" ")+dec.decode(p); }).join("\r\n");
+}
+function bytesToBase64(bytes){
+  var CHUNK=0x8000, strs=[];
+  for(var i=0;i<bytes.length;i+=CHUNK){
+    strs.push(String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+CHUNK, bytes.length))));
+  }
+  return btoa(strs.join(""));
+}
+function isoBasic(d){
+  return d.toISOString().replace(/[-:]/g,"").replace(/\.\d+Z$/,"Z");
+}
+function hasName(f){ return !!(((f.sei||"")+(f.mei||"")).trim()); }
+function buildVCard(f, embedPhotoBytes){
+  var lines=[];
+  lines.push("BEGIN:VCARD");
+  lines.push("VERSION:3.0");
+  var sei=(f.sei||"").trim(), mei=(f.mei||"").trim();
+  lines.push("N:"+vEsc(sei)+";"+vEsc(mei)+";;;");
+  var fn=(sei+(sei&&mei?" ":"")+mei).trim() || (f.org||"").trim() || "名刺";
+  lines.push("FN:"+vEsc(fn));
+  var seiKana=(f.seiKana||"").trim(), meiKana=(f.meiKana||"").trim();
+  if(seiKana) lines.push("X-PHONETIC-LAST-NAME:"+vEsc(seiKana));
+  if(meiKana) lines.push("X-PHONETIC-FIRST-NAME:"+vEsc(meiKana));
+  var org=(f.org||"").trim(), dept=(f.dept||"").trim();
+  if(org||dept) lines.push("ORG:"+vEsc(org)+(dept?";"+vEsc(dept):""));
+  var ttl=(f.title||"").trim();
+  if(ttl) lines.push("TITLE:"+vEsc(ttl));
+  var tel1=(f.tel1||"").trim();
+  if(tel1) lines.push("TEL;TYPE=CELL,VOICE:"+vEsc(tel1));
+  var tel2=(f.tel2||"").trim();
+  if(tel2) lines.push("TEL;TYPE=WORK,VOICE:"+vEsc(tel2));
+  var fax=(f.fax||"").trim();
+  if(fax) lines.push("TEL;TYPE=WORK,FAX:"+vEsc(fax));
+  var email=(f.email||"").trim();
+  if(email) lines.push("EMAIL;TYPE=INTERNET:"+vEsc(email));
+  var url=(f.url||"").trim();
+  if(url) lines.push("URL:"+vEsc(url));
+  var post=(f.post||"").trim(), addr=(f.addr||"").trim();
+  if(post||addr) lines.push("ADR;TYPE=WORK:;;"+vEsc(addr)+";;;"+vEsc(post)+";");
+  var memo=(f.memo||"").trim();
+  if(memo) lines.push("NOTE:"+vEsc(memo));
+  if(embedPhotoBytes && embedPhotoBytes.length) lines.push("PHOTO;ENCODING=b;TYPE=JPEG:"+bytesToBase64(embedPhotoBytes));
+  lines.push("REV:"+isoBasic(new Date()));
+  lines.push("END:VCARD");
+  return lines.map(foldLine).join("\r\n")+"\r\n";
+}
+function safeFileName(s){
+  s=(s||"").replace(/[\\\/:*?"<>|\u0000-\u001f]/g,"").trim();
+  return s || "contact";
+}
+
+/* =========================================================
+   状態・UI
+   ========================================================= */
+var lang="ja";
+var uid=1;
+var cards=[]; // {id, bitmap, w, h, rotate, error, fileName, f:{...}, $root}
+
+var T={
+  ja:{
+    title:"名刺の写真を見ながら連絡先ファイル(vCard)をまとめて作成",
+    sub:"名刺の写真を見ながら、氏名・ふりがな・会社名・電話番号などをその場で入力し、スマートフォンの連絡先にそのまま取り込めるvCard(.vcf)ファイルを作成します。文字認識(OCR)は使わないため誤読の心配がありません。入力内容や写真はこの端末の中だけで処理されます。",
+    h_source:"名刺の写真を追加", dropText:"ここに名刺の写真をドラッグ＆ドロップ、またはクリックして選択（複数可）",
+    formatNote:"JPEG・PNG・WebPに対応。写真は入力中の見本として使うだけで、文字を自動では読み取りません（OCRなし）。写真が無くても「写真なしで1件追加」から入力できます。",
+    addBlankBtn:"写真なしで1件追加", embedChkLabel:"名刺の写真を連絡先の画像として保存する",
+    h_list_prefix:"入力（", h_list_suffix:"件）", clearBtn:"すべてクリア",
+    h_out:"書き出し", mergedBtn:"全件を1つのvCardファイルでダウンロード（一括インポート用）", zipBtn:"1件ずつのファイルをZIPでダウンロード",
+    feedback:"フィードバックはこちら", privacy:"写真と入力内容はサーバーに送信されません。vCardファイルの作成もこの端末のブラウザだけで行われます。",
+    loadError:"読み込めませんでした", filesAdded:function(n){return n+"件読み込みました"},
+    rotateTitle:"回転", removeTitle:"削除", saveOneTitle:"この1件を保存",
+    noPhoto:"写真なし",
+    lbl_sei:"姓", lbl_mei:"名", lbl_seiKana:"姓（フリガナ）", lbl_meiKana:"名（フリガナ）",
+    lbl_org:"会社名", lbl_dept:"部署", lbl_title:"役職",
+    lbl_tel1:"携帯電話", lbl_tel2:"会社電話（直通・代表）", lbl_fax:"FAX", lbl_email:"メール", lbl_url:"ウェブサイト",
+    lbl_post:"郵便番号", lbl_addr:"住所", lbl_memo:"メモ（名刺交換した日や経緯など）",
+    skipNote:"氏名が未入力のため書き出しから除外されます",
+    summaryText:function(n,skip){return "入力済み "+n+"件を書き出します"+(skip?"（氏名未入力の"+skip+"件は除外）":"")},
+    noneToExport:"氏名を入力したカードがありません。",
+    done:"ダウンロードしました。",
+    confirmClear:"すべての入力内容を削除します。よろしいですか？"
+  },
+  en:{
+    title:"Fill In Contact Details While Viewing Business Card Photos, Export as vCard",
+    sub:"Looking at each business card photo, type in the name, phonetic reading, company, phone numbers, etc., and export vCard (.vcf) files you can import straight into your phone's contacts. No OCR is used, so there's no risk of a misread. Everything is processed on this device.",
+    h_source:"Add business card photos", dropText:"Drag and drop card photos here, or click to choose (multiple allowed)",
+    formatNote:"JPEG, PNG and WebP are supported. The photo is only a visual reference while you type — no text is read automatically (no OCR). You can also add an entry with no photo.",
+    addBlankBtn:"Add one without a photo", embedChkLabel:"Save the card photo as the contact's image",
+    h_list_prefix:"Entries (", h_list_suffix:")", clearBtn:"Clear all",
+    h_out:"Export", mergedBtn:"Download all as one vCard file (for bulk import)", zipBtn:"Download one file per person as a ZIP",
+    feedback:"Feedback", privacy:"Photos and what you type are never sent to a server. The vCard files are built entirely in this browser.",
+    loadError:"Could not load", filesAdded:function(n){return "Added "+n+" file(s)"},
+    rotateTitle:"Rotate", removeTitle:"Remove", saveOneTitle:"Save this one",
+    noPhoto:"No photo",
+    lbl_sei:"Last name", lbl_mei:"First name", lbl_seiKana:"Last name (reading)", lbl_meiKana:"First name (reading)",
+    lbl_org:"Company", lbl_dept:"Department", lbl_title:"Title",
+    lbl_tel1:"Mobile", lbl_tel2:"Work phone", lbl_fax:"Fax", lbl_email:"Email", lbl_url:"Website",
+    lbl_post:"Postal code", lbl_addr:"Address", lbl_memo:"Note (how/when you met, etc.)",
+    skipNote:"No name yet — left out of the export",
+    summaryText:function(n,skip){return "Exporting "+n+" entr"+(n===1?"y":"ies")+(skip?" ("+skip+" without a name skipped)":"")},
+    noneToExport:"No entries have a name yet.",
+    done:"Downloaded.",
+    confirmClear:"This clears everything you've entered. Continue?"
+  }
+};
+
+/* ---------- 画像読み込み（meishi-matome等と同じ手法） ---------- */
+function loadViaImgTag(file){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){ resolve(img); };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error("img-load-failed")); };
+    img.src=url;
+  });
+}
+function getBitmapSize(bmp){
+  if("naturalWidth" in bmp) return {w:bmp.naturalWidth, h:bmp.naturalHeight};
+  return {w:bmp.width, h:bmp.height};
+}
+async function loadImageEntry(file){
+  var bmp=null, err=null;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }
+  catch(e1){
+    try{ bmp = await createImageBitmap(file); }
+    catch(e2){
+      try{ bmp = await loadViaImgTag(file); }
+      catch(e3){ err = T[lang].loadError; }
+    }
+  }
+  var size = bmp ? getBitmapSize(bmp) : {w:0,h:0};
+  return { bitmap:bmp, w:size.w, h:size.h, error: err || (size.w===0?T[lang].loadError:null) };
+}
+function rotatedSize(entry){
+  if(entry.rotate%180===90) return {w:entry.h,h:entry.w};
+  return {w:entry.w,h:entry.h};
+}
+function drawRotated(ctx, bmp, entryW, entryH, rotate, dx, dy, dw, dh){
+  ctx.save();
+  ctx.translate(dx+dw/2, dy+dh/2);
+  ctx.rotate(rotate*Math.PI/180);
+  var rs = (rotate%180===90) ? {w:dh,h:dw} : {w:dw,h:dh};
+  ctx.drawImage(bmp, -rs.w/2, -rs.h/2, rs.w, rs.h);
+  ctx.restore();
+}
+function makeThumbDataUrl(entry){
+  if(!entry.bitmap) return null;
+  var SIZE=144;
+  var c=document.createElement("canvas"); c.width=SIZE; c.height=SIZE;
+  var ctx=c.getContext("2d");
+  ctx.fillStyle="#f2f2ee"; ctx.fillRect(0,0,SIZE,SIZE);
+  var rs=rotatedSize(entry);
+  var scale=Math.max(SIZE/rs.w, SIZE/rs.h);
+  var dw=rs.w*scale, dh=rs.h*scale;
+  var dx=(SIZE-dw)/2, dy=(SIZE-dh)/2;
+  try{ drawRotated(ctx, entry.bitmap, entry.w, entry.h, entry.rotate, dx, dy, dw, dh); }
+  catch(e){ return null; }
+  return c.toDataURL("image/jpeg",0.75);
+}
+function canvasToBlob(canvas, type, quality){
+  return new Promise(function(resolve){ canvas.toBlob(resolve, type, quality); });
+}
+/* 連絡先の画像として埋め込む縮小JPEGを作る（埋め込みvCard自体が大きくなりすぎないよう長辺480pxに制限） */
+async function makeEmbedJpeg(entry){
+  var rs=rotatedSize(entry);
+  var rotCanvas=document.createElement("canvas");
+  rotCanvas.width=Math.max(1,Math.round(rs.w));
+  rotCanvas.height=Math.max(1,Math.round(rs.h));
+  var rctx=rotCanvas.getContext("2d");
+  rctx.save();
+  rctx.translate(rotCanvas.width/2, rotCanvas.height/2);
+  rctx.rotate(entry.rotate*Math.PI/180);
+  rctx.drawImage(entry.bitmap, -entry.w/2, -entry.h/2, entry.w, entry.h);
+  rctx.restore();
+
+  var TARGET_LONG=480;
+  var longSide=Math.max(rotCanvas.width, rotCanvas.height);
+  var scale=Math.min(1, TARGET_LONG/longSide);
+  var outW=Math.max(1,Math.round(rotCanvas.width*scale));
+  var outH=Math.max(1,Math.round(rotCanvas.height*scale));
+  var outCanvas=rotCanvas;
+  if(scale<1){
+    outCanvas=document.createElement("canvas");
+    outCanvas.width=outW; outCanvas.height=outH;
+    outCanvas.getContext("2d").drawImage(rotCanvas,0,0,outW,outH);
+  }
+  var blob=await canvasToBlob(outCanvas,"image/jpeg",0.82);
+  var buf=await blob.arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+/* ---------- 書き出し対象の取得 ---------- */
+function exportableCards(){ return cards.filter(function(c){ return hasName(c.f); }); }
+
+/* ---------- サマリー更新 ---------- */
+function updateSummary(){
+  var n=exportableCards().length, skip=cards.length-n;
+  $("summary").textContent = n>0 ? T[lang].summaryText(n,skip) : T[lang].noneToExport;
+  $("mergedBtn").disabled = n===0;
+  $("zipBtn").disabled = n===0;
+  $("outCard").style.display = cards.length>0 ? "" : "none";
+  $("listCard").style.display = cards.length>0 ? "" : "none";
+  $("cardCount").textContent = String(cards.length);
+}
+
+/* ---------- 1件分のvCardを作る（写真埋め込み込み） ---------- */
+async function buildOneVCard(card){
+  var embedBytes=null;
+  if($("embedChk").checked && card.bitmap && !card.error){
+    try{ embedBytes = await makeEmbedJpeg(card); }catch(e){ embedBytes=null; }
+  }
+  return buildVCard(card.f, embedBytes);
+}
+
+/* ---------- フィールド定義 ---------- */
+var FIELD_ROWS=[
+  [{k:"sei",labelKey:"lbl_sei"},{k:"mei",labelKey:"lbl_mei"}],
+  [{k:"seiKana",labelKey:"lbl_seiKana"},{k:"meiKana",labelKey:"lbl_meiKana"}],
+  [{k:"org",labelKey:"lbl_org"},{k:"dept",labelKey:"lbl_dept"}],
+  [{k:"title",labelKey:"lbl_title"}],
+  [{k:"tel1",labelKey:"lbl_tel1"},{k:"tel2",labelKey:"lbl_tel2"},{k:"fax",labelKey:"lbl_fax"}],
+  [{k:"email",labelKey:"lbl_email"},{k:"url",labelKey:"lbl_url"}],
+  [{k:"post",labelKey:"lbl_post"},{k:"addr",labelKey:"lbl_addr"}]
+];
+
+/* ---------- カード行の生成（一度だけ作り、以後は入力欄を破壊しない） ---------- */
+function createCardRow(card){
+  var root=document.createElement("div");
+  root.className="ccard";
+
+  var head=document.createElement("div");
+  head.className="chead";
+
+  var thumbWrap=document.createElement("div");
+  function renderThumb(){
+    thumbWrap.innerHTML="";
+    var url=makeThumbDataUrl(card);
+    if(url){
+      var img=document.createElement("img");
+      img.src=url; img.alt="";
+      thumbWrap.appendChild(img);
+    } else {
+      var ph=document.createElement("div");
+      ph.className="noimg";
+      ph.textContent=T[lang].noPhoto;
+      thumbWrap.appendChild(ph);
+    }
+  }
+  renderThumb();
+  head.appendChild(thumbWrap);
+
+  var info=document.createElement("div");
+  info.className="info";
+  var fname=document.createElement("div");
+  fname.className="fname";
+  fname.textContent=card.fileName || "";
+  info.appendChild(fname);
+  var filePrevEl=document.createElement("div");
+  filePrevEl.className="filePreview";
+  info.appendChild(filePrevEl);
+  head.appendChild(info);
+
+  var btns=document.createElement("div");
+  btns.className="btns";
+  if(card.bitmap){
+    var rotBtn=document.createElement("button");
+    rotBtn.type="button"; rotBtn.textContent="⟳"; rotBtn.title=T[lang].rotateTitle;
+    rotBtn.addEventListener("click",function(){ card.rotate=(card.rotate+90)%360; renderThumb(); });
+    btns.appendChild(rotBtn);
+  }
+  var rmBtn=document.createElement("button");
+  rmBtn.type="button"; rmBtn.textContent="✕"; rmBtn.title=T[lang].removeTitle; rmBtn.className="rm";
+  rmBtn.addEventListener("click",function(){
+    var idx=cards.indexOf(card);
+    if(idx>=0) cards.splice(idx,1);
+    root.remove();
+    updateSummary();
+  });
+  btns.appendChild(rmBtn);
+  head.appendChild(btns);
+  root.appendChild(head);
+
+  var grid=document.createElement("div");
+  grid.className="fgrid";
+  var inputs={};
+  FIELD_ROWS.forEach(function(row){
+    row.forEach(function(def){
+      var item=document.createElement("div");
+      item.className="fitem";
+      if(row.length===1) item.classList.add("full");
+      var label=document.createElement("label");
+      label.textContent=T[lang][def.labelKey];
+      label.setAttribute("data-fieldlabel", def.labelKey);
+      item.appendChild(label);
+      var inp=document.createElement("input");
+      inp.type = (def.k==="email") ? "email" : (def.k==="url") ? "url" : "text";
+      inp.value = card.f[def.k] || "";
+      inp.addEventListener("input",function(){
+        card.f[def.k]=inp.value;
+        updatePreview();
+        updateSummary();
+      });
+      item.appendChild(inp);
+      grid.appendChild(item);
+      inputs[def.k]=inp;
+    });
+  });
+  var memoItem=document.createElement("div");
+  memoItem.className="fitem full";
+  var memoLabel=document.createElement("label");
+  memoLabel.textContent=T[lang].lbl_memo;
+  memoLabel.setAttribute("data-fieldlabel","lbl_memo");
+  memoItem.appendChild(memoLabel);
+  var memoInp=document.createElement("textarea");
+  memoInp.rows=2;
+  memoInp.value=card.f.memo||"";
+  memoInp.addEventListener("input",function(){ card.f.memo=memoInp.value; });
+  memoItem.appendChild(memoInp);
+  grid.appendChild(memoItem);
+  inputs.memo=memoInp;
+  root.appendChild(grid);
+
+  var foot=document.createElement("div");
+  foot.className="cfoot";
+  var saveBtn=document.createElement("button");
+  saveBtn.type="button"; saveBtn.className="secondary"; saveBtn.textContent=T[lang].saveOneTitle;
+  saveBtn.addEventListener("click",async function(){
+    if(!hasName(card.f)) return;
+    saveBtn.disabled=true;
+    try{
+      var text=await buildOneVCard(card);
+      downloadText(text, safeFileName(((card.f.sei||"")+(card.f.mei||"")).trim())+".vcf");
+    } finally { saveBtn.disabled=false; }
+  });
+  foot.appendChild(saveBtn);
+  root.appendChild(foot);
+
+  function updatePreview(){
+    var skip = !hasName(card.f);
+    filePrevEl.textContent = skip ? T[lang].skipNote : "→ "+safeFileName(((card.f.sei||"")+(card.f.mei||"")).trim())+".vcf";
+    filePrevEl.className = "filePreview" + (skip ? " warnTag" : "");
+  }
+  updatePreview();
+
+  card.$root=root;
+  card.$inputs=inputs;
+  card.$filePrevEl=filePrevEl;
+  card.$renderThumb=renderThumb;
+  card.$updatePreview=updatePreview;
+  return root;
+}
+
+/* ---------- ファイル追加 ---------- */
+function newBlankField(){
+  return { sei:"", mei:"", seiKana:"", meiKana:"", org:"", dept:"", title:"",
+    tel1:"", tel2:"", fax:"", email:"", url:"", post:"", addr:"", memo:"" };
+}
+function addCardToList(card){
+  cards.push(card);
+  $("cardsWrap").appendChild(createCardRow(card));
+  updateSummary();
+}
+async function addFiles(fileList){
+  var files=Array.prototype.slice.call(fileList);
+  if(files.length===0) return;
+  $("loadStatus").textContent="…";
+  var added=0;
+  for(var i=0;i<files.length;i++){
+    var loaded=await loadImageEntry(files[i]);
+    var card={ id:uid++, bitmap:loaded.bitmap, w:loaded.w, h:loaded.h, rotate:0, error:loaded.error,
+      fileName: files[i].name, f:newBlankField() };
+    addCardToList(card);
+    added++;
+  }
+  $("loadStatus").textContent=T[lang].filesAdded(added);
+}
+function addBlankCard(){
+  var card={ id:uid++, bitmap:null, w:0, h:0, rotate:0, error:null, fileName:"", f:newBlankField() };
+  addCardToList(card);
+}
+
+/* ---------- ダウンロード ---------- */
+function downloadBytes(bytes, filename, mime){
+  var blob=new Blob([bytes],{type:mime});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+}
+function downloadText(text, filename){
+  downloadBytes(new TextEncoder().encode(text), filename, "text/vcard");
+}
+
+async function downloadMerged(){
+  var list=exportableCards();
+  if(list.length===0) return;
+  var btn=$("mergedBtn");
+  btn.disabled=true;
+  var status=$("summary");
+  try{
+    var parts=[];
+    for(var i=0;i<list.length;i++){ parts.push(await buildOneVCard(list[i])); }
+    downloadText(parts.join(""), "meishi-renraku.vcf");
+    status.textContent=T[lang].done;
+  } finally { updateSummary(); }
+}
+async function downloadZip(){
+  var list=exportableCards();
+  if(list.length===0) return;
+  var btn=$("zipBtn");
+  btn.disabled=true;
+  var status=$("summary");
+  try{
+    var files=[]; var usedNames={};
+    for(var i=0;i<list.length;i++){
+      var text=await buildOneVCard(list[i]);
+      var base=safeFileName(((list[i].f.sei||"")+(list[i].f.mei||"")).trim());
+      var name=base, n=2;
+      while(usedNames[name]){ name=base+"_"+n; n++; }
+      usedNames[name]=true;
+      files.push({name:name+".vcf", bytes:new TextEncoder().encode(text)});
+    }
+    var zipBytes=await buildZip(files);
+    downloadBytes(zipBytes, "meishi-vcard.zip", "application/zip");
+    status.textContent=T[lang].done;
+  } finally { updateSummary(); }
+}
+
+/* ---------- イベント配線 ---------- */
+var dropZone=$("dropZone");
+var fileInput=$("fileInput");
+dropZone.addEventListener("click",function(){fileInput.click()});
+fileInput.addEventListener("change",function(){
+  if(fileInput.files && fileInput.files.length) addFiles(fileInput.files);
+  fileInput.value="";
+});
+["dragenter","dragover"].forEach(function(ev){
+  dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.add("over")});
+});
+["dragleave","drop"].forEach(function(ev){
+  dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.remove("over")});
+});
+dropZone.addEventListener("drop",function(e){
+  var dt=e.dataTransfer;
+  if(dt && dt.files && dt.files.length) addFiles(dt.files);
+});
+$("addBlankBtn").addEventListener("click",addBlankCard);
+$("clearBtn").addEventListener("click",function(){
+  if(cards.length && !window.confirm(T[lang].confirmClear)) return;
+  cards=[];
+  $("cardsWrap").innerHTML="";
+  $("loadStatus").textContent="";
+  updateSummary();
+});
+$("mergedBtn").addEventListener("click",downloadMerged);
+$("zipBtn").addEventListener("click",downloadZip);
+
+/* ---------- 言語切替 ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  /* 既存カードのラベル・プレースホルダー文言・プレビュー文言も切替 */
+  cards.forEach(function(card){
+    if(!card.$root) return;
+    var labelEls=card.$root.querySelectorAll("[data-fieldlabel]");
+    for(var j=0;j<labelEls.length;j++){
+      var lk=labelEls[j].getAttribute("data-fieldlabel");
+      if(T[lang][lk]!==undefined) labelEls[j].textContent=T[lang][lk];
+    }
+    var rmB=card.$root.querySelector(".chead button.rm");
+    if(rmB) rmB.title=T[lang].removeTitle;
+    var rotB=card.$root.querySelector(".chead button:not(.rm)");
+    if(rotB) rotB.title=T[lang].rotateTitle;
+    var saveB=card.$root.querySelector(".cfoot button");
+    if(saveB) saveB.textContent=T[lang].saveOneTitle;
+    if(card.$renderThumb) card.$renderThumb();
+    if(card.$updatePreview) card.$updatePreview();
+  });
+  updateSummary();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0; li<langBtns.length; li++){
+  langBtns[li].addEventListener("click",function(){ lang=this.getAttribute("data-lang"); applyLang(); });
+}
+
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
