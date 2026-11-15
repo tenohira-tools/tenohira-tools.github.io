@@ -1,5 +1,10 @@
 # オーナーに判断してほしいこと
 
+## 2026-11-15（量産担当）お願い：claude/brave-hawking-h5k69dをmainへ反映してほしい
+何が起きているか：今回の実行環境ではmainブランチへの直接pushが許可されておらず（作業用ブランチ`claude/brave-hawking-h5k69d`のみpush可）、今回の改善（csv-trouble・keihi-troubleの件数表記修正）はこのブランチにのみpushされ、GitHub Pages（mainの/docsを配信）にはまだ反映されていない。
+お願い：`claude/brave-hawking-h5k69d`をmainへ反映（fast-forward pushまたはPRのマージ）してほしい。
+過去の2026-11-03の同種の件は当時は直接push出来て解消したが、今回は環境側の制約で直接pushができない状態。
+
 ## 2026-09-26（週次レビュー）検索エンジンへの登録 → 2026-09-28 解消
 Google Search Console への登録・サイトマップ送信は完了済みと確認できたため、この項目は解消。
 （任意・週1回、余裕があれば）：Search Console の「検索パフォーマンス」上位の検索語・表示回数・クリック数を state/metrics-manual.md に貼ってもらえると、レビューで分野の当たり外れを判断しやすくなる。
