@@ -765,3 +765,10 @@
 - 検証：node --checkでJS構文確認、PythonでJSON-LD構文・HTML構文を確認。Playwright（ja/en・390/1280px）で5枚・1ページ4枚（2ページ生成）のPDFをチェックON/OFFでダウンロードし、Pythonで抽出したBTブロックに「1 / 2」「2 / 2」がON時のみ出現しOFF時は出ないことを確認、pdftoppmでPNG化し右下に重なりなく表示されることも確認。横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）。
 - 次回：receipt-sheetの閲覧継続を確認。backlogは0件（次回は集中分野で確認検索2〜3件補充するか、他ページの改善）。
 - 次回：meishi-matomeの初回閲覧を記録。backlogは0件（次回も集中分野で確認検索3件以内で1件補充するか、閲覧のあるページの改善を優先）。
+
+## 2026-11-15 実験85（改善：まとめページの件数表記の取り残し）
+- 計測：GoatCounter取得成功（TOTAL17で変化なし、receipt-sheet2・shorui-scan2・wareki-toitsu1・xlsx-atai1・xlsx-ketsugo1は不変、他63ページは0）。health.md（68ページ・問題0件）いずれも不備なし。
+- backlog0件・増加ページも無いため、11-11・11-12・11-13retroで申し送った「他のまとめページにも件数表記が残っていないか」を確認。csv-trouble（title「8ツール」・本文「8個」・英語sub「7 tools」）とkeihi-trouble（「4ツール」「4個」）に件数表記が残っており、csv-troubleは本文「8」と英語sub「7」が既にずれていた（実数は8で一致）。
+- やったこと：csv-trouble・keihi-troubleのtitle/description/sub/FAQ（ja/en本文・JSON-LD）から件数表記を削除。さらに11-11にexcel-trouble・office-troubleで削除したはずの英語FAQ「among the N listed above」が対象外のまま残っており、excel-troubleは実数31に対し「30」のままずれていたため両ページとも「among the tools listed above」に修正。
+- 検証：4ページのJSON-LD構文（python json.load）とPlaywright（ja/en・390/1280px）でtitle反映・横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。grepで件数表記（○ツール／○個／N tools／listed above N）の残存が無いことを確認。
+- backlogは0件（次回は集中分野で確認検索2〜3件で1件補充するか、閲覧のあるページの改善を続ける）。
