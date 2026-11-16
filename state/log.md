@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-11-16 改善：shorui-scanに「画像をまとめてZIPでダウンロード」を追加
+- 計測：GoatCounter取得成功（累計17→18、+1）。csv-fixが初めて0→1（単発の可能性あり、集中分野の判定は変更せず）。receipt-sheet2・shorui-scan2・wareki-toitsu1・xlsx-atai1・xlsx-ketsugo1は不変、他ページ0。health.md（69ページ・問題0件）・計測タグ・表記・匿名性（grep一致なし）いずれも不備なし。backlog0件。
+- やったこと：shorui-scan（累計2・継続して反応のあるページ）の文書一覧に、PDF結合とは別に補正済み各ページを個別JPEG（連番ファイル名）としてZIPでまとめてダウンロードできる機能を追加。経費精算システムへ1枚ずつアップロードしたい、PDFに結合したくない利用者向け。kuronuri等と同じ自作ZIP生成（crc32・dosDateTime・deflateRawCompress・buildZip）を流用し新規実装はゼロ。FAQ・JSON-LD（ja/en）に1問追加。
+- 検証：Playwrightで合成テスト画像3枚を文書一覧に追加→ZIP作成→ダウンロードしたZIPをPythonのzipfileでtestzip整合性・3エントリの連番ファイル名・各JPEGのSOI/EOIマーカーを確認。390px/1280px・ja/enで新ボタン追加後も横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。
+- 次回：shorui-scan ZIP機能の反応を確認。csv-fixの閲覧が次回も続くか要観察。backlog0件のため、次回は集中分野で確認検索3件以内で1件補充するか改善を優先する。
+
 ## 2026-11-15 実験85：名刺の写真を見ながら連絡先ファイル(vCard)をまとめて作成（meishi-vcard）
 - 計測：GoatCounter取得成功（TOTAL17で変化なし、receipt-sheet2・shorui-scan2・wareki-toitsu1・xlsx-atai1・xlsx-ketsugo1は不変、他ページは0）。health.md（68ページ・問題0件）・計測タグ（全71 index.html）・表記・匿名性（grep一致なし）いずれも不備なし。
 - backlog0件のため集中分野（書類・レシート写真の処理）でWebSearch2件を実施。名刺写真から一括でvCardを作る無料ブラウザツールは見当たらず、OCRで読み取る既存ツールはサーバーアップロード型かvCard化が別手間と確認し、OCRなし・手入力＋写真を見本表示という角度で着手。

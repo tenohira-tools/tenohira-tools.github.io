@@ -827,6 +827,12 @@
           "views_this_week": 0,
           "views_total": 2,
           "class": "改善実施（backlog0件のため、増加のないまま横ばいの本ページを改善。文書一覧に「各ページの右下にページ番号を入れる」チェックを追加し、オンでPDFを書き出すと各ページ右下に「1 / 3」形式の番号を印字する。数字のみのためHelvetica標準フォントを参照し日本語フォント埋め込み不要。buildPdfにFont/XObjectを条件付きで追加し、文字幅は等幅近似（0.556em）で右寄せ。Playwrightで合成2枚をPDF化し、チェックON/OFFそれぞれのPDFバイト列をPythonで直接パースしてBTブロックの文字列（1 / 2・2 / 2）とチェックOFF時に/Font自体が無いことを確認、さらにpdftoppmで実際にレンダリングしたPNGを目視確認。390/1280px・ja/enで横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）。FAQ（ja/en）・JSON-LDにも追記。"
+        },
+        {
+          "date": "2026-11-16",
+          "views_this_week": 0,
+          "views_total": 2,
+          "class": "改善実施（文書一覧に「画像をまとめてZIPでダウンロード」を追加。PDFに結合せず、補正済みの各ページを個別のJPEGファイル（連番付き）としてZIPで取得できる。経費精算システムへ1枚ずつアップロードしたい場合などに対応。kuronuri等と同じ自作ZIP生成（buildZip/crc32/dosDateTime/deflateRawCompress）を流用。Playwrightで合成3枚を文書一覧に追加→ZIP作成→ダウンロードしたZIPをPythonのzipfileでtestzip整合性確認、3エントリの連番ファイル名・各JPEGのSOI/EOIマーカーを確認。390/1280px・ja/enで新ボタン追加後も横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）。FAQ（ja/en）・JSON-LDにも追記。"
         }
       ]
     },
