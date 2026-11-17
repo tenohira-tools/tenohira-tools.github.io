@@ -1,5 +1,11 @@
 # 実行ログ
 
+## 2026-11-17 改善：wareki-toitsuに「R6年1月2日」形式の検出を追加
+- 計測：GoatCounter取得成功（累計18→19、+1）。wareki-toitsuが1→2（11-09の初回閲覧に続く2回目、+1と一致）。receipt-sheet2・shorui-scan2・csv-fix1・xlsx-atai1・xlsx-ketsugo1は不変、他ページ0。health.md（69ページ・問題0件）・計測タグ・表記・匿名性（grep一致なし）いずれも不備なし。backlog0件。
+- やったこと：wareki-toitsuの検出エンジンに、略記（R/H/S等）と漢字の年月日を混ぜた「R6年1月2日」形式（申請書類で頻出、従来はR6.1.2のドット区切りのみ対応）を追加。既存の元号境界チェック（era違反・実在しない日付の検出）をそのまま再利用し、新規実装は正規表現の分岐1つと解決処理の分岐1つのみ。サンプル文・使い方説明（ja/en）にも反映。
+- 検証：Node.js単体テスト11件（新形式の検出・解決、小文字r、元年、era違反、前後に英数字がある場合の除外、既存4形式の回帰）をHTMLから抽出した実コードに対して実施してから確認。Playwright（ja-JP/英語切替・390/1280px）で文章モード・CSVモードの両方でR6年1月2日→2024-01-02の変換を確認、JSエラー無し・横スクロール無し。
+- 次回：wareki-toitsuの閲覧継続を観察。backlog0件のため、次回は集中分野（書類・写真）で確認検索3件以内で1件補充するか改善を優先する。
+
 ## 2026-11-16 改善：shorui-scanに「画像をまとめてZIPでダウンロード」を追加
 - 計測：GoatCounter取得成功（累計17→18、+1）。csv-fixが初めて0→1（単発の可能性あり、集中分野の判定は変更せず）。receipt-sheet2・shorui-scan2・wareki-toitsu1・xlsx-atai1・xlsx-ketsugo1は不変、他ページ0。health.md（69ページ・問題0件）・計測タグ・表記・匿名性（grep一致なし）いずれも不備なし。backlog0件。
 - やったこと：shorui-scan（累計2・継続して反応のあるページ）の文書一覧に、PDF結合とは別に補正済み各ページを個別JPEG（連番ファイル名）としてZIPでまとめてダウンロードできる機能を追加。経費精算システムへ1枚ずつアップロードしたい、PDFに結合したくない利用者向け。kuronuri等と同じ自作ZIP生成（crc32・dosDateTime・deflateRawCompress・buildZip）を流用し新規実装はゼロ。FAQ・JSON-LD（ja/en）に1問追加。

@@ -172,7 +172,7 @@ html[lang=en] .en-only{display:block}
     <ol>
       <li>上で「変換後の形式」を選びます（西暦の数字表記／西暦の漢字表記／和暦漢字／和暦の略記）。</li>
       <li>「文章」モードでは、文章を貼り付けて「変換する」を押すと、見つかった日付だけをその場で指定の形式に書き換えます。「CSVファイル」モードでは、CSVをドラッグ＆ドロップすると全セルを対象に同じ処理をしてプレビューし、ダウンロードできます。</li>
-      <li>対応する表記：「令和6年1月2日」のような和暦の漢字表記（元年も可）、「R6.1.2」「H31/4/1」のような元号の略記（M/T/S/H/R）、「2024/1/2」「2024-01-02」のような西暦のスラッシュ・ハイフン区切り、「2024年1月2日」のような西暦の漢字表記。</li>
+      <li>対応する表記：「令和6年1月2日」のような和暦の漢字表記（元年も可）、「R6.1.2」「H31/4/1」のような元号の略記（M/T/S/H/R）、「R6年1月2日」のように略記と漢字の年月日を混ぜた書き方（申請書類でよく見る形）、「2024/1/2」「2024-01-02」のような西暦のスラッシュ・ハイフン区切り、「2024年1月2日」のような西暦の漢字表記。</li>
       <li>平成31年5月1日のように、元号の境目を越えて実在しない日付は変換せず、その場に残したうえで「検出した日付」に理由つきで表示します。</li>
     </ol>
     <h3>Q. なぜ「令和1年3月1日」のような日付は変換されないのですか？</h3>
@@ -191,7 +191,7 @@ html[lang=en] .en-only{display:block}
     <ol>
       <li>Choose an output format above (numeric Western date, kanji Western date, kanji Japanese-era date, or abbreviated Japanese-era date).</li>
       <li>In "Text" mode, paste text and click "Convert" — only the dates it finds are rewritten, in place. In "CSV file" mode, drop a CSV file and the same detection runs on every cell, with a preview and download.</li>
-      <li>Formats it recognizes: kanji-era dates like 令和6年1月2日 (including 元年 for year 1), abbreviated era dates like R6.1.2 or H31/4/1 (M/T/S/H/R), slash/hyphen Western dates like 2024/1/2 or 2024-01-02, and kanji Western dates like 2024年1月2日.</li>
+      <li>Formats it recognizes: kanji-era dates like 令和6年1月2日 (including 元年 for year 1), abbreviated era dates like R6.1.2 or H31/4/1 (M/T/S/H/R), a mixed form like R6年1月2日 (abbreviation letter with kanji units, common on official forms), slash/hyphen Western dates like 2024/1/2 or 2024-01-02, and kanji Western dates like 2024年1月2日.</li>
       <li>A date that doesn't actually exist — for example one that crosses an era boundary — is left unchanged and listed, with a reason, under "Dates found".</li>
     </ol>
     <h3>Q. Why isn't "令和1年3月1日" (Reiwa 1, March 1) converted?</h3>
@@ -317,6 +317,7 @@ var RE=new RegExp(
   +"|(?<![A-Za-z0-9])([MTSHRmtshr])("+ERA_NUM+")[.\\/\\-]("+NUM2+")[.\\/\\-]("+NUM2+")(?![0-9])"
   +"|(?<![0-9])("+NUM4+")[.\\/\\-]("+NUM2+")[.\\/\\-]("+NUM2+")(?![0-9])"
   +"|("+NUM4+")年\\s*("+NUM2+")月\\s*("+NUM2+")日"
+  +"|(?<![A-Za-z0-9])([MTSHRmtshr])("+ERA_NUM+")年\\s*("+NUM2+")月\\s*("+NUM2+")日"
 ,"g");
 
 function scan(text){
@@ -338,6 +339,11 @@ function scan(text){
       resolvePlainToken(tok,y3,parseNum(m[10]),parseNum(m[11]));
     } else if(m[12]!==undefined){
       resolvePlainToken(tok,parseNum(m[12]),parseNum(m[13]),parseNum(m[14]));
+    } else if(m[15]!==undefined){
+      var eIdx2=ERA_BY_ABBR[m[15].toUpperCase()];
+      var n2=parseNum(m[16]);
+      if(n2>99){ continue; }
+      resolveEraToken(tok,eIdx2,n2,parseNum(m[17]),parseNum(m[18]));
     }
     tokens.push(tok);
     if(RE.lastIndex===start) RE.lastIndex++;
@@ -480,7 +486,7 @@ var T={
 var lang="ja";
 try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
 
-var SAMPLE="契約日は令和6年1月2日、支払期限は2024/2/1です。備考：旧契約はH31.4.1に開始（前の元号）。誤記の例として令和1年3月1日ともありますが、これは存在しない日付です。";
+var SAMPLE="契約日は令和6年1月2日、支払期限は2024/2/1です。申請書にはR6年4月10日と記載。備考：旧契約はH31.4.1に開始（前の元号）。誤記の例として令和1年3月1日ともありますが、これは存在しない日付です。";
 
 /* ============ text mode ============ */
 function flash(id,msg){
