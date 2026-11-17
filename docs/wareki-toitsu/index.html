@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
-<title>和暦・西暦 混在日付の一括統一（文章・CSV対応）| てのひらツール</title>
-<meta name="description" content="「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した日付表記を、文章やCSVの中からまとめて検出して指定の形式に統一。平成31年5月1日のような元号の境目を越えた存在しない日付は、変換せずに知らせます。すべてブラウザ内で処理し、送信されません。Find and unify mixed Japanese-era and Western date formats in text or CSV files, entirely in your browser — dates that fall outside a real era boundary are flagged, never silently guessed.">
+<title>和暦・西暦 混在日付の一括統一（文章・CSV・Excel対応）| てのひらツール</title>
+<meta name="description" content="「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した日付表記を、文章・CSV・Excel（.xlsx）のセルからまとめて検出して指定の形式に統一。平成31年5月1日のような元号の境目を越えた存在しない日付は、変換せずに知らせます。すべてブラウザ内で処理し、送信されません。Find and unify mixed Japanese-era and Western date formats in text, CSV or Excel (.xlsx) cells, entirely in your browser — dates that fall outside a real era boundary are flagged, never silently guessed.">
 <link rel="canonical" href="https://tenohira-tools.github.io/wareki-toitsu/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--err:#8a5a00;--err-bg:#fdf3dc}
@@ -74,7 +74,7 @@ html[lang=en] .en-only{display:block}
 <header>
   <div>
     <h1 data-i="title">和暦・西暦 混在日付の一括統一</h1>
-    <p class="sub" data-i="sub">「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した日付を、文章やCSVの中からまとめて見つけて指定の形式にそろえます。存在しない日付（元号の境目を越えたものなど）は変換せずに知らせます。</p>
+    <p class="sub" data-i="sub">「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した日付を、文章・CSV・Excel（.xlsx）のセルからまとめて見つけて指定の形式にそろえます。存在しない日付（元号の境目を越えたものなど）は変換せずに知らせます。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -98,6 +98,7 @@ html[lang=en] .en-only{display:block}
   <div class="modeTabs" role="group" aria-label="mode">
     <button type="button" data-mode="text" aria-pressed="true" data-i="modeText">文章</button>
     <button type="button" data-mode="csv" aria-pressed="false" data-i="modeCsv">CSVファイル</button>
+    <button type="button" data-mode="xlsx" aria-pressed="false" data-i="modeXlsx">Excelファイル</button>
   </div>
 
   <div id="textPanel">
@@ -164,6 +165,23 @@ html[lang=en] .en-only{display:block}
       <p style="margin-top:12px"><button type="button" class="primary" id="downloadCsvBtn" data-i="downloadCsvBtn">変換してCSVをダウンロード</button></p>
     </div>
   </div>
+
+  <div id="xlsxPanel" style="display:none">
+    <div id="xlsxDropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+      <p data-i="xlsxDropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+      <p class="hint" data-i="xlsxDropzoneHint">全シートのセルの文字列（共有文字列・インライン文字列）を対象に検出します。ファイルは選択した端末の中だけで処理されます。</p>
+    </div>
+    <input type="file" id="xlsxFileInput" accept=".xlsx,.xlsm" style="display:none">
+    <p class="hint" id="xlsxFileInfo" aria-live="polite"></p>
+    <div class="note" id="xlsxWarnBox"></div>
+
+    <div id="xlsxResultWrap" style="display:none">
+      <h3 class="small" style="margin-top:16px"><span data-i="detectedHeading">検出した日付</span><span class="countBadge" id="xlsxDetectCount"></span></h3>
+      <ul class="resultList" id="xlsxResultList"></ul>
+      <p class="hint" id="xlsxNoneFound" style="display:none" data-i="noneFound">日付らしい表記は見つかりませんでした。</p>
+      <p style="margin-top:12px"><button type="button" class="primary" id="downloadXlsxBtn" data-i="downloadXlsxBtn">変換してExcelをダウンロード</button></p>
+    </div>
+  </div>
 </section>
 
 <section class="card about">
@@ -171,10 +189,12 @@ html[lang=en] .en-only{display:block}
     <h2>使い方とよくある質問</h2>
     <ol>
       <li>上で「変換後の形式」を選びます（西暦の数字表記／西暦の漢字表記／和暦漢字／和暦の略記）。</li>
-      <li>「文章」モードでは、文章を貼り付けて「変換する」を押すと、見つかった日付だけをその場で指定の形式に書き換えます。「CSVファイル」モードでは、CSVをドラッグ＆ドロップすると全セルを対象に同じ処理をしてプレビューし、ダウンロードできます。</li>
+      <li>「文章」モードでは、文章を貼り付けて「変換する」を押すと、見つかった日付だけをその場で指定の形式に書き換えます。「CSVファイル」モードでは、CSVをドラッグ＆ドロップすると全セルを対象に同じ処理をしてプレビューし、ダウンロードできます。「Excelファイル」モードでは、.xlsxファイルをドラッグ＆ドロップすると全シートのセル文字列を対象に同じ処理をして、変換後のファイルをダウンロードできます。</li>
       <li>対応する表記：「令和6年1月2日」のような和暦の漢字表記（元年も可）、「R6.1.2」「H31/4/1」のような元号の略記（M/T/S/H/R）、「2024/1/2」「2024-01-02」のような西暦のスラッシュ・ハイフン区切り、「2024年1月2日」のような西暦の漢字表記。</li>
       <li>平成31年5月1日のように、元号の境目を越えて実在しない日付は変換せず、その場に残したうえで「検出した日付」に理由つきで表示します。</li>
     </ol>
+    <h3>Q. Excelファイル（.xlsx）にも対応していますか？</h3>
+    <p>A. はい。「Excelファイル」モードでファイルを追加すると、全シートのセルの文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、変換後の内容を新しいファイルとしてダウンロードできます。セルに「令和6年1月2日」のような文字列として日付が入力されている場合が対象で、Excel内部で実際の日付値（シリアル値）として保存され表示形式だけで和暦・西暦が切り替わっているセルは、そもそも表記が混在していないため対象外です。同じ文字列が複数のセルで共有されている場合、1件の変換がそれを参照する全セルに反映されます（検出した日付の一覧に「共有文字列（○セルで使用）」として表示）。古い.xls形式やパスワード保護されたファイルは読み込めません。</p>
     <h3>Q. なぜ「令和1年3月1日」のような日付は変換されないのですか？</h3>
     <p>A. 令和は2019年5月1日に始まった元号なので、それより前の日付には使えません（2019年3月1日は平成31年にあたります）。同様に「平成31年5月1日」も、平成が2019年4月30日までしかないため実在しません。このツールは元号の開始日・終了日をもとに存在しない組み合わせを検出し、正しく直せない場合は黙って変換せず、そのまま残してお知らせします。</p>
     <h3>Q. 「2024/13/40」のような日付はどうなりますか？</h3>
@@ -190,10 +210,12 @@ html[lang=en] .en-only{display:block}
     <h2>How to use &amp; FAQ</h2>
     <ol>
       <li>Choose an output format above (numeric Western date, kanji Western date, kanji Japanese-era date, or abbreviated Japanese-era date).</li>
-      <li>In "Text" mode, paste text and click "Convert" — only the dates it finds are rewritten, in place. In "CSV file" mode, drop a CSV file and the same detection runs on every cell, with a preview and download.</li>
+      <li>In "Text" mode, paste text and click "Convert" — only the dates it finds are rewritten, in place. In "CSV file" mode, drop a CSV file and the same detection runs on every cell, with a preview and download. In "Excel file" mode, drop an .xlsx file and the same detection runs on every sheet's cell text, with a download of the updated file.</li>
       <li>Formats it recognizes: kanji-era dates like 令和6年1月2日 (including 元年 for year 1), abbreviated era dates like R6.1.2 or H31/4/1 (M/T/S/H/R), slash/hyphen Western dates like 2024/1/2 or 2024-01-02, and kanji Western dates like 2024年1月2日.</li>
       <li>A date that doesn't actually exist — for example one that crosses an era boundary — is left unchanged and listed, with a reason, under "Dates found".</li>
     </ol>
+    <h3>Q. Does it also support Excel (.xlsx) files?</h3>
+    <p>A. Yes. Add a file in "Excel file" mode and it scans every sheet's cell text (shared strings and inline strings) with the same engine, letting you download the result as a new file. It targets cells where a date is stored as text, like 令和6年1月2日 — a cell whose underlying value is an actual date serial, merely displayed in a different format, isn't a mixed-notation case to begin with, so it's out of scope. If a string is shared across cells, one conversion updates every cell referencing it (shown as "shared string, used in N cells" in the list). The older .xls format and password-protected files can't be read.</p>
     <h3>Q. Why isn't "令和1年3月1日" (Reiwa 1, March 1) converted?</h3>
     <p>A. The Reiwa era began on 2019-05-01, so no date before that can be "Reiwa" — 2019-03-01 actually falls in Heisei 31. Likewise "Heisei 31, May 1" doesn't exist either, since Heisei ended on 2019-04-30. This tool checks each era's real start and end dates and never guesses when a combination doesn't exist — it leaves it untouched and flags it instead.</p>
     <h3>Q. What about a date like "2024/13/40"?</h3>
@@ -222,6 +244,7 @@ html[lang=en] .en-only{display:block}
       <li><a href="../csv-master-replace/">CSVのコード→名称 一括変換ツール</a> — データCSVのコード列を、対応表（マスタ）CSVと突き合わせて店舗名・氏名などの列を一括追加。</li>
       <li><a href="../config-convert/">JSON・YAML・TOML 相互変換エディタ</a> — 3つの枠のどれかを編集すると、残り2つの形式にその場で変換。</li>
       <li><a href="../regex-ja/">正規表現テスター（日本語で自動解説）</a> — 正規表現とテスト文字列を入れるとマッチ箇所をハイライトし、パターンの意味を自然な日本語の文章で自動解説。</li>
+      <li><a href="../xlsx-okikae/">複数のエクセルファイルの文字列を一括置換</a> — 日付以外の任意の文字列を複数のExcelファイルにわたって一括で置換したいならこちら。</li>
     </ul>
   </div>
   <div class="en-only">
@@ -238,6 +261,7 @@ html[lang=en] .en-only{display:block}
       <li><a href="../csv-master-replace/">CSV Code → Name Lookup Converter</a> — Join a data CSV's code column against a lookup-table CSV to add name columns in bulk.</li>
       <li><a href="../config-convert/">JSON / YAML / TOML Converter</a> — Edit JSON, YAML or TOML and the other two formats update instantly.</li>
       <li><a href="../regex-ja/">Regex Tester with Japanese Auto-Explanation</a> — A regex tester that explains what your pattern means in a natural Japanese sentence.</li>
+      <li><a href="../xlsx-okikae/">Replace text across many Excel files at once</a> — for replacing any other text (not dates) across multiple Excel files.</li>
     </ul>
   </div>
 </section>
@@ -252,6 +276,7 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
+    {"@type":"Question","name":"Excelファイル（.xlsx）にも対応していますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「Excelファイル」モードで全シートのセル文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、新しいファイルとしてダウンロードできます。セルの値が実際の日付シリアル値のものは対象外です。同じ文字列が複数のセルで共有されている場合、1件の変換が参照する全セルに反映されます。古い.xls形式やパスワード保護されたファイルは読み込めません。"}},
     {"@type":"Question","name":"なぜ「令和1年3月1日」のような日付は変換されないのですか？","acceptedAnswer":{"@type":"Answer","text":"令和は2019年5月1日に始まった元号のため、それより前の日付には使えません（2019年3月1日は平成31年です）。元号の開始日・終了日をもとに存在しない組み合わせを検出し、正しく直せない場合は変換せずそのまま残してお知らせします。"}},
     {"@type":"Question","name":"「2024/13/40」のような日付はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"実在しないカレンダー上の日付も変換せず、検出した日付の一覧に理由を添えて表示します。うるう年の2月29日は実際にうるう年である年だけ正しく変換されます。"}},
     {"@type":"Question","name":"すべての日付表記を見つけられますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。誤検出を避けるため、西暦のスラッシュ・ハイフン区切りは1900〜2099年の範囲のみを対象にし、元号の略記も年数が極端に大きいものは対象外です。変換前にプレビューで確認してください。"}},
@@ -425,6 +450,335 @@ function parseCSV(text){
 function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
 function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
 
+/* ============ xlsx mode: hand-rolled ZIP + XML core, same approach
+   already shipped in xlsx-okikae/xlsx-style/xlsx-merge and the rest of
+   the Excel-tools family (no external libraries; only standard browser
+   APIs: DecompressionStream/CompressionStream/TextDecoder). Reused here
+   so the date engine above can also detect and rewrite date text stored
+   directly inside an .xlsx file's cells. ============ */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+/* Compresses each entry with deflate-raw so the rebuilt workbook doesn't
+   balloon to several times its original size (same approach as
+   xlsx-style/xlsx-hani's buildZip). */
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function encodeXmlText(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+function findSpanIndex(spans,pos){
+  for(var i=0;i<spans.length;i++){ if(pos>=spans[i].start && pos<spans[i].end) return i; }
+  return -1;
+}
+function countSharedStringUsage(sheetXmls){
+  var counts={};
+  sheetXmls.forEach(function(xml){
+    findTags(xml,"c").forEach(function(c){
+      if(c.selfClose||c.inner===null||c.attrs.t!=="s") return;
+      var vTag=findTags(c.inner,"v")[0];
+      if(!vTag||vTag.inner===null) return;
+      var idx=parseInt(decodeXmlEntities(vTag.inner),10);
+      if(isNaN(idx)) return;
+      counts[idx]=(counts[idx]||0)+1;
+    });
+  });
+  return counts;
+}
+async function parseXlsxFile(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  if(!sheetList.length) throw new Error("NOT_XLSX");
+  var sheets=sheetList.map(function(s){
+    var entry=byName[s.path];
+    return {name:s.name, path:s.path, xml:entry?dec.decode(entry.bytes):""};
+  }).filter(function(s){return s.xml});
+  if(!sheets.length) throw new Error("NOT_XLSX");
+  var sssEntry=byName["xl/sharedStrings.xml"];
+  return {entries:entries, sheets:sheets, sssPath:sssEntry?sssEntry.name:null, sssXml:sssEntry?dec.decode(sssEntry.bytes):""};
+}
+
+/* Scans every <t> text run (shared strings or a sheet's inline strings),
+   excluding furigana (<rPh>), through the same convertText() date engine
+   the text/CSV modes use above. */
+function analyzeDateTextRuns(xml,fmt,lang){
+  var rphRanges=findTags(xml,"rPh").map(function(r){return [r.start,r.end]});
+  function inRph(pos){ for(var i=0;i<rphRanges.length;i++){ if(pos>=rphRanges[i][0]&&pos<rphRanges[i][1]) return true; } return false; }
+  var ts=findTags(xml,"t").filter(function(t){ return !t.selfClose && t.inner!==null && !inRph(t.start); });
+  return ts.map(function(t){
+    var oldText=decodeXmlEntities(t.inner);
+    var r=convertText(oldText,fmt,lang);
+    return {start:t.start,end:t.end,openText:t.openText,oldText:oldText,newText:r.text,
+      changed:r.text!==oldText, changes:r.changes.filter(function(c){return !c.same}), errors:r.errors};
+  });
+}
+function applyEditsToXml(xml,edits){
+  if(!edits.length) return xml;
+  var sorted=edits.slice().sort(function(a,b){return b.start-a.start});
+  var out=xml;
+  sorted.forEach(function(e){
+    var needsPreserve=/^\s|\s$/.test(e.newText) && !/xml:space\s*=\s*["']preserve["']/.test(e.openText);
+    var openTag=needsPreserve?"<t xml:space=\"preserve\">":e.openText;
+    var repl=openTag+encodeXmlText(e.newText)+"</t>";
+    out=out.slice(0,e.start)+repl+out.slice(e.end);
+  });
+  return out;
+}
+/* Groups runs by their enclosing <si> (shared string) or <is> (inline
+   string) span, keeping only groups with a real change or a flagged
+   error — used both for the on-screen list and for the eventual rewrite. */
+function processXmlForDates(xml,spanTag,fmt,lang){
+  var spans=findTags(xml,spanTag).map(function(s){return {start:s.start,end:s.end}});
+  if(!spans.length) return {groups:[],edits:[]};
+  var runs=analyzeDateTextRuns(xml,fmt,lang);
+  var groups={};
+  runs.forEach(function(r){
+    var idx=findSpanIndex(spans,r.start);
+    if(idx<0) return;
+    (groups[idx]=groups[idx]||[]).push(r);
+  });
+  var groupList=[], edits=[];
+  Object.keys(groups).forEach(function(k){
+    var idx=parseInt(k,10), grp=groups[k];
+    var hasAny=grp.some(function(r){return r.changed||r.errors.length});
+    if(!hasAny) return;
+    groupList.push({spanIndex:idx,runs:grp});
+    grp.forEach(function(r){ if(r.changed) edits.push(r); });
+  });
+  return {groups:groupList,edits:edits};
+}
+/* Builds the flat list shown on screen (one row per changed or flagged
+   date, each tagged with where it is: a shared string's usage count, or
+   a sheet name + cell reference) plus the edits needed to rewrite the
+   file. */
+function analyzeXlsxDates(parsed,fmt,lang){
+  var sharedEdits=[], inlineEditsByPath={}, items=[];
+  if(parsed.sssXml){
+    var sProc=processXmlForDates(parsed.sssXml,"si",fmt,lang);
+    var usage=countSharedStringUsage(parsed.sheets.map(function(s){return s.xml}));
+    sharedEdits=sProc.edits;
+    sProc.groups.forEach(function(g){
+      var cellCount=usage[g.spanIndex]||0;
+      var label=lang==="ja" ? ("共有文字列（"+cellCount+"セルで使用）") : ("shared string (used in "+cellCount+" cell"+(cellCount===1?"":"s")+")");
+      g.runs.forEach(function(r){
+        r.changes.forEach(function(c){ items.push({label:label,raw:c.raw,rep:c.rep,isErr:false}); });
+        r.errors.forEach(function(t){ items.push({label:label,raw:t.raw,reason:errorReason(t,lang),isErr:true}); });
+      });
+    });
+  }
+  parsed.sheets.forEach(function(sh){
+    var cTags=findTags(sh.xml,"c");
+    var cSpans=cTags.map(function(c){return {start:c.start,end:c.end}});
+    var isSpansAll=findTags(sh.xml,"is").map(function(s){return {start:s.start,end:s.end}});
+    var shProc=processXmlForDates(sh.xml,"is",fmt,lang);
+    if(shProc.edits.length) inlineEditsByPath[sh.path]=shProc.edits;
+    shProc.groups.forEach(function(g){
+      var span=isSpansAll[g.spanIndex];
+      var cIdx=span?findSpanIndex(cSpans,span.start):-1;
+      var ref=(cIdx>=0 && cTags[cIdx].attrs.r)?cTags[cIdx].attrs.r:"?";
+      var label=sh.name+" "+ref;
+      g.runs.forEach(function(r){
+        r.changes.forEach(function(c){ items.push({label:label,raw:c.raw,rep:c.rep,isErr:false}); });
+        r.errors.forEach(function(t){ items.push({label:label,raw:t.raw,reason:errorReason(t,lang),isErr:true}); });
+      });
+    });
+  });
+  return {items:items,sharedEdits:sharedEdits,inlineEditsByPath:inlineEditsByPath};
+}
+async function buildConvertedXlsx(parsed,analysis){
+  var enc=new TextEncoder();
+  var outFiles=parsed.entries.map(function(e){
+    if(parsed.sssPath && e.name===parsed.sssPath){
+      return {name:e.name, bytes:enc.encode(applyEditsToXml(parsed.sssXml,analysis.sharedEdits))};
+    }
+    var sheetEdits=analysis.inlineEditsByPath[e.name];
+    if(sheetEdits){
+      var sh=parsed.sheets.filter(function(s){return s.path===e.name})[0];
+      return {name:e.name, bytes:enc.encode(applyEditsToXml(sh.xml,sheetEdits))};
+    }
+    return {name:e.name, bytes:e.bytes};
+  });
+  return await buildZip(outFiles);
+}
+
 /* ============ i18n ============ */
 var ENC_LABEL={"utf-8":{ja:"UTF-8",en:"UTF-8"},"shift_jis":{ja:"Shift_JIS（CP932）",en:"Shift_JIS (CP932)"},"euc-jp":{ja:"EUC-JP",en:"EUC-JP"},"iso-2022-jp":{ja:"ISO-2022-JP（JIS）",en:"ISO-2022-JP (JIS)"}};
 var T={
@@ -451,6 +805,12 @@ var T={
   bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
   downloadCsvBtn:"変換してCSVをダウンロード",
   rowCol:"行",colCol:"列",
+  modeXlsx:"Excelファイル",
+  xlsxDropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
+  xlsxDropzoneHint:"全シートのセルの文字列（共有文字列・インライン文字列）を対象に検出します。ファイルは選択した端末の中だけで処理されます。",
+  downloadXlsxBtn:"変換してExcelをダウンロード",
+  errBadXlsx:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
+  loadingLabel:"読み込み中…",
   feedback:"フィードバックはこちら",privacy:"貼り付けた文章やアップロードしたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
  en:{title:"Unify Mixed Japanese-Era / Western Dates",
   sub:"Find dates mixed in formats like 令和6年1月2日, R6.1.2, H31/4/1 or 2024/1/2 across text or a CSV file, and unify them into one format. A date that doesn't really exist (e.g. crossing an era boundary) is flagged instead of guessed.",
@@ -475,6 +835,12 @@ var T={
   bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
   downloadCsvBtn:"Convert and download CSV",
   rowCol:"row",colCol:"col",
+  modeXlsx:"Excel file",
+  xlsxDropzoneText:"Drag and drop an Excel (.xlsx) file here, or click to choose one",
+  xlsxDropzoneHint:"Scans every sheet's cell text (shared strings and inline strings). Everything happens on this device.",
+  downloadXlsxBtn:"Convert and download Excel",
+  errBadXlsx:"Could not read this file (it may not be .xlsx, or it's password-protected)",
+  loadingLabel:"Loading…",
   feedback:"Feedback",privacy:"Nothing you paste or upload is sent to a server — everything is processed inside this browser."}
 };
 var lang="ja";
@@ -516,6 +882,7 @@ $("sampleBtn").addEventListener("click",function(){ $("ta").value=SAMPLE; render
 $("fmtSelect").addEventListener("change",function(){
   if($("textResult").style.display!=="none" && $("ta").value) renderTextResult();
   if(state.rows.length) renderCsvPreview();
+  if(xState.parsed) reanalyzeXlsx();
 });
 $("copyBtn").addEventListener("click",function(){
   var text=$("taOut").value;
@@ -544,6 +911,7 @@ for(var mi=0;mi<modeBtns.length;mi++){
     for(var j=0;j<modeBtns.length;j++)modeBtns[j].setAttribute("aria-pressed",modeBtns[j].getAttribute("data-mode")===m?"true":"false");
     $("textPanel").style.display=(m==="text")?"":"none";
     $("csvPanel").style.display=(m==="csv")?"":"none";
+    $("xlsxPanel").style.display=(m==="xlsx")?"":"none";
   });
 }
 
@@ -690,6 +1058,73 @@ $("downloadCsvBtn").addEventListener("click",function(){
   setTimeout(function(){URL.revokeObjectURL(url)},2000);
 });
 
+/* ============ xlsx mode ============ */
+var xState={name:"",parsed:null,analysis:null};
+
+function renderXlsxResult(){
+  if(!xState.analysis){ $("xlsxResultWrap").style.display="none"; return; }
+  $("xlsxResultWrap").style.display="";
+  var list=$("xlsxResultList");
+  list.innerHTML="";
+  var items=xState.analysis.items;
+  $("xlsxDetectCount").textContent=items.length?("（"+items.length+(lang==="ja"?"件":"")+"）"):"";
+  items.forEach(function(it){
+    var li=document.createElement("li");
+    if(it.isErr){
+      li.className="errItem";
+      li.textContent=it.label+" "+it.raw+"： "+it.reason;
+    } else {
+      li.textContent=it.label+" "+it.raw+T[lang].changedTo+" "+it.rep;
+    }
+    list.appendChild(li);
+  });
+  $("xlsxNoneFound").style.display=items.length?"none":"block";
+  var hasEdits=xState.analysis.sharedEdits.length>0 || Object.keys(xState.analysis.inlineEditsByPath).length>0;
+  $("downloadXlsxBtn").disabled=!hasEdits;
+}
+function reanalyzeXlsx(){
+  if(!xState.parsed) return;
+  xState.analysis=analyzeXlsxDates(xState.parsed,$("fmtSelect").value,lang);
+  renderXlsxResult();
+}
+function handleXlsxFile(file){
+  xState.name=file.name; xState.parsed=null; xState.analysis=null;
+  $("xlsxResultWrap").style.display="none";
+  $("xlsxWarnBox").textContent="";
+  $("xlsxFileInfo").textContent=T[lang].fileLabel+": "+file.name+" ("+T[lang].loadingLabel+")";
+  file.arrayBuffer().then(function(buf){ return parseXlsxFile(new Uint8Array(buf)); })
+    .then(function(result){
+      xState.parsed=result;
+      $("xlsxFileInfo").textContent=T[lang].fileLabel+": "+file.name;
+      reanalyzeXlsx();
+    })
+    .catch(function(){
+      $("xlsxFileInfo").textContent="";
+      $("xlsxWarnBox").textContent=T[lang].errBadXlsx;
+    });
+}
+var xdz=$("xlsxDropzone");
+["dragenter","dragover"].forEach(function(ev){xdz.addEventListener(ev,function(e){e.preventDefault();xdz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){xdz.addEventListener(ev,function(e){e.preventDefault();xdz.classList.remove("drag")})});
+xdz.addEventListener("drop",function(e){ var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f)handleXlsxFile(f); });
+xdz.addEventListener("click",function(){$("xlsxFileInput").click()});
+xdz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("xlsxFileInput").click()} });
+$("xlsxFileInput").addEventListener("change",function(e){ var f=e.target.files&&e.target.files[0]; if(f)handleXlsxFile(f); });
+$("downloadXlsxBtn").addEventListener("click",function(){
+  if(!xState.parsed||!xState.analysis) return;
+  buildConvertedXlsx(xState.parsed,xState.analysis).then(function(bytes){
+    var blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    var m=/\.[^.]+$/.exec(xState.name);
+    var ext=m?m[0]:".xlsx";
+    var base=xState.name.replace(/\.[^.]+$/,"")||"file";
+    var outName=base+"_toitsu"+ext;
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");a.href=url;a.download=outName;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},2000);
+  });
+});
+
 /* ============ lang switch ============ */
 function applyLang(){
   document.documentElement.lang=lang;
@@ -702,8 +1137,12 @@ function applyLang(){
   if(state.bytes){
     $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
   }
+  if(xState.parsed){
+    $("xlsxFileInfo").textContent=T[lang].fileLabel+": "+xState.name;
+  }
   if($("textResult").style.display!=="none" && $("ta").value) renderTextResult();
   if(state.rows.length) renderCsvPreview();
+  if(xState.parsed) reanalyzeXlsx();
 }
 var langBtns=document.querySelectorAll(".lang button");
 for(var li=0;li<langBtns.length;li++)langBtns[li].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
