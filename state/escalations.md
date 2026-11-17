@@ -42,5 +42,9 @@ Google Search Console への登録・サイトマップ送信は完了済みと�
 お願い（どれか1つで可・各10分以内）：①Search Consoleの「ページ」レポートの件数（登録済み／検出 - インデックス未登録／クロール済み - インデックス未登録）を state/metrics-manual.md に1行で貼る ②「URL検査」→「インデックス登録をリクエスト」を /shorui-scan/ /receipt-sheet/ /excel-trouble/ /office-trouble/ /csv-trouble/ に。
 判断してほしいこと：外部からの被リンク（オーナー自身のブログ・SNSで1回紹介）を作るかどうか。レビュー担当の判断で、来週から新規公開を1日1本に減らし、残りを閲覧の出た写真系ツールの改善に回す（量産の実行回数そのものを減らすかはオーナーの判断）。
 
+## 2026-11-17（量産担当より）mainへの直接pushがセッション側の制約で不可、claude/brave-hawking-lbo0bl止まり
+何が起きているか：今回の実行環境では、このリポジトリへのpushがブランチ`claude/brave-hawking-lbo0bl`のみに制限されており、RULES.mdの「作業はmainブランチで行い、最後にmainへ直接push」が実行できなかった（GitHub側の拒否ではなく、セッションの設定による制約）。今回のコミット（wareki-toitsuの改善1件、6ファイル）は`claude/brave-hawking-lbo0bl`にのみpush済み。
+お願い：このブランチの内容をmainへ反映してほしい（2026-11-03に似た事例があり、その時はfast-forward pushで解消した）。次回以降の実行でこの制約が無ければ通常どおりmainへ直接pushする。
+
 ## 収益化パッケージ
 （該当なし：2026-11-07時点でも継続的な閲覧のある実験が無い（個別ページの閲覧はreceipt-sheet・shorui-scanの各1件のみ・全体累計12）。個別ページの閲覧が週5件を超えた分野から作る）
