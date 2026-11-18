@@ -27,6 +27,11 @@ h2{font-size:1.05rem;margin:0 0 12px}
 .opts{display:flex;flex-wrap:wrap;gap:8px}
 .opts button{font:inherit;font-size:.9rem;font-weight:600;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;min-height:36px}
 .opts button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.strengthRow{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.strengthRow label{font-size:.88rem;color:var(--muted)}
+.strengthRow .end{font-size:.8rem;color:var(--muted)}
+.strengthRow input[type=range]{flex:1 1 140px;max-width:220px}
+.strengthRow .val{font-size:.85rem;color:var(--muted);min-width:2.6em;text-align:right}
 .drop{border:2px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted);cursor:pointer}
 .drop.over{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
 .drop input{display:none}
@@ -115,6 +120,13 @@ html[lang=en] .en-only{display:block}
   <p class="status" id="autoDetectStatus"></p>
   <p class="optlabel" data-i="filterLabel">仕上がり</p>
   <div class="opts" id="filterOpts"></div>
+  <div class="strengthRow" id="strengthRow">
+    <label for="strengthSlider" data-i="strengthLabel">濃さ調整</label>
+    <span class="end" data-i="strengthLightEnd">薄く</span>
+    <input type="range" id="strengthSlider" min="-50" max="50" step="5" value="0">
+    <span class="end" data-i="strengthDarkEnd">濃く</span>
+    <span class="val" id="strengthVal">0</span>
+  </div>
   <div class="row">
     <button type="button" class="primary" id="applyBtn" data-i="applyBtn">補正を適用</button>
     <button type="button" class="secondary" id="cancelEditBtn" data-i="cancelEditBtn">この写真をやめる</button>
@@ -161,6 +173,8 @@ html[lang=en] .en-only{display:block}
     <p>A. 「影を消す（白く）」を選ぶと、写真全体の明るさのムラをやわらかく推定し、そのムラで割ることで紙の地色をできるだけ均一な白に揃えます。照明のムラや手・スマホの影で片側だけ暗くなった写真でも、文字の濃さはムラに対する比率として保たれるため、影を飛ばしつつ文字は読みやすいまま残ります。色は保持されるので、スタンプやマーカーの色も消えません。</p>
     <h3>Q. 「白黒くっきり」はどんな処理ですか？OCR（文字認識）はできますか？</h3>
     <p>A. 白黒くっきりは、グレースケール化した上で写真全体の明暗の分布を自動で調整（オートレベル補正）し、紙面の陰影を飛ばして文字を読みやすくする処理です。「影を消す（白く）」と異なり画像全体で一律に調整するため、片側だけ強く影が落ちた写真には「影を消す（白く）」の方が向いています。どちらも文字の認識（OCR）やテキスト化は行っておらず、見た目を整えるだけの機能です。</p>
+    <h3>Q. 鉛筆書きなど薄い文字が、自動調整でも読みにくいままです。</h3>
+    <p>A. 「仕上がり」の下にある「濃さ調整」のスライダーで、紙の白はそのまま保ちながら文字の濃さだけを強めたり弱めたりできます（カラー選択時は使いません）。薄い文字が読みにくい場合は「濃く」側へ、逆に紙の色味や薄い汚れが気になる場合は「薄く」側へ動かしてください。「影を消す（白く）」「白黒くっきり」「グレースケール」のいずれとも組み合わせて使え、「補正を適用」→「この写真をやり直す」で設定を変えながら何度でも試せます。</p>
     <h3>Q. iPhoneの写真（HEIC形式）が読み込めません。</h3>
     <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
     <h3>Q. 複数ページの書類をまとめられますか？</h3>
@@ -190,6 +204,8 @@ html[lang=en] .en-only{display:block}
     <p>A. Yes — pick "Remove shadow (whiten)". It estimates a soft, blurred map of the photo's overall brightness and divides each pixel by that map, flattening lighting unevenness so the paper's background becomes roughly uniform white, even when a hand, phone or lamp casts a shadow over just part of the page. Text stays legible because its darkness is preserved relative to the local background, and colors (stamps, highlighter) are kept intact.</p>
     <h3>Q. What does "crisp black &amp; white" do? Does it do OCR (text recognition)?</h3>
     <p>A. It converts the image to grayscale and automatically stretches the brightness levels across the whole photo to flatten shadows and make text easier to read. Unlike "Remove shadow (whiten)", which corrects unevenness locally, this adjusts the whole image uniformly, so a photo shadowed on just one side is better handled by "Remove shadow (whiten)". Neither does text recognition (OCR) — both only improve the visual appearance.</p>
+    <h3>Q. Faint pencil writing is still hard to read even after the automatic adjustment.</h3>
+    <p>A. Use the "Darken/lighten" slider below "Finish" — it keeps white paper white while making the text itself darker or lighter (it has no effect when "Color" is selected). Move it toward "Darker" if faint writing is still hard to read, or toward "Lighter" if a paper tint or light smudges bother you. It works together with "Remove shadow (whiten)", "Crisp black &amp; white" or "Grayscale"; after "Apply correction", use "Redo this photo" to try different settings as many times as you like.</p>
     <h3>Q. My iPhone photos (HEIC) won't load.</h3>
     <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
     <h3>Q. Can I combine multiple pages?</h3>
@@ -250,6 +266,7 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"四隅を自動で検出してくれますか？","acceptedAnswer":{"@type":"Answer","text":"「四隅を自動検出」ボタンで候補位置に移動できますが、あくまで手動調整の出発点です。背景や照明によっては正確に合わないため、移動後は必ず確認し、ズレていれば手でドラッグして合わせてください。"}},
     {"@type":"Question","name":"片側だけ暗く写ってしまった写真の影を消せますか？","acceptedAnswer":{"@type":"Answer","text":"「影を消す（白く）」を選ぶと、写真全体の明るさのムラを推定してそれで割ることで、紙の地色をできるだけ均一な白に揃えます。片側だけ影が落ちた写真でも文字は読みやすいまま残り、色も保持されます。"}},
     {"@type":"Question","name":"「白黒くっきり」はどんな処理ですか？OCRはできますか？","acceptedAnswer":{"@type":"Answer","text":"グレースケール化した上で明暗の分布を自動調整する処理で、文字認識（OCR）は行っていません。見た目を整えるだけの機能です。片側だけ影が強い写真には「影を消す（白く）」の方が向いています。"}},
+    {"@type":"Question","name":"鉛筆書きなど薄い文字が、自動調整でも読みにくいままです。","acceptedAnswer":{"@type":"Answer","text":"「仕上がり」の下の「濃さ調整」スライダーで、紙の白を保ったまま文字の濃さだけを強め・弱めできます。薄い文字には「濃く」側、紙の色味や汚れが気になる場合は「薄く」側へ動かしてください。"}},
     {"@type":"Question","name":"ページ番号（ノンブル）を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「文書一覧」の「各ページの右下にページ番号を入れる」にチェックを入れてPDFを書き出すと、各ページの右下に「1 / 3」のような現在のページ番号と全体のページ数が印字されます。"}},
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。写真の見た目を整えるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}},
     {"@type":"Question","name":"PDFではなく画像のままダウンロードしたいです。","acceptedAnswer":{"@type":"Answer","text":"「画像をまとめてZIPでダウンロード」を押すと、文書一覧の各ページを1枚ずつ補正済みのJPEGファイルとしてZIPにまとめてダウンロードできます。PDFに結合せず画像のまま使いたい場合にお使いください。"}}
@@ -490,10 +507,33 @@ function removeShadow(canvas){
   ctx.putImageData(img,0,0);
 }
 
-/* グレースケール／白黒くっきり（オートレベル）／影を消す フィルタ */
-function applyFilter(canvas, mode){
+/* 濃さ調整（-50〜50）：0=無調整。255は常に255に保ち（白地はそのまま）、
+   中間調だけをガンマカーブで濃く／薄くする。strength>0で濃く、<0で薄く。 */
+function buildGammaLUT(strength){
+  var gamma=Math.pow(2,strength/50);
+  var lut=new Uint8ClampedArray(256);
+  for(var c=0;c<256;c++) lut[c]=Math.round(255*Math.pow(c/255,gamma));
+  return lut;
+}
+function applyGammaToCanvas(canvas, strength){
+  var ctx=canvas.getContext("2d");
+  var w=canvas.width, h=canvas.height;
+  var img=ctx.getImageData(0,0,w,h);
+  var d=img.data;
+  var lut=buildGammaLUT(strength);
+  for(var i=0;i<d.length;i+=4){ d[i]=lut[d[i]]; d[i+1]=lut[d[i+1]]; d[i+2]=lut[d[i+2]]; }
+  ctx.putImageData(img,0,0);
+}
+
+/* グレースケール／白黒くっきり（オートレベル）／影を消す フィルタ。strengthは濃さ調整。 */
+function applyFilter(canvas, mode, strength){
+  strength = strength||0;
   if(mode==="color") return;
-  if(mode==="shadow"){ removeShadow(canvas); return; }
+  if(mode==="shadow"){
+    removeShadow(canvas);
+    if(strength) applyGammaToCanvas(canvas, strength);
+    return;
+  }
   var ctx=canvas.getContext("2d");
   var w=canvas.width, h=canvas.height;
   var img=ctx.getImageData(0,0,w,h);
@@ -516,12 +556,14 @@ function applyFilter(canvas, mode){
     if(hi<=lo){ lo=0; hi=255; }
   }
   var range=Math.max(1,hi-lo);
+  var lut=strength?buildGammaLUT(strength):null;
   for(i=0;i<n;i++){
     var g=gray[i];
     if(mode==="bw"){
       g=Math.round((g-lo)/range*255);
       if(g<0)g=0; if(g>255)g=255;
     }
+    if(lut) g=lut[g];
     var o2=i*4;
     d[o2]=g; d[o2+1]=g; d[o2+2]=g;
   }
@@ -720,6 +762,7 @@ var state={
   srcCanvas:null,           // 現在編集中の元画像（回転反映済み）
   corners:null,             // [{x,y}...] 元画像ピクセル座標、TL,TR,BR,BL
   filterMode:"bw",
+  filterStrength:0,          // 濃さ調整（-50〜50、0が無調整）。gray/bw/shadowに適用
   resultCanvas:null,
   docs:[],                  // {id,name,thumbUrl,jpegBytes,w,h}
   queue:[]                  // 複数選択・複数ドロップした残りのファイル
@@ -737,6 +780,7 @@ var T={
     autoDetectOk:"自動検出した位置に移動しました。ズレがあれば緑の点を手で調整してください。",
     autoDetectFail:"検出できませんでした。緑の点を手でドラッグして四隅に合わせてください。",
     filterLabel:"仕上がり", applyBtn:"補正を適用", cancelEditBtn:"この写真をやめる",
+    strengthLabel:"濃さ調整", strengthLightEnd:"薄く", strengthDarkEnd:"濃く",
     h_result:"補正結果", downloadJpegBtn:"JPEGをダウンロード", addToListBtn:"文書一覧に追加（PDF用）", redoBtn:"この写真をやり直す",
     h_list:"文書一覧（PDFにまとめる）", makePdfBtn:"まとめてPDFをダウンロード", makeZipBtn:"画像をまとめてZIPでダウンロード", clearListBtn:"一覧をクリア",
     pageNumChkLabel:"各ページの右下にページ番号を入れる",
@@ -760,6 +804,7 @@ var T={
     autoDetectOk:"Moved to the detected position. Drag the green dots to fix any gap.",
     autoDetectFail:"Couldn't detect the corners. Drag the green dots onto them manually.",
     filterLabel:"Finish", applyBtn:"Apply correction", cancelEditBtn:"Discard this photo",
+    strengthLabel:"Darken/lighten", strengthLightEnd:"Lighter", strengthDarkEnd:"Darker",
     h_result:"Result", downloadJpegBtn:"Download JPEG", addToListBtn:"Add to document list", redoBtn:"Redo this photo",
     h_list:"Document list (combine into PDF)", makePdfBtn:"Download combined PDF", makeZipBtn:"Download images as ZIP", clearListBtn:"Clear list",
     pageNumChkLabel:"Add a page number to the bottom-right of each page",
@@ -972,7 +1017,7 @@ function applyCorrection(){
     try{
       var outSize=outputSizeFromCorners(state.corners, MAX_DIM);
       var result=warpPerspective(state.srcCanvas, state.corners, outSize.w, outSize.h);
-      applyFilter(result, state.filterMode);
+      applyFilter(result, state.filterMode, state.filterStrength);
       state.resultCanvas=result;
       var rc=$("resultCanvas");
       rc.width=result.width; rc.height=result.height;
@@ -1120,6 +1165,7 @@ function renderFilterOpts(){
     b.addEventListener("click",function(){ state.filterMode=item.key; renderFilterOpts(); });
     container.appendChild(b);
   });
+  $("strengthRow").style.display = (state.filterMode==="color") ? "none" : "";
 }
 
 /* ---------- イベント配線 ---------- */
@@ -1156,6 +1202,11 @@ $("resetCornersBtn").addEventListener("click", function(){
   state.corners=defaultCorners(state.srcCanvas.width, state.srcCanvas.height);
   renderHandles();
   $("autoDetectStatus").textContent="";
+});
+$("strengthSlider").value=state.filterStrength;
+$("strengthSlider").addEventListener("input", function(){
+  state.filterStrength=parseInt($("strengthSlider").value,10);
+  $("strengthVal").textContent=(state.filterStrength>0?"+":"")+state.filterStrength;
 });
 $("applyBtn").addEventListener("click", applyCorrection);
 $("cancelEditBtn").addEventListener("click", function(){
