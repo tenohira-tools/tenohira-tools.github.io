@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>レシート・領収書の写真を見ながら経費を記録｜OCRなし・手入力で日付・金額の一覧表（CSV）を作成 | てのひらツール</title>
+<meta name="description" content="レシート・領収書の写真を1件ずつ見ながら、日付・取引先・金額・科目をその場で入力し、合計金額や科目ごとの小計を確認しながら一覧表をCSVでダウンロードできる無料ツール。文字認識（OCR）は使わないため誤読の心配がなく、入力内容や写真はこの端末の中だけで処理されます。Type in the date, vendor, amount and category while viewing each receipt photo (no OCR) and export the running list as a CSV file, entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/keihi-kiroku/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.3rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.drop input{display:none}
+.status{margin-top:10px;font-size:.9rem;color:var(--muted)}
+.note{margin-top:10px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.88rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.cardsWrap{display:flex;flex-direction:column;gap:14px;margin-top:4px}
+.ccard{border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.chead{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.chead img{width:72px;height:72px;object-fit:cover;border-radius:8px;background:var(--bg);border:1px solid var(--line);flex:none}
+.chead .noimg{width:72px;height:72px;border-radius:8px;background:var(--bg);border:1px dashed var(--line);flex:none;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;text-align:center}
+.chead .info{flex:1;min-width:0}
+.chead .fname{font-size:.85rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chead .btns{display:flex;gap:4px;flex:none}
+.chead button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:.95rem}
+.chead button.rm{color:var(--bad,#a4353a)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
+.fgrid .full{grid-column:1/-1}
+.fitem{min-width:0}
+.fitem label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:3px}
+.fitem input,.fitem textarea{width:100%;min-width:0;font:inherit;font-size:.92rem;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg)}
+.fitem textarea{resize:vertical;min-height:2.4em}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px}
+button.secondary:disabled{opacity:.4;cursor:not-allowed}
+.summary{margin-top:10px;font-size:.9rem;color:var(--muted)}
+.summary .total{font-size:1.1rem;font-weight:700;color:var(--fg)}
+table.subtotal{width:100%;border-collapse:collapse;margin-top:10px;font-size:.88rem}
+table.subtotal th,table.subtotal td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+table.subtotal td.num,table.subtotal th.num{text-align:right}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">レシート・領収書の写真を見ながら経費を記録</h1>
+    <p class="sub" data-i="sub">レシート・領収書の写真を1件ずつ見ながら、日付・取引先・金額・科目をその場で入力し、合計金額や科目ごとの小計を確認しながら一覧表をCSVでダウンロードします。文字認識（OCR）は使わないため誤読の心配がありません。入力内容や写真はこの端末の中だけで処理されます。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <h2 data-i="h_source">レシート・領収書の写真を追加</h2>
+  <div class="drop" id="dropZone">
+    <span data-i="dropText">ここに写真をドラッグ＆ドロップ、またはクリックして選択（複数可）</span>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+  </div>
+  <p class="note" data-i="formatNote">JPEG・PNG・WebPに対応。写真は入力中の見本として表示するだけで、文字や金額を自動では読み取りません（OCRなし）。写真が無くても「写真なしで1件追加」から入力できます。</p>
+  <p class="status" id="loadStatus"></p>
+  <div class="row">
+    <button type="button" class="secondary" id="addBlankBtn" data-i="addBlankBtn">写真なしで1件追加</button>
+  </div>
+</section>
+
+<section class="card" id="listCard" style="display:none">
+  <h2><span data-i="h_list_prefix">記録（</span><span id="cardCount">0</span><span data-i="h_list_suffix">件）</span></h2>
+  <div class="cardsWrap" id="cardsWrap"></div>
+  <div class="row">
+    <button type="button" class="secondary" id="sortBtn" data-i="sortBtn">日付の古い順に並べ替え</button>
+    <button type="button" class="secondary" id="clearBtn" data-i="clearBtn">すべてクリア</button>
+  </div>
+</section>
+
+<section class="card" id="outCard" style="display:none">
+  <h2 data-i="h_out">書き出し</h2>
+  <div class="summary" id="summary"></div>
+  <table class="subtotal hidden" id="subtotalTable">
+    <thead><tr><th data-i="th_category">科目</th><th class="num" data-i="th_amount">小計</th></tr></thead>
+    <tbody id="subtotalBody"></tbody>
+  </table>
+  <div class="row">
+    <button type="button" class="primary" id="csvBtn" data-i="csvBtn">CSVでダウンロード</button>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>レシート・領収書の写真をドラッグ＆ドロップ、またはタップして選択します（写真が無い場合は「写真なしで1件追加」も使えます）。</li>
+      <li>各カードに表示された写真を見ながら、日付・取引先・金額・科目・メモを入力します。科目欄には入力候補（消耗品費・旅費交通費など）が出ますが、自由に書き換えられます。</li>
+      <li>入力しながら「書き出し」欄の合計金額・科目ごとの小計がその場で更新されます。日付順に並べたい場合は「日付の古い順に並べ替え」を使います。</li>
+      <li>「CSVでダウンロード」でExcelでそのまま開ける一覧表（日付・取引先・金額・科目・メモ・元ファイル名、末尾に合計行）を保存します。</li>
+    </ol>
+    <h3>Q. 文字や金額は自動で読み取ってもらえますか？（OCR機能はありますか）</h3>
+    <p>A. いいえ。このツールは文字認識（OCR）を行いません。レシート・領収書の写真はあくまで入力時に見る見本としてその場に表示するだけで、日付・取引先・金額などはすべて手で入力します。OCRの誤読を心配する必要がない代わりに、入力の手間はそのまま残ります。</p>
+    <h3>Q. 写真や入力した内容はどこかに送信されますか？</h3>
+    <p>A. されません。写真の表示、入力内容の保持、CSVファイルの作成まで、すべてこの端末のブラウザの中だけで行われます（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。ページを閉じる、または再読み込みすると入力内容は消えるため、途中でCSVをダウンロードしてから閉じることをおすすめします。</p>
+    <h3>Q. 科目欄の候補は、確定申告や経理上の正しい分類を保証しますか？</h3>
+    <p>A. いいえ。科目欄の候補（消耗品費・旅費交通費など）は入力の手間を減らすための一般的な例であり、税務・会計上の正しい分類を判定・保証するものではありません。実際にどの科目で処理すべきかは、会計ソフトの設定や顧問税理士など専門家にご確認ください。</p>
+    <h3>Q. 合計金額や科目ごとの小計はどう計算されますか？</h3>
+    <p>A. 金額欄に数値が入力されている行だけを対象に単純に合計します。金額が空欄・数値として読み取れない行は0円として扱われ、エラー表示はされません。科目ごとの小計は、科目欄の文字列が完全に一致する行同士をまとめた合計です（表記が違うと別の科目として集計されるため、同じ科目は同じ書き方で統一してください）。科目欄が空欄の行は「(未分類)」としてまとめます。</p>
+    <h3>Q. このCSVは電子帳簿保存法の要件を満たしますか？</h3>
+    <p>A. いいえ。このツールは一覧の確認・集計のための表を作るだけで、税務上の保存要件を満たすことを保証するものではありません。電子帳簁保存法では原則として取引ごとに検索・確認できる形での保存が求められるため、レシート・領収書の画像そのものを個別のファイルとして保存する場合は<a href="../shohyo-rename/">証憑ファイル名整理ツール</a>を、複数枚をまとめて添付用に整列したい場合は<a href="../receipt-sheet/">領収書まとめ台紙メーカー</a>をお使いください。正式な保存要件は国税庁の資料や顧問税理士など専門家にご確認ください。</p>
+    <h3>Q. 証憑ファイル名整理ツール・交通費精算書メーカーとの違いは何ですか？</h3>
+    <p>A. 「証憑ファイル名整理ツール」は画像・PDFのファイル名を日付・取引先・金額で付け替えることが目的で、一覧表（CSV）は作りません。「交通費精算書メーカー」は交通費専用で、写真を使わず行をテキストで入力してA4の精算書を作ります。本ツールは写真を見ながら日付・取引先・金額・科目・メモを入力し、交通費に限らずレシート・領収書全般を対象にした一覧表（CSV）を作る点が異なります。</p>
+    <h3>Q. 1枚の写真に複数の商品・レシートが写っている場合はどうすればいいですか？</h3>
+    <p>A. 同じ写真を元に複数件を記録したい場合は、「写真なしで1件追加」で行を追加し、同じ日付・取引先を入力してください（写真の表示は1枚目のカードだけになりますが、金額・科目は商品ごとに分けて記録できます）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Drag and drop receipt/invoice photos, or tap to choose them (or use "Add one without a photo").</li>
+      <li>Looking at each card's photo, type in the date, vendor, amount, category and a memo. The category field suggests common labels but you can type anything.</li>
+      <li>As you type, the total amount and per-category subtotals in the "Export" section update live. Use "Sort by oldest date first" to reorder the list.</li>
+      <li>"Download as CSV" saves a list (date, vendor, amount, category, memo, source filename, with a total row at the end) that opens directly in Excel.</li>
+    </ol>
+    <h3>Q. Does it read the text or amount automatically (OCR)?</h3>
+    <p>A. No. This tool does not perform OCR. The receipt photo is shown only as a visual reference while you type; every field is entered by hand. You avoid OCR misreads, but you still have to type the details yourself.</p>
+    <h3>Q. Are my photos or the details I type sent anywhere?</h3>
+    <p>A. No. Displaying the photo, holding what you type, and building the CSV file all happen inside this browser on your device (only anonymous, cookie-free page-view counts are collected for this page). Reloading or closing the page clears what you've entered, so download the CSV before you close it.</p>
+    <h3>Q. Do the category suggestions guarantee correct tax/accounting classification?</h3>
+    <p>A. No. The category suggestions (e.g. supplies, travel) are common examples meant to save typing, not a determination of the correct bookkeeping category. Check your accounting software or a tax professional for the actual classification to use.</p>
+    <h3>Q. How are the total and per-category subtotals calculated?</h3>
+    <p>A. Only rows where the amount field holds a number are added up; a blank or unparseable amount counts as zero, with no error shown. Per-category subtotals group rows by an exact match on the category text (different wording is treated as a different category, so keep spelling consistent), and rows with no category are grouped as "(uncategorized)".</p>
+    <h3>Q. Does this CSV satisfy Japan's electronic bookkeeping retention law?</h3>
+    <p>A. No. This tool only builds a list for reviewing and totaling; it makes no claim about satisfying tax record-keeping requirements. If you need to keep the receipt images themselves as individually searchable records, use the <a href="../shohyo-rename/">Receipt Filename Organizer</a>, or the <a href="../receipt-sheet/">Receipt Sheet Maker</a> to arrange several onto one sheet for attachment. Check official guidance or a tax professional for the actual requirements.</p>
+    <h3>Q. How is this different from the Receipt Filename Organizer or Travel Expense Report Maker?</h3>
+    <p>A. The Receipt Filename Organizer only renames image/PDF files by date, vendor and amount — it doesn't build a CSV list. The Travel Expense Report Maker is travel-only and has no photos, just typed rows for a printable A4 report. This tool is for receipts in general: you view each photo while typing date, vendor, amount, category and a memo, and export the whole list as CSV.</p>
+    <h3>Q. What if one photo shows several items or receipts?</h3>
+    <p>A. Use "Add one without a photo" to add extra rows with the same date and vendor (only the first card shows that photo, but you can still record each item's amount and category separately).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../shohyo-rename/">証憑ファイル名整理ツール</a> — 一覧表ではなく、画像・PDFのファイル名そのものを日付・取引先・金額で付け替えたいときはこちら。</li>
+      <li><a href="../receipt-sheet/">領収書まとめ台紙メーカー</a> — 複数のレシート写真をA4のPDF1枚にまとめて添付・印刷したいときはこちら。</li>
+      <li><a href="../shorui-scan/">書類写真のスキャン風補正</a> — レシートの四隅をドラッグして斜めを直し、読みやすくしてから本ツールに読み込ませると見本として見やすくなります。</li>
+      <li><a href="../kotsuhi-seisan/">交通費精算書メーカー</a> — 交通費だけをA4の精算書として作りたいときはこちら（写真は使いません）。</li>
+      <li><a href="../keihi-trouble/">経費精算・領収書整理のトラブル解決ガイド</a> — 症状から経理・書類系ツールを選べる案内ページ。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../shohyo-rename/">Receipt Filename Organizer</a> — Rename the image/PDF files themselves by date, vendor and amount instead of building a list.</li>
+      <li><a href="../receipt-sheet/">Receipt Sheet Maker</a> — Arrange several receipt photos onto one printable A4 PDF sheet.</li>
+      <li><a href="../shorui-scan/">Document Scan Correction</a> — Straighten a crooked receipt photo first so it's easier to read as a reference while typing.</li>
+      <li><a href="../kotsuhi-seisan/">Travel Expense Report Maker</a> — Build a printable A4 travel-only expense report (no photos).</li>
+      <li><a href="../keihi-trouble/">Expense Report &amp; Receipt Paperwork Troubleshooting Guide</a> — Find the right paperwork tool by symptom.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">写真と入力内容はサーバーに送信されません。一覧表（CSV）の作成もこの端末のブラウザだけで行われます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"文字や金額は自動で読み取ってもらえますか？（OCR機能はありますか）","acceptedAnswer":{"@type":"Answer","text":"いいえ。このツールは文字認識（OCR）を行いません。レシート・領収書の写真は入力時に見る見本として表示するだけで、日付・取引先・金額などはすべて手で入力します。"}},
+    {"@type":"Question","name":"写真や入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の表示、入力内容の保持、CSVファイルの作成まで、すべてこの端末のブラウザの中だけで行われます（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。ページを閉じると入力内容は消えます。"}},
+    {"@type":"Question","name":"科目欄の候補は、確定申告や経理上の正しい分類を保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。科目欄の候補は入力の手間を減らすための一般的な例であり、税務・会計上の正しい分類を判定・保証するものではありません。実際の分類は会計ソフトの設定や顧問税理士などにご確認ください。"}},
+    {"@type":"Question","name":"合計金額や科目ごとの小計はどう計算されますか？","acceptedAnswer":{"@type":"Answer","text":"金額欄に数値が入力されている行だけを合計し、空欄・数値以外は0円扱いです。科目ごとの小計は科目欄の文字列が完全一致する行同士の合計で、空欄は「(未分類)」としてまとめます。"}},
+    {"@type":"Question","name":"このCSVは電子帳簿保存法の要件を満たしますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。確認・集計用の一覧表を作るだけで、税務上の保存要件を満たすことは保証しません。取引ごとの個別保存が必要な場合は証憑ファイル名整理ツール等をお使いください。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+
+/* ---------- 言語辞書 ---------- */
+var lang="ja";
+var CATS=["消耗品費","旅費交通費","会議費","接待交際費","通信費","新聞図書費","事務用品費","広告宣伝費","雑費"];
+
+var T={
+  ja:{
+    title:"レシート・領収書の写真を見ながら経費を記録",
+    sub:"レシート・領収書の写真を1件ずつ見ながら、日付・取引先・金額・科目をその場で入力し、合計金額や科目ごとの小計を確認しながら一覧表をCSVでダウンロードします。文字認識（OCR）は使わないため誤読の心配がありません。入力内容や写真はこの端末の中だけで処理されます。",
+    h_source:"レシート・領収書の写真を追加", dropText:"ここに写真をドラッグ＆ドロップ、またはクリックして選択（複数可）",
+    formatNote:"JPEG・PNG・WebPに対応。写真は入力中の見本として表示するだけで、文字や金額を自動では読み取りません（OCRなし）。写真が無くても「写真なしで1件追加」から入力できます。",
+    addBlankBtn:"写真なしで1件追加",
+    h_list_prefix:"記録（", h_list_suffix:"件）", sortBtn:"日付の古い順に並べ替え", clearBtn:"すべてクリア",
+    h_out:"書き出し", csvBtn:"CSVでダウンロード",
+    th_category:"科目", th_amount:"小計", uncategorized:"(未分類)",
+    feedback:"フィードバックはこちら", privacy:"写真と入力内容はサーバーに送信されません。一覧表（CSV）の作成もこの端末のブラウザだけで行われます。",
+    loadError:"読み込めませんでした", filesAdded:function(n){return n+"件読み込みました"},
+    rotateTitle:"回転", removeTitle:"削除", noPhoto:"写真なし",
+    lbl_date:"日付", lbl_vendor:"取引先", lbl_amount:"金額（円）", lbl_category:"科目", lbl_memo:"メモ",
+    summaryText:function(n,total){return "記録 "+n+"件 ／ 合計 ¥"+total.toLocaleString("ja-JP")},
+    noneYet:"まだ記録がありません。",
+    done:"ダウンロードしました。",
+    confirmClear:"すべての記録を削除します。よろしいですか？"
+  },
+  en:{
+    title:"Record Expenses While Viewing Receipt Photos",
+    sub:"Looking at each receipt photo, type in the date, vendor, amount and category, watch the running total and per-category subtotals update, and export the list as a CSV file. No OCR is used, so there's no risk of a misread. Everything is processed on this device.",
+    h_source:"Add receipt/invoice photos", dropText:"Drag and drop photos here, or click to choose (multiple allowed)",
+    formatNote:"JPEG, PNG and WebP are supported. The photo is only a visual reference while you type — no text or amount is read automatically (no OCR). You can also add an entry with no photo.",
+    addBlankBtn:"Add one without a photo",
+    h_list_prefix:"Entries (", h_list_suffix:")", sortBtn:"Sort by oldest date first", clearBtn:"Clear all",
+    h_out:"Export", csvBtn:"Download as CSV",
+    th_category:"Category", th_amount:"Subtotal", uncategorized:"(uncategorized)",
+    feedback:"Feedback", privacy:"Photos and what you type are never sent to a server. The CSV file is built entirely in this browser.",
+    loadError:"Could not load", filesAdded:function(n){return "Added "+n+" file(s)"},
+    rotateTitle:"Rotate", removeTitle:"Remove", noPhoto:"No photo",
+    lbl_date:"Date", lbl_vendor:"Vendor", lbl_amount:"Amount", lbl_category:"Category", lbl_memo:"Memo",
+    summaryText:function(n,total){return n+" entr"+(n===1?"y":"ies")+" / total ¥"+total.toLocaleString("en-US")},
+    noneYet:"No entries yet.",
+    done:"Downloaded.",
+    confirmClear:"This deletes every entry. Continue?"
+  }
+};
+
+/* ---------- 画像読み込み（meishi-vcard等と同じ手法） ---------- */
+function loadViaImgTag(file){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){ resolve(img); };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error("img-load-failed")); };
+    img.src=url;
+  });
+}
+function getBitmapSize(bmp){
+  if("naturalWidth" in bmp) return {w:bmp.naturalWidth, h:bmp.naturalHeight};
+  return {w:bmp.width, h:bmp.height};
+}
+async function loadImageEntry(file){
+  var bmp=null, err=null;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }
+  catch(e1){
+    try{ bmp = await createImageBitmap(file); }
+    catch(e2){
+      try{ bmp = await loadViaImgTag(file); }
+      catch(e3){ err = T[lang].loadError; }
+    }
+  }
+  var size = bmp ? getBitmapSize(bmp) : {w:0,h:0};
+  return { bitmap:bmp, w:size.w, h:size.h, error: err || (size.w===0?T[lang].loadError:null) };
+}
+function rotatedSize(entry){
+  if(entry.rotate%180===90) return {w:entry.h,h:entry.w};
+  return {w:entry.w,h:entry.h};
+}
+function drawRotated(ctx, bmp, entryW, entryH, rotate, dx, dy, dw, dh){
+  ctx.save();
+  ctx.translate(dx+dw/2, dy+dh/2);
+  ctx.rotate(rotate*Math.PI/180);
+  var rs = (rotate%180===90) ? {w:dh,h:dw} : {w:dw,h:dh};
+  ctx.drawImage(bmp, -rs.w/2, -rs.h/2, rs.w, rs.h);
+  ctx.restore();
+}
+function makeThumbDataUrl(entry){
+  if(!entry.bitmap) return null;
+  var SIZE=144;
+  var c=document.createElement("canvas"); c.width=SIZE; c.height=SIZE;
+  var ctx=c.getContext("2d");
+  ctx.fillStyle="#f2f2ee"; ctx.fillRect(0,0,SIZE,SIZE);
+  var rs=rotatedSize(entry);
+  var scale=Math.max(SIZE/rs.w, SIZE/rs.h);
+  var dw=rs.w*scale, dh=rs.h*scale;
+  var dx=(SIZE-dw)/2, dy=(SIZE-dh)/2;
+  try{ drawRotated(ctx, entry.bitmap, entry.w, entry.h, entry.rotate, dx, dy, dw, dh); }
+  catch(e){ return null; }
+  return c.toDataURL("image/jpeg",0.75);
+}
+
+/* ---------- 状態 ---------- */
+var uid=1;
+var cards=[]; // {id, bitmap, w, h, rotate, error, fileName, f:{date,vendor,amount,category,memo}}
+
+function todayISO(){
+  var d=new Date();
+  var m=String(d.getMonth()+1).padStart(2,"0");
+  var day=String(d.getDate()).padStart(2,"0");
+  return d.getFullYear()+"-"+m+"-"+day;
+}
+function newBlankField(){
+  return { date:todayISO(), vendor:"", amount:"", category:"", memo:"" };
+}
+function isBlankField(f){
+  /* 日付は新規カード追加時に今日の日付を既定で入れるため、判定からは除外する
+     （取引先・金額・科目・メモのいずれかに入力があるまでは「空」として件数・書き出しの対象外にする） */
+  return !(f.vendor||"").trim() && !(f.amount+"").trim() && !(f.category||"").trim() && !(f.memo||"").trim();
+}
+function amountOf(f){
+  var n=parseFloat(f.amount);
+  return isFinite(n) ? n : 0;
+}
+
+/* ---------- サマリー更新 ---------- */
+function updateSummary(){
+  var meaningful = cards.filter(function(c){ return !isBlankField(c.f); });
+  var total = meaningful.reduce(function(s,c){ return s+amountOf(c.f); }, 0);
+  $("summary").innerHTML = cards.length>0
+    ? '<span class="total">'+escapeHtml(T[lang].summaryText(meaningful.length,total))+"</span>"
+    : escapeHtml(T[lang].noneYet);
+  $("csvBtn").disabled = meaningful.length===0;
+  $("outCard").style.display = cards.length>0 ? "" : "none";
+  $("listCard").style.display = cards.length>0 ? "" : "none";
+  $("cardCount").textContent = String(cards.length);
+
+  var groups={}, order=[];
+  meaningful.forEach(function(c){
+    var cat=(c.f.category||"").trim() || T[lang].uncategorized;
+    if(!(cat in groups)){ groups[cat]=0; order.push(cat); }
+    groups[cat]+=amountOf(c.f);
+  });
+  var body=$("subtotalBody");
+  body.innerHTML="";
+  if(order.length>1){
+    order.forEach(function(cat){
+      var tr=document.createElement("tr");
+      var td1=document.createElement("td"); td1.textContent=cat;
+      var td2=document.createElement("td"); td2.className="num";
+      td2.textContent="¥"+groups[cat].toLocaleString(lang==="ja"?"ja-JP":"en-US");
+      tr.appendChild(td1); tr.appendChild(td2);
+      body.appendChild(tr);
+    });
+    $("subtotalTable").classList.remove("hidden");
+  } else {
+    $("subtotalTable").classList.add("hidden");
+  }
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>]/g,function(c){return c==="&"?"&amp;":c==="<"?"&lt;":"&gt;"});
+}
+
+/* ---------- フィールド定義 ---------- */
+var FIELD_DEFS=[
+  {k:"date", labelKey:"lbl_date", type:"date"},
+  {k:"vendor", labelKey:"lbl_vendor", type:"text"},
+  {k:"amount", labelKey:"lbl_amount", type:"number"},
+  {k:"category", labelKey:"lbl_category", type:"text", list:"categoryList"}
+];
+
+/* ---------- カード行の生成 ---------- */
+function createCardRow(card){
+  var root=document.createElement("div");
+  root.className="ccard";
+
+  var head=document.createElement("div");
+  head.className="chead";
+
+  var thumbWrap=document.createElement("div");
+  function renderThumb(){
+    thumbWrap.innerHTML="";
+    var url=makeThumbDataUrl(card);
+    if(url){
+      var img=document.createElement("img");
+      img.src=url; img.alt="";
+      thumbWrap.appendChild(img);
+    } else {
+      var ph=document.createElement("div");
+      ph.className="noimg";
+      ph.textContent=T[lang].noPhoto;
+      thumbWrap.appendChild(ph);
+    }
+  }
+  renderThumb();
+  head.appendChild(thumbWrap);
+
+  var info=document.createElement("div");
+  info.className="info";
+  var fname=document.createElement("div");
+  fname.className="fname";
+  fname.textContent=card.fileName || "";
+  info.appendChild(fname);
+  head.appendChild(info);
+
+  var btns=document.createElement("div");
+  btns.className="btns";
+  if(card.bitmap){
+    var rotBtn=document.createElement("button");
+    rotBtn.type="button"; rotBtn.textContent="⟳"; rotBtn.title=T[lang].rotateTitle;
+    rotBtn.addEventListener("click",function(){ card.rotate=(card.rotate+90)%360; renderThumb(); });
+    btns.appendChild(rotBtn);
+  }
+  var rmBtn=document.createElement("button");
+  rmBtn.type="button"; rmBtn.textContent="✕"; rmBtn.title=T[lang].removeTitle; rmBtn.className="rm";
+  rmBtn.addEventListener("click",function(){
+    var idx=cards.indexOf(card);
+    if(idx>=0) cards.splice(idx,1);
+    root.remove();
+    updateSummary();
+  });
+  btns.appendChild(rmBtn);
+  head.appendChild(btns);
+  root.appendChild(head);
+
+  var grid=document.createElement("div");
+  grid.className="fgrid";
+  FIELD_DEFS.forEach(function(def){
+    var item=document.createElement("div");
+    item.className="fitem";
+    var label=document.createElement("label");
+    label.textContent=T[lang][def.labelKey];
+    label.setAttribute("data-fieldlabel", def.labelKey);
+    item.appendChild(label);
+    var inp=document.createElement("input");
+    inp.type=def.type;
+    if(def.type==="number"){ inp.min="0"; inp.step="1"; inp.inputMode="numeric"; }
+    if(def.list) inp.setAttribute("list", def.list);
+    inp.value = card.f[def.k] || "";
+    inp.addEventListener("input",function(){
+      card.f[def.k]=inp.value;
+      updateSummary();
+    });
+    item.appendChild(inp);
+    grid.appendChild(item);
+  });
+  var memoItem=document.createElement("div");
+  memoItem.className="fitem full";
+  var memoLabel=document.createElement("label");
+  memoLabel.textContent=T[lang].lbl_memo;
+  memoLabel.setAttribute("data-fieldlabel","lbl_memo");
+  memoItem.appendChild(memoLabel);
+  var memoInp=document.createElement("textarea");
+  memoInp.rows=2;
+  memoInp.value=card.f.memo||"";
+  memoInp.addEventListener("input",function(){ card.f.memo=memoInp.value; });
+  memoItem.appendChild(memoInp);
+  grid.appendChild(memoItem);
+  root.appendChild(grid);
+
+  card.$root=root;
+  card.$renderThumb=renderThumb;
+  return root;
+}
+
+function renderAllCards(){
+  var wrap=$("cardsWrap");
+  wrap.innerHTML="";
+  cards.forEach(function(card){ wrap.appendChild(createCardRow(card)); });
+}
+
+/* ---------- 追加 ---------- */
+function addCardToList(card){
+  cards.push(card);
+  $("cardsWrap").appendChild(createCardRow(card));
+  updateSummary();
+}
+async function addFiles(fileList){
+  var files=Array.prototype.slice.call(fileList);
+  if(files.length===0) return;
+  $("loadStatus").textContent="…";
+  var added=0;
+  for(var i=0;i<files.length;i++){
+    var loaded=await loadImageEntry(files[i]);
+    var card={ id:uid++, bitmap:loaded.bitmap, w:loaded.w, h:loaded.h, rotate:0, error:loaded.error,
+      fileName: files[i].name, f:newBlankField() };
+    addCardToList(card);
+    added++;
+  }
+  $("loadStatus").textContent=T[lang].filesAdded(added);
+}
+function addBlankCard(){
+  var card={ id:uid++, bitmap:null, w:0, h:0, rotate:0, error:null, fileName:"", f:newBlankField() };
+  addCardToList(card);
+}
+
+/* ---------- 並べ替え ---------- */
+function sortByDate(){
+  cards.sort(function(a,b){
+    var da=a.f.date||"9999-99-99", db=b.f.date||"9999-99-99";
+    return da<db?-1:(da>db?1:0);
+  });
+  renderAllCards();
+}
+
+/* ---------- CSV ---------- */
+function csvEscape(v){
+  v=String(v==null?"":v);
+  if(/[",\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function downloadCsv(){
+  var meaningful = cards.filter(function(c){ return !isBlankField(c.f); });
+  if(meaningful.length===0) return;
+  var header=["日付","取引先","金額","科目","メモ","元ファイル名"];
+  var lines=[header.map(csvEscape).join(",")];
+  meaningful.forEach(function(c){
+    lines.push([c.f.date||"", c.f.vendor||"", amountOf(c.f), c.f.category||"", c.f.memo||"", c.fileName||""].map(csvEscape).join(","));
+  });
+  var total=meaningful.reduce(function(s,c){return s+amountOf(c.f)},0);
+  lines.push(["","合計",total,"","",""].map(csvEscape).join(","));
+  var csv="﻿"+lines.join("\r\n");
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download="keihi-kiroku.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+  $("summary").innerHTML='<span class="total">'+escapeHtml(T[lang].done)+"</span>";
+  setTimeout(updateSummary, 1800);
+}
+
+/* ---------- イベント配線 ---------- */
+var dropZone=$("dropZone");
+var fileInput=$("fileInput");
+dropZone.addEventListener("click",function(){fileInput.click()});
+fileInput.addEventListener("change",function(){
+  if(fileInput.files && fileInput.files.length) addFiles(fileInput.files);
+  fileInput.value="";
+});
+["dragenter","dragover"].forEach(function(ev){
+  dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.add("over")});
+});
+["dragleave","drop"].forEach(function(ev){
+  dropZone.addEventListener(ev,function(e){e.preventDefault();dropZone.classList.remove("over")});
+});
+dropZone.addEventListener("drop",function(e){
+  var dt=e.dataTransfer;
+  if(dt && dt.files && dt.files.length) addFiles(dt.files);
+});
+$("addBlankBtn").addEventListener("click",addBlankCard);
+$("sortBtn").addEventListener("click",sortByDate);
+$("clearBtn").addEventListener("click",function(){
+  if(cards.length && !window.confirm(T[lang].confirmClear)) return;
+  cards=[];
+  $("cardsWrap").innerHTML="";
+  $("loadStatus").textContent="";
+  updateSummary();
+});
+$("csvBtn").addEventListener("click",downloadCsv);
+
+/* ---------- 科目候補（datalist） ---------- */
+(function(){
+  var dl=document.createElement("datalist");
+  dl.id="categoryList";
+  CATS.forEach(function(c){
+    var opt=document.createElement("option");
+    opt.value=c;
+    dl.appendChild(opt);
+  });
+  document.body.appendChild(dl);
+})();
+
+/* ---------- 言語切替 ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  renderAllCards();
+  updateSummary();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0; li<langBtns.length; li++){
+  langBtns[li].addEventListener("click",function(){ lang=this.getAttribute("data-lang"); applyLang(); });
+}
+
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
