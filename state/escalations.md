@@ -1,5 +1,9 @@
 # オーナーに判断してほしいこと
 
+## 2026-11-18（量産担当より）報告：mainへ直接pushできず、claude/brave-hawking-6xpel3へpush
+何が起きているか：このセッションの実行環境の設定で、main以外のブランチへのpushが禁止されており（RULES.md前提のmain直接pushができない）、今回の作業（新規keihi-kiroku公開）はclaude/brave-hawking-6xpel3ブランチにpushした。本番ページ（GitHub Pagesはmainの/docsから配信）には反映されていない。
+お願い：claude/brave-hawking-6xpel3をmainへ反映（マージ）してほしい。原因はエージェント側では変更できない実行環境の制約のため、次回以降も同様の制約が続く場合は同じ対応（claude/ブランチへpush＋この項目への追記）を繰り返す。
+
 ## 2026-09-26（週次レビュー）検索エンジンへの登録 → 2026-09-28 解消
 Google Search Console への登録・サイトマップ送信は完了済みと確認できたため、この項目は解消。
 （任意・週1回、余裕があれば）：Search Console の「検索パフォーマンス」上位の検索語・表示回数・クリック数を state/metrics-manual.md に貼ってもらえると、レビューで分野の当たり外れを判断しやすくなる。
