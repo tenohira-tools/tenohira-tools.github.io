@@ -20,7 +20,7 @@ h1{font-size:1.35rem;line-height:1.4;margin:0}
 .lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
 .lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
-section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px;min-width:0}
 h2{font-size:1.1rem;margin:0 0 12px}
 h3.small{font-size:1rem;margin:0 0 8px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
@@ -66,6 +66,15 @@ footer a{color:var(--accent)}
 .en-only{display:none}
 html[lang=en] .ja-only{display:none}
 html[lang=en] .en-only{display:block}
+#xlsxFileListBox{display:grid;gap:14px;margin-top:4px}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.fileCardHead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCardHead .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCardHead .fMeta{color:var(--muted);font-size:.85rem}
+.fileCardHead .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCardHead button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCardHead button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.buildMsg{color:var(--accent);font-size:.88rem;margin:8px 0 0}
 </style>
 </head>
 <body>
@@ -168,19 +177,11 @@ html[lang=en] .en-only{display:block}
 
   <div id="xlsxPanel" style="display:none">
     <div id="xlsxDropzone" tabindex="0" role="button" aria-label="ファイルを選択">
-      <p data-i="xlsxDropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
-      <p class="hint" data-i="xlsxDropzoneHint">全シートのセルの文字列（共有文字列・インライン文字列）を対象に検出します。ファイルは選択した端末の中だけで処理されます。</p>
+      <p data-i="xlsxDropzoneText"><strong>ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数可）</p>
+      <p class="hint" data-i="xlsxDropzoneHint">全シートのセルの文字列（共有文字列・インライン文字列）を対象に検出します。複数ファイルを一度に追加し、ファイルごとにダウンロードできます。ファイルは選択した端末の中だけで処理されます。</p>
     </div>
-    <input type="file" id="xlsxFileInput" accept=".xlsx,.xlsm" style="display:none">
-    <p class="hint" id="xlsxFileInfo" aria-live="polite"></p>
-    <div class="note" id="xlsxWarnBox"></div>
-
-    <div id="xlsxResultWrap" style="display:none">
-      <h3 class="small" style="margin-top:16px"><span data-i="detectedHeading">検出した日付</span><span class="countBadge" id="xlsxDetectCount"></span></h3>
-      <ul class="resultList" id="xlsxResultList"></ul>
-      <p class="hint" id="xlsxNoneFound" style="display:none" data-i="noneFound">日付らしい表記は見つかりませんでした。</p>
-      <p style="margin-top:12px"><button type="button" class="primary" id="downloadXlsxBtn" data-i="downloadXlsxBtn">変換してExcelをダウンロード</button></p>
-    </div>
+    <input type="file" id="xlsxFileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+    <div id="xlsxFileListBox"></div>
   </div>
 </section>
 
@@ -194,7 +195,7 @@ html[lang=en] .en-only{display:block}
       <li>平成31年5月1日のように、元号の境目を越えて実在しない日付は変換せず、その場に残したうえで「検出した日付」に理由つきで表示します。</li>
     </ol>
     <h3>Q. Excelファイル（.xlsx）にも対応していますか？</h3>
-    <p>A. はい。「Excelファイル」モードでファイルを追加すると、全シートのセルの文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、変換後の内容を新しいファイルとしてダウンロードできます。セルに「令和6年1月2日」のような文字列として日付が入力されている場合が対象で、Excel内部で実際の日付値（シリアル値）として保存され表示形式だけで和暦・西暦が切り替わっているセルは、そもそも表記が混在していないため対象外です。同じ文字列が複数のセルで共有されている場合、1件の変換がそれを参照する全セルに反映されます（検出した日付の一覧に「共有文字列（○セルで使用）」として表示）。古い.xls形式やパスワード保護されたファイルは読み込めません。</p>
+    <p>A. はい。「Excelファイル」モードでファイルを追加すると、全シートのセルの文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、変換後の内容を新しいファイルとしてダウンロードできます。セルに「令和6年1月2日」のような文字列として日付が入力されている場合が対象で、Excel内部で実際の日付値（シリアル値）として保存され表示形式だけで和暦・西暦が切り替わっているセルは、そもそも表記が混在していないため対象外です。同じ文字列が複数のセルで共有されている場合、1件の変換がそれを参照する全セルに反映されます（検出した日付の一覧に「共有文字列（○セルで使用）」として表示）。一度に複数ファイルを追加できます。ファイルごとに検出結果とダウンロードボタンが並び、個別にダウンロードします（まとめてZIPにはしません）。古い.xls形式やパスワード保護されたファイルは読み込めません。</p>
     <h3>Q. なぜ「令和1年3月1日」のような日付は変換されないのですか？</h3>
     <p>A. 令和は2019年5月1日に始まった元号なので、それより前の日付には使えません（2019年3月1日は平成31年にあたります）。同様に「平成31年5月1日」も、平成が2019年4月30日までしかないため実在しません。このツールは元号の開始日・終了日をもとに存在しない組み合わせを検出し、正しく直せない場合は黙って変換せず、そのまま残してお知らせします。</p>
     <h3>Q. 「2024/13/40」のような日付はどうなりますか？</h3>
@@ -215,7 +216,7 @@ html[lang=en] .en-only{display:block}
       <li>A date that doesn't actually exist — for example one that crosses an era boundary — is left unchanged and listed, with a reason, under "Dates found".</li>
     </ol>
     <h3>Q. Does it also support Excel (.xlsx) files?</h3>
-    <p>A. Yes. Add a file in "Excel file" mode and it scans every sheet's cell text (shared strings and inline strings) with the same engine, letting you download the result as a new file. It targets cells where a date is stored as text, like 令和6年1月2日 — a cell whose underlying value is an actual date serial, merely displayed in a different format, isn't a mixed-notation case to begin with, so it's out of scope. If a string is shared across cells, one conversion updates every cell referencing it (shown as "shared string, used in N cells" in the list). The older .xls format and password-protected files can't be read.</p>
+    <p>A. Yes. Add a file in "Excel file" mode and it scans every sheet's cell text (shared strings and inline strings) with the same engine, letting you download the result as a new file. It targets cells where a date is stored as text, like 令和6年1月2日 — a cell whose underlying value is an actual date serial, merely displayed in a different format, isn't a mixed-notation case to begin with, so it's out of scope. If a string is shared across cells, one conversion updates every cell referencing it (shown as "shared string, used in N cells" in the list). You can add several files at once — each gets its own card with its own results and download button (downloaded individually, not bundled into a ZIP). The older .xls format and password-protected files can't be read.</p>
     <h3>Q. Why isn't "令和1年3月1日" (Reiwa 1, March 1) converted?</h3>
     <p>A. The Reiwa era began on 2019-05-01, so no date before that can be "Reiwa" — 2019-03-01 actually falls in Heisei 31. Likewise "Heisei 31, May 1" doesn't exist either, since Heisei ended on 2019-04-30. This tool checks each era's real start and end dates and never guesses when a combination doesn't exist — it leaves it untouched and flags it instead.</p>
     <h3>Q. What about a date like "2024/13/40"?</h3>
@@ -276,7 +277,7 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"Excelファイル（.xlsx）にも対応していますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「Excelファイル」モードで全シートのセル文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、新しいファイルとしてダウンロードできます。セルの値が実際の日付シリアル値のものは対象外です。同じ文字列が複数のセルで共有されている場合、1件の変換が参照する全セルに反映されます。古い.xls形式やパスワード保護されたファイルは読み込めません。"}},
+    {"@type":"Question","name":"Excelファイル（.xlsx）にも対応していますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「Excelファイル」モードで全シートのセル文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、新しいファイルとしてダウンロードできます。セルの値が実際の日付シリアル値のものは対象外です。同じ文字列が複数のセルで共有されている場合、1件の変換が参照する全セルに反映されます。一度に複数ファイルを追加でき、ファイルごとに個別ダウンロードできます。古い.xls形式やパスワード保護されたファイルは読み込めません。"}},
     {"@type":"Question","name":"なぜ「令和1年3月1日」のような日付は変換されないのですか？","acceptedAnswer":{"@type":"Answer","text":"令和は2019年5月1日に始まった元号のため、それより前の日付には使えません（2019年3月1日は平成31年です）。元号の開始日・終了日をもとに存在しない組み合わせを検出し、正しく直せない場合は変換せずそのまま残してお知らせします。"}},
     {"@type":"Question","name":"「2024/13/40」のような日付はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"実在しないカレンダー上の日付も変換せず、検出した日付の一覧に理由を添えて表示します。うるう年の2月29日は実際にうるう年である年だけ正しく変換されます。"}},
     {"@type":"Question","name":"すべての日付表記を見つけられますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。誤検出を避けるため、西暦のスラッシュ・ハイフン区切りは1900〜2099年の範囲のみを対象にし、元号の略記も年数が極端に大きいものは対象外です。変換前にプレビューで確認してください。"}},
@@ -806,11 +807,12 @@ var T={
   downloadCsvBtn:"変換してCSVをダウンロード",
   rowCol:"行",colCol:"列",
   modeXlsx:"Excelファイル",
-  xlsxDropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
-  xlsxDropzoneHint:"全シートのセルの文字列（共有文字列・インライン文字列）を対象に検出します。ファイルは選択した端末の中だけで処理されます。",
-  downloadXlsxBtn:"変換してExcelをダウンロード",
+  xlsxDropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
+  xlsxDropzoneHint:"全シートのセルの文字列（共有文字列・インライン文字列）を対象に検出します。複数ファイルを一度に追加し、ファイルごとにダウンロードできます。ファイルは選択した端末の中だけで処理されます。",
+  downloadXlsxBtn:"変換してダウンロード",
   errBadXlsx:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
   loadingLabel:"読み込み中…",
+  removeBtn:"削除",buildBtnBusy:"構築中…",buildDone:"ダウンロードしました：",
   feedback:"フィードバックはこちら",privacy:"貼り付けた文章やアップロードしたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
  en:{title:"Unify Mixed Japanese-Era / Western Dates",
   sub:"Find dates mixed in formats like 令和6年1月2日, R6.1.2, H31/4/1 or 2024/1/2 across text or a CSV file, and unify them into one format. A date that doesn't really exist (e.g. crossing an era boundary) is flagged instead of guessed.",
@@ -836,11 +838,12 @@ var T={
   downloadCsvBtn:"Convert and download CSV",
   rowCol:"row",colCol:"col",
   modeXlsx:"Excel file",
-  xlsxDropzoneText:"Drag and drop an Excel (.xlsx) file here, or click to choose one",
-  xlsxDropzoneHint:"Scans every sheet's cell text (shared strings and inline strings). Everything happens on this device.",
-  downloadXlsxBtn:"Convert and download Excel",
+  xlsxDropzoneText:"Drag and drop Excel (.xlsx) file(s) here, or click to choose (multiple allowed)",
+  xlsxDropzoneHint:"Scans every sheet's cell text (shared strings and inline strings). Add several files at once and download each one separately. Everything happens on this device.",
+  downloadXlsxBtn:"Convert & download",
   errBadXlsx:"Could not read this file (it may not be .xlsx, or it's password-protected)",
   loadingLabel:"Loading…",
+  removeBtn:"Remove",buildBtnBusy:"Building…",buildDone:"Downloaded: ",
   feedback:"Feedback",privacy:"Nothing you paste or upload is sent to a server — everything is processed inside this browser."}
 };
 var lang="ja";
@@ -882,7 +885,7 @@ $("sampleBtn").addEventListener("click",function(){ $("ta").value=SAMPLE; render
 $("fmtSelect").addEventListener("change",function(){
   if($("textResult").style.display!=="none" && $("ta").value) renderTextResult();
   if(state.rows.length) renderCsvPreview();
-  if(xState.parsed) reanalyzeXlsx();
+  reanalyzeXlsxAll(); renderXlsxFiles();
 });
 $("copyBtn").addEventListener("click",function(){
   var text=$("taOut").value;
@@ -1058,72 +1061,96 @@ $("downloadCsvBtn").addEventListener("click",function(){
   setTimeout(function(){URL.revokeObjectURL(url)},2000);
 });
 
-/* ============ xlsx mode ============ */
-var xState={name:"",parsed:null,analysis:null};
+/* ============ xlsx mode (multiple files, each with its own
+   card + download button — same list pattern as xlsx-okikae) ============ */
+var xFiles=[],xNextId=1;
 
-function renderXlsxResult(){
-  if(!xState.analysis){ $("xlsxResultWrap").style.display="none"; return; }
-  $("xlsxResultWrap").style.display="";
-  var list=$("xlsxResultList");
-  list.innerHTML="";
-  var items=xState.analysis.items;
-  $("xlsxDetectCount").textContent=items.length?("（"+items.length+(lang==="ja"?"件":"")+"）"):"";
-  items.forEach(function(it){
-    var li=document.createElement("li");
-    if(it.isErr){
-      li.className="errItem";
-      li.textContent=it.label+" "+it.raw+"： "+it.reason;
+function escTruncX(s){ s=String(s); var t=s.length>70?s.slice(0,70)+"…":s; return esc(t); }
+
+function reanalyzeXlsxFile(f){
+  if(!f.parsed) return;
+  f.analysis=analyzeXlsxDates(f.parsed,$("fmtSelect").value,lang);
+}
+function reanalyzeXlsxAll(){ xFiles.forEach(function(f){ if(!f.loading&&!f.error) reanalyzeXlsxFile(f); }); }
+
+function renderXlsxFileCard(f){
+  var t=T[lang];
+  var h="<div class='fileCard' data-id='"+f.id+"'>";
+  h+="<div class='fileCardHead'><span class='fName'>"+esc(f.name)+"</span>";
+  if(f.loading){ h+="<span class='fMeta'>"+esc(t.loadingLabel)+"</span>"; }
+  else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+  h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(t.removeBtn)+"</button></div>";
+
+  if(!f.loading && !f.error && f.analysis){
+    var items=f.analysis.items;
+    h+="<h3 class='small'><span>"+esc(t.detectedHeading)+"</span><span class='countBadge'>"+(items.length?("（"+items.length+(lang==="ja"?"件":"")+"）"):"")+"</span></h3>";
+    if(items.length){
+      h+="<ul class='resultList'>";
+      items.forEach(function(it){
+        if(it.isErr){ h+="<li class='errItem'>"+esc(it.label)+" "+escTruncX(it.raw)+"： "+esc(it.reason)+"</li>"; }
+        else { h+="<li>"+esc(it.label)+" "+escTruncX(it.raw)+esc(t.changedTo)+" "+escTruncX(it.rep)+"</li>"; }
+      });
+      h+="</ul>";
     } else {
-      li.textContent=it.label+" "+it.raw+T[lang].changedTo+" "+it.rep;
+      h+="<p class='hint'>"+esc(t.noneFound)+"</p>";
     }
-    list.appendChild(li);
-  });
-  $("xlsxNoneFound").style.display=items.length?"none":"block";
-  var hasEdits=xState.analysis.sharedEdits.length>0 || Object.keys(xState.analysis.inlineEditsByPath).length>0;
-  $("downloadXlsxBtn").disabled=!hasEdits;
+    var hasEdits=f.analysis.sharedEdits.length>0 || Object.keys(f.analysis.inlineEditsByPath).length>0;
+    h+="<p style='margin-top:12px'><button type='button' class='primary buildBtn' data-id='"+f.id+"' "+((!hasEdits||f.building)?"disabled":"")+">"+esc(f.building?t.buildBtnBusy:t.downloadXlsxBtn)+"</button></p>";
+    if(f.buildMsg) h+="<p class='buildMsg'>"+esc(f.buildMsg)+"</p>";
+  }
+  h+="</div>";
+  return h;
 }
-function reanalyzeXlsx(){
-  if(!xState.parsed) return;
-  xState.analysis=analyzeXlsxDates(xState.parsed,$("fmtSelect").value,lang);
-  renderXlsxResult();
+function renderXlsxFiles(){
+  var box=$("xlsxFileListBox");
+  var h=""; xFiles.forEach(function(f){ h+=renderXlsxFileCard(f); });
+  box.innerHTML=h;
+  var rms=box.querySelectorAll(".remove");
+  for(var i=0;i<rms.length;i++){ rms[i].addEventListener("click",function(){ removeXlsxFile(parseInt(this.getAttribute("data-id"),10)); }); }
+  var bbs=box.querySelectorAll(".buildBtn");
+  for(var b=0;b<bbs.length;b++){ bbs[b].addEventListener("click",function(){ buildAndDownloadXlsx(parseInt(this.getAttribute("data-id"),10)); }); }
 }
-function handleXlsxFile(file){
-  xState.name=file.name; xState.parsed=null; xState.analysis=null;
-  $("xlsxResultWrap").style.display="none";
-  $("xlsxWarnBox").textContent="";
-  $("xlsxFileInfo").textContent=T[lang].fileLabel+": "+file.name+" ("+T[lang].loadingLabel+")";
+function addXlsxFile(file){
+  var f={id:xNextId++,name:file.name,loading:true,error:"",parsed:null,analysis:null,building:false,buildMsg:""};
+  xFiles.push(f);
+  renderXlsxFiles();
   file.arrayBuffer().then(function(buf){ return parseXlsxFile(new Uint8Array(buf)); })
-    .then(function(result){
-      xState.parsed=result;
-      $("xlsxFileInfo").textContent=T[lang].fileLabel+": "+file.name;
-      reanalyzeXlsx();
-    })
-    .catch(function(){
-      $("xlsxFileInfo").textContent="";
-      $("xlsxWarnBox").textContent=T[lang].errBadXlsx;
-    });
+    .then(function(result){ f.parsed=result; f.loading=false; reanalyzeXlsxFile(f); renderXlsxFiles(); })
+    .catch(function(){ f.loading=false; f.error=T[lang].errBadXlsx; renderXlsxFiles(); });
 }
-var xdz=$("xlsxDropzone");
-["dragenter","dragover"].forEach(function(ev){xdz.addEventListener(ev,function(e){e.preventDefault();xdz.classList.add("drag")})});
-["dragleave","drop"].forEach(function(ev){xdz.addEventListener(ev,function(e){e.preventDefault();xdz.classList.remove("drag")})});
-xdz.addEventListener("drop",function(e){ var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f)handleXlsxFile(f); });
-xdz.addEventListener("click",function(){$("xlsxFileInput").click()});
-xdz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("xlsxFileInput").click()} });
-$("xlsxFileInput").addEventListener("change",function(e){ var f=e.target.files&&e.target.files[0]; if(f)handleXlsxFile(f); });
-$("downloadXlsxBtn").addEventListener("click",function(){
-  if(!xState.parsed||!xState.analysis) return;
-  buildConvertedXlsx(xState.parsed,xState.analysis).then(function(bytes){
+function removeXlsxFile(id){ xFiles=xFiles.filter(function(f){return f.id!==id}); renderXlsxFiles(); }
+function suggestXlsxOutName(name){
+  var m=/\.[^.]+$/.exec(name);
+  var ext=m?m[0]:".xlsx";
+  var base=name.replace(/\.[^.]+$/,"")||"file";
+  return base+"_toitsu"+ext;
+}
+function buildAndDownloadXlsx(id){
+  var f=xFiles.filter(function(x){return x.id===id})[0];
+  if(!f||!f.analysis||f.building) return;
+  var hasEdits=f.analysis.sharedEdits.length>0 || Object.keys(f.analysis.inlineEditsByPath).length>0;
+  if(!hasEdits) return;
+  var t=T[lang];
+  f.building=true; f.buildMsg=""; renderXlsxFiles();
+  buildConvertedXlsx(f.parsed,f.analysis).then(function(bytes){
+    var outName=suggestXlsxOutName(f.name);
     var blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
-    var m=/\.[^.]+$/.exec(xState.name);
-    var ext=m?m[0]:".xlsx";
-    var base=xState.name.replace(/\.[^.]+$/,"")||"file";
-    var outName=base+"_toitsu"+ext;
     var url=URL.createObjectURL(blob);
     var a=document.createElement("a");a.href=url;a.download=outName;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(function(){URL.revokeObjectURL(url)},2000);
+    f.building=false; f.buildMsg=t.buildDone+outName; renderXlsxFiles();
+  }).catch(function(){
+    f.building=false; f.buildMsg=t.errBadXlsx; renderXlsxFiles();
   });
-});
+}
+var xdz=$("xlsxDropzone");
+["dragenter","dragover"].forEach(function(ev){xdz.addEventListener(ev,function(e){e.preventDefault();xdz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){xdz.addEventListener(ev,function(e){e.preventDefault();xdz.classList.remove("drag")})});
+xdz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addXlsxFile(fs[i]); });
+xdz.addEventListener("click",function(){$("xlsxFileInput").click()});
+xdz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("xlsxFileInput").click()} });
+$("xlsxFileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addXlsxFile(fs[i]); e.target.value=""; });
 
 /* ============ lang switch ============ */
 function applyLang(){
@@ -1137,12 +1164,9 @@ function applyLang(){
   if(state.bytes){
     $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
   }
-  if(xState.parsed){
-    $("xlsxFileInfo").textContent=T[lang].fileLabel+": "+xState.name;
-  }
   if($("textResult").style.display!=="none" && $("ta").value) renderTextResult();
   if(state.rows.length) renderCsvPreview();
-  if(xState.parsed) reanalyzeXlsx();
+  reanalyzeXlsxAll(); renderXlsxFiles();
 }
 var langBtns=document.querySelectorAll(".lang button");
 for(var li=0;li<langBtns.length;li++)langBtns[li].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
