@@ -46,7 +46,12 @@ h2{font-size:1.05rem;margin:0 0 12px}
 .thumbrow .detailRow input{font:inherit;font-size:.85rem;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--bg);color:var(--fg);min-width:0}
 .thumbrow .detailRow .dDate{flex:1 1 128px}
 .thumbrow .detailRow .dPayee{flex:2 1 140px}
+.thumbrow .detailRow .dCategory{flex:1 1 110px}
 .thumbrow .detailRow .dAmount{flex:1 1 90px;text-align:right}
+#categorySubtotalTable{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:10px}
+#categorySubtotalTable th,#categorySubtotalTable td{border-bottom:1px solid #ccc;padding:4px 8px;text-align:left}
+#categorySubtotalTable td:last-child,#categorySubtotalTable th:last-child{text-align:right}
+#categorySubtotalTitle{margin:14px 0 2px;font-size:.92rem;font-weight:700}
 .printSheetWrap{display:none}
 #printSheetTable{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:10px}
 #printSheetTable th,#printSheetTable td{border-bottom:1px solid #999;padding:6px 8px;text-align:left}
@@ -118,8 +123,10 @@ html[lang=en] .en-only{display:block}
 
 <section class="card" id="listCard" style="display:none">
   <h2 data-i="h_list">写真一覧（並び替え・回転）</h2>
-  <label class="chk"><input type="checkbox" id="detailChk"><span data-i="detailChkLabel">各写真に日付・支払先・金額を入力する（任意）</span></label>
+  <label class="chk"><input type="checkbox" id="detailChk"><span data-i="detailChkLabel">各写真に日付・支払先・費目・金額を入力する（任意）</span></label>
   <div class="thumbs" id="thumbList"></div>
+  <datalist id="categoryList"></datalist>
+  <p class="status" id="detailTotal"></p>
   <div class="row">
     <button type="button" class="secondary" id="sortDateBtn" data-i="sortDateBtn">撮影日時順に並べ替え</button>
     <button type="button" class="secondary" id="clearBtn" data-i="clearBtn">すべてクリア</button>
@@ -132,8 +139,10 @@ html[lang=en] .en-only{display:block}
   <div class="previewGrid" id="previewGrid"></div>
   <div class="row">
     <button type="button" class="primary" id="makePdfBtn" data-i="makePdfBtn">PDFを作成してダウンロード</button>
-    <button type="button" class="secondary" id="printListBtn" data-i="printListBtn">明細一覧を印刷（日付・支払先・金額）</button>
+    <button type="button" class="secondary" id="printListBtn" data-i="printListBtn">明細一覧を印刷（日付・支払先・費目・金額）</button>
+    <button type="button" class="secondary" id="csvBtn" data-i="csvBtn">明細一覧をCSVでダウンロード</button>
   </div>
+  <p class="status" data-i="csvNote">CSVには一覧の写真がすべて含まれ、入力していない欄は空欄のまま出力されます。</p>
   <div class="summary" id="summary"></div>
 </section>
 
@@ -141,9 +150,14 @@ html[lang=en] .en-only{display:block}
   <h2 id="printSheetTitle"></h2>
   <p id="printSheetMeta"></p>
   <table id="printSheetTable">
-    <thead><tr><th data-i="printColNo">No.</th><th data-i="printColDate">日付</th><th data-i="printColPayee">支払先</th><th data-i="printColAmount">金額</th></tr></thead>
+    <thead><tr><th data-i="printColNo">No.</th><th data-i="printColDate">日付</th><th data-i="printColPayee">支払先</th><th data-i="printColCategory">費目</th><th data-i="printColAmount">金額</th></tr></thead>
     <tbody id="printSheetBody"></tbody>
-    <tfoot><tr><td colspan="3" data-i="printTotalLabel">合計</td><td id="printSheetTotal"></td></tr></tfoot>
+    <tfoot><tr><td colspan="4" data-i="printTotalLabel">合計</td><td id="printSheetTotal"></td></tr></tfoot>
+  </table>
+  <p id="categorySubtotalTitle" data-i="categorySubtotalTitle" style="display:none">費目別の小計</p>
+  <table id="categorySubtotalTable" style="display:none">
+    <thead><tr><th data-i="printColCategory">費目</th><th data-i="printColAmount">金額</th></tr></thead>
+    <tbody id="categorySubtotalBody"></tbody>
   </table>
 </div>
 
@@ -165,7 +179,9 @@ html[lang=en] .en-only{display:block}
     <h3>Q. iPhoneの写真（HEIC形式）が読み込めません。</h3>
     <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
     <h3>Q. キャプションに好きな文字を入れられますか？</h3>
-    <p>A. 現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。</p>
+    <p>A. 現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・費目・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・費目・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。</p>
+    <h3>Q. 金額を入力したら合計や費目別の集計を見られますか？</h3>
+    <p>A. はい。「各写真に日付・支払先・費目・金額を入力する」を有効にすると、金額を入力した枚数と合計金額が一覧の下にその場で表示されます。費目は自由入力で、よく使う候補（交通費・会議費・消耗品費など）を入力中に選べます。「明細一覧を印刷」では、2種類以上の費目を入力している場合に費目別の小計表も一緒に印刷されます。「明細一覧をCSVでダウンロード」を使うと、No.・日付・支払先・費目・金額の列を持つCSVファイルとして保存でき、Excelやスプレッドシートに貼り付けてさらに集計できます（CSVの作成も含めてこの端末の中だけで行われ、外部には送信されません）。</p>
     <h3>Q. 何枚まで対応していますか？</h3>
     <p>A. 枚数に上限は設けていませんが、写真が多くなるほど処理に時間がかかり、生成されるPDFのファイルサイズも大きくなります。数十枚を超える場合は、複数回に分けて作成することをおすすめします。</p>
     <h3>Q. 日付の古い順に並べ替えたい（スマホで撮った順）。</h3>
@@ -190,7 +206,9 @@ html[lang=en] .en-only{display:block}
     <h3>Q. My iPhone photos (HEIC) won't load.</h3>
     <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
     <h3>Q. Can I add custom caption text?</h3>
-    <p>A. Only auto-numbering (1, 2, 3…) is supported inside the PDF, since it's generated without embedding a Japanese font, so free-text Japanese captions can't be rendered there. If you want to record a date, payee, or amount, turn on "Enter date / payee / amount for each photo" in the photo list, then use the "Print itemized list" button to print an A4 sheet with the same numbers as the PDF using your browser's own print feature (which renders Japanese text natively). Everything stays on this device.</p>
+    <p>A. Only auto-numbering (1, 2, 3…) is supported inside the PDF, since it's generated without embedding a Japanese font, so free-text Japanese captions can't be rendered there. If you want to record a date, payee, category, or amount, turn on "Enter date / payee / category / amount for each photo" in the photo list, then use the "Print itemized list" button to print an A4 sheet with the same numbers as the PDF using your browser's own print feature (which renders Japanese text natively). Everything stays on this device.</p>
+    <h3>Q. Can I see a running total or a breakdown by category?</h3>
+    <p>A. Yes. Turn on "Enter date / payee / category / amount for each photo" and, as you type amounts, the number of entries and their total appear live below the list. Category is a free-text field with common suggestions (travel, meeting, supplies, and so on) you can pick while typing. "Print itemized list" also prints a subtotal table by category whenever two or more categories are in use. "Download itemized list as CSV" saves a CSV file with No., date, payee, category and amount columns, so you can paste it into Excel or a spreadsheet for further totals (everything, including building the CSV, happens on this device only).</p>
     <h3>Q. Is there a limit on how many photos?</h3>
     <p>A. No hard limit, but more photos means more processing time and a larger PDF file. For dozens of photos, consider splitting into a few runs.</p>
     <h3>Q. Can I sort photos into the order they were taken?</h3>
@@ -236,7 +254,8 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"写真はどこかにアップロードされますか？","acceptedAnswer":{"@type":"Answer","text":"されません。写真の内容はこの端末のブラウザの中だけで処理され、PDFの生成も含めて外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}},
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。複数の写真を1枚のPDFに並べるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}},
     {"@type":"Question","name":"iPhoneの写真（HEIC形式）が読み込めません。","acceptedAnswer":{"@type":"Answer","text":"HEIC形式の読み込みはブラウザに依存します。読み込めない場合は、写真の設定を「互換性優先（JPEG）」にするか、JPEGとして書き出してからお試しください。"}},
-    {"@type":"Question","name":"キャプションに好きな文字を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます（ブラウザの印刷機能を使うため日本語もそのまま印刷されます）。入力内容はこの端末の中だけで扱われ、外部には送信されません。"}},
+    {"@type":"Question","name":"キャプションに好きな文字を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"現在は通し番号（1, 2, 3…）のみに対応しています。PDF内の文字は日本語フォントを埋め込まずに生成しているため、自由記述の日本語キャプションは正しく表示できません。日付・支払先・費目・金額などのメモを残したい場合は、「写真一覧」の「各写真に日付・支払先・費目・金額を入力する」を有効にしたうえで、「明細一覧を印刷」ボタンからPDFと同じ番号付きの一覧表をブラウザの印刷機能でA4に印刷できます。入力内容はこの端末の中だけで扱われ、外部には送信されません。"}},
+    {"@type":"Question","name":"金額を入力したら合計や費目別の集計を見られますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「各写真に日付・支払先・費目・金額を入力する」を有効にすると、金額を入力した枚数と合計金額が一覧の下にその場で表示されます。「明細一覧を印刷」では2種類以上の費目がある場合に費目別の小計表も印刷され、「明細一覧をCSVでダウンロード」でNo.・日付・支払先・費目・金額の列を持つCSVファイルとして保存できます。処理はすべてこの端末の中だけで行われます。"}},
     {"@type":"Question","name":"日付の古い順に並べ替えたい（スマホで撮った順）。","acceptedAnswer":{"@type":"Answer","text":"「撮影日時順に並べ替え」ボタンで、写真のEXIF撮影日時の古い順に自動で並べ替えます。EXIFが無い写真はファイルの更新日時を代わりに使い、必要なら↑↓ボタンで手動調整できます。"}},
     {"@type":"Question","name":"ページ番号（ノンブル）を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「各ページの下部にページ番号を印字する」にチェックを入れてPDFを作成すると、各ページの右下に「1 / 3」のような現在のページ番号と全体のページ数が印字されます。"}}
   ]
@@ -430,11 +449,18 @@ var T={
     h_source:"写真を追加", dropText:"ここに写真をドラッグ＆ドロップ、またはクリックして選択（複数可）",
     formatNote:"JPEG・PNG・WebPに対応。HEIC（iPhoneの写真形式）はブラウザによって読み込めない場合があります。うまく読み込めない場合はFAQをご覧ください。",
     h_list:"写真一覧（並び替え・回転）", clearBtn:"すべてクリア",
-    detailChkLabel:"各写真に日付・支払先・金額を入力する（任意）",
-    detailDateLabel:"日付", detailPayeePlaceholder:"支払先", detailAmountPlaceholder:"金額",
+    detailChkLabel:"各写真に日付・支払先・費目・金額を入力する（任意）",
+    detailDateLabel:"日付", detailPayeePlaceholder:"支払先", detailCategoryPlaceholder:"費目", detailAmountPlaceholder:"金額",
+    categoryPresets:["交通費","会議費","消耗品費","通信費","接待費","新聞図書費","雑費"],
+    noCategoryLabel:"（未分類）",
+    liveTotalText:function(n,total){ return n+"件・合計 "+formatAmount(total)+"円"; },
+    liveTotalNone:"金額を入力すると合計が表示されます。",
     h_preview:"プレビュー", makePdfBtn:"PDFを作成してダウンロード",
-    printListBtn:"明細一覧を印刷（日付・支払先・金額）",
-    printColNo:"No.", printColDate:"日付", printColPayee:"支払先", printColAmount:"金額", printTotalLabel:"合計",
+    printListBtn:"明細一覧を印刷（日付・支払先・費目・金額）",
+    csvBtn:"明細一覧をCSVでダウンロード",
+    csvNote:"CSVには一覧の写真がすべて含まれ、入力していない欄は空欄のまま出力されます。",
+    categorySubtotalTitle:"費目別の小計",
+    printColNo:"No.", printColDate:"日付", printColPayee:"支払先", printColCategory:"費目", printColAmount:"金額", printTotalLabel:"合計",
     printSheetTitle:"領収書 明細一覧",
     printSheetMeta:function(d){return "作成日："+d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+"（PDFと同じ通し番号）"},
     feedback:"フィードバックはこちら", privacy:"写真の内容はサーバーに送信されません。PDFの生成もこの端末のブラウザだけで行われます。",
@@ -456,11 +482,18 @@ var T={
     h_source:"Add photos", dropText:"Drag and drop photos here, or click to choose (multiple allowed)",
     formatNote:"JPEG, PNG and WebP are supported. HEIC (iPhone) may not load in every browser — see the FAQ if it fails.",
     h_list:"Photo list (reorder / rotate)", clearBtn:"Clear all",
-    detailChkLabel:"Enter date / payee / amount for each photo (optional)",
-    detailDateLabel:"Date", detailPayeePlaceholder:"Payee", detailAmountPlaceholder:"Amount",
+    detailChkLabel:"Enter date / payee / category / amount for each photo (optional)",
+    detailDateLabel:"Date", detailPayeePlaceholder:"Payee", detailCategoryPlaceholder:"Category", detailAmountPlaceholder:"Amount",
+    categoryPresets:["Travel","Meeting","Supplies","Communication","Entertainment","Books","Misc"],
+    noCategoryLabel:"(Uncategorized)",
+    liveTotalText:function(n,total){ return n+" item(s), total "+formatAmount(total); },
+    liveTotalNone:"Enter an amount to see the running total.",
     h_preview:"Preview", makePdfBtn:"Create PDF &amp; download",
-    printListBtn:"Print itemized list (date / payee / amount)",
-    printColNo:"No.", printColDate:"Date", printColPayee:"Payee", printColAmount:"Amount", printTotalLabel:"Total",
+    printListBtn:"Print itemized list (date / payee / category / amount)",
+    csvBtn:"Download itemized list as CSV",
+    csvNote:"The CSV includes every photo in the list; any field left blank is exported as an empty cell.",
+    categorySubtotalTitle:"Subtotal by category",
+    printColNo:"No.", printColDate:"Date", printColPayee:"Payee", printColCategory:"Category", printColAmount:"Amount", printTotalLabel:"Total",
     printSheetTitle:"Receipt itemized list",
     printSheetMeta:function(d){return "Generated: "+(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()+" (same numbers as the PDF)"},
     feedback:"Feedback", privacy:"Photos are never sent to a server. The PDF is built entirely in this browser.",
@@ -584,7 +617,7 @@ async function loadImageEntry(file){
   var exifDate = await getExifCaptureDate(file);
   var sortTime = exifDate ? exifDate.getTime() : file.lastModified;
   var dateSource = exifDate ? "exif" : "file";
-  return { id:uid++, name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, error: err || (size.w===0?T[lang].loadError:null), date:"", payee:"", amount:"", sortTime:sortTime, dateSource:dateSource };
+  return { id:uid++, name:file.name, bitmap:bmp, w:size.w, h:size.h, rotate:0, error: err || (size.w===0?T[lang].loadError:null), date:"", payee:"", category:"", amount:"", sortTime:sortTime, dateSource:dateSource };
 }
 
 /* ---------- 回転を反映した実効サイズ ---------- */
@@ -752,16 +785,52 @@ function renderThumbs(){
       dPayee.addEventListener("input",function(){ entry.payee=dPayee.value; });
       det.appendChild(dPayee);
 
+      var dCategory=document.createElement("input");
+      dCategory.type="text"; dCategory.className="dCategory"; dCategory.value=entry.category||"";
+      dCategory.placeholder=T[lang].detailCategoryPlaceholder; dCategory.setAttribute("list","categoryList");
+      dCategory.addEventListener("input",function(){ entry.category=dCategory.value; updateDetailTotal(); });
+      det.appendChild(dCategory);
+
       var dAmount=document.createElement("input");
       dAmount.type="number"; dAmount.className="dAmount"; dAmount.value=entry.amount||"";
       dAmount.placeholder=T[lang].detailAmountPlaceholder; dAmount.min="0"; dAmount.step="1"; dAmount.inputMode="numeric";
-      dAmount.addEventListener("input",function(){ entry.amount=dAmount.value; });
+      dAmount.addEventListener("input",function(){ entry.amount=dAmount.value; updateDetailTotal(); });
       det.appendChild(dAmount);
 
       row.appendChild(det);
     }
 
     wrap.appendChild(row);
+  });
+  updateDetailTotal();
+}
+/* ---------- 入力中の合計（金額を入力した分だけ即時集計） ---------- */
+function computeTotals(){
+  var valid=validFiles();
+  var total=0, hasAmount=false, byCat={}, n=0;
+  valid.forEach(function(entry){
+    var raw=String(entry.amount||"").trim();
+    var amt=parseFloat(raw.replace(/,/g,""));
+    if(raw==="" || isNaN(amt)) return;
+    n++; total+=amt; hasAmount=true;
+    var cat=(entry.category||"").trim() || T[lang].noCategoryLabel;
+    byCat[cat]=(byCat[cat]||0)+amt;
+  });
+  return {n:n, total:total, hasAmount:hasAmount, byCat:byCat};
+}
+function updateDetailTotal(){
+  var el=$("detailTotal");
+  if(!state.detailOn || state.files.length===0){ el.textContent=""; return; }
+  var t=computeTotals();
+  el.textContent = t.hasAmount ? T[lang].liveTotalText(t.n, t.total) : T[lang].liveTotalNone;
+}
+function populateCategoryList(){
+  var dl=$("categoryList");
+  dl.innerHTML="";
+  T[lang].categoryPresets.forEach(function(c){
+    var opt=document.createElement("option");
+    opt.value=c;
+    dl.appendChild(opt);
   });
 }
 function escapeHtml(s){
@@ -890,21 +959,41 @@ function buildPrintSheet(){
   $("printSheetMeta").textContent=T[lang].printSheetMeta(new Date());
   var body=$("printSheetBody");
   body.innerHTML="";
-  var total=0, hasAmount=false;
   valid.forEach(function(entry,i){
     var tr=document.createElement("tr");
     var raw=String(entry.amount||"").trim();
     var amtNum=parseFloat(raw.replace(/,/g,""));
     var amtText="";
-    if(raw!=="" && !isNaN(amtNum)){ total+=amtNum; hasAmount=true; amtText=formatAmount(amtNum); }
+    if(raw!=="" && !isNaN(amtNum)){ amtText=formatAmount(amtNum); }
     var tdNo=document.createElement("td"); tdNo.textContent=String(i+1);
     var tdDate=document.createElement("td"); tdDate.textContent=entry.date||"";
     var tdPayee=document.createElement("td"); tdPayee.textContent=entry.payee||"";
+    var tdCategory=document.createElement("td"); tdCategory.textContent=entry.category||"";
     var tdAmt=document.createElement("td"); tdAmt.textContent=amtText;
-    tr.appendChild(tdNo); tr.appendChild(tdDate); tr.appendChild(tdPayee); tr.appendChild(tdAmt);
+    tr.appendChild(tdNo); tr.appendChild(tdDate); tr.appendChild(tdPayee); tr.appendChild(tdCategory); tr.appendChild(tdAmt);
     body.appendChild(tr);
   });
-  $("printSheetTotal").textContent = hasAmount ? formatAmount(total) : "";
+  var totals=computeTotals();
+  $("printSheetTotal").textContent = totals.hasAmount ? formatAmount(totals.total) : "";
+
+  var catKeys=Object.keys(totals.byCat);
+  var subtotalTitle=$("categorySubtotalTitle"), subtotalTable=$("categorySubtotalTable");
+  if(catKeys.length>1){
+    subtotalTitle.style.display=""; subtotalTable.style.display="";
+    subtotalTitle.textContent=T[lang].categorySubtotalTitle;
+    var subBody=$("categorySubtotalBody");
+    subBody.innerHTML="";
+    catKeys.sort(function(a,b){ return totals.byCat[b]-totals.byCat[a]; });
+    catKeys.forEach(function(cat){
+      var tr=document.createElement("tr");
+      var tdCat=document.createElement("td"); tdCat.textContent=cat;
+      var tdAmt=document.createElement("td"); tdAmt.textContent=formatAmount(totals.byCat[cat]);
+      tr.appendChild(tdCat); tr.appendChild(tdAmt);
+      subBody.appendChild(tr);
+    });
+  } else {
+    subtotalTitle.style.display="none"; subtotalTable.style.display="none";
+  }
 }
 function printItemizedList(){
   if(validFiles().length===0) return;
@@ -915,6 +1004,33 @@ function printItemizedList(){
 window.addEventListener("afterprint",function(){
   document.documentElement.classList.remove("printing-summary");
 });
+
+/* ---------- 明細一覧のCSVダウンロード ---------- */
+function csvField(s){
+  s=String(s==null?"":s);
+  if(/[",\n]/.test(s)) return '"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function downloadItemizedCsv(){
+  var valid=validFiles();
+  if(valid.length===0) return;
+  var header=[T[lang].printColNo,T[lang].printColDate,T[lang].printColPayee,T[lang].printColCategory,T[lang].printColAmount];
+  var lines=[header.map(csvField).join(",")];
+  valid.forEach(function(entry,i){
+    var raw=String(entry.amount||"").trim();
+    var amtNum=parseFloat(raw.replace(/,/g,""));
+    var amtOut=(raw!=="" && !isNaN(amtNum)) ? String(amtNum) : "";
+    lines.push([i+1, entry.date||"", entry.payee||"", entry.category||"", amtOut].map(csvField).join(","));
+  });
+  var csvStr=lines.join("\r\n")+"\r\n";
+  var bom=new Uint8Array([0xEF,0xBB,0xBF]);
+  var blob=new Blob([bom, csvStr],{type:"text/csv;charset=utf-8"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download="receipt-list.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+}
 
 /* ---------- 設定ボタン群の生成 ---------- */
 function buildOptButtons(container, items, isActive, onPick){
@@ -993,6 +1109,7 @@ $("detailChk").addEventListener("change",function(){
   renderAll();
 });
 $("printListBtn").addEventListener("click",function(){ printItemizedList(); });
+$("csvBtn").addEventListener("click",function(){ downloadItemizedCsv(); });
 $("sortDateBtn").addEventListener("click",function(){ sortFilesByDate(); });
 $("clearBtn").addEventListener("click",function(){
   state.files=[];
@@ -1009,6 +1126,7 @@ function applyLang(){
   for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
   var bs=document.querySelectorAll(".lang button");
   for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  populateCategoryList();
   renderAll();
 }
 var langBtns=document.querySelectorAll(".lang button");
