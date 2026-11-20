@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>保証書・契約の期限一覧｜写真つきでブラウザに保存 | てのひらツール</title>
+<meta name="description" content="家電や契約の保証書・レシートを写真で記録し、期限が近いものから一覧で確認できる無料ツール。品名と保証期限を入力するだけ。入力内容はこの端末のブラウザ内だけに保存され、サーバーには送信されません。A browser-only warranty &amp; contract expiry tracker — snap a photo of each receipt, sort by expiry date, back up your list as a JSON file anytime.">
+<link rel="canonical" href="https://tenohira-tools.github.io/hoshou-kigen/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--bad:#a4353a;--bad-bg:#fbe9ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--bad:#f19a9d;--bad-bg:#3a2022}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:800px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.3rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px;min-width:0}
+h2{font-size:1.08rem;margin:0 0 12px}
+.formGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;min-width:0}
+.formGrid .wide{grid-column:1/-1}
+.formGrid label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.formGrid input,.formGrid textarea{width:100%;font:inherit;font-size:.95rem;padding:8px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.formGrid textarea{resize:vertical}
+.photoPreview{margin-top:8px;display:flex;align-items:center;gap:10px;min-width:0}
+.photoPreview img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.photoPreview .ph-note{color:var(--muted);font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.rowBetween{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{font:inherit;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer;min-height:36px;white-space:nowrap}
+button.secondary.danger{color:var(--bad)}
+.fileLabel{display:inline-flex;align-items:center;cursor:pointer}
+.hiddenInput{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.toast{margin-top:10px;font-size:.9rem;color:var(--accent);min-height:1.4em}
+.searchBox{font:inherit;font-size:.92rem;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);max-width:220px;width:100%}
+.itemList{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.itemCard{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.itemCard .thumb{flex:none;width:64px;height:64px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--bg)}
+.itemCard .noThumb{flex:none;width:64px;height:64px;border-radius:8px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.72rem;text-align:center;padding:4px}
+.itemCard .body{flex:1;min-width:0}
+.itemCard .nameRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.itemCard .name{font-weight:700;word-break:break-word}
+.badge{display:inline-block;font-size:.78rem;font-weight:700;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.badge-bad{color:var(--bad);background:var(--bad-bg)}
+.badge-warn{color:var(--warn);background:var(--warn-bg)}
+.badge-ok{color:var(--accent);background:var(--accent-bg)}
+.badge-none{color:var(--muted);background:var(--bg);border:1px solid var(--line)}
+.itemCard .dates{color:var(--muted);font-size:.86rem;margin-top:3px}
+.itemCard .memo{color:var(--fg);font-size:.88rem;margin-top:4px;white-space:pre-wrap;word-break:break-word}
+.itemCard .actions{flex:none;display:flex;flex-direction:column;gap:6px}
+.itemCard .actions button{font:inherit;font-size:.82rem;font-weight:600;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:5px 10px;cursor:pointer;white-space:nowrap}
+.itemCard .actions button:hover{border-color:var(--accent);color:var(--accent)}
+.itemCard .actions button.rm:hover{border-color:var(--bad);color:var(--bad)}
+.empty{color:var(--muted);font-size:.92rem;margin:14px 0 0}
+.hidden{display:none !important}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul,.about ol{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+@media print{
+  .lang,.top,.addCard,.searchBox,.outputCard,footer,.about,.related,.itemCard .actions{display:none !important}
+  section.card{border:0;box-shadow:none;padding:0;margin:0 0 14px}
+  body{background:#fff;color:#000}
+  .itemCard{border:1px solid #999;break-inside:avoid}
+  .badge{border:1px solid #000;background:transparent !important;color:#000 !important}
+}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">保証書・契約の期限を、写真つきで一覧管理</h1>
+    <p class="sub" data-i="sub">品名と保証期限を入力するだけで、期限が近いものから並べて表示します。データはこの端末のブラウザ内だけに保存され、サーバーには送信されません。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card addCard">
+  <h2 data-i="h_add">保証書・契約を追加</h2>
+  <div class="formGrid">
+    <div><label for="fName" data-i="nameLabel">品名</label><input type="text" id="fName" autocomplete="off"></div>
+    <div><label for="fExpiry" data-i="expiryLabel">保証期限・更新期限</label><input type="date" id="fExpiry"></div>
+    <div><label for="fPurchase" data-i="purchaseLabel">購入日・契約日（任意）</label><input type="date" id="fPurchase"></div>
+    <div class="wide"><label for="fMemo" data-i="memoLabel">メモ（購入店・保証番号など、任意）</label><textarea id="fMemo" rows="2"></textarea></div>
+    <div class="wide">
+      <label for="fPhoto" data-i="photoLabel">写真（保証書やレシート、任意）</label>
+      <input type="file" id="fPhoto" accept="image/*">
+      <div class="photoPreview hidden" id="photoPreview"></div>
+    </div>
+  </div>
+  <div class="row">
+    <button type="button" class="primary" id="addBtn" data-i="addBtn">＋ 追加</button>
+    <button type="button" class="secondary hidden" id="cancelEditBtn" data-i="cancelEditBtn">キャンセル</button>
+  </div>
+  <p class="toast" id="toast"></p>
+</section>
+
+<section class="card">
+  <div class="rowBetween">
+    <h2 id="listHeading">一覧（0件）</h2>
+    <input type="search" id="searchBox" class="searchBox">
+  </div>
+  <ul class="itemList" id="itemList"></ul>
+  <p class="empty hidden" id="emptyMsg" data-i="emptyMsg">まだ登録がありません。上の欄から追加してください。</p>
+  <p class="empty hidden" id="emptyFilteredMsg" data-i="emptyFilteredMsg">検索条件に一致する項目がありません。</p>
+</section>
+
+<section class="card outputCard">
+  <h2 data-i="h_output">出力・バックアップ</h2>
+  <div class="row">
+    <button type="button" class="secondary" id="printBtn" data-i="printBtn">印刷 / PDF保存</button>
+    <button type="button" class="secondary" id="backupBtn" data-i="backupBtn">バックアップ(JSON)をダウンロード</button>
+    <label class="secondary fileLabel"><span data-i="restoreBtn">JSONファイルから復元</span><input type="file" id="restoreInput" class="hiddenInput" accept="application/json,.json"></label>
+    <button type="button" class="secondary danger" id="clearAllBtn" data-i="clearAllBtn">すべて削除</button>
+  </div>
+  <p class="toast" id="toast2"></p>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>「品名」（例：冷蔵庫、Wi-Fiルーター、賃貸契約）と「保証期限・更新期限」を入力し、必要なら購入日・メモ・保証書やレシートの写真を添えて「追加」します。</li>
+      <li>一覧は期限が近いもの（期限切れを含む）から自動で並び替わり、期限切れは赤、30日以内は黄色で色分け表示されます。</li>
+      <li>各項目の「編集」で内容を書き直し、「削除」で1件だけ消せます。写真を変更しなければ元の写真が保たれます。</li>
+      <li>入力した内容はこの端末のブラウザに自動保存されるため、閉じても次回また続きから使えます。</li>
+      <li>「印刷 / PDF保存」で一覧を印刷・PDF化できます。「バックアップ(JSON)をダウンロード」で保存内容をファイルに控えられ、別の端末やブラウザでは「JSONファイルから復元」で読み込めます（読み込むと今の一覧は上書きされます）。</li>
+    </ol>
+    <h3>Q. 入力した内容や写真はどこかに送信されますか？</h3>
+    <p>A. されません。品名・日付・メモ・写真は、この端末のブラウザ内（localStorage）だけに保存され、外部のサーバーに送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。ブラウザの閲覧データ（Cookieやサイトデータ）を削除すると保存内容も消えるため、「バックアップ(JSON)をダウンロード」で定期的に控えておくことをおすすめします。</p>
+    <h3>Q. 写真はどのくらいの画質で保存されますか？</h3>
+    <p>A. ブラウザの保存容量には上限があるため、アップロードした写真はその場で縮小・圧縮してから保存します（元の高画質データは保存されません）。内容を思い出すための見本・メモ代わりとしてご利用ください。原本の写真は端末のアルバム等に別途保管してください。</p>
+    <h3>Q. 期限が近づいたら通知してくれますか？</h3>
+    <p>A. いいえ。プッシュ通知やメール通知の機能はありません（通知にはサーバーとの通信やログインが必要になり、本ツールの「サーバーに何も送信しない」という方針と合わないためです）。ページを開いたときに、期限が近いものから色分けして見える一覧表示型のツールです。</p>
+    <h3>Q. 保証が実際に有効かどうか判定してくれますか？</h3>
+    <p>A. いいえ。入力した日付をそのまま表示・並べ替えるだけの記録ツールであり、保証内容の有効性や契約条件についての助言は行いません。実際の保証・契約の適用については、お持ちの保証書・契約書の記載内容や販売店・サービス提供者にご確認ください。本ツールは法律・税務上の助言を行うものではありません。</p>
+    <h3>Q. 他の端末やブラウザと同期できますか？</h3>
+    <p>A. できません。保存はこの端末・このブラウザの中だけで完結する設計です。他の端末でも使いたい場合は、「バックアップ(JSON)をダウンロード」したファイルを、使いたい端末のこのページで「JSONファイルから復元」してください（今の一覧は上書きされます）。</p>
+    <h3>Q. 間違えてすべて削除してしまったら元に戻せますか？</h3>
+    <p>A. 元に戻す機能はありません。日頃から「バックアップ(JSON)をダウンロード」でファイルを保存しておくと、読み込み直して復元できます。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Enter an item name (e.g. a fridge, a Wi-Fi router, a lease contract) and its warranty/renewal due date, optionally with a purchase date, memo, and a photo of the warranty card or receipt, then click "Add".</li>
+      <li>The list automatically sorts by how soon each item is due (including overdue ones), color-coded red when overdue and yellow within 30 days.</li>
+      <li>Use "Edit" on any item to change it, or "Delete" to remove just that one. Leaving the photo field empty while editing keeps the existing photo.</li>
+      <li>Everything is saved automatically in this browser, so you can close the tab and pick up where you left off.</li>
+      <li>"Print / Save as PDF" prints the list. "Download backup (JSON)" saves everything to a file; use "Restore from JSON file" on another device or browser to load it (this overwrites the current list).</li>
+    </ol>
+    <h3>Q. Is anything I enter or any photo sent anywhere?</h3>
+    <p>A. No. Names, dates, memos and photos are stored only in this browser's local storage and never sent to a server (only anonymous, cookie-free page-view counts are collected for this page). Clearing your browser data will erase them, so download a JSON backup periodically.</p>
+    <h3>Q. What quality are photos stored at?</h3>
+    <p>A. Because browser storage has a limited quota, uploaded photos are shrunk and compressed on the spot before saving (the original high-resolution file is not kept). Treat it as a reminder thumbnail, not an archive — keep the original photo in your phone's album.</p>
+    <h3>Q. Will it notify me when something is about to expire?</h3>
+    <p>A. No push or email notifications — those would require a server connection or login, which conflicts with this tool's "nothing is sent anywhere" design. It's a list you check yourself, color-coded by urgency.</p>
+    <h3>Q. Does it judge whether a warranty is actually still valid?</h3>
+    <p>A. No. It only displays and sorts the dates you enter; it gives no advice on warranty validity or contract terms. Check the actual warranty card, contract, or the seller/provider for that. This is not legal or tax advice.</p>
+    <h3>Q. Can it sync across devices or browsers?</h3>
+    <p>A. No — everything stays in this one browser on this one device. To use it elsewhere, download a JSON backup and restore it on the other device (this overwrites that device's current list).</p>
+    <h3>Q. I deleted everything by mistake — can I undo it?</h3>
+    <p>A. There's no undo. Download a JSON backup regularly so you can restore from it if needed.</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../shorui-scan/">書類写真のスキャン風補正</a> — 保証書やレシートの写真を先に台形補正・白黒くっきり化してから登録すると見やすくなります。</li>
+      <li><a href="../receipt-sheet/">領収書まとめ台紙メーカー</a> — 複数のレシート写真をA4のPDFにまとめたいときはこちら。</li>
+      <li><a href="../kotsuhi-seisan/">交通費精算書メーカー</a> — 同じくこの端末のブラウザだけにデータを保存する、明細集計・印刷ツール。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../shorui-scan/">Document Scan Correction</a> — Straighten and clean up a warranty card or receipt photo before adding it here.</li>
+      <li><a href="../receipt-sheet/">Receipt Sheet Maker</a> — Arrange several receipt photos into a printable A4 PDF.</li>
+      <li><a href="../kotsuhi-seisan/">Travel Expense Report Maker</a> — Another tool that keeps all its data only in this browser.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">入力した内容・写真はサーバーに送信されません。この端末のブラウザ（localStorage）だけに保存されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"入力した内容や写真はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。品名・日付・メモ・写真は、この端末のブラウザ内（localStorage）だけに保存され、外部のサーバーに送信されることはありません（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。ブラウザの閲覧データを削除すると保存内容も消えるため、バックアップのダウンロードを定期的に行うことをおすすめします。"}},
+    {"@type":"Question","name":"写真はどのくらいの画質で保存されますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザの保存容量には上限があるため、アップロードした写真はその場で縮小・圧縮してから保存します。元の高画質データは保存されないため、見本・メモ代わりとしてご利用ください。"}},
+    {"@type":"Question","name":"期限が近づいたら通知してくれますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。プッシュ通知やメール通知の機能はありません。ページを開いたときに期限が近いものから色分けして見える一覧表示型のツールです。"}},
+    {"@type":"Question","name":"保証が実際に有効かどうか判定してくれますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。入力した日付を表示・並べ替えるだけの記録ツールで、保証内容の有効性や契約条件についての助言は行いません。実際の適用は保証書・契約書の記載内容や販売店・提供者にご確認ください。"}},
+    {"@type":"Question","name":"他の端末やブラウザと同期できますか？","acceptedAnswer":{"@type":"Answer","text":"できません。保存はこの端末・このブラウザの中だけで完結します。他の端末で使う場合は、バックアップ(JSON)をダウンロードしてその端末で復元してください。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function uid(){ return "h"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+var STORE_KEY="hoshou-kigen:v1";
+var lang="ja";
+var editingId=null;
+
+function loadState(){
+  try{
+    var raw=localStorage.getItem(STORE_KEY);
+    if(raw){
+      var s=JSON.parse(raw);
+      if(s && Array.isArray(s.items)) return s;
+    }
+  }catch(e){}
+  return {items:[]};
+}
+var state=loadState();
+
+function saveState(){
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+function findItem(id){
+  for(var i=0;i<state.items.length;i++){ if(state.items[i].id===id) return state.items[i]; }
+  return null;
+}
+
+var T={
+  ja:{
+    title:"保証書・契約の期限を、写真つきで一覧管理",
+    sub:"品名と保証期限を入力するだけで、期限が近いものから並べて表示します。データはこの端末のブラウザ内だけに保存され、サーバーには送信されません。",
+    h_add:"保証書・契約を追加",
+    nameLabel:"品名", expiryLabel:"保証期限・更新期限", purchaseLabel:"購入日・契約日（任意）",
+    memoLabel:"メモ（購入店・保証番号など、任意）", photoLabel:"写真（保証書やレシート、任意）",
+    addBtn:"＋ 追加", updateBtn:"更新する", cancelEditBtn:"キャンセル",
+    needName:"品名を入力してください", added:"追加しました", updated:"更新しました", deleted:"削除しました",
+    saveFailed:"保存容量が不足しているため保存できませんでした。写真の数を減らすか、不要な項目を削除してください。",
+    confirmDelete:"この項目を削除します。よろしいですか？",
+    h_list:function(n){ return "一覧（"+n+"件）"; },
+    searchPh:"品名・メモで検索",
+    emptyMsg:"まだ登録がありません。上の欄から追加してください。",
+    emptyFilteredMsg:"検索条件に一致する項目がありません。",
+    noPhoto:"写真なし",
+    badgeExpired:function(n){ return n===0 ? "本日期限" : (-n)+"日前に期限切れ"; },
+    badgeSoon:function(n){ return "あと"+n+"日"; },
+    badgeOk:function(n){ return "あと"+n+"日"; },
+    badgeNone:"期限未設定",
+    purchaseLine:function(d){ return "購入日: "+d; },
+    expiryLine:function(d){ return "期限: "+d; },
+    editBtn:"編集", rmBtn:"削除",
+    h_output:"出力・バックアップ", printBtn:"印刷 / PDF保存", backupBtn:"バックアップ(JSON)をダウンロード", restoreBtn:"JSONファイルから復元", clearAllBtn:"すべて削除",
+    confirmRestore:"読み込んだ内容で、今の一覧をすべて上書きします。よろしいですか？", confirmClearAll:"登録した項目をすべて削除します。よろしいですか？",
+    backupDone:"バックアップをダウンロードしました", restoreDone:"復元しました", restoreError:"ファイルを読み込めませんでした（形式が異なります）", cleared:"すべて削除しました",
+    feedback:"フィードバックはこちら", privacy:"入力した内容・写真はサーバーに送信されません。この端末のブラウザ（localStorage）だけに保存されます。",
+    keepPhotoNote:"（写真を選び直さなければ、元の写真が保たれます）"
+  },
+  en:{
+    title:"Track warranty &amp; contract expiry dates, with photos",
+    sub:"Enter an item name and its expiry date and the list sorts by urgency automatically. Everything stays only in this browser; nothing is sent to a server.",
+    h_add:"Add a warranty or contract",
+    nameLabel:"Item name", expiryLabel:"Warranty/renewal due date", purchaseLabel:"Purchase/contract date (optional)",
+    memoLabel:"Memo (store, warranty number, etc. — optional)", photoLabel:"Photo (warranty card or receipt, optional)",
+    addBtn:"＋ Add", updateBtn:"Update", cancelEditBtn:"Cancel",
+    needName:"Please enter an item name", added:"Added", updated:"Updated", deleted:"Deleted",
+    saveFailed:"Couldn't save — storage is full. Remove some photos or delete unused items.",
+    confirmDelete:"Delete this item?",
+    h_list:function(n){ return "List ("+n+" item"+(n===1?"":"s")+")"; },
+    searchPh:"Search name or memo",
+    emptyMsg:"Nothing added yet — use the form above.",
+    emptyFilteredMsg:"No items match your search.",
+    noPhoto:"No photo",
+    badgeExpired:function(n){ return n===0 ? "Due today" : "Overdue by "+(-n)+" day"+((-n)===1?"":"s"); },
+    badgeSoon:function(n){ return "Due in "+n+" day"+(n===1?"":"s"); },
+    badgeOk:function(n){ return "Due in "+n+" day"+(n===1?"":"s"); },
+    badgeNone:"No date set",
+    purchaseLine:function(d){ return "Purchased: "+d; },
+    expiryLine:function(d){ return "Due: "+d; },
+    editBtn:"Edit", rmBtn:"Delete",
+    h_output:"Output &amp; backup", printBtn:"Print / Save as PDF", backupBtn:"Download backup (JSON)", restoreBtn:"Restore from JSON file", clearAllBtn:"Delete all",
+    confirmRestore:"This will overwrite the current list with the loaded file. Continue?", confirmClearAll:"Delete every item in the list?",
+    backupDone:"Backup downloaded", restoreDone:"Restored", restoreError:"Couldn't read that file (wrong format)", cleared:"All items deleted",
+    feedback:"Feedback", privacy:"Nothing you enter or upload is sent to a server. It's saved only in this browser's local storage.",
+    keepPhotoNote:"(leave this empty to keep the existing photo)"
+  }
+};
+
+function toast(msg){ $("toast").textContent=msg; }
+function toast2(msg){ $("toast2").textContent=msg; }
+
+function todayISO(){
+  var d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function todayCompact(){ return todayISO().replace(/-/g,""); }
+function daysUntil(dateStr){
+  if(!dateStr) return null;
+  var today=new Date(); today.setHours(0,0,0,0);
+  var parts=dateStr.split("-");
+  var d=new Date(Number(parts[0]), Number(parts[1])-1, Number(parts[2]));
+  d.setHours(0,0,0,0);
+  return Math.round((d-today)/86400000);
+}
+function formatDate(dateStr){
+  if(!dateStr) return "";
+  return dateStr;
+}
+
+/* ---------- 写真の縮小 ---------- */
+function shrinkPhoto(file, callback){
+  if(!file){ callback(null); return; }
+  var reader=new FileReader();
+  reader.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var maxW=480;
+      var scale=Math.min(1, maxW/img.width);
+      var w=Math.max(1, Math.round(img.width*scale));
+      var h=Math.max(1, Math.round(img.height*scale));
+      var canvas=document.createElement("canvas");
+      canvas.width=w; canvas.height=h;
+      var ctx=canvas.getContext("2d");
+      ctx.drawImage(img,0,0,w,h);
+      var dataUrl;
+      try{ dataUrl=canvas.toDataURL("image/jpeg",0.6); }catch(e){ dataUrl=null; }
+      callback(dataUrl);
+    };
+    img.onerror=function(){ callback(null); };
+    img.src=reader.result;
+  };
+  reader.onerror=function(){ callback(null); };
+  reader.readAsDataURL(file);
+}
+
+$("fPhoto").addEventListener("change", function(){
+  var file=this.files && this.files[0];
+  var box=$("photoPreview");
+  if(!file){ box.classList.add("hidden"); box.innerHTML=""; return; }
+  shrinkPhoto(file, function(dataUrl){
+    box.innerHTML="";
+    box.classList.remove("hidden");
+    if(dataUrl){
+      var img=document.createElement("img");
+      img.src=dataUrl;
+      box.appendChild(img);
+    }
+    var note=document.createElement("span");
+    note.className="ph-note";
+    note.textContent = editingId ? T[lang].keepPhotoNote : "";
+    box.appendChild(note);
+  });
+});
+
+/* ---------- フォームのリセット／編集開始 ---------- */
+function resetForm(){
+  $("fName").value=""; $("fExpiry").value=""; $("fPurchase").value=""; $("fMemo").value="";
+  $("fPhoto").value=""; $("photoPreview").classList.add("hidden"); $("photoPreview").innerHTML="";
+  editingId=null;
+  $("addBtn").textContent=T[lang].addBtn;
+  $("cancelEditBtn").classList.add("hidden");
+}
+function startEdit(item){
+  $("fName").value=item.name||"";
+  $("fExpiry").value=item.expiry||"";
+  $("fPurchase").value=item.purchase||"";
+  $("fMemo").value=item.memo||"";
+  $("fPhoto").value="";
+  var box=$("photoPreview");
+  box.innerHTML="";
+  if(item.photo){
+    var img=document.createElement("img"); img.src=item.photo; box.appendChild(img);
+  }
+  var note=document.createElement("span"); note.className="ph-note"; note.textContent=T[lang].keepPhotoNote;
+  box.appendChild(note);
+  box.classList.remove("hidden");
+  editingId=item.id;
+  $("addBtn").textContent=T[lang].updateBtn;
+  $("cancelEditBtn").classList.remove("hidden");
+  $("fName").scrollIntoView({behavior:"smooth", block:"start"});
+}
+$("cancelEditBtn").addEventListener("click", resetForm);
+
+/* ---------- 追加・更新 ---------- */
+function finishSave(photoResult){
+  var name=$("fName").value.trim();
+  var expiry=$("fExpiry").value||"";
+  var purchase=$("fPurchase").value||"";
+  var memo=$("fMemo").value.trim();
+  var prevItemsSnapshot=JSON.stringify(state.items);
+  var wasEditing=editingId;
+
+  if(editingId){
+    var it=findItem(editingId);
+    if(it){
+      it.name=name; it.expiry=expiry; it.purchase=purchase; it.memo=memo;
+      if(photoResult.changed) it.photo=photoResult.value;
+    }
+  }else{
+    state.items.push({id:uid(), name:name, expiry:expiry, purchase:purchase, memo:memo, photo:photoResult.changed?photoResult.value:null});
+  }
+
+  if(!saveState()){
+    try{ state.items=JSON.parse(prevItemsSnapshot); }catch(e){ state.items=[]; }
+    toast(T[lang].saveFailed);
+    renderList();
+    return;
+  }
+  resetForm();
+  renderList();
+  toast(wasEditing ? T[lang].updated : T[lang].added);
+}
+$("addBtn").addEventListener("click", function(){
+  var name=$("fName").value.trim();
+  if(!name){ toast(T[lang].needName); return; }
+  var file=$("fPhoto").files && $("fPhoto").files[0];
+  if(file){
+    shrinkPhoto(file, function(dataUrl){ finishSave({changed:true, value:dataUrl}); });
+  }else if(editingId){
+    finishSave({changed:false});
+  }else{
+    finishSave({changed:true, value:null});
+  }
+});
+
+/* ---------- 一覧 ---------- */
+function statusOf(item){
+  var n=daysUntil(item.expiry);
+  if(n===null) return {cls:"badge-none", text:T[lang].badgeNone, n:null};
+  if(n<0) return {cls:"badge-bad", text:T[lang].badgeExpired(n), n:n};
+  if(n<=30) return {cls:"badge-warn", text:T[lang].badgeSoon(n), n:n};
+  return {cls:"badge-ok", text:T[lang].badgeOk(n), n:n};
+}
+function sortedFilteredItems(){
+  var q=$("searchBox").value.trim().toLowerCase();
+  var list=state.items.filter(function(it){
+    if(!q) return true;
+    return (it.name||"").toLowerCase().indexOf(q)>=0 || (it.memo||"").toLowerCase().indexOf(q)>=0;
+  });
+  var withDate=list.filter(function(it){return !!it.expiry}).sort(function(a,b){
+    return new Date(a.expiry)-new Date(b.expiry);
+  });
+  var withoutDate=list.filter(function(it){return !it.expiry}).sort(function(a,b){
+    return (a.name||"").localeCompare(b.name||"");
+  });
+  return withDate.concat(withoutDate);
+}
+function renderList(){
+  var all=state.items;
+  var shown=sortedFilteredItems();
+  $("listHeading").textContent=T[lang].h_list(all.length);
+  var ul=$("itemList");
+  ul.innerHTML="";
+  $("emptyMsg").classList.toggle("hidden", all.length!==0);
+  $("emptyFilteredMsg").classList.toggle("hidden", !(all.length>0 && shown.length===0));
+
+  shown.forEach(function(item){
+    var li=document.createElement("li");
+    li.className="itemCard";
+
+    if(item.photo){
+      var img=document.createElement("img");
+      img.className="thumb"; img.src=item.photo; img.alt="";
+      li.appendChild(img);
+    }else{
+      var noThumb=document.createElement("div");
+      noThumb.className="noThumb"; noThumb.textContent=T[lang].noPhoto;
+      li.appendChild(noThumb);
+    }
+
+    var body=document.createElement("div");
+    body.className="body";
+
+    var nameRow=document.createElement("div");
+    nameRow.className="nameRow";
+    var nameSpan=document.createElement("span");
+    nameSpan.className="name"; nameSpan.textContent=item.name||"";
+    nameRow.appendChild(nameSpan);
+    var st=statusOf(item);
+    var badge=document.createElement("span");
+    badge.className="badge "+st.cls; badge.textContent=st.text;
+    nameRow.appendChild(badge);
+    body.appendChild(nameRow);
+
+    var dates=document.createElement("div");
+    dates.className="dates";
+    var parts=[];
+    if(item.expiry) parts.push(T[lang].expiryLine(formatDate(item.expiry)));
+    if(item.purchase) parts.push(T[lang].purchaseLine(formatDate(item.purchase)));
+    dates.textContent=parts.join(" ・ ");
+    if(parts.length) body.appendChild(dates);
+
+    if(item.memo){
+      var memo=document.createElement("div");
+      memo.className="memo"; memo.textContent=item.memo;
+      body.appendChild(memo);
+    }
+    li.appendChild(body);
+
+    var actions=document.createElement("div");
+    actions.className="actions";
+    var editBtn=document.createElement("button");
+    editBtn.type="button"; editBtn.textContent=T[lang].editBtn;
+    editBtn.addEventListener("click", function(){ startEdit(item); });
+    actions.appendChild(editBtn);
+    var rmBtn=document.createElement("button");
+    rmBtn.type="button"; rmBtn.className="rm"; rmBtn.textContent=T[lang].rmBtn;
+    rmBtn.addEventListener("click", function(){
+      if(!window.confirm(T[lang].confirmDelete)) return;
+      var i=state.items.indexOf(item);
+      if(i>=0) state.items.splice(i,1);
+      if(!saveState()){ toast(T[lang].saveFailed); }
+      if(editingId===item.id) resetForm();
+      renderList();
+      toast(T[lang].deleted);
+    });
+    actions.appendChild(rmBtn);
+    li.appendChild(actions);
+
+    ul.appendChild(li);
+  });
+}
+$("searchBox").addEventListener("input", renderList);
+
+/* ---------- 出力・バックアップ ---------- */
+$("printBtn").addEventListener("click", function(){ window.print(); });
+
+$("backupBtn").addEventListener("click", function(){
+  var data=JSON.stringify({app:"hoshou-kigen", version:1, exportedAt:new Date().toISOString(), items:state.items});
+  var blob=new Blob([data], {type:"application/json"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download="hoshou-kigen-backup-"+todayCompact()+".json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+  toast2(T[lang].backupDone);
+});
+
+$("restoreInput").addEventListener("change", function(){
+  var file=this.files && this.files[0];
+  var input=this;
+  if(!file) return;
+  if(!window.confirm(T[lang].confirmRestore)){ input.value=""; return; }
+  var reader=new FileReader();
+  reader.onload=function(){
+    var prevItemsSnapshot=JSON.stringify(state.items);
+    try{
+      var data=JSON.parse(String(reader.result));
+      if(!data || !Array.isArray(data.items)) throw new Error("invalid");
+      state.items=data.items.map(function(it){
+        return {
+          id: (it && it.id) ? String(it.id) : uid(),
+          name: String((it && it.name) || ""),
+          expiry: (it && it.expiry) ? String(it.expiry) : "",
+          purchase: (it && it.purchase) ? String(it.purchase) : "",
+          memo: String((it && it.memo) || ""),
+          photo: (it && it.photo) ? String(it.photo) : null
+        };
+      });
+      if(!saveState()){
+        state.items=JSON.parse(prevItemsSnapshot);
+        toast2(T[lang].saveFailed);
+      }else{
+        toast2(T[lang].restoreDone);
+      }
+    }catch(e){
+      state.items=JSON.parse(prevItemsSnapshot);
+      toast2(T[lang].restoreError);
+    }
+    resetForm();
+    renderList();
+    input.value="";
+  };
+  reader.onerror=function(){ toast2(T[lang].restoreError); input.value=""; };
+  reader.readAsText(file);
+});
+
+$("clearAllBtn").addEventListener("click", function(){
+  if(!window.confirm(T[lang].confirmClearAll)) return;
+  state={items:[]};
+  saveState();
+  resetForm();
+  renderList();
+  toast2(T[lang].cleared);
+});
+
+/* ---------- 言語切替 ---------- */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){
+    var k=els[i].getAttribute("data-i");
+    if(typeof T[lang][k]==="string") els[i].innerHTML=T[lang][k];
+  }
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++) bs[m].setAttribute("aria-pressed", bs[m].getAttribute("data-lang")===lang?"true":"false");
+  $("searchBox").placeholder=T[lang].searchPh;
+  if(!editingId){ $("addBtn").textContent=T[lang].addBtn; }
+  else { $("addBtn").textContent=T[lang].updateBtn; }
+  renderList();
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0; li<langBtns.length; li++){
+  langBtns[li].addEventListener("click", function(){ lang=this.getAttribute("data-lang"); applyLang(); });
+}
+
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
