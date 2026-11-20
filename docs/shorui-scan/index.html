@@ -126,7 +126,9 @@ html[lang=en] .en-only{display:block}
     <input type="range" id="strengthSlider" min="-50" max="50" step="5" value="0">
     <span class="end" data-i="strengthDarkEnd">濃く</span>
     <span class="val" id="strengthVal">0</span>
+    <button type="button" class="secondary" id="autoStrengthBtn" data-i="autoStrengthBtn">濃さを自動検出</button>
   </div>
+  <p class="status" id="autoStrengthStatus"></p>
   <div class="row">
     <button type="button" class="primary" id="applyBtn" data-i="applyBtn">補正を適用</button>
     <button type="button" class="secondary" id="cancelEditBtn" data-i="cancelEditBtn">この写真をやめる</button>
@@ -175,6 +177,8 @@ html[lang=en] .en-only{display:block}
     <p>A. 白黒くっきりは、グレースケール化した上で写真全体の明暗の分布を自動で調整（オートレベル補正）し、紙面の陰影を飛ばして文字を読みやすくする処理です。「影を消す（白く）」と異なり画像全体で一律に調整するため、片側だけ強く影が落ちた写真には「影を消す（白く）」の方が向いています。どちらも文字の認識（OCR）やテキスト化は行っておらず、見た目を整えるだけの機能です。</p>
     <h3>Q. 鉛筆書きなど薄い文字が、自動調整でも読みにくいままです。</h3>
     <p>A. 「仕上がり」の下にある「濃さ調整」のスライダーで、紙の白はそのまま保ちながら文字の濃さだけを強めたり弱めたりできます（カラー選択時は使いません）。薄い文字が読みにくい場合は「濃く」側へ、逆に紙の色味や薄い汚れが気になる場合は「薄く」側へ動かしてください。「影を消す（白く）」「白黒くっきり」「グレースケール」のいずれとも組み合わせて使え、「補正を適用」→「この写真をやり直す」で設定を変えながら何度でも試せます。</p>
+    <h3>Q. 濃さ調整の値を自分で探すのが面倒です。</h3>
+    <p>A. 「濃さを自動検出」を押すと、現在の四隅で切り出した紙面の明るさを調べ、紙の地色に対して文字が薄すぎる場合だけ、読みやすくなる程度の値を自動でスライダーに設定します。文字がすでに十分濃い場合は「調整不要」と表示し、紙と文字の明るさの差が小さすぎて判断できない場合（無地のページなど）は何も変更せずその旨を表示します。自動設定後も結果を見て、スライダーで微調整できます。</p>
     <h3>Q. iPhoneの写真（HEIC形式）が読み込めません。</h3>
     <p>A. HEIC形式の読み込みはブラウザに依存し、対応していない場合があります（Safariでは読み込める場合が多く、Chrome・Firefoxでは読み込めないことがあります）。読み込めない場合は、写真アプリの設定を「互換性優先（JPEGで保存）」に変更するか、共有時にJPEGとして書き出してからお試しください。</p>
     <h3>Q. 複数ページの書類をまとめられますか？</h3>
@@ -206,6 +210,8 @@ html[lang=en] .en-only{display:block}
     <p>A. It converts the image to grayscale and automatically stretches the brightness levels across the whole photo to flatten shadows and make text easier to read. Unlike "Remove shadow (whiten)", which corrects unevenness locally, this adjusts the whole image uniformly, so a photo shadowed on just one side is better handled by "Remove shadow (whiten)". Neither does text recognition (OCR) — both only improve the visual appearance.</p>
     <h3>Q. Faint pencil writing is still hard to read even after the automatic adjustment.</h3>
     <p>A. Use the "Darken/lighten" slider below "Finish" — it keeps white paper white while making the text itself darker or lighter (it has no effect when "Color" is selected). Move it toward "Darker" if faint writing is still hard to read, or toward "Lighter" if a paper tint or light smudges bother you. It works together with "Remove shadow (whiten)", "Crisp black &amp; white" or "Grayscale"; after "Apply correction", use "Redo this photo" to try different settings as many times as you like.</p>
+    <h3>Q. Finding the right darkness value by hand is a hassle.</h3>
+    <p>A. Click "Auto-detect darkness" — it measures the brightness of the paper cropped to the current four corners, and only when the text looks too faint against the paper does it set the slider to a value that should make it readable. If the text is already dark enough, it says no adjustment is needed; if the gap between paper and text is too small to judge (a blank page, for example), it changes nothing and says so. You can still fine-tune the slider after it sets a value.</p>
     <h3>Q. My iPhone photos (HEIC) won't load.</h3>
     <p>A. HEIC support depends on your browser (often fine in Safari, sometimes not in Chrome/Firefox). Switch your camera to "Most Compatible" (JPEG) in Settings, or export as JPEG when sharing, then try again.</p>
     <h3>Q. Can I combine multiple pages?</h3>
@@ -267,6 +273,7 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"片側だけ暗く写ってしまった写真の影を消せますか？","acceptedAnswer":{"@type":"Answer","text":"「影を消す（白く）」を選ぶと、写真全体の明るさのムラを推定してそれで割ることで、紙の地色をできるだけ均一な白に揃えます。片側だけ影が落ちた写真でも文字は読みやすいまま残り、色も保持されます。"}},
     {"@type":"Question","name":"「白黒くっきり」はどんな処理ですか？OCRはできますか？","acceptedAnswer":{"@type":"Answer","text":"グレースケール化した上で明暗の分布を自動調整する処理で、文字認識（OCR）は行っていません。見た目を整えるだけの機能です。片側だけ影が強い写真には「影を消す（白く）」の方が向いています。"}},
     {"@type":"Question","name":"鉛筆書きなど薄い文字が、自動調整でも読みにくいままです。","acceptedAnswer":{"@type":"Answer","text":"「仕上がり」の下の「濃さ調整」スライダーで、紙の白を保ったまま文字の濃さだけを強め・弱めできます。薄い文字には「濃く」側、紙の色味や汚れが気になる場合は「薄く」側へ動かしてください。"}},
+    {"@type":"Question","name":"濃さ調整の値を自分で探すのが面倒です。","acceptedAnswer":{"@type":"Answer","text":"「濃さを自動検出」を押すと、紙の地色に対して文字が薄すぎる場合だけ、読みやすくなる程度の値を自動でスライダーに設定します。すでに十分濃い場合は調整不要と表示し、判断できない場合は何も変更しません。"}},
     {"@type":"Question","name":"ページ番号（ノンブル）を入れられますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「文書一覧」の「各ページの右下にページ番号を入れる」にチェックを入れてPDFを書き出すと、各ページの右下に「1 / 3」のような現在のページ番号と全体のページ数が印字されます。"}},
     {"@type":"Question","name":"これは電子帳簿保存法などの要件を満たすことを保証しますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。写真の見た目を整えるだけの補助ツールです。税務上の保存が目的の場合は、取引ごとにファイルを分ける姉妹ツール（証憑ファイル名整理ツール）の利用をおすすめします。税務・法律上の助言ではありません。"}},
     {"@type":"Question","name":"PDFではなく画像のままダウンロードしたいです。","acceptedAnswer":{"@type":"Answer","text":"「画像をまとめてZIPでダウンロード」を押すと、文書一覧の各ページを1枚ずつ補正済みのJPEGファイルとしてZIPにまとめてダウンロードできます。PDFに結合せず画像のまま使いたい場合にお使いください。"}}
@@ -473,6 +480,43 @@ function detectCorners(srcCanvas){
          + Math.abs((pts[2].x-pts[0].x)*(pts[3].y-pts[0].y)-(pts[3].x-pts[0].x)*(pts[2].y-pts[0].y))/2;
   if(area < sw*sh*0.15) return null;
   return pts; /* TL,TR,BR,BL（元画像ピクセル座標） */
+}
+
+/* 濃さ調整の自動検出：現在の四隅で紙面だけを小さく射影変換し、明るさのヒストグラムを
+   取る。最も画素数が多い明るさ（最頻値）を紙の地色とみなし、そこから十分暗い画素
+   （文字・印刷など）だけを集めて、その中での中央値を「文字の濃さ」の代表値とする。
+   文字が占める面積の割合に依存しないため、ごく少量の文字しかない写真でも判定できる。
+   暗い画素がほとんど無い（無地・判別不能）場合はnullを返す。文字の代表値が目標の
+   濃さ(TARGET)へ届くよう、濃さ調整のgamma（buildGammaLUTと同じ定義）を逆算し、
+   既に十分濃い場合は0、薄くする方向（負の値）は提案しない。 */
+function detectStrength(srcCanvas, corners){
+  var size=outputSizeFromCorners(corners, 220);
+  var warped=warpPerspective(srcCanvas, corners, size.w, size.h);
+  var data=warped.getContext("2d").getImageData(0,0,size.w,size.h).data;
+  var n=size.w*size.h;
+  if(n<64) return null;
+  var hist=new Array(256).fill(0);
+  for(var i=0;i<data.length;i+=4){
+    var g=Math.round(0.299*data[i]+0.587*data[i+1]+0.114*data[i+2]);
+    hist[g]++;
+  }
+  var bg=0, bgCount=-1;
+  for(var v=0; v<256; v++){ if(hist[v]>bgCount){ bgCount=hist[v]; bg=v; } }
+  var MARGIN=30, cut=bg-MARGIN;
+  var darkTotal=0;
+  for(v=0; v<=cut; v++) darkTotal+=hist[v];
+  if(darkTotal < n*0.001) return null; /* 地色より十分暗い画素がほぼ無い＝無地か判別不能 */
+  var half=darkTotal/2, acc=0, ink=cut;
+  for(v=0; v<=cut; v++){ acc+=hist[v]; if(acc>=half){ ink=v; break; } }
+  var TARGET=140;
+  if(bg-ink<8) return null;
+  if(ink<=0) return 0;
+  var gamma=Math.log(TARGET/255)/Math.log(ink/255);
+  if(!isFinite(gamma) || gamma<=1) return 0;
+  var strength=Math.round((50*Math.log2(gamma))/5)*5;
+  if(strength>50) strength=50;
+  if(strength<5) strength=5;
+  return strength;
 }
 
 /* 影を消す（背景を白くする）：画像を大きくぼかした「局所的な明るさの地図」を作り、
@@ -781,6 +825,10 @@ var T={
     autoDetectFail:"検出できませんでした。緑の点を手でドラッグして四隅に合わせてください。",
     filterLabel:"仕上がり", applyBtn:"補正を適用", cancelEditBtn:"この写真をやめる",
     strengthLabel:"濃さ調整", strengthLightEnd:"薄く", strengthDarkEnd:"濃く",
+    autoStrengthBtn:"濃さを自動検出",
+    autoStrengthOk:function(s){return "薄い文字を検出し、濃さ調整を「+"+s+"」にしました。結果を見て、必要なら手で微調整してください。";},
+    autoStrengthNone:"文字はすでに十分濃いため、調整は不要と判断しました。",
+    autoStrengthFail:"紙の地色と文字の濃さの差が小さく、検出できませんでした。スライダーで手動調整してください。",
     h_result:"補正結果", downloadJpegBtn:"JPEGをダウンロード", addToListBtn:"文書一覧に追加（PDF用）", redoBtn:"この写真をやり直す",
     h_list:"文書一覧（PDFにまとめる）", makePdfBtn:"まとめてPDFをダウンロード", makeZipBtn:"画像をまとめてZIPでダウンロード", clearListBtn:"一覧をクリア",
     pageNumChkLabel:"各ページの右下にページ番号を入れる",
@@ -805,6 +853,10 @@ var T={
     autoDetectFail:"Couldn't detect the corners. Drag the green dots onto them manually.",
     filterLabel:"Finish", applyBtn:"Apply correction", cancelEditBtn:"Discard this photo",
     strengthLabel:"Darken/lighten", strengthLightEnd:"Lighter", strengthDarkEnd:"Darker",
+    autoStrengthBtn:"Auto-detect darkness",
+    autoStrengthOk:function(s){return "Detected faint text and set the darkness slider to \"+"+s+"\". Check the result and fine-tune by hand if needed.";},
+    autoStrengthNone:"The text already looks dark enough, so no adjustment was needed.",
+    autoStrengthFail:"Couldn't detect it — the gap between the paper and the text is too small. Try the slider manually.",
     h_result:"Result", downloadJpegBtn:"Download JPEG", addToListBtn:"Add to document list", redoBtn:"Redo this photo",
     h_list:"Document list (combine into PDF)", makePdfBtn:"Download combined PDF", makeZipBtn:"Download images as ZIP", clearListBtn:"Clear list",
     pageNumChkLabel:"Add a page number to the bottom-right of each page",
@@ -872,6 +924,7 @@ function openEditor(canvas){
   $("editCard").style.display="";
   $("applyStatus").textContent="";
   $("autoDetectStatus").textContent="";
+  $("autoStrengthStatus").textContent="";
   renderHandles();
   hideMagnifier();
   updateQueueStatus();
@@ -1165,7 +1218,9 @@ function renderFilterOpts(){
     b.addEventListener("click",function(){ state.filterMode=item.key; renderFilterOpts(); });
     container.appendChild(b);
   });
-  $("strengthRow").style.display = (state.filterMode==="color") ? "none" : "";
+  var hideStrength = (state.filterMode==="color");
+  $("strengthRow").style.display = hideStrength ? "none" : "";
+  $("autoStrengthStatus").style.display = hideStrength ? "none" : "";
 }
 
 /* ---------- イベント配線 ---------- */
@@ -1207,6 +1262,18 @@ $("strengthSlider").value=state.filterStrength;
 $("strengthSlider").addEventListener("input", function(){
   state.filterStrength=parseInt($("strengthSlider").value,10);
   $("strengthVal").textContent=(state.filterStrength>0?"+":"")+state.filterStrength;
+  $("autoStrengthStatus").textContent="";
+});
+$("autoStrengthBtn").addEventListener("click", function(){
+  var s=detectStrength(state.srcCanvas, state.corners);
+  if(s===null){
+    $("autoStrengthStatus").textContent=T[lang].autoStrengthFail;
+    return;
+  }
+  state.filterStrength=s;
+  $("strengthSlider").value=s;
+  $("strengthVal").textContent=(s>0?"+":"")+s;
+  $("autoStrengthStatus").textContent = s===0 ? T[lang].autoStrengthNone : T[lang].autoStrengthOk(s);
 });
 $("applyBtn").addEventListener("click", applyCorrection);
 $("cancelEditBtn").addEventListener("click", function(){
