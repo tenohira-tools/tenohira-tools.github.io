@@ -26,6 +26,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [「Wordファイルが重い」原因を診断：ファイル内訳チェッカー（画像・フォント埋め込み・トリミング残存データ）](https://tenohira-tools.github.io/docx-omoi/)
 - [複数のWordファイルの変更履歴（校閲）を一括で確定・反映：挿入・削除・移動をすべて承諾](https://tenohira-tools.github.io/docx-shodaku/)
 - [エクセルが重い・保存できない・エラーが出るときの対策まとめ｜症状から探すツール一覧](https://tenohira-tools.github.io/excel-trouble/)
+- [保証書・契約の期限一覧｜写真つきでブラウザに保存](https://tenohira-tools.github.io/hoshou-kigen/)
 - [表記ゆれ・全角半角チェッカー（サーバ/サーバーなどを検出して統一）](https://tenohira-tools.github.io/hyoki-yure/)
 - [はんこ・サインの写真を透明なPNGにする｜背景を消して朱色・黒に統一](https://tenohira-tools.github.io/insho-toka/)
 - [領収書のファイル名・まとめ方・経費精算で困ったときの対策まとめ｜症状から探す4ツール](https://tenohira-tools.github.io/keihi-trouble/)
