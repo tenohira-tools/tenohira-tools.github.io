@@ -820,3 +820,10 @@
 - 検証：node --checkでJS構文、PythonのHTMLParserでHTML構文、json.loadでJSON-LD構文を確認。Playwright（Chromiumヘッドレス、ja/en・390px/1280px幅）で期限切れ・30日以内・遠い期限・未設定の4パターンを追加し並べ替え・色分け・検索フィルタを確認、編集（メモ更新・写真保持）・個別削除・言語切替・バックアップのダウンロードとそのファイルからの復元・全削除までJSエラー無し・横スクロール無しを確認。ImageMagick製のテスト画像でcanvas縮小後のJPEG dataURLが実際にlocalStorageへ保存されることも確認。RULES.md記載の匿名性チェック用grepも実行し一致0件。
 - 内部リンク：相互リンクはshorui-scan・receipt-sheet・kotsuhi-seisanの3ページに絞り双方向をgrepで確認。docs/index.htmlにも追加。
 - 次回：hoshou-kigenの初回閲覧を記録。backlogは0件（次回は集中分野で確認検索2〜3件補充するか、他の閲覧ありページの改善）。
+
+## 2026-11-21 実験92（改善）
+- 計測：GoatCounter取得成功（TOTAL19で変化なし。receipt-sheet2・shorui-scan2・wareki-toitsu2・xlsx-atai1・xlsx-ketsugo1・csv-fix1も不変、hoshou-kigenは公開翌日で0、他64ページも0）。health.md（69ページ・問題0件）・計測タグ（全72 index.html）・表記・匿名性（grep一致なし）いずれも不備なし。backlog0件。
+- 検討：backlog0件のため集中分野でWebSearch3件（車検・自動車保険の期限管理／お薬手帳／備品管理）。車検・保険はアプリ競合多数で需要は強いが、ログイン不要・ブラウザ完結の無料ツールは見当たらず差別化を確認。お薬手帳は医療記録に近く見送り、備品管理は個人の検索需要が弱いため見送り。
+- やったこと：車検・保険はhoshou-kigenの「期限がある書類」という枠に収まるため、重複ページを避けてhoshou-kigenを拡張。「種類（任意）」欄（車検証・自動車保険・火災保険等のdatalist付き自由入力）を追加し、一覧に種類タグを表示・検索対象にも含めた。title/description/h1/subに車検・保険を明記し、FAQ(ja/en)・JSON-LDに車検証・自動車保険のQ&Aを追加。
+- 検証：node --checkでJS構文、PythonのHTMLParserでHTML構文、json.loadでJSON-LD構文を確認。Playwright（390/1280px・ja/en）で種類を入力して追加→一覧の種類タグ表示→種類文字列での検索一致→編集で種類を変更→バックアップJSONに種類が含まれることを確認。英語切替で種類欄のラベル・候補が翻訳されること、横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。
+- 次回：hoshou-kigenの閲覧と種類タグの利用有無を確認。backlogは0件（次回は集中分野で確認検索2〜3件補充するか、他の閲覧ありページの改善）。
