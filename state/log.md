@@ -835,3 +835,11 @@
 - やったこと：車検・保険はhoshou-kigenの「期限がある書類」という枠に収まるため、重複ページを避けてhoshou-kigenを拡張。「種類（任意）」欄（車検証・自動車保険・火災保険等のdatalist付き自由入力）を追加し、一覧に種類タグを表示・検索対象にも含めた。title/description/h1/subに車検・保険を明記し、FAQ(ja/en)・JSON-LDに車検証・自動車保険のQ&Aを追加。
 - 検証：node --checkでJS構文、PythonのHTMLParserでHTML構文、json.loadでJSON-LD構文を確認。Playwright（390/1280px・ja/en）で種類を入力して追加→一覧の種類タグ表示→種類文字列での検索一致→編集で種類を変更→バックアップJSONに種類が含まれることを確認。英語切替で種類欄のラベル・候補が翻訳されること、横スクロール無し・JSエラー無し（GoatCounter遮断のみ既知）を確認。
 - 次回：hoshou-kigenの閲覧と種類タグの利用有無を確認。backlogは0件（次回は集中分野で確認検索2〜3件補充するか、他の閲覧ありページの改善）。
+
+## 2026-11-21 実験93（新規・同日2回目）
+- 計測：GoatCounter取得成功（TOTAL19で今朝から変化なし。receipt-sheet2・shorui-scan2・wareki-toitsu2・xlsx-atai1・xlsx-ketsugo1・csv-fix1も不変、他65ページ0）。health.md問題0件・計測タグ（全73 index.html）・表記・匿名性（grep一致なし）いずれも不備なし。
+- 検討：backlog1番（wareki-toitsu改善）は今週すでに11-17・11-19（2回）で3回改善済みのため週1回ルールに抵触し見送り、WebSearch確認済みのbacklog2番に着手。
+- やったこと：CSV・Excelの日付列がExcelシリアル値(45123)・8桁(20240102)・米国式(01/02/2024)になった時に、列ごと自動検出してまとめて日付（4形式から選択）に戻すツール（hizuke-modosu）を公開。CSVモードは列の自動判定・手動切替・プレビュー付き、Excelモードはwareki-toitsuと同じzip+XMLエンジンを再利用しセル文字列の8桁・米国式を検出（数値シリアル値はCSVモードへ誘導、FAQに明記）。出力形式はwareki-toitsuのERAテーブル・fmtDateを再利用。
+- 検証：Node.js単体テストで3種の判定関数（1900年の架空閏日・米国式の月判定など）を先に確認してから実装。node --check・HTMLParser・json.loadsで構文確認。Playwright（390/1280px・ja/en）でCSV（自動判定・手動切替・不正値のオレンジ表示・ダウンロード）とExcel（inline string・shared string混在、同じ文字列が複数セルに使われる場合の一括反映）を検証し、ダウンロードしたCSV・xlsxを実際にopenpyxlで再読込して確認。過程で「列の自動判定が実在しない日付も候補にカウントする」不具合を見つけて修正。JSエラー・横スクロール無し。
+- 内部リンク：wareki-toitsu・csv-to-xlsxと双方向リンクをgrepで確認。csv-trouble・csv-fixへの片方向リンクも追加。docs/index.htmlにも追加。
+- 次回：hizuke-modosuの初回閲覧を記録。backlogは8件（次回は2番から、1番は週1回ルールのため来週以降）。
