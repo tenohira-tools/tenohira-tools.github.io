@@ -694,7 +694,7 @@ var T={
 };
 var CAT_KEY={formula:"catFormula",name:"catName",dv:"catDv",cf:"catCf",chart:"catChart"};
 var lang="ja";
-try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}}catch(e){}
 
 var state={files:[], nextId:1, fileFilter:"", categoryFilter:"", search:""};
 var MAX_RENDER=1000;

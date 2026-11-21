@@ -156,7 +156,7 @@ function applyLang(lang){
   for(var k=0;k<bs.length;k++)bs[k].setAttribute("aria-pressed",bs[k].getAttribute("data-lang")===lang?"true":"false");
 }
 var lang="ja";
-try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}}catch(e){}
 var bs=document.querySelectorAll(".lang button");
 for(var i=0;i<bs.length;i++)bs[i].addEventListener("click",function(){applyLang(this.getAttribute("data-lang"))});
 applyLang(lang);

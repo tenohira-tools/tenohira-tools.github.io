@@ -692,7 +692,7 @@ var T={
   feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
 };
 var lang="ja";
-try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}}catch(e){}
 
 var state={old:null,"new":null,diffSheets:null,sheetFilter:"",typeFilter:"",search:"",gridSheet:"",
   mode:"address",keyCol:"A",headerRows:1,keyColValid:true};

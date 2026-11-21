@@ -340,7 +340,7 @@ var T={
 };
 
 var lang="ja";
-try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}}catch(e){}
 
 /* ---- encoding (shared pattern with csv-fix / csv-merge / csv-seiri) ---- */
 function tryDecode(bytes,label){

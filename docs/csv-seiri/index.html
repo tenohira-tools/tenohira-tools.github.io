@@ -275,7 +275,7 @@ var T={
 };
 
 var lang="ja";
-try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}else if(!/^ja/i.test(navigator.language||"ja")){lang="en"}}catch(e){}
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}}catch(e){}
 
 var state={bytes:null,name:"",text:"",rows:[],cols:0,transforms:[]};
 
