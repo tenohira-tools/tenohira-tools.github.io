@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
+<title>名簿CSVの生年月日から満年齢・学年を一括計算 | てのひらツール</title>
+<meta name="description" content="名簿のCSVファイルにある生年月日の列（和暦・西暦どちらの書き方でも、8桁の数字やExcelのシリアル値になってしまった場合でも）から、指定した基準日時点の満年齢と、4月2日基準の学年を列として一括で追加し、CSVで書き出します。すべてブラウザ内で処理し、送信されません。From a roster CSV's birthdate column (Japanese era, Western, or a mis-converted 8-digit/serial number), add age and Japanese school-grade columns in bulk, calculated as of a reference date you choose — entirely in your browser.">
+<link rel="canonical" href="https://tenohira-tools.github.io/nenrei-ikkatsu/">
+<style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--err:#8a5a00;--err-bg:#fdf3dc}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#ececea;--muted:#a3a39d;--card:#1f1f1d;--line:#34342f;--accent:#7cc39c;--accent-bg:#1f3328;--warn:#f0c46a;--warn-bg:#3a2f16;--diff:#e08a7a;--err:#f0c46a;--err-bg:#3a2f16}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:1.35rem;line-height:1.4;margin:0}
+.sub{color:var(--muted);margin:4px 0 20px;font-size:.95rem}
+.top a{color:var(--muted);font-size:.9rem}
+.lang{display:flex;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;color:var(--muted);padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;margin:0 0 16px;min-width:0}
+h2{font-size:1.1rem;margin:0 0 12px}
+h3.small{font-size:1rem;margin:0 0 8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.row:first-child{margin-top:0}
+label{font-size:.92rem}
+select,input[type=date]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:42px}
+select:focus,input[type=date]:focus{outline:2px solid var(--accent);outline-offset:1px}
+.hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
+button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong{color:var(--fg)}
+#fileInfo{font-size:.92rem;color:var(--muted);margin-top:10px}
+.note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
+.note:empty{display:none}
+.checkline{display:flex;align-items:center;gap:8px;margin-top:10px}
+.checkline input{width:auto;min-height:auto}
+.scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.newCol{font-weight:600;color:var(--accent)}
+td.hasErr{color:var(--err);font-weight:600}
+.countBadge{color:var(--muted);font-size:.9rem;margin-left:6px}
+.about p,.about li{color:var(--fg);font-size:.95rem}
+.about ul{padding-left:1.2em}
+.about h3{font-size:1rem;margin:16px 0 6px}
+footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+footer a{color:var(--accent)}
+.en-only{display:none}
+html[lang=en] .ja-only{display:none}
+html[lang=en] .en-only{display:block}
+.colCard{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.colCard .cSample{color:var(--muted);font-size:.85rem;word-break:break-all}
+.summaryLine{font-size:.92rem;margin-top:10px}
+.summaryLine b{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="../">← てのひらツール</a></p>
+<header>
+  <div>
+    <h1 data-i="title">名簿の生年月日から満年齢・学年を一括計算</h1>
+    <p class="sub" data-i="sub">名簿のCSVファイルにある生年月日の列（和暦・西暦どちらの書き方でも、8桁の数字やExcelのシリアル値になってしまった場合でも）から、指定した基準日時点の満年齢と、4月2日基準の学年を列として一括で追加し、CSVで書き出します。</p>
+  </div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<section class="card">
+  <div class="row">
+    <label for="refDate" data-i="refDateLabel">基準日</label>
+    <input type="date" id="refDate">
+  </div>
+  <div class="checkline">
+    <input type="checkbox" id="gradeCheck" checked>
+    <label for="gradeCheck" data-i="gradeCheckLabel">学年の列も追加する（4月2日生まれが区切り。標準どおり進級した場合の見込み）</label>
+  </div>
+
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択" style="margin-top:16px">
+    <p data-i="dropzoneText"><strong>ここに名簿のCSVファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
+    <p class="hint" data-i="dropzoneHint">CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。</p>
+  </div>
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/*" style="display:none">
+  <p id="fileInfo" aria-live="polite"></p>
+
+  <div id="encCard" style="display:none">
+    <div class="row">
+      <label for="encSelect" data-i="encSelectLabel">文字コードを指定（自動判定がおかしい場合に変更）</label>
+      <select id="encSelect">
+        <option value="utf-8">UTF-8</option>
+        <option value="shift_jis">Shift_JIS（CP932）</option>
+        <option value="euc-jp">EUC-JP</option>
+        <option value="iso-2022-jp">ISO-2022-JP（JIS）</option>
+      </select>
+    </div>
+    <div class="note" id="warnBox"></div>
+    <div class="checkline">
+      <input type="checkbox" id="headerCheck" checked>
+      <label for="headerCheck" data-i="headerLabel">1行目を見出し（ヘッダー）として扱う（対象から外し、列名の表示に使う）</label>
+    </div>
+  </div>
+
+  <div id="colWrap" style="display:none">
+    <h3 class="small" style="margin-top:16px" data-i="colHeading">生年月日の列</h3>
+    <p class="hint" data-i="colHint">値から自動判定した列を既定で選んでいます。間違っていれば選び直してください。</p>
+    <div id="colListBox"></div>
+  </div>
+
+  <div id="previewWrap" style="display:none">
+    <h3 class="small" style="margin-top:16px"><span data-i="previewHeading">プレビュー</span><span class="countBadge" id="previewCount"></span></h3>
+    <p class="hint" data-i="previewNote2">緑字は追加される列、オレンジ字は生年月日として認識できなかった・未来の日付になってしまった行です。</p>
+    <div id="previewBox"></div>
+    <p class="summaryLine" id="summaryLine"></p>
+
+    <div class="checkline" style="margin-top:14px">
+      <input type="checkbox" id="bomCheck" checked>
+      <label for="bomCheck" data-i="bomLabel">BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）</label>
+    </div>
+    <p style="margin-top:12px"><button type="button" class="primary" id="downloadBtn" data-i="downloadBtn">満年齢・学年を追加してCSVをダウンロード</button></p>
+  </div>
+</section>
+
+<section class="card about">
+  <div class="ja-only">
+    <h2>使い方とよくある質問</h2>
+    <ol>
+      <li>「基準日」を選びます（既定は本日の日付）。満年齢・学年はこの日付時点のものを計算します。</li>
+      <li>名簿のCSVをドラッグ＆ドロップします。生年月日が入っている列を値から自動判定しますが、間違っていればプルダウンで選び直してください。</li>
+      <li>プレビューで各行の満年齢・学年を確認し、問題なければ「満年齢・学年を追加してCSVをダウンロード」を押します。元の列はそのまま残り、右側に新しい列が追加されます。</li>
+      <li>対応する生年月日の書き方：和暦（「平成5年4月1日」「H5.4.1」）、西暦（「1993/4/1」「1993-04-01」「1993年4月1日」）、他システムの書き出しで数字になってしまった8桁（19930401）やExcelのシリアル値（34060）。</li>
+    </ol>
+    <h3>Q. 学年はどうやって計算していますか？</h3>
+    <p>A. 日本の学校制度にあわせ、「4月2日生まれから翌年4月1日生まれまでが同学年」というルールで計算しています。例えば2018年4月1日生まれは2024年4月に小学1年生になりますが、1日違いの2018年4月2日生まれは2025年4月に1年生になります。小学校入学前（年少・年中・年長）や、高校卒業に相当する年齢以降も表示します。進級・卒業が標準どおりに進んだ場合の見込みであり、留年や早期入学など個別の事情は反映していません。</p>
+    <h3>Q. 生年月日の列が自動で正しく選ばれないのですが？</h3>
+    <p>A. 「生年月日の列」のプルダウンから手動で選び直してください。自動判定は、各列の値のうち半分以上が生年月日として認識できた列を候補にしていますが、完全ではありません。</p>
+    <h3>Q. 一部の行だけ満年齢・学年が空欄（オレンジ字）になるのはなぜですか？</h3>
+    <p>A. その行の生年月日が「対応する書き方」に当てはまらない、実在しない日付（13月など）、または基準日より後の未来の日付になっている場合です。該当の行は元のセルの値のまま変換せず、理由を添えて一覧に表示します。</p>
+    <h3>Q. 和暦の元号をまたいだ年齢計算もできますか？</h3>
+    <p>A. はい。生年月日・基準日のどちらが和暦・西暦であっても、内部では西暦の年月日に変換してから満年齢を計算するため、元号をまたいでも正しく計算されます。</p>
+    <h3>Q. 文章やファイルはサーバーに送信されますか？</h3>
+    <p>A. いいえ。アップロードしたファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
+  </div>
+  <div class="en-only">
+    <h2>How to use &amp; FAQ</h2>
+    <ol>
+      <li>Pick a "reference date" (defaults to today). Age and school grade are both calculated as of that date.</li>
+      <li>Drop a roster CSV. The birthdate column is auto-detected from its values — override it with the dropdown if it picked the wrong one.</li>
+      <li>Check each row's age/grade in the preview, then click "Add age &amp; grade and download CSV". The original columns stay untouched; new columns are appended on the right.</li>
+      <li>Recognized birthdate formats: Japanese era ("平成5年4月1日", "H5.4.1"), Western ("1993/4/1", "1993-04-01", "1993年4月1日"), or a date mangled into an 8-digit number (19930401) or an Excel serial number (34060) by another system's export.</li>
+    </ol>
+    <h3>Q. How is the school grade calculated?</h3>
+    <p>A. It follows the Japanese school-year cutoff: children born from April 2 through April 1 of the following year are the same grade. For example, a child born April 1, 2018 enters 1st grade in April 2024, while one born just a day later (April 2, 2018) enters in April 2025. Pre-elementary years and anything past high-school age are shown too. This assumes standard, on-time advancement — it doesn't account for repeated grades or early enrollment.</p>
+    <h3>Q. The auto-detected birthdate column is wrong — what do I do?</h3>
+    <p>A. Change it with the "Birthdate column" dropdown. Auto-detection only proposes a column when at least half its values are recognized as a birthdate, but it isn't perfect.</p>
+    <h3>Q. Why are some rows' age/grade blank (shown in orange)?</h3>
+    <p>A. That row's value doesn't match a recognized format, isn't a real calendar date (like month 13), or is a date after the reference date. That row is left as-is, listed with a reason.</p>
+    <h3>Q. Does it handle an age calculation across a change of Japanese era?</h3>
+    <p>A. Yes. Whether the birthdate or the reference date is written in the Japanese era or the Western calendar, both are converted to a plain Western year/month/day internally before the age is computed, so an era boundary doesn't cause an error.</p>
+    <h3>Q. Is my file uploaded anywhere?</h3>
+    <p>A. No. Everything is processed inside your browser on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
+  </div>
+</section>
+
+<section class="card related">
+  <div class="ja-only">
+    <h2>関連ツール</h2>
+    <ul>
+      <li><a href="../wareki-toitsu/">和暦・西暦 混在日付の一括統一</a> — 生年月日の表記自体（和暦・西暦の混在）をそろえたいときはこちら。</li>
+      <li><a href="../hizuke-modosu/">CSV・Excelの日付が数字になった時の一括修正</a> — 生年月日の列がExcelのシリアル値や8桁の数字のまま文字として残っていて、年齢計算の前に読める日付に直したいときはこちら。</li>
+      <li><a href="../wareki/">和暦・西暦 早見表</a> — 1件だけ変換したいときのシンプルな早見表。</li>
+    </ul>
+  </div>
+  <div class="en-only">
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="../wareki-toitsu/">Unify Mixed Japanese-Era / Western Dates</a> — fix mixed-up date notation itself before calculating ages.</li>
+      <li><a href="../hizuke-modosu/">Fix a date that turned into a number</a> — straighten out an Excel-serial or 8-digit birthdate column first.</li>
+      <li><a href="../wareki/">Japanese-Era / Western Calendar Lookup</a> — a simple lookup table for a single conversion.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <p><span data-i="feedback">フィードバックはこちら</span>：<a href="https://github.com/tenohira-tools/tenohira-tools.github.io/issues">GitHub Issues</a></p>
+  <p data-i="privacy">アップロードしたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。</p>
+</footer>
+</main>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"学年はどうやって計算していますか？","acceptedAnswer":{"@type":"Answer","text":"4月2日生まれから翌年4月1日生まれまでが同学年という日本の学校制度のルールで計算します。進級・卒業が標準どおりに進んだ場合の見込みで、留年や早期入学などの個別事情は反映していません。"}},
+    {"@type":"Question","name":"生年月日の列が自動で正しく選ばれないのですが？","acceptedAnswer":{"@type":"Answer","text":"「生年月日の列」のプルダウンから手動で選び直してください。自動判定は列の値のうち半分以上が生年月日として認識できた列を候補にしていますが、完全ではありません。"}},
+    {"@type":"Question","name":"一部の行だけ満年齢・学年が空欄になるのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"対応する書き方に当てはまらない、実在しない日付、または基準日より後の未来の日付になっている場合です。該当行は変換せず理由を添えて一覧に表示します。"}},
+    {"@type":"Question","name":"和暦の元号をまたいだ年齢計算もできますか？","acceptedAnswer":{"@type":"Answer","text":"はい。内部では西暦の年月日に変換してから計算するため、元号をまたいでも正しく計算されます。"}},
+    {"@type":"Question","name":"ファイルはサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。すべてブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
+  ]
+}
+</script>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ============ date-recognition engine: same ERA table + whole-cell
+   scan regex as wareki-toitsu (era/western text), plus the numeric
+   fallbacks (8-digit / Excel serial) from hizuke-modosu, so a
+   roster's birthdate column is read the same way across this site's
+   date tools, whatever system it was exported from. ============ */
+var ERAS=[
+  {ja:"明治",en:"Meiji",abbr:"M",y:1868,m:1,d:25},
+  {ja:"大正",en:"Taisho",abbr:"T",y:1912,m:7,d:30},
+  {ja:"昭和",en:"Showa",abbr:"S",y:1926,m:12,d:25},
+  {ja:"平成",en:"Heisei",abbr:"H",y:1989,m:1,d:8},
+  {ja:"令和",en:"Reiwa",abbr:"R",y:2019,m:5,d:1}
+];
+var ERA_BY_KANJI={},ERA_BY_ABBR={};
+ERAS.forEach(function(e,i){ERA_BY_KANJI[e.ja]=i;ERA_BY_ABBR[e.abbr]=i;});
+function key(y,m,d){return y*10000+m*100+d}
+function isLeap(y){return (y%4===0&&y%100!==0)||y%400===0}
+function daysInMonth(y,m){var d=[31,isLeap(y)?29:28,31,30,31,30,31,31,30,31,30,31];return d[m-1]}
+function validYMD(y,m,d){return m>=1&&m<=12&&d>=1&&d<=daysInMonth(y,m)}
+function eraIndexAt(y,m,d){var k=key(y,m,d),r=null;for(var i=0;i<ERAS.length;i++){if(key(ERAS[i].y,ERAS[i].m,ERAS[i].d)<=k)r=i}return r}
+function eraBounds(i){
+  var startK=key(ERAS[i].y,ERAS[i].m,ERAS[i].d);
+  var endK=(i+1<ERAS.length)?key(ERAS[i+1].y,ERAS[i+1].m,ERAS[i+1].d)-1:Infinity;
+  return {startK:startK,endK:endK};
+}
+function toHalfNum(s){return String(s).replace(/[０-９]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0xFEE0)})}
+function pad2(n){return (n<10?"0":"")+n}
+function parseNum(raw){ if(raw==="元")return 1; return parseInt(toHalfNum(raw),10) }
+
+var DIGIT="[0-9０-９]";
+var ERA_NUM="(?:元|"+DIGIT+"{1,2})";
+var NUM2=DIGIT+"{1,2}";
+var NUM4=DIGIT+"{4}";
+var RE=new RegExp(
+  "^(明治|大正|昭和|平成|令和)("+ERA_NUM+")年\\s*("+NUM2+")月\\s*("+NUM2+")日$"
+  +"|^([MTSHRmtshr])("+ERA_NUM+")[.\\/\\-]("+NUM2+")[.\\/\\-]("+NUM2+")$"
+  +"|^("+NUM4+")[.\\/\\-]("+NUM2+")[.\\/\\-]("+NUM2+")$"
+  +"|^("+NUM4+")年\\s*("+NUM2+")月\\s*("+NUM2+")日$"
+);
+function resolvePlainToken(y,m,d){
+  if(!validYMD(y,m,d)) return {error:"cal"};
+  return {y:y,m:m,d:d,valid:true};
+}
+function resolveEraToken(eIdx,n,m,d){
+  var absY=ERAS[eIdx].y+n-1;
+  if(!validYMD(absY,m,d)) return {error:"cal"};
+  var b=eraBounds(eIdx),k=key(absY,m,d);
+  if(k<b.startK||k>b.endK) return {error:"era"};
+  return {y:absY,m:m,d:d,valid:true};
+}
+function excelSerialToYMD(n){
+  if(n===60) return null; /* Excel's fictitious 1900-02-29 */
+  var days=n<60?n:n-1;
+  var ms=Date.UTC(1899,11,31)+days*86400000;
+  var dt=new Date(ms);
+  return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()};
+}
+/* "Shaped" formats have an unambiguous date shape (era kanji/abbr,
+   a separated y/m/d, or an 8-digit yyyymmdd) — a plain run of digits
+   can't be mistaken for one of these by coincidence. Returns null
+   when the text isn't shaped like any of them (leave it alone, not
+   an error — e.g. a name or ID), or {valid:true,y,m,d} / {error:"..."}
+   when it is. */
+function parseBirthShaped(raw){
+  var t=String(raw).trim();
+  if(t==="") return null;
+  var m=RE.exec(t);
+  if(m){
+    if(m[1]!==undefined) return resolveEraToken(ERA_BY_KANJI[m[1]],parseNum(m[2]),parseNum(m[3]),parseNum(m[4]));
+    if(m[5]!==undefined){
+      var eIdx=ERA_BY_ABBR[m[5].toUpperCase()],n=parseNum(m[6]);
+      if(n>99) return null;
+      return resolveEraToken(eIdx,n,parseNum(m[7]),parseNum(m[8]));
+    }
+    if(m[9]!==undefined){
+      var y3=parseNum(m[9]);
+      if(y3<1900||y3>2099) return null;
+      return resolvePlainToken(y3,parseNum(m[10]),parseNum(m[11]));
+    }
+    if(m[12]!==undefined) return resolvePlainToken(parseNum(m[12]),parseNum(m[13]),parseNum(m[14]));
+  }
+  if(/^[0-9]{8}$/.test(t)){
+    var y=parseInt(t.slice(0,4),10),mo=parseInt(t.slice(4,6),10),da=parseInt(t.slice(6,8),10);
+    if(y<1900||y>2099) return {error:"range"};
+    return resolvePlainToken(y,mo,da);
+  }
+  return null;
+}
+/* A bare run of digits (1-5 of them) is far more ambiguous — it could
+   just as easily be a sequential employee/student ID, so it's only
+   tried as an Excel serial date as a fallback, never preferred over a
+   shaped match (see autoDetectBirthColumn). */
+function parseBirthSerial(raw){
+  var t=String(raw).trim();
+  if(!/^[0-9]{1,5}$/.test(t)) return null;
+  var num=parseInt(t,10);
+  if(num<1||num>72700) return null;
+  var ymd=excelSerialToYMD(num);
+  if(!ymd) return {error:"cal"};
+  if(ymd.y<1900||ymd.y>2099) return null;
+  return {y:ymd.y,m:ymd.m,d:ymd.d,valid:true};
+}
+function parseBirthCell(raw){
+  var r=parseBirthShaped(raw);
+  if(r) return r;
+  return parseBirthSerial(raw);
+}
+function errReason(err,lang){
+  if(err==="era") return lang==="en" ? "That date doesn't fall within this era." : "その元号の期間に当たらない日付です。";
+  if(err==="range") return lang==="en" ? "Year out of the plausible range (1900–2099)." : "年が想定範囲（1900〜2099年）の外です。";
+  return lang==="en" ? "Not a real calendar date." : "実在しない日付です。";
+}
+
+/* ============ age / school-grade calculation ============ */
+function calcAge(by,bm,bd,ry,rm,rd){
+  if(key(by,bm,bd)>key(ry,rm,rd)) return {error:"future"};
+  var age=ry-by;
+  if(rm<bm||(rm===bm&&rd<bd)) age--;
+  return {age:age};
+}
+/* April-2 school-year cutoff: born on/before April 1 of year Y belongs
+   to cohort Y; born April 2 of year Y onward belongs to cohort Y+1.
+   gradeNum 1-6 = elementary, 7-9 = junior high, 10-12 = high school,
+   <=0 = pre-elementary (年少・年中・年長 etc.), >12 = past high school age. */
+function schoolGradeNum(by,bm,bd,ry,rm,rd){
+  var cohortY=(bm<4||(bm===4&&bd<=1))?by:by+1;
+  var entryNendo=cohortY+6;
+  var refNendo=(rm>=4)?ry:ry-1;
+  return refNendo-entryNendo+1;
+}
+function gradeLabel(g,lang){
+  if(g<-2) return lang==="en" ? "Before preschool age" : "未就学（幼児）";
+  if(g===-2) return lang==="en" ? "Preschool (age 3 class)" : "未就学（年少）";
+  if(g===-1) return lang==="en" ? "Preschool (age 4 class)" : "未就学（年中）";
+  if(g===0) return lang==="en" ? "Preschool (age 5 class)" : "未就学（年長）";
+  if(g>=1&&g<=6) return lang==="en" ? ("Grade "+g+" (elementary)") : ("小学"+g+"年");
+  if(g>=7&&g<=9) return lang==="en" ? ("Grade "+(g-6)+" (junior high)") : ("中学"+(g-6)+"年");
+  if(g>=10&&g<=12) return lang==="en" ? ("Grade "+(g-9)+" (high school)") : ("高校"+(g-9)+"年");
+  return lang==="en" ? "Past high-school age" : "高校卒業相当以降";
+}
+
+/* ============ shared CSV helpers (same pattern as hizuke-modosu / csv-seiri) ============ */
+function tryDecode(bytes,label){ try{return new TextDecoder(label,{fatal:true}).decode(bytes)}catch(e){return null} }
+function hasBOM(bytes){return bytes.length>=3&&bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF}
+function detectEncoding(bytes){
+  var order=["utf-8","shift_jis","euc-jp","iso-2022-jp"];
+  for(var i=0;i<order.length;i++){var t=tryDecode(bytes,order[i]);if(t!==null)return{enc:order[i],ok:true}}
+  return {enc:"utf-8",ok:false};
+}
+function parseCSV(text){
+  var rows=[],row=[],cur="",inQ=false,i=0,n=text.length;
+  while(i<n){
+    var c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text.charAt(i+1)==='"'){cur+='"';i+=2;continue} inQ=false;i++;continue }
+      cur+=c;i++;continue;
+    }
+    if(c==='"'){inQ=true;i++;continue}
+    if(c===','){row.push(cur);cur="";i++;continue}
+    if(c==='\r'){ if(text.charAt(i+1)==='\n')i++; row.push(cur);cur="";rows.push(row);row=[];i++;continue }
+    if(c==='\n'){ row.push(cur);cur="";rows.push(row);row=[];i++;continue }
+    cur+=c;i++;
+  }
+  if(cur!==""||row.length){row.push(cur);rows.push(row)}
+  return rows;
+}
+function csvField(v){ v=String(v); if(/[",\r\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; }
+function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).join(",")}).join("\r\n"); }
+
+/* ============ i18n ============ */
+var T={
+ ja:{title:"名簿の生年月日から満年齢・学年を一括計算",
+  sub:"名簿のCSVファイルにある生年月日の列（和暦・西暦どちらの書き方でも、8桁の数字やExcelのシリアル値になってしまった場合でも）から、指定した基準日時点の満年齢と、4月2日基準の学年を列として一括で追加し、CSVで書き出します。",
+  refDateLabel:"基準日",
+  gradeCheckLabel:"学年の列も追加する（4月2日生まれが区切り。標準どおり進級した場合の見込み）",
+  dropzoneText:"ここに名簿のCSVファイルをドラッグ＆ドロップ、またはクリックして選択",
+  dropzoneHint:"CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。",
+  fileLabel:"ファイル",
+  encSelectLabel:"文字コードを指定（自動判定がおかしい場合に変更）",
+  headerLabel:"1行目を見出し（ヘッダー）として扱う（対象から外し、列名の表示に使う）",
+  warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。上の文字コードを別の候補に変更してみてください。",
+  warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。手動で文字コードを選び直してください。",
+  colHeading:"生年月日の列",colHint:"値から自動判定した列を既定で選んでいます。間違っていれば選び直してください。",
+  colSampleLabel:"例：",colMatchLabel:"件中",colMatchLabel2:"件を生年月日として認識",
+  colName:"列",colNoneOpt:"（選択してください）",
+  previewHeading:"プレビュー",previewNote:"先頭の一部のみ表示しています（ダウンロードするファイルは全体を計算します）。",
+  previewNote2:"緑字は追加される列、オレンジ字は生年月日として認識できなかった・未来の日付になってしまった行です。",
+  previewCountSuffix:"件中",
+  noData:"プレビューできる内容がありません。",
+  ageColLabel:"満年齢",gradeColLabel:"学年",
+  summaryOk:"件、満年齢を計算できました。",summaryErr:"件は生年月日が認識できず空欄です。",
+  bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
+  downloadBtn:"満年齢・学年を追加してCSVをダウンロード",
+  feedback:"フィードバックはこちら",privacy:"アップロードしたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
+ en:{title:"Add age &amp; school grade from a roster's birthdates",
+  sub:"From a roster CSV's birthdate column (Japanese era, Western, or a date mis-converted into an 8-digit number or an Excel serial number), add age and Japanese school-grade columns in bulk, calculated as of a reference date you choose.",
+  refDateLabel:"Reference date",
+  gradeCheckLabel:"Also add a school-grade column (April 2 cutoff; assumes standard, on-time advancement)",
+  dropzoneText:"Drag and drop a roster CSV file here, or click to choose one",
+  dropzoneHint:"Works with CSV and TSV files. Everything happens on this device.",
+  fileLabel:"File",
+  encSelectLabel:"Choose encoding manually (if auto-detect looks wrong)",
+  headerLabel:"Treat the first row as a header (excluded, used as column labels)",
+  warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding above.",
+  warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose the correct encoding manually.",
+  colHeading:"Birthdate column",colHint:"Defaults to the column auto-detected from its values. Change it if that's wrong.",
+  colSampleLabel:"e.g. ",colMatchLabel:"of ",colMatchLabel2:" recognized as a birthdate",
+  colName:"Column",colNoneOpt:"(choose a column)",
+  previewHeading:"Preview",previewNote:"Showing only the first part of the file (the downloaded file covers every row).",
+  previewNote2:"Green cells are the new columns. Orange rows couldn't be recognized as a birthdate, or the date is after the reference date.",
+  previewCountSuffix:"of",
+  noData:"Nothing to preview yet.",
+  ageColLabel:"Age",gradeColLabel:"School grade",
+  summaryOk:" row(s) got an age.",summaryErr:" row(s) left blank (birthdate not recognized).",
+  bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
+  downloadBtn:"Add age & grade and download CSV",
+  feedback:"Feedback",privacy:"Nothing you upload is sent to a server — everything is processed inside this browser."}
+};
+var lang="ja";
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}}catch(e){}
+
+/* ============ reference date default = today, local time ============ */
+function todayISO(){ var d=new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+$("refDate").value=todayISO();
+
+/* ============ state ============ */
+var state={bytes:null,name:"",text:"",rows:[],cols:0,hasHeader:true,birthCol:-1,colDetect:[]};
+
+function dataRows(){ return state.hasHeader ? state.rows.slice(1) : state.rows.slice(); }
+function escTrunc(s){ s=String(s); var t=s.length>60?s.slice(0,60)+"…":s; return esc(t); }
+function columnLabel(c){
+  if(state.hasHeader && state.rows[0] && state.rows[0][c]!==undefined && state.rows[0][c]!=="") return state.rows[0][c];
+  return T[lang].colName+" "+(c+1);
+}
+function sampleForColumn(c){
+  var rows=dataRows();
+  for(var r=0;r<rows.length;r++){ var v=rows[r][c]; if(v!==undefined&&String(v).trim()!=="") return String(v).trim(); }
+  return "";
+}
+function autoDetectBirthColumn(){
+  var rows=dataRows(),out=[],bestShaped=-1,bestShapedScore=0,bestAny=-1,bestAnyScore=0;
+  for(var c=0;c<state.cols;c++){
+    var nonEmpty=0,shapedHit=0,anyHit=0;
+    for(var r=0;r<rows.length;r++){
+      var v=rows[r][c];
+      if(v===undefined||String(v).trim()==="") continue;
+      nonEmpty++;
+      var sres=parseBirthShaped(v);
+      if(sres&&sres.valid){ shapedHit++; anyHit++; continue; }
+      var fres=parseBirthCell(v);
+      if(fres&&fres.valid) anyHit++;
+    }
+    out.push({nonEmpty:nonEmpty,hit:anyHit});
+    var shapedScore=nonEmpty?shapedHit/nonEmpty:0, anyScore=nonEmpty?anyHit/nonEmpty:0;
+    if(nonEmpty>=1 && shapedScore>=0.5 && shapedScore>bestShapedScore){ bestShapedScore=shapedScore; bestShaped=c; }
+    if(nonEmpty>=1 && anyScore>=0.5 && anyScore>bestAnyScore){ bestAnyScore=anyScore; bestAny=c; }
+  }
+  /* Prefer a column with unambiguous date-shaped text; only fall back
+     to a bare-number (serial) match when no column has one. */
+  var best=bestShaped>=0?bestShaped:bestAny;
+  return {perCol:out,best:best};
+}
+
+function refYMD(){
+  var v=$("refDate").value;
+  var m=/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(v);
+  if(!m) return null;
+  return {y:parseInt(m[1],10),m:parseInt(m[2],10),d:parseInt(m[3],10)};
+}
+
+function renderColumns(){
+  var box=$("colListBox");
+  var t=T[lang];
+  var h="<div class='colCard'><select id='birthColSelect'>";
+  h+="<option value='-1'"+(state.birthCol===-1?" selected":"")+">"+esc(t.colNoneOpt)+"</option>";
+  for(var c=0;c<state.cols;c++){
+    h+="<option value='"+c+"'"+(state.birthCol===c?" selected":"")+">"+esc(columnLabel(c))+"</option>";
+  }
+  h+="</select>";
+  if(state.birthCol>=0){
+    var det=state.colDetect.perCol[state.birthCol];
+    var sampleTxt=sampleForColumn(state.birthCol);
+    var noteStr=sampleTxt?(t.colSampleLabel+escTrunc(sampleTxt)):"";
+    if(det&&det.nonEmpty) noteStr+=(noteStr?" / ":"")+det.hit+t.colMatchLabel+det.nonEmpty+t.colMatchLabel2;
+    h+="<span class='cSample'>"+noteStr+"</span>";
+  }
+  h+="</div>";
+  box.innerHTML=h;
+  $("birthColSelect").addEventListener("change",function(){
+    state.birthCol=parseInt(this.value,10);
+    renderColumns();
+    renderPreview();
+  });
+}
+
+function renderPreview(){
+  var t=T[lang];
+  var box=$("previewBox");
+  if(!state.rows.length || state.birthCol<0){ box.innerHTML="<p class='hint'>"+esc(t.noData)+"</p>"; $("summaryLine").textContent=""; $("previewCount").textContent=""; return; }
+  var ref=refYMD();
+  var withGrade=$("gradeCheck").checked;
+  var maxRows=15;
+  var startRow=state.hasHeader?1:0;
+  var allRows=dataRows();
+  var shown=state.rows.slice(startRow,startRow+maxRows);
+  var maxCols=Math.min(6,state.cols);
+  var h="<div class='scroll'><table><thead><tr>";
+  for(var c=0;c<maxCols;c++) h+="<th>"+esc(columnLabel(c))+"</th>";
+  h+="<th class='newCol'>"+esc(t.ageColLabel)+"</th>";
+  if(withGrade) h+="<th class='newCol'>"+esc(t.gradeColLabel)+"</th>";
+  h+="</tr></thead><tbody>";
+  var okCount=0,errCount=0;
+  for(var r=0;r<allRows.length;r++){
+    var cell=allRows[r][state.birthCol];
+    var res=parseBirthCell(cell);
+    var ageText="",gradeText="",isErr=false;
+    if(!res){ isErr=true; }
+    else if(res.error){ isErr=true; }
+    else if(ref){
+      var a=calcAge(res.y,res.m,res.d,ref.y,ref.m,ref.d);
+      if(a.error){ isErr=true; }
+      else{
+        ageText=String(a.age);
+        if(withGrade) gradeText=gradeLabel(schoolGradeNum(res.y,res.m,res.d,ref.y,ref.m,ref.d),lang);
+        okCount++;
+      }
+    }
+    if(isErr) errCount++;
+    if(r<shown.length){
+      h+="<tr>";
+      for(var c2=0;c2<maxCols;c2++){ var ov=shown[r][c2]; h+="<td>"+(ov===undefined?"":escTrunc(ov))+"</td>"; }
+      h+="<td class='"+(isErr?"hasErr":"newCol")+"'>"+(isErr?"—":esc(ageText))+"</td>";
+      if(withGrade) h+="<td class='"+(isErr?"hasErr":"newCol")+"'>"+(isErr?"—":esc(gradeText))+"</td>";
+      h+="</tr>";
+    }
+  }
+  h+="</tbody></table></div>";
+  if(allRows.length>maxRows||state.cols>maxCols) h+="<p class='hint'>"+esc(t.previewNote)+"</p>";
+  box.innerHTML=h;
+  $("previewCount").textContent=allRows.length?("（"+allRows.length+(lang==="ja"?"行":" rows")+"）"):"";
+  $("summaryLine").innerHTML="<b>"+okCount+"</b>"+esc(t.summaryOk)+(errCount?("　<b>"+errCount+"</b>"+esc(t.summaryErr)):"");
+}
+
+function loadRows(){
+  state.rows=parseCSV(state.text);
+  state.cols=0;
+  for(var i=0;i<state.rows.length;i++) state.cols=Math.max(state.cols,state.rows[i].length);
+  var has=state.rows.length>0;
+  $("colWrap").style.display=has?"":"none";
+  $("previewWrap").style.display=has?"":"none";
+  if(has){
+    state.colDetect=autoDetectBirthColumn();
+    state.birthCol=state.colDetect.best;
+    renderColumns();
+    renderPreview();
+  }
+}
+function applyEncoding(enc,forcedFallback){
+  var bytes=state.bytes;
+  var t=tryDecode(bytes,enc),warn="";
+  if(t===null){ t=new TextDecoder(enc,{fatal:false}).decode(bytes); warn=T[lang].warnReplace; }
+  else if(forcedFallback){ warn=T[lang].warnUnknown; }
+  state.text=t;
+  $("warnBox").textContent=warn;
+  loadRows();
+}
+function handleFile(file){
+  state.name=file.name;
+  file.arrayBuffer().then(function(buf){
+    state.bytes=new Uint8Array(buf);
+    var d=detectEncoding(state.bytes);
+    $("encSelect").value=d.enc;
+    $("encCard").style.display="";
+    var bom=hasBOM(state.bytes);
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(bom?", BOM":"")+")";
+    applyEncoding(d.enc,!d.ok);
+  }).catch(function(){ $("fileInfo").textContent=T[lang].warnUnknown; });
+}
+var dz=$("dropzone");
+["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
+dz.addEventListener("drop",function(e){ var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; if(f)handleFile(f); });
+dz.addEventListener("click",function(){$("fileInput").click()});
+dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
+$("fileInput").addEventListener("change",function(e){ var f=e.target.files&&e.target.files[0]; if(f)handleFile(f); });
+$("encSelect").addEventListener("change",function(){ if(state.bytes) applyEncoding(this.value,false); });
+$("headerCheck").addEventListener("change",function(){ state.hasHeader=this.checked; loadRows(); });
+$("refDate").addEventListener("change",function(){ if(state.rows.length) renderPreview(); });
+$("gradeCheck").addEventListener("change",function(){ if(state.rows.length) renderPreview(); });
+
+$("downloadBtn").addEventListener("click",function(){
+  if(!state.rows.length||state.birthCol<0) return;
+  var t=T[lang];
+  var ref=refYMD();
+  var withGrade=$("gradeCheck").checked;
+  var out=[];
+  if(state.hasHeader && state.rows.length){
+    var head=state.rows[0].slice();
+    head.push(t.ageColLabel);
+    if(withGrade) head.push(t.gradeColLabel);
+    out.push(head);
+  }
+  var rows=dataRows();
+  for(var r=0;r<rows.length;r++){
+    var row=rows[r].slice();
+    var cell=row[state.birthCol];
+    var res=parseBirthCell(cell);
+    var ageText="",gradeText="";
+    if(res&&!res.error&&ref){
+      var a=calcAge(res.y,res.m,res.d,ref.y,ref.m,ref.d);
+      if(!a.error){
+        ageText=String(a.age);
+        if(withGrade) gradeText=gradeLabel(schoolGradeNum(res.y,res.m,res.d,ref.y,ref.m,ref.d),lang);
+      }
+    }
+    row.push(ageText);
+    if(withGrade) row.push(gradeText);
+    out.push(row);
+  }
+  var csvText=serializeCSV(out);
+  var addBom=$("bomCheck").checked;
+  var encoded=new TextEncoder().encode(csvText);
+  var bytes;
+  if(addBom){ bytes=new Uint8Array(encoded.length+3); bytes[0]=0xEF;bytes[1]=0xBB;bytes[2]=0xBF; bytes.set(encoded,3); }
+  else bytes=encoded;
+  var blob=new Blob([bytes],{type:"text/csv;charset=utf-8"});
+  var m=/\.[^.]+$/.exec(state.name);
+  var ext=m?m[0]:".csv";
+  var base=state.name.replace(/\.[^.]+$/,"")||"file";
+  var outName=base+"_nenrei"+ext;
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download=outName;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},2000);
+});
+
+/* ============ lang switch ============ */
+function applyLang(){
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll("[data-i]");
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].innerHTML=T[lang][k]}
+  var bs=document.querySelectorAll(".lang button");
+  for(var m=0;m<bs.length;m++)bs[m].setAttribute("aria-pressed",bs[m].getAttribute("data-lang")===lang?"true":"false");
+  if(state.bytes){
+    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
+  }
+  if(state.rows.length){ renderColumns(); renderPreview(); }
+}
+var langBtns=document.querySelectorAll(".lang button");
+for(var li=0;li<langBtns.length;li++)langBtns[li].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
+applyLang();
+})();
+</script>
+<script data-goatcounter="https://tenohira.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

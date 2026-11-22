@@ -5,11 +5,12 @@
 
 ## 来週の候補（上から順に。2026-11-21 週次レビューで並べ替え）
 
-並べ方の根拠：閲覧のある個別ページは receipt-sheet・shorui-scan・wareki-toitsu（各2）、csv-fix・xlsx-atai・xlsx-ketsugo（各1）。写真系に加え「日付・表のデータ整形」に信号が出たため、wareki-toitsu関連を上位にした。新規は1日1本まで、同じページの改善は週1回まで。1〜2番は2026-11-21にWebSearchで確認済み（年齢を一括計算するブラウザ完結ツールは見当たらず、解説記事とマクロ・Power Queryのみ。旧2番「CSV・Excelで数字になった日付を列ごとに戻す」は同日中にhizuke-modosuとして公開済みのため削除）。他は着手前に確認検索2件まで。
+並べ方の根拠：閲覧のある個別ページは receipt-sheet・shorui-scan・wareki-toitsu（各2）、csv-fix・xlsx-atai・xlsx-ketsugo（各1）。写真系に加え「日付・表のデータ整形」に信号が出たため、wareki-toitsu関連を上位にした。新規は1日1本まで、同じページの改善は週1回まで。他は着手前に確認検索2件まで。
 注：1番（wareki-toitsu改善）は今週すでに3回改善済み（11-17・11-19×2）のため、週1回ルールにより次回も見送り、2番以降から選ぶこと。
+（旧2番「名簿CSVの生年月日から満年齢・学年を一括計算」は2026-11-22にnenrei-ikkatsuとして公開済みのため削除。CSVモードのみで、Excelファイル対応は規模を抑えるため見送り→新規2番として追加。）
 
 1. 改善：wareki-toitsu のExcelモードで「日付として保存され表示形式だけ和暦」のセル（現在は対象外）も検出・変換し、title・descriptionの先頭に「Excel 和暦 西暦 一括変換」の言い回しを入れる。
-2. 新規：名簿CSV・Excelの生年月日の列から、基準日時点の満年齢（任意で学年）を一括で列追加（和暦の生年月日も可。slug案 nenrei-ikkatsu）。wareki・wareki-toitsuと相互リンク。
+2. 改善：nenrei-ikkatsuにExcel(.xlsx)ファイルモードを追加（wareki-toitsu/hizuke-modosuと同じzip+XMLエンジンでシート上の生年月日セルを読み取り、満年齢・学年の列を追加した新しいファイルを書き出す）。
 3. 改善：xlsx-ketsugo で、結合解除＋値埋めの結果をCSVだけでなく.xlsxのまま保存（他シート・書式は保持）。FAQの「xlsxで保存し直せますか」を実際の挙動に更新。
 4. 改善：csv-fix に複数ファイルの一括変換（ZIP保存）を追加（未対応なら）。titleの先頭を「ExcelでCSVが文字化けする」の言い回しにする。
 5. 新規：書類・レシート写真のまとめページ（slug案 shashin-trouble）。shorui-scan・receipt-sheet・kuronuri・insho-toka・meishi-matome・meishi-vcard・hoshou-kigen・mibun-teishutsuを症状から選べるようにし、各ページから1本ずつリンク。
@@ -25,6 +26,8 @@
 （2026-11-16見送り：マイナンバーカードの番号部分マスキング専用ツール。確認検索で、マイナンバーの裏面コピーは法令で定められた手続き以外は求めてはならない等の法的制約が強く絡む領域で、ツールの案内自体が実質的な法律助言に近づきRULES.md違反のリスクがあると判断し着手しない。一般的な黒塗りはkuronuriで既にカバー済み。今後も再検討しない。）
 
 ### 実施済みの記録
+
+（2026-11-22実施済み：新規：名簿CSVの生年月日（和暦・西暦・8桁・シリアル値）から基準日時点の満年齢・4月2日基準の学年を一括で列追加するツール（nenrei-ikkatsu）を公開。backlog旧2番。CSVモードのみで公開（Excel対応はbacklog新2番として分離）。wareki-toitsu・hizuke-modosu・warekiと双方向リンク。詳細はexperiments.json参照。）
 
 （2026-11-21（同日2回目）実施済み：新規：CSV・Excelの日付列がExcelシリアル値(45123)・8桁(20240102)・米国式(01/02/2024)になった時に列ごと自動検出して戻すツール（hizuke-modosu）を公開。backlog旧2番。wareki-toitsu・csv-to-xlsxと双方向リンク。詳細はexperiments.json参照。）
 

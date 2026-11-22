@@ -843,3 +843,11 @@
 - 検証：Node.js単体テストで3種の判定関数（1900年の架空閏日・米国式の月判定など）を先に確認してから実装。node --check・HTMLParser・json.loadsで構文確認。Playwright（390/1280px・ja/en）でCSV（自動判定・手動切替・不正値のオレンジ表示・ダウンロード）とExcel（inline string・shared string混在、同じ文字列が複数セルに使われる場合の一括反映）を検証し、ダウンロードしたCSV・xlsxを実際にopenpyxlで再読込して確認。過程で「列の自動判定が実在しない日付も候補にカウントする」不具合を見つけて修正。JSエラー・横スクロール無し。
 - 内部リンク：wareki-toitsu・csv-to-xlsxと双方向リンクをgrepで確認。csv-trouble・csv-fixへの片方向リンクも追加。docs/index.htmlにも追加。
 - 次回：hizuke-modosuの初回閲覧を記録。backlogは8件（次回は2番から、1番は週1回ルールのため来週以降）。
+
+## 2026-11-22 実験94（新規）
+- 計測：GoatCounter取得成功（71パス・TOTAL1件も含め全て成功。累計19で11-21夜から変化なし。receipt-sheet2・shorui-scan2・wareki-toitsu2・xlsx-atai1・xlsx-ketsugo1・csv-fix1も不変、新規公開のhizuke-modosu・hoshou-kigenも含め他ページは0）。health.md（71ページ・問題0件）・計測タグ（全74 index.html）・表記（「追跡なし」なし）・匿名性（grep一致なし）いずれも不備なし。origin/mainがこのブランチと20コミット分ずれていたため作業前にmainへ切替・同期（pushは問題なく通った。詳細はretro）。
+- 検討：backlog1番（wareki-toitsu改善）は11-17・11-19×2で週1回ルールに抵触するため見送りの指示どおり2番（nenrei-ikkatsu新規）に着手。
+- やったこと：名簿CSVの生年月日の列（和暦・西暦どちらでも、8桁の数字やExcelのシリアル値になった場合でも）から、基準日時点の満年齢と4月2日基準の学年を列として一括追加しCSVで書き出すツール（nenrei-ikkatsu）を公開。生年月日の認識はwareki-toitsuのERAテーブル・正規表現（セル全体が1つの日付と一致する場合のみ）を優先し、それで認識できない場合だけ素の数字をExcelシリアル値として試す2段構成。学年は4月2日の学校年度カットオフをcohortYear方式で計算し、小学1〜6年・中学1〜3年・高校1〜3年・就学前（年少・年中・年長）・卒業相当以降を表示。規模を抑えるためCSVモードのみ公開し、Excel対応はbacklogに次点として追加。
+- 検証：年齢計算・学年計算（4月1日/4月2日の境界ケース）・各認識パターンをNode.js単体テストで先に確認してから実装。node --check・HTMLParser・json.loadsで構文確認。Playwrightの実データ検証で「社員番号など素の数字列を生年月日列として誤って自動選択する」不具合を見つけ、テキスト形式の一致を優先する検出順に修正。Playwright（390/1280px・ja/en）で和暦・西暦・8桁・未来日付・認識不能値を混在させたCSVをアップロードし、自動列検出・プレビューの件数・ダウンロードしたCSV（UTF-8 BOM付き）の値を確認。JSエラー・横スクロール無し（GoatCounter遮断のみ既知）。
+- 内部リンク：wareki-toitsu・hizuke-modosu・warekiと双方向リンクをgrepで確認。docs/index.htmlにも追加。
+- 次回：nenrei-ikkatsuの初回閲覧を記録。backlogは9件（次回は2番のExcel対応か、他の閲覧ありページの改善）。
