@@ -851,3 +851,10 @@
 - 検証：年齢計算・学年計算（4月1日/4月2日の境界ケース）・各認識パターンをNode.js単体テストで先に確認してから実装。node --check・HTMLParser・json.loadsで構文確認。Playwrightの実データ検証で「社員番号など素の数字列を生年月日列として誤って自動選択する」不具合を見つけ、テキスト形式の一致を優先する検出順に修正。Playwright（390/1280px・ja/en）で和暦・西暦・8桁・未来日付・認識不能値を混在させたCSVをアップロードし、自動列検出・プレビューの件数・ダウンロードしたCSV（UTF-8 BOM付き）の値を確認。JSエラー・横スクロール無し（GoatCounter遮断のみ既知）。
 - 内部リンク：wareki-toitsu・hizuke-modosu・warekiと双方向リンクをgrepで確認。docs/index.htmlにも追加。
 - 次回：nenrei-ikkatsuの初回閲覧を記録。backlogは9件（次回は2番のExcel対応か、他の閲覧ありページの改善）。
+
+## 2026-11-22 実験95（改善・同日2回目）
+- 計測：GoatCounter取得成功（72パス）。累計19で今朝から変化なし。receipt-sheet2・shorui-scan2・wareki-toitsu2・xlsx-atai1・xlsx-ketsugo1・csv-fix1も不変、nenrei-ikkatsu・hizuke-modosu・hoshou-kigenも含め他ページは0。health.md（71ページ・問題0件）・計測タグ（全73 index.html）・表記（「追跡なし」なし）・匿名性（grep一致なし）いずれも不備なし。
+- 検討：新規の増加ページ無く、今日は既にnenrei-ikkatsuを新規公開済み（1日1本ルール）のため改善を選択。backlog1番は今週3回改善済みで見送り、2番（nenrei-ikkatsuのExcelモード追加）に着手。
+- やったこと：nenrei-ikkatsuに「Excelファイル」モードを追加。wareki-toitsu/hizuke-modosuと同じzip+XML読み書きエンジンと、xlsx-ihanのセル値解決（共有文字列・インライン文字列、t="s"/"inlineStr"）を再利用し、新規実装はシートの行・列グリッド化（セル参照→行列インデックス）と、CSVモードと同じparseBirthShaped/parseBirthCellの優先順位での列自動判定、満年齢（数値セル）・学年（inlineStrセル）の新規<c>要素の追記、<dimension>の拡張のみ。実際の数値（シリアル値）セルは対象外とFAQに明記（CSVモードへ誘導）。シートごとに検出列をプルダウンで上書き可能、複数シート・複数ファイルに対応。
+- 検証：node --checkでJS構文、PythonのHTMLParserでHTML構文、json.loadsでJSON-LD構文を確認。openpyxl製（インライン文字列、社員番号の数値列・無関係な別シートを含む）とPythonのzipfileで手組みした共有文字列版の2種の実ファイルをPlaywright（1280px/390px・ja/en）でアップロードし、シートごとの自動列検出（社員番号列を誤検出しないこと含む）・手動での列切替・学年チェックボックスの有無・複数ファイルを確認。ダウンロードしたファイルをopenpyxlで再読込し、満年齢・学年の値、対象外にした別シート・sharedStrings.xmlがバイト単位で不変であること、<dimension>の拡張を確認。JSエラー・横スクロール無し（GoatCounter遮断のみ既知）。RULES.md記載の匿名性チェック用grepも実行し一致0件。
+- 次回：nenrei-ikkatsuのExcelモードの利用有無を確認。backlogは8件（次回は1番見送りのため2番から、または閲覧ありページの改善）。
