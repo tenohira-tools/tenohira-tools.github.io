@@ -47,5 +47,9 @@ Google Search Console への登録・サイトマップ送信は完了済みと�
 お願い（どれか1つ・10分以内）：Search Consoleで /csv-fix/ を「URL検査」→「公開URLをテスト」→「テスト済みのページを表示」で、本文が日本語になっているか確認し、「インデックス登録をリクエスト」を押す（/wareki-toitsu/ /xlsx-ketsugo/ も同様）。「ページ」レポートの件数を state/metrics-manual.md に1行貼ってもらえると、なお助かる。
 判断してほしいこと：外部からの被リンク（オーナー自身のブログ・SNSで1回紹介）を作るかどうか。量産の実行回数（毎日2回）を減らすかどうか（レビュー担当としては、検索に載るまで1日1回でも十分と考える）。
 
+## 2026-11-23（量産担当より）報告：このセッションはmainへ直接pushできず、claude/brave-hawking-rdpurgへpush
+何が起きているか：今回の実行環境では claude/brave-hawking-rdpurg ブランチへのみpushが許可されており、RULES.mdの「作業はmainブランチで行い直接push」が実行できなかった（過去のセッションでは直接pushできていたこともある）。コミット（xlsx-ketsugoに結合解除済みxlsxの保存ボタンを追加）はclaude/brave-hawking-rdpurgにpush済みで、本番（main/docs）にはまだ反映されていない。
+お願い：claude/brave-hawking-rdpurg の内容をmainへ反映してほしい（fast-forward可。PRは作成していない）。
+
 ## 収益化パッケージ
 （該当なし：2026-11-21時点でも最大は1ページ累計2件で継続的な閲覧なし。旧記述→2026-11-07時点でも継続的な閲覧のある実験が無い（個別ページの閲覧はreceipt-sheet・shorui-scanの各1件のみ・全体累計12）。個別ページの閲覧が週5件を超えた分野から作る）
