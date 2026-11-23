@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
-<title>名簿CSVの生年月日から満年齢・学年を一括計算 | てのひらツール</title>
-<meta name="description" content="名簿のCSVファイルにある生年月日の列（和暦・西暦どちらの書き方でも、8桁の数字やExcelのシリアル値になってしまった場合でも）から、指定した基準日時点の満年齢と、4月2日基準の学年を列として一括で追加し、CSVで書き出します。すべてブラウザ内で処理し、送信されません。From a roster CSV's birthdate column (Japanese era, Western, or a mis-converted 8-digit/serial number), add age and Japanese school-grade columns in bulk, calculated as of a reference date you choose — entirely in your browser.">
+<title>名簿CSV・Excelの生年月日から満年齢・学年を一括計算 | てのひらツール</title>
+<meta name="description" content="名簿のCSV・Excel(.xlsx)ファイルにある生年月日の列（和暦・西暦どちらの書き方でも、8桁の数字やExcelのシリアル値になってしまった場合でも）から、指定した基準日時点の満年齢と、4月2日基準の学年を列として一括で追加し、ファイルで書き出します。すべてブラウザ内で処理し、送信されません。From a roster CSV or Excel file's birthdate column (Japanese era, Western, or a mis-converted 8-digit/serial number), add age and Japanese school-grade columns in bulk, calculated as of a reference date you choose — entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/nenrei-ikkatsu/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--err:#8a5a00;--err-bg:#fdf3dc}
@@ -28,15 +28,30 @@ h3.small{font-size:1rem;margin:0 0 8px}
 label{font-size:.92rem}
 select,input[type=date]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:42px}
 select:focus,input[type=date]:focus{outline:2px solid var(--accent);outline-offset:1px}
+.modeTabs{display:flex;gap:8px;margin-bottom:14px}
+.modeTabs button{font:inherit;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 16px;cursor:pointer;min-height:40px}
+.modeTabs button[aria-pressed="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 .hint{color:var(--muted);font-size:.88rem;margin:8px 0 0}
 button.primary{font:inherit;font-weight:700;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;min-height:44px}
 button.primary:disabled{opacity:.45;cursor:not-allowed}
-#dropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
-#dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
-#dropzone strong{color:var(--fg)}
+#dropzone,#xlsxDropzone{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted)}
+#dropzone.drag,#xlsxDropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--fg)}
+#dropzone strong,#xlsxDropzone strong{color:var(--fg)}
 #fileInfo{font-size:.92rem;color:var(--muted);margin-top:10px}
 .note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
 .note:empty{display:none}
+#xlsxFileListBox{display:grid;gap:14px;margin-top:4px}
+.fileCard{border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.fileCardHead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.fileCardHead .fName{font-weight:700;word-break:break-all;min-width:140px}
+.fileCardHead .fMeta{color:var(--muted);font-size:.85rem}
+.fileCardHead .fWarn{color:var(--diff);font-size:.85rem;flex-basis:100%}
+.fileCardHead button.remove{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:8px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.fileCardHead button.remove:hover{color:var(--diff);border-color:var(--diff)}
+.buildMsg{color:var(--accent);font-size:.88rem;margin:8px 0 0}
+.resultList{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.resultList li{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.92rem}
+.resultList li.errItem{border-color:var(--err);background:var(--err-bg);color:var(--err)}
 .checkline{display:flex;align-items:center;gap:8px;margin-top:10px}
 .checkline input{width:auto;min-height:auto}
 .scroll{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px}
@@ -66,7 +81,7 @@ html[lang=en] .en-only{display:block}
 <header>
   <div>
     <h1 data-i="title">名簿の生年月日から満年齢・学年を一括計算</h1>
-    <p class="sub" data-i="sub">名簿のCSVファイルにある生年月日の列（和暦・西暦どちらの書き方でも、8桁の数字やExcelのシリアル値になってしまった場合でも）から、指定した基準日時点の満年齢と、4月2日基準の学年を列として一括で追加し、CSVで書き出します。</p>
+    <p class="sub" data-i="sub">名簿のCSV・Excel(.xlsx)ファイルにある生年月日の列（和暦・西暦どちらの書き方でも、8桁の数字やExcelのシリアル値になってしまった場合でも）から、指定した基準日時点の満年齢と、4月2日基準の学年を列として一括で追加し、ファイルで書き出します。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -84,7 +99,13 @@ html[lang=en] .en-only{display:block}
     <label for="gradeCheck" data-i="gradeCheckLabel">学年の列も追加する（4月2日生まれが区切り。標準どおり進級した場合の見込み）</label>
   </div>
 
-  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択" style="margin-top:16px">
+  <div class="modeTabs" role="group" aria-label="mode" style="margin-top:16px">
+    <button type="button" data-mode="csv" aria-pressed="true" data-i="modeCsv">CSVファイル</button>
+    <button type="button" data-mode="xlsx" aria-pressed="false" data-i="modeXlsx">Excelファイル</button>
+  </div>
+
+  <div id="csvPanel">
+  <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
     <p data-i="dropzoneText"><strong>ここに名簿のCSVファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
     <p class="hint" data-i="dropzoneHint">CSV・TSVファイル対応。ファイルは選択した端末の中だけで処理されます。</p>
   </div>
@@ -126,6 +147,20 @@ html[lang=en] .en-only{display:block}
     </div>
     <p style="margin-top:12px"><button type="button" class="primary" id="downloadBtn" data-i="downloadBtn">満年齢・学年を追加してCSVをダウンロード</button></p>
   </div>
+  </div>
+
+  <div id="xlsxPanel" style="display:none">
+    <div id="xlsxDropzone" tabindex="0" role="button" aria-label="ファイルを選択">
+      <p data-i="xlsxDropzoneText"><strong>ここに名簿のExcel(.xlsx)ファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数可）</p>
+      <p class="hint" data-i="xlsxDropzoneHint">各シートのセル文字列（共有文字列・インライン文字列）として入っている生年月日を対象に、列を自動検出して満年齢・学年の列を追加します。実際の数値セル（Excelのシリアル値として保存された日付）はCSVモードをお使いください。複数ファイルを一度に追加し、ファイルごとにダウンロードできます。</p>
+    </div>
+    <div class="checkline">
+      <input type="checkbox" id="xHeaderCheck" checked>
+      <label for="xHeaderCheck" data-i="xHeaderLabel">各シートの1行目を見出し（ヘッダー）として扱う</label>
+    </div>
+    <input type="file" id="xlsxFileInput" accept=".xlsx,.xlsm" multiple style="display:none">
+    <div id="xlsxFileListBox"></div>
+  </div>
 </section>
 
 <section class="card about">
@@ -145,6 +180,8 @@ html[lang=en] .en-only{display:block}
     <p>A. その行の生年月日が「対応する書き方」に当てはまらない、実在しない日付（13月など）、または基準日より後の未来の日付になっている場合です。該当の行は元のセルの値のまま変換せず、理由を添えて一覧に表示します。</p>
     <h3>Q. 和暦の元号をまたいだ年齢計算もできますか？</h3>
     <p>A. はい。生年月日・基準日のどちらが和暦・西暦であっても、内部では西暦の年月日に変換してから満年齢を計算するため、元号をまたいでも正しく計算されます。</p>
+    <h3>Q. Excel(.xlsx)ファイルのまま使えますか？</h3>
+    <p>A. はい。「Excelファイル」モードでは、各シートのセルの文字列（共有文字列・インライン文字列）として入っている生年月日の列を自動検出し、見つかったシートだけに「満年齢」「学年」の列を右端に追加した新しいファイルを書き出します。セルが実際の数値（Excelのシリアル値として保存された日付）の場合は対象外のため、CSVとして保存し直すか、CSVモードをお使いください。元のファイルの他の内容（他のシート・書式・数式）は変更しません。</p>
     <h3>Q. 文章やファイルはサーバーに送信されますか？</h3>
     <p>A. いいえ。アップロードしたファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
   </div>
@@ -164,6 +201,8 @@ html[lang=en] .en-only{display:block}
     <p>A. That row's value doesn't match a recognized format, isn't a real calendar date (like month 13), or is a date after the reference date. That row is left as-is, listed with a reason.</p>
     <h3>Q. Does it handle an age calculation across a change of Japanese era?</h3>
     <p>A. Yes. Whether the birthdate or the reference date is written in the Japanese era or the Western calendar, both are converted to a plain Western year/month/day internally before the age is computed, so an era boundary doesn't cause an error.</p>
+    <h3>Q. Can I use an Excel (.xlsx) file directly?</h3>
+    <p>A. Yes. "Excel file" mode auto-detects a birthdate column stored as cell text (shared or inline strings) on each sheet, and appends "Age" and "School grade" columns to the right edge of any sheet where one is found, as a new file. A cell holding an actual numeric value (a date stored as an Excel serial number) isn't covered — re-save as CSV or use CSV mode for that. Everything else in the file (other sheets, formatting, formulas) is left untouched.</p>
     <h3>Q. Is my file uploaded anywhere?</h3>
     <p>A. No. Everything is processed inside your browser on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
   </div>
@@ -202,6 +241,7 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"生年月日の列が自動で正しく選ばれないのですが？","acceptedAnswer":{"@type":"Answer","text":"「生年月日の列」のプルダウンから手動で選び直してください。自動判定は列の値のうち半分以上が生年月日として認識できた列を候補にしていますが、完全ではありません。"}},
     {"@type":"Question","name":"一部の行だけ満年齢・学年が空欄になるのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"対応する書き方に当てはまらない、実在しない日付、または基準日より後の未来の日付になっている場合です。該当行は変換せず理由を添えて一覧に表示します。"}},
     {"@type":"Question","name":"和暦の元号をまたいだ年齢計算もできますか？","acceptedAnswer":{"@type":"Answer","text":"はい。内部では西暦の年月日に変換してから計算するため、元号をまたいでも正しく計算されます。"}},
+    {"@type":"Question","name":"Excel(.xlsx)ファイルのまま使えますか？","acceptedAnswer":{"@type":"Answer","text":"はい。Excelファイルモードでは各シートのセル文字列から生年月日の列を自動検出し、見つかったシートに満年齢・学年の列を追加した新しいファイルを書き出します。実際の数値セル（シリアル値）は対象外です。"}},
     {"@type":"Question","name":"ファイルはサーバーに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。すべてブラウザの中だけで処理されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}}
   ]
 }
@@ -404,6 +444,14 @@ var T={
   summaryOk:"件、満年齢を計算できました。",summaryErr:"件は生年月日が認識できず空欄です。",
   bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
   downloadBtn:"満年齢・学年を追加してCSVをダウンロード",
+  modeCsv:"CSVファイル",modeXlsx:"Excelファイル",
+  xlsxDropzoneText:"ここに名簿のExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
+  xlsxDropzoneHint:"各シートのセル文字列（共有文字列・インライン文字列）として入っている生年月日を対象に、列を自動検出して満年齢・学年の列を追加します。実際の数値セル（Excelのシリアル値として保存された日付）はCSVモードをお使いください。複数ファイルを一度に追加し、ファイルごとにダウンロードできます。",
+  xHeaderLabel:"各シートの1行目を見出し（ヘッダー）として扱う",
+  loadingLabel:"読み込み中…",removeBtn:"削除",errBadXlsx:"読み込めませんでした（.xlsxファイルか確認してください）",
+  detectedHeading:"検出結果",noneFound:"生年月日の列が見つかりませんでした（どのシートにも該当なし）。",
+  sheetHit:"：生年月日の列を検出（",sheetHitMid:"列）。",sheetOk:"件に満年齢を計算",sheetErr:"件は空欄",
+  buildBtnBusy:"書き出し中…",downloadXlsxBtn:"満年齢・学年を追加してダウンロード",buildDone:"ダウンロードしました：",
   feedback:"フィードバックはこちら",privacy:"アップロードしたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
  en:{title:"Add age &amp; school grade from a roster's birthdates",
   sub:"From a roster CSV's birthdate column (Japanese era, Western, or a date mis-converted into an 8-digit number or an Excel serial number), add age and Japanese school-grade columns in bulk, calculated as of a reference date you choose.",
@@ -427,6 +475,14 @@ var T={
   summaryOk:" row(s) got an age.",summaryErr:" row(s) left blank (birthdate not recognized).",
   bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
   downloadBtn:"Add age & grade and download CSV",
+  modeCsv:"CSV file",modeXlsx:"Excel file",
+  xlsxDropzoneText:"Drag and drop a roster Excel (.xlsx) file here, or click to choose one (multiple allowed)",
+  xlsxDropzoneHint:"Auto-detects a birthdate column stored as cell text (shared or inline strings) on each sheet and appends age and school-grade columns. A cell holding an actual numeric value (an Excel serial date) isn't covered — use CSV mode for that. Add several files at once; each gets its own download.",
+  xHeaderLabel:"Treat row 1 of each sheet as a header",
+  loadingLabel:"Loading…",removeBtn:"Remove",errBadXlsx:"Couldn't read this file (check it's a valid .xlsx)",
+  detectedHeading:"Detection result",noneFound:"No birthdate column was found on any sheet.",
+  sheetHit:": birthdate column detected (col ",sheetHitMid:"). ",sheetOk:" row(s) got an age,",sheetErr:" left blank",
+  buildBtnBusy:"Building…",downloadXlsxBtn:"Add age & grade and download",buildDone:"Downloaded: ",
   feedback:"Feedback",privacy:"Nothing you upload is sent to a server — everything is processed inside this browser."}
 };
 var lang="ja";
@@ -598,8 +654,8 @@ dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.pr
 $("fileInput").addEventListener("change",function(e){ var f=e.target.files&&e.target.files[0]; if(f)handleFile(f); });
 $("encSelect").addEventListener("change",function(){ if(state.bytes) applyEncoding(this.value,false); });
 $("headerCheck").addEventListener("change",function(){ state.hasHeader=this.checked; loadRows(); });
-$("refDate").addEventListener("change",function(){ if(state.rows.length) renderPreview(); });
-$("gradeCheck").addEventListener("change",function(){ if(state.rows.length) renderPreview(); });
+$("refDate").addEventListener("change",function(){ if(state.rows.length) renderPreview(); reanalyzeXlsxAll(); renderXlsxFiles(); });
+$("gradeCheck").addEventListener("change",function(){ if(state.rows.length) renderPreview(); reanalyzeXlsxAll(); renderXlsxFiles(); });
 
 $("downloadBtn").addEventListener("click",function(){
   if(!state.rows.length||state.birthCol<0) return;
@@ -647,6 +703,484 @@ $("downloadBtn").addEventListener("click",function(){
   setTimeout(function(){URL.revokeObjectURL(url)},2000);
 });
 
+/* ============ xlsx mode: hand-rolled ZIP + XML core, copied as-is
+   from wareki-toitsu/hizuke-modosu (no external libraries; only
+   standard browser APIs: DecompressionStream/CompressionStream/TextDecoder).
+   Unlike those two (which edit text in place), this mode APPENDS new
+   columns (age / school grade) to the right edge of each sheet that
+   has a detected birthdate column, using plain inlineStr cells so
+   sharedStrings.xml never needs to be touched. ============ */
+function readU32(dv,o){return dv.getUint32(o,true)}
+function readU16(dv,o){return dv.getUint16(o,true)}
+function zipCentralDirectory(bytes){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  var EOCD=0x06054b50, end=-1;
+  var minPos=Math.max(0,bytes.length-65557);
+  for(var i=bytes.length-22;i>=minPos;i--){ if(readU32(dv,i)===EOCD){end=i;break} }
+  if(end===-1) throw new Error("ZIP_EOCD_NOT_FOUND");
+  var count=readU16(dv,end+10), cdOff=readU32(dv,end+16);
+  var entries=[], p=cdOff, CD=0x02014b50;
+  for(var e=0;e<count;e++){
+    if(readU32(dv,p)!==CD) throw new Error("ZIP_CD_SIG_MISMATCH");
+    var method=readU16(dv,p+10), compSize=readU32(dv,p+20), uncompSize=readU32(dv,p+24);
+    var nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), commentLen=readU16(dv,p+32);
+    var localOff=readU32(dv,p+42);
+    var name=new TextDecoder("utf-8").decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name:name,compMethod:method,compSize:compSize,uncompSize:uncompSize,localHeaderOffset:localOff});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  return entries;
+}
+function zipLocalDataOffset(bytes,localOff){
+  var dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  if(readU32(dv,localOff)!==0x04034b50) throw new Error("ZIP_LFH_SIG_MISMATCH");
+  var nameLen=readU16(dv,localOff+26), extraLen=readU16(dv,localOff+28);
+  return localOff+30+nameLen+extraLen;
+}
+async function zipReadEntry(bytes,entry){
+  var start=zipLocalDataOffset(bytes,entry.localHeaderOffset);
+  var comp=bytes.subarray(start,start+entry.compSize);
+  if(entry.compMethod===0) return comp;
+  if(entry.compMethod!==8) throw new Error("ZIP_UNSUPPORTED_METHOD");
+  var stream=new Blob([comp]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function xDeflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function xCrc32(bytes){
+  var table=xCrc32.table;
+  if(!table){
+    table=xCrc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function xDosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=xDosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc2=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc2.encode(f.name);
+    var crc=xCrc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await xDeflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+function decodeXmlEntities(s){
+  if(s.indexOf("&")===-1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g,function(m,g){
+    if(g==="amp")return "&"; if(g==="lt")return "<"; if(g==="gt")return ">";
+    if(g==="quot")return '"'; if(g==="apos")return "'";
+    if(g.charAt(0)==="#"){ var code=g.charAt(1)==="x"?parseInt(g.slice(2),16):parseInt(g.slice(1),10);
+      if(isNaN(code))return m; try{return String.fromCodePoint(code)}catch(e){return m} }
+    return m;
+  });
+}
+function encodeXmlText(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function parseOpenTag(xml,from){
+  var i=from,n=xml.length,attrs={};
+  while(i<n && !/[\s/>]/.test(xml[i])) i++;
+  for(;;){
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]==="/" && xml[i+1]===">") return {attrs:attrs,selfClose:true,end:i+2};
+    if(xml[i]===">") return {attrs:attrs,selfClose:false,end:i+1};
+    if(i>=n) return {attrs:attrs,selfClose:true,end:n};
+    var ns=i;
+    while(i<n && xml[i]!=="=" && !/\s/.test(xml[i]) && xml[i]!==">" && xml[i]!=="/") i++;
+    var attrName=xml.slice(ns,i);
+    while(i<n && /\s/.test(xml[i])) i++;
+    if(xml[i]!=="="){ continue }
+    i++;
+    while(i<n && /\s/.test(xml[i])) i++;
+    var q=xml[i];
+    if(q!=='"' && q!=="'"){ continue }
+    i++;
+    var vs=i;
+    while(i<n && xml[i]!==q) i++;
+    attrs[attrName]=decodeXmlEntities(xml.slice(vs,i));
+    i++;
+  }
+}
+function findTags(xml,tagName){
+  var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
+  while((m=re.exec(xml))){
+    var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
+    var depth=1, innerStart=open.end;
+    var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
+    scanRe.lastIndex=innerStart;
+    var innerEnd=-1, closeEnd=-1, sm;
+    while((sm=scanRe.exec(xml))){
+      if(sm[0].charAt(1)==="/"){ depth--; if(depth===0){innerEnd=sm.index;closeEnd=scanRe.lastIndex;break} }
+      else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
+    }
+    if(innerEnd===-1){ re.lastIndex=open.end; continue }
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
+    re.lastIndex=closeEnd;
+  }
+  return results;
+}
+function parseSheetList(workbookXml,relsXml){
+  var relTarget={};
+  findTags(relsXml,"Relationship").forEach(function(r){ relTarget[r.attrs.Id]=r.attrs.Target; });
+  return findTags(workbookXml,"sheet").map(function(s){
+    var rid=s.attrs["r:id"]||s.attrs.rid;
+    var target=(relTarget[rid]||"").replace(/^\/?xl\//,"").replace(/^\.?\//,"");
+    if(!/^worksheets\//.test(target)) target="worksheets/"+target.replace(/^.*worksheets\//,"");
+    return {name:s.attrs.name, path:"xl/"+target};
+  });
+}
+async function parseXlsxFile(bytes){
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  var wbEntry=byName["xl/workbook.xml"], relsEntry=byName["xl/_rels/workbook.xml.rels"];
+  if(!wbEntry||!relsEntry) throw new Error("NOT_XLSX");
+  var workbookXml=dec.decode(wbEntry.bytes), relsXml=dec.decode(relsEntry.bytes);
+  var sheetList=parseSheetList(workbookXml,relsXml);
+  if(!sheetList.length) throw new Error("NOT_XLSX");
+  var sheets=sheetList.map(function(s){
+    var entry=byName[s.path];
+    return {name:s.name, path:s.path, xml:entry?dec.decode(entry.bytes):""};
+  }).filter(function(s){return s.xml});
+  if(!sheets.length) throw new Error("NOT_XLSX");
+  var sssEntry=byName["xl/sharedStrings.xml"];
+  return {entries:entries, sheets:sheets, sssXml:sssEntry?dec.decode(sssEntry.bytes):""};
+}
+function parseSharedStrings(xml){
+  if(!xml) return [];
+  return findTags(xml,"si").map(function(si){
+    var ts=findTags(si.inner||"","t");
+    return ts.map(function(t){ return decodeXmlEntities(t.inner||""); }).join("");
+  });
+}
+function colLetterToIndex(letters){
+  var idx=0;
+  for(var i=0;i<letters.length;i++) idx=idx*26+(letters.toUpperCase().charCodeAt(i)-64);
+  return idx-1;
+}
+function colIndexToLetter(idx){
+  var s="", n=idx+1;
+  while(n>0){ var rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+/* Only shared ("s") and inline ("inlineStr") string cells count as
+   candidate birthdate text — an actual numeric cell (a real Excel
+   serial date) is intentionally out of scope, same convention as
+   hizuke-modosu's Excel mode (see FAQ). */
+function xCellText(c,sharedStrings){
+  if(c.selfClose||c.inner===null) return null;
+  var t=c.attrs.t;
+  if(t==="inlineStr"){
+    var isTag=findTags(c.inner,"is")[0];
+    if(!isTag) return null;
+    var tt=findTags(isTag.inner||"","t");
+    return tt.map(function(x){return decodeXmlEntities(x.inner||"")}).join("");
+  }
+  if(t==="s"){
+    var v=findTags(c.inner,"v")[0];
+    if(!v||v.inner===null) return null;
+    var idx=parseInt(decodeXmlEntities(v.inner),10);
+    if(isNaN(idx)) return null;
+    return sharedStrings[idx]!==undefined?sharedStrings[idx]:null;
+  }
+  return null;
+}
+function readSheetGrid(sheetXml,sharedStrings){
+  var rowTags=findTags(sheetXml,"row");
+  var maxCols=0;
+  var rows=rowTags.map(function(rt){
+    var rowNum=parseInt(rt.attrs.r,10);
+    var cells={};
+    if(!rt.selfClose && rt.inner){
+      findTags(rt.inner,"c").forEach(function(ct){
+        if(!ct.attrs.r) return;
+        var m=/^([A-Za-z]+)/.exec(ct.attrs.r);
+        if(!m) return;
+        var colIdx=colLetterToIndex(m[1]);
+        if(colIdx+1>maxCols) maxCols=colIdx+1;
+        cells[colIdx]=xCellText(ct,sharedStrings);
+      });
+    }
+    return {rowNum:rowNum,tag:rt,cells:cells};
+  });
+  return {rows:rows,maxCols:maxCols};
+}
+/* Same scoring logic as autoDetectBirthColumn() above (shaped text
+   preferred, bare-digit serial as fallback), applied per sheet. */
+function autoDetectBirthColumnX(grid,hasHeader){
+  var dataRows=grid.rows.filter(function(r){ return !(hasHeader && r.rowNum===1); });
+  var bestShaped=-1,bestShapedScore=0,bestAny=-1,bestAnyScore=0;
+  for(var c=0;c<grid.maxCols;c++){
+    var nonEmpty=0,shapedHit=0,anyHit=0;
+    dataRows.forEach(function(r){
+      var v=r.cells[c];
+      if(v===undefined||v===null||String(v).trim()==="") return;
+      var sres=parseBirthShaped(v);
+      nonEmpty++;
+      if(sres&&sres.valid){ shapedHit++; anyHit++; return; }
+      var fres=parseBirthCell(v);
+      if(fres&&fres.valid) anyHit++;
+    });
+    var shapedScore=nonEmpty?shapedHit/nonEmpty:0, anyScore=nonEmpty?anyHit/nonEmpty:0;
+    if(nonEmpty>=1 && shapedScore>=0.5 && shapedScore>bestShapedScore){ bestShapedScore=shapedScore; bestShaped=c; }
+    if(nonEmpty>=1 && anyScore>=0.5 && anyScore>bestAnyScore){ bestAnyScore=anyScore; bestAny=c; }
+  }
+  return bestShaped>=0?bestShaped:bestAny;
+}
+function xCellInlineStr(ref,text){
+  text=text===undefined||text===null?"":String(text);
+  var preserve=/^\s|\s$/.test(text)?' xml:space="preserve"':'';
+  return '<c r="'+ref+'" t="inlineStr"><is><t'+preserve+'>'+encodeXmlText(text)+'</t></is></c>';
+}
+function applyRowEdits(xml,edits){
+  if(!edits.length) return xml;
+  var sorted=edits.slice().sort(function(a,b){return b.start-a.start});
+  var out=xml;
+  sorted.forEach(function(e){ out=out.slice(0,e.start)+e.text+out.slice(e.end); });
+  return out;
+}
+/* Extends <dimension ref="A1:D10"/> to cover the newly appended
+   columns — a hint only (readers recompute the real range), but kept
+   accurate for tidiness. Silently does nothing if the tag is missing
+   or oddly shaped. */
+function bumpDimension(xml,totalCols){
+  var m=/<dimension ref="([^"]+)"\s*\/>/.exec(xml);
+  if(!m) return xml;
+  var ref=m[1];
+  var mm=/^(\$?[A-Za-z]+)(\$?[0-9]+):(\$?[A-Za-z]+)(\$?[0-9]+)$/.exec(ref);
+  var newRef=null;
+  if(mm){
+    var col2=colLetterToIndex(mm[3].replace("$",""));
+    if(totalCols-1>col2) newRef=mm[1]+mm[2]+":"+colIndexToLetter(totalCols-1)+mm[4];
+  } else {
+    var mm2=/^(\$?[A-Za-z]+)(\$?[0-9]+)$/.exec(ref);
+    if(mm2){
+      var col1=colLetterToIndex(mm2[1].replace("$",""));
+      if(totalCols-1>col1) newRef=mm2[1]+mm2[2]+":"+colIndexToLetter(totalCols-1)+mm2[2];
+    }
+  }
+  if(!newRef) return xml;
+  return xml.slice(0,m.index)+'<dimension ref="'+newRef+'"/>'+xml.slice(m.index+m[0].length);
+}
+/* Builds the row-replacement edits for one sheet (header cells get the
+   column labels; every other row gets its computed age/grade, blank
+   when the birth cell can't be read) and returns them alongside the
+   per-sheet counts shown in the file card. */
+function buildSheetAppend(grid,birthCol,hasHeader,withGrade,ref,langCode){
+  var ageCol=grid.maxCols, gradeCol=withGrade?grid.maxCols+1:-1;
+  var edits=[], ok=0, err=0;
+  grid.rows.forEach(function(r){
+    var isHeader=hasHeader && r.rowNum===1;
+    var ageRef=colIndexToLetter(ageCol)+r.rowNum;
+    var cellsXml;
+    if(isHeader){
+      cellsXml=xCellInlineStr(ageRef,T[langCode].ageColLabel);
+      if(withGrade) cellsXml+=xCellInlineStr(colIndexToLetter(gradeCol)+r.rowNum,T[langCode].gradeColLabel);
+    } else {
+      var raw=r.cells[birthCol];
+      var ageText="",gradeText="";
+      if(raw!==undefined && raw!==null && String(raw).trim()!==""){
+        var res=parseBirthCell(raw);
+        if(res && !res.error && ref){
+          var a=calcAge(res.y,res.m,res.d,ref.y,ref.m,ref.d);
+          if(!a.error){ ageText=String(a.age); if(withGrade) gradeText=gradeLabel(schoolGradeNum(res.y,res.m,res.d,ref.y,ref.m,ref.d),langCode); ok++; }
+          else err++;
+        } else err++;
+      }
+      cellsXml=xCellInlineStr(ageRef,ageText);
+      if(withGrade) cellsXml+=xCellInlineStr(colIndexToLetter(gradeCol)+r.rowNum,gradeText);
+    }
+    var rt=r.tag, newXml;
+    if(rt.selfClose){ newXml=rt.openText.replace(/\/>\s*$/,">")+cellsXml+"</row>"; }
+    else { newXml=rt.openText+(rt.inner||"")+cellsXml+"</row>"; }
+    edits.push({start:rt.start,end:rt.end,text:newXml});
+  });
+  return {edits:edits,ageCol:ageCol,gradeCol:gradeCol,ok:ok,err:err};
+}
+function analyzeXlsxAppend(parsed,opts){
+  var sharedStrings=parseSharedStrings(parsed.sssXml);
+  var perSheet=[];
+  parsed.sheets.forEach(function(sh){
+    var grid=readSheetGrid(sh.xml,sharedStrings);
+    var birthCol=autoDetectBirthColumnX(grid,opts.hasHeader);
+    if(birthCol<0) return;
+    var res=buildSheetAppend(grid,birthCol,opts.hasHeader,opts.withGrade,opts.ref,opts.lang);
+    if(!res.edits.length) return;
+    perSheet.push({name:sh.name,path:sh.path,colLabel:colIndexToLetter(birthCol),ok:res.ok,err:res.err,edits:res.edits,totalCols:(res.gradeCol>=0?res.gradeCol:res.ageCol)+1});
+  });
+  return {perSheet:perSheet};
+}
+async function buildAppendedXlsx(parsed,analysis){
+  var enc3=new TextEncoder();
+  var byPath={}; analysis.perSheet.forEach(function(s){byPath[s.path]=s;});
+  var outFiles=parsed.entries.map(function(e){
+    var s=byPath[e.name];
+    if(!s) return {name:e.name,bytes:e.bytes};
+    var sh=parsed.sheets.filter(function(x){return x.path===e.name})[0];
+    var newXml=applyRowEdits(sh.xml,s.edits);
+    newXml=bumpDimension(newXml,s.totalCols);
+    return {name:e.name,bytes:enc3.encode(newXml)};
+  });
+  return await buildZip(outFiles);
+}
+
+/* ============ xlsx mode UI (multiple files, each with its own card +
+   download button — same list pattern as wareki-toitsu/hizuke-modosu) ============ */
+var xFiles=[],xNextId=1;
+function escTruncX(s){ s=String(s); var t=s.length>70?s.slice(0,70)+"…":s; return esc(t); }
+function xOpts(){ return {hasHeader:$("xHeaderCheck").checked, withGrade:$("gradeCheck").checked, ref:refYMD(), lang:lang}; }
+function reanalyzeXlsxFile(f){ if(!f.parsed) return; f.analysis=analyzeXlsxAppend(f.parsed,xOpts()); }
+function reanalyzeXlsxAll(){ xFiles.forEach(function(f){ if(!f.loading&&!f.error) reanalyzeXlsxFile(f); }); }
+function renderXlsxFileCard(f){
+  var t=T[lang];
+  var h="<div class='fileCard' data-id='"+f.id+"'>";
+  h+="<div class='fileCardHead'><span class='fName'>"+esc(f.name)+"</span>";
+  if(f.loading){ h+="<span class='fMeta'>"+esc(t.loadingLabel)+"</span>"; }
+  else if(f.error){ h+="<span class='fWarn'>"+esc(f.error)+"</span>"; }
+  h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(t.removeBtn)+"</button></div>";
+  if(!f.loading && !f.error && f.analysis){
+    var ps=f.analysis.perSheet;
+    h+="<h3 class='small'><span>"+esc(t.detectedHeading)+"</span></h3>";
+    if(ps.length){
+      h+="<ul class='resultList'>";
+      ps.forEach(function(s){
+        h+="<li>"+esc(s.name)+esc(t.sheetHit)+esc(s.colLabel)+esc(t.sheetHitMid)+s.ok+esc(t.sheetOk)+(s.err?("　"+s.err+esc(t.sheetErr)):"")+"</li>";
+      });
+      h+="</ul>";
+    } else {
+      h+="<p class='hint'>"+esc(t.noneFound)+"</p>";
+    }
+    var hasEdits=ps.length>0;
+    h+="<p style='margin-top:12px'><button type='button' class='primary buildBtn' data-id='"+f.id+"' "+((!hasEdits||f.building)?"disabled":"")+">"+esc(f.building?t.buildBtnBusy:t.downloadXlsxBtn)+"</button></p>";
+    if(f.buildMsg) h+="<p class='buildMsg'>"+esc(f.buildMsg)+"</p>";
+  }
+  h+="</div>";
+  return h;
+}
+function renderXlsxFiles(){
+  var box=$("xlsxFileListBox");
+  var h=""; xFiles.forEach(function(f){ h+=renderXlsxFileCard(f); });
+  box.innerHTML=h;
+  var rms=box.querySelectorAll(".remove");
+  for(var i=0;i<rms.length;i++){ rms[i].addEventListener("click",function(){ removeXlsxFile(parseInt(this.getAttribute("data-id"),10)); }); }
+  var bbs=box.querySelectorAll(".buildBtn");
+  for(var b=0;b<bbs.length;b++){ bbs[b].addEventListener("click",function(){ buildAndDownloadXlsx(parseInt(this.getAttribute("data-id"),10)); }); }
+}
+function addXlsxFile(file){
+  var f={id:xNextId++,name:file.name,loading:true,error:"",parsed:null,analysis:null,building:false,buildMsg:""};
+  xFiles.push(f);
+  renderXlsxFiles();
+  file.arrayBuffer().then(function(buf){ return parseXlsxFile(new Uint8Array(buf)); })
+    .then(function(result){ f.parsed=result; f.loading=false; reanalyzeXlsxFile(f); renderXlsxFiles(); })
+    .catch(function(){ f.loading=false; f.error=T[lang].errBadXlsx; renderXlsxFiles(); });
+}
+function removeXlsxFile(id){ xFiles=xFiles.filter(function(f){return f.id!==id}); renderXlsxFiles(); }
+function suggestXlsxOutName(name){
+  var m=/\.[^.]+$/.exec(name);
+  var ext=m?m[0]:".xlsx";
+  var base=name.replace(/\.[^.]+$/,"")||"file";
+  return base+"_nenrei"+ext;
+}
+function buildAndDownloadXlsx(id){
+  var f=xFiles.filter(function(x){return x.id===id})[0];
+  if(!f||!f.analysis||f.building) return;
+  if(!f.analysis.perSheet.length) return;
+  var t=T[lang];
+  f.building=true; f.buildMsg=""; renderXlsxFiles();
+  buildAppendedXlsx(f.parsed,f.analysis).then(function(bytes){
+    var outName=suggestXlsxOutName(f.name);
+    var blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");a.href=url;a.download=outName;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},2000);
+    f.building=false; f.buildMsg=t.buildDone+outName; renderXlsxFiles();
+  }).catch(function(){
+    f.building=false; f.buildMsg=t.errBadXlsx; renderXlsxFiles();
+  });
+}
+var xdz=$("xlsxDropzone");
+["dragenter","dragover"].forEach(function(ev){xdz.addEventListener(ev,function(e){e.preventDefault();xdz.classList.add("drag")})});
+["dragleave","drop"].forEach(function(ev){xdz.addEventListener(ev,function(e){e.preventDefault();xdz.classList.remove("drag")})});
+xdz.addEventListener("drop",function(e){ var fs=e.dataTransfer&&e.dataTransfer.files; if(fs) for(var i=0;i<fs.length;i++) addXlsxFile(fs[i]); });
+xdz.addEventListener("click",function(){$("xlsxFileInput").click()});
+xdz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("xlsxFileInput").click()} });
+$("xlsxFileInput").addEventListener("change",function(e){ var fs=e.target.files; if(fs) for(var i=0;i<fs.length;i++) addXlsxFile(fs[i]); e.target.value=""; });
+$("xHeaderCheck").addEventListener("change",function(){ reanalyzeXlsxAll(); renderXlsxFiles(); });
+
+/* ============ mode tabs (CSV / Excel) ============ */
+var modeTabBtns=document.querySelectorAll(".modeTabs button");
+for(var mi=0;mi<modeTabBtns.length;mi++){
+  modeTabBtns[mi].addEventListener("click",function(){
+    var mode=this.getAttribute("data-mode");
+    for(var k=0;k<modeTabBtns.length;k++) modeTabBtns[k].setAttribute("aria-pressed",modeTabBtns[k].getAttribute("data-mode")===mode?"true":"false");
+    $("csvPanel").style.display=mode==="csv"?"":"none";
+    $("xlsxPanel").style.display=mode==="xlsx"?"":"none";
+  });
+}
+
 /* ============ lang switch ============ */
 function applyLang(){
   document.documentElement.lang=lang;
@@ -658,6 +1192,7 @@ function applyLang(){
     $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
   }
   if(state.rows.length){ renderColumns(); renderPreview(); }
+  if(xFiles.length){ renderXlsxFiles(); }
 }
 var langBtns=document.querySelectorAll(".lang button");
 for(var li=0;li<langBtns.length;li++)langBtns[li].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
