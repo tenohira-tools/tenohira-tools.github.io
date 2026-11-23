@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
-<title>Excelの結合セルを解除して値を埋める→CSV出力ツール | てのひらツール</title>
-<meta name="description" content="結合セルを解除すると空欄になってしまう問題を解決。Excel(.xlsx)の結合セルをすべて検出し、左上の値で他のセルを自動的に埋めてからCSVに書き出します。縦方向だけ埋める／横方向も埋める（表が2方向にまたがる結合向け）を選べます。並び替えやフィルター、ピボットができる表に整えたいときに。ファイルはブラウザの中だけで処理され、サーバーには送信されません。Unmerge Excel merged cells and fill in the blanks with the top-left value, then export as CSV — entirely in your browser.">
+<title>Excelの結合セルを解除して値を埋める→CSV・Excel出力ツール | てのひらツール</title>
+<meta name="description" content="結合セルを解除すると空欄になってしまう問題を解決。Excel(.xlsx)の結合セルをすべて検出し、左上の値で他のセルを自動的に埋めてからCSV、または結合を解除した新しいExcel(.xlsx)ファイルとして書き出します（他のシート・書式はそのまま）。縦方向だけ埋める／横方向も埋める（表が2方向にまたがる結合向け）を選べます。並び替えやフィルター、ピボットができる表に整えたいときに。ファイルはブラウザの中だけで処理され、サーバーには送信されません。Unmerge Excel merged cells and fill in the blanks with the top-left value, then export as CSV or a new .xlsx — entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/xlsx-ketsugo/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--fill:#fff4cf;--fill-dark:#5a4a12}
@@ -42,6 +42,8 @@ select:focus{outline:2px solid var(--accent);outline-offset:1px}
 .fileCard button.remove:hover{color:var(--diff);border-color:var(--diff)}
 .fileCard button.dl{border:0;background:var(--accent);color:#fff;border-radius:8px;padding:6px 14px;font:inherit;font-weight:700;font-size:.9rem;cursor:pointer}
 .fileCard button.dl:disabled{opacity:.45;cursor:not-allowed}
+.fileCard button.dlx{border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:8px;padding:6px 14px;font:inherit;font-weight:700;font-size:.9rem;cursor:pointer}
+.fileCard button.dlx:disabled{opacity:.45;cursor:not-allowed}
 .noMerge{color:var(--muted);font-size:.85rem;margin-top:8px}
 .scroll{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:10px}
 table{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -68,7 +70,7 @@ html[lang=en] .en-only{display:block}
 <header>
   <div>
     <h1 data-i="title">Excelの結合セルを解除して値を埋める</h1>
-    <p class="sub" data-i="sub">結合セルを解除するとできる空欄を、左上の値で自動的に埋めてからCSVに書き出します。並び替え・フィルター・ピボットができる表に整えたいときに。ファイルはどこにも送信されません。</p>
+    <p class="sub" data-i="sub">結合セルを解除するとできる空欄を、左上の値で自動的に埋めてからCSV、または結合を解除した新しいExcel(.xlsx)ファイルに書き出します（他のシート・書式はそのまま）。並び替え・フィルター・ピボットができる表に整えたいときに。ファイルはどこにも送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -105,7 +107,7 @@ html[lang=en] .en-only{display:block}
       <li>上の枠にExcel（.xlsx/.xlsm）ファイルをドラッグ＆ドロップするか、クリックして選びます（複数ファイルも一度に追加できます）。</li>
       <li>結合セルが見つかると「結合セルN個を検出」と表示され、左上の値で他のセルが自動的に埋まったプレビューが出ます（埋めたセルは色付きで表示）。</li>
       <li>結合が行と列の両方にまたがっている表なら「横方向も埋める」をオンにします（通常の「1列を複数行にまたがる結合」だけならオフのままで大丈夫です）。</li>
-      <li>ファイルごとに「CSVダウンロード」ボタンを押すと、そのファイル（選んだシート）を埋めた結果がCSVとして保存されます。</li>
+      <li>ファイルごとに「CSVダウンロード」ボタンを押すと、そのファイル（選んだシート）を埋めた結果がCSVとして保存されます。「Excelファイル(.xlsx)で保存」を押すと、選んだシートだけ結合を解除して値を埋めた新しいxlsxファイルが保存されます（他のシートや書式はそのまま）。</li>
     </ol>
     <h3>Q. このツールにファイルをアップロードしても安全ですか？</h3>
     <p>A. はい。ファイルはサーバーに送信されず、すべてこのページを開いているブラウザの中だけで読み込み・変換されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。</p>
@@ -117,8 +119,8 @@ html[lang=en] .en-only{display:block}
     <p>A. Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式や、パスワードで保護されたファイルは読み込めません。読み込みに失敗した場合は、そのファイルの横にエラーを表示します。</p>
     <h3>Q. 1つのファイルに複数のシートがある場合は？</h3>
     <p>A. ファイルの一覧に「シート」の選択欄が出るので、使いたいシートを1つ選べます（既定は先頭のシート）。</p>
-    <h3>Q. 結合セル自体が入ったxlsxファイルとして保存し直すことはできますか？</h3>
-    <p>A. このツールはCSV出力専用です。結合を解除した新しいxlsxファイルが必要な場合は、Excelの「セルの結合」解除後に手作業で値をコピーするか、別の方法をご検討ください。</p>
+    <h3>Q. 結合を解除した状態でxlsxファイルとして保存し直すことはできますか？</h3>
+    <p>A. はい。ファイルごとの「Excelファイル(.xlsx)で保存」ボタンで、今選んでいるシートだけ結合を解除し、空欄を左上の値で埋めた新しいxlsxファイルを書き出せます（結合の宣言は削除し、元から値が入っていたセルは変更しません）。列幅・行の高さ・セルの書式、他のシートの内容はそのまま残ります（他のシートに結合セルが残っている場合もそのままです）。</p>
     <h3>Q. 日付や時刻、数式が入ったセルはどうなりますか？</h3>
     <p>A. セルの表示形式を見て、シリアル値ではなく「2026/04/01」のような見たままに近い文字列に変換します。数式セルは直近に保存されたときの計算結果をそのまま使い、再計算はしません。</p>
   </div>
@@ -128,7 +130,7 @@ html[lang=en] .en-only{display:block}
       <li>Drag and drop an Excel (.xlsx/.xlsm) file into the box above, or click it to choose one (several files at once are fine too).</li>
       <li>If merged cells are found, it shows "N merged cells detected" and a preview where the blanks have been filled with the top-left value (filled cells are highlighted).</li>
       <li>If a table's merges span both rows and columns, turn on "Also fill horizontally" (leave it off for the common case of one column merged down several rows).</li>
-      <li>Click "Download CSV" on each file's card to save that file's (chosen sheet's) filled-in result as a CSV.</li>
+      <li>Click "Download CSV" on each file's card to save that file's (chosen sheet's) filled-in result as a CSV, or "Save as Excel (.xlsx)" to save a new .xlsx with just that sheet unmerged and filled in (other sheets and formatting are kept).</li>
     </ol>
     <h3>Q. Is it safe to use this on my files?</h3>
     <p>A. Yes. Files are never uploaded to a server — everything is read and converted inside your browser, on this device (only an anonymous, cookie-free page-view count for this site is sent, via GoatCounter).</p>
@@ -141,7 +143,7 @@ html[lang=en] .en-only{display:block}
     <h3>Q. What if a file has multiple sheets?</h3>
     <p>A. Each file's row in the list gets a sheet picker (defaulting to the first sheet).</p>
     <h3>Q. Can I save the result back as an .xlsx file with the merges actually removed?</h3>
-    <p>A. This tool only exports CSV. If you need a new .xlsx file with the merges removed, use Excel's own "Unmerge Cells" and copy the values down by hand, or look for another tool for that specific need.</p>
+    <p>A. Yes. Each file's "Save as Excel (.xlsx)" button builds a new .xlsx with just the currently selected sheet unmerged — blanks filled with the top-left value, the merge declarations removed, and cells that already had a value left untouched. Column widths, row heights, cell styles and every other sheet are kept exactly as they were (merges on other sheets, if any, are left in place).</p>
     <h3>Q. What about date, time and formula cells?</h3>
     <p>A. Dates/times are converted from Excel's internal serial numbers to readable text like "2026/04/01" based on the cell's display format. Formula cells use the last calculated value saved in the file; nothing is recalculated.</p>
   </div>
@@ -230,7 +232,7 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"なぜ結合セルを解除すると困るのですか？","acceptedAnswer":{"@type":"Answer","text":"結合セルを解除すると、見た目では1つだった値が元のセル1か所にしか残らず、残りは空欄になります。並び替え・フィルター・ピボットテーブルでは各行に値が必要なため、空欄のままでは思った通りに動きません。"}},
     {"@type":"Question","name":"「縦方向だけ埋める」と「横方向も埋める」はどう違いますか？","acceptedAnswer":{"@type":"Answer","text":"1つの列が複数行にまたがって結合されている通常のケースは「縦方向だけ」で十分です。行・列の両方にまたがって結合された見出し（クロス集計など）では「横方向も埋める」をオンにします。"}},
     {"@type":"Question","name":"対応しているファイル形式は？","acceptedAnswer":{"@type":"Answer","text":"Excel 2007以降の.xlsx・.xlsm形式に対応しています。古い.xls形式やパスワード保護されたファイルは読み込めません。"}},
-    {"@type":"Question","name":"結合セル付きのxlsxファイルとして保存し直せますか？","acceptedAnswer":{"@type":"Answer","text":"このツールはCSV出力専用です。結合を解除した新しいxlsxファイルが必要な場合は別の方法をご検討ください。"}}
+    {"@type":"Question","name":"結合を解除した状態でxlsxファイルとして保存し直せますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「Excelファイル(.xlsx)で保存」ボタンで、選んでいるシートだけ結合を解除し空欄を左上の値で埋めた新しいxlsxファイルを書き出せます。列幅・行の高さ・セルの書式、他のシートはそのまま残ります。"}}
   ]
 }
 </script>
@@ -329,7 +331,8 @@ function findTags(xml,tagName){
   var results=[], re=new RegExp("<"+tagName+"(?=[\\s/>])","g"), m;
   while((m=re.exec(xml))){
     var tagStart=m.index, open=parseOpenTag(xml,tagStart+1+tagName.length);
-    if(open.selfClose){ results.push({attrs:open.attrs,inner:null}); re.lastIndex=open.end; continue }
+    var openText=xml.slice(tagStart,open.end);
+    if(open.selfClose){ results.push({attrs:open.attrs,inner:null,start:tagStart,end:open.end,openText:openText,selfClose:true}); re.lastIndex=open.end; continue }
     var depth=1, innerStart=open.end;
     var scanRe=new RegExp("<"+tagName+"(?:[\\s/>])|</"+tagName+">","g");
     scanRe.lastIndex=innerStart;
@@ -339,10 +342,101 @@ function findTags(xml,tagName){
       else{ var sub=parseOpenTag(xml,sm.index+1+tagName.length); if(!sub.selfClose) depth++; scanRe.lastIndex=sub.end; }
     }
     if(innerEnd===-1){ re.lastIndex=open.end; continue }
-    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd)});
+    results.push({attrs:open.attrs,inner:xml.slice(innerStart,innerEnd),start:tagStart,end:closeEnd,openText:openText,selfClose:false});
     re.lastIndex=closeEnd;
   }
   return results;
+}
+/* =====================================================================
+   XLSX ZIP writer (deflate-raw, same approach as xlsx-style/xlsx-hani/
+   xlsx-gyoretsu/nenrei-ikkatsu) — used only by the new "save as .xlsx"
+   button below; CSV export never needed it.
+   ===================================================================== */
+async function unzipAllEntries(bytes){
+  var entries=zipCentralDirectory(bytes), out=[];
+  for(var i=0;i<entries.length;i++){
+    var en=entries[i];
+    if(en.name.charAt(en.name.length-1)==="/") continue;
+    out.push({name:en.name, bytes:await zipReadEntry(bytes,en)});
+  }
+  return out;
+}
+async function deflateRawCompress(bytes){
+  if(!bytes.length) return bytes;
+  var stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  var buf=await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); table[n]=c>>>0; }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+async function buildZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var uncompSize=f.bytes.length;
+    var compBytes=await deflateRawCompress(f.bytes);
+    var compSize=compBytes.length;
+    var method=uncompSize>0?8:0;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,method,true); dv.setUint16(10,dt.time,true); dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,compSize,true); dv.setUint32(22,uncompSize,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,compBytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true); cdv.setUint16(4,20,true); cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true); cdv.setUint16(10,method,true); cdv.setUint16(12,dt.time,true); cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true); cdv.setUint32(20,compSize,true); cdv.setUint32(24,uncompSize,true);
+    cdv.setUint16(28,nameBytes.length,true); cdv.setUint16(30,0,true); cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true); cdv.setUint16(36,0,true); cdv.setUint32(38,0,true); cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + compBytes.length;
+  }
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true); edv.setUint16(4,0,true); edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true); edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true); edv.setUint32(16,centralOffset,true); edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  centralParts.forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  out.set(eocd,pos);
+  return out;
+}
+function encodeXmlText(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function colIndexToLetter(idx){
+  var s="", n=idx+1;
+  while(n>0){ var rem=(n-1)%26; s=String.fromCharCode(65+rem)+s; n=Math.floor((n-1)/26); }
+  return s;
 }
 
 function parseSheetList(workbookXml,relsXml){
@@ -468,17 +562,113 @@ function parseCellRef(ref){
   return {col: colLetterToIndex(m[1]), row: parseInt(m[2],10)-1};
 }
 async function parseXlsx(bytes){
-  var files=await unzipToMap(bytes);
-  var workbookXml=files["xl/workbook.xml"], relsXml=files["xl/_rels/workbook.xml.rels"];
+  var entries=await unzipAllEntries(bytes);
+  var byName={}; entries.forEach(function(e){byName[e.name]=e});
+  var dec=new TextDecoder("utf-8");
+  function text(name){ return byName[name]?dec.decode(byName[name].bytes):""; }
+  var workbookXml=text("xl/workbook.xml"), relsXml=text("xl/_rels/workbook.xml.rels");
   if(!workbookXml || !relsXml) throw new Error("NOT_XLSX");
   var sheetList=parseSheetList(workbookXml,relsXml);
-  var sharedStrings=parseSharedStrings(files["xl/sharedStrings.xml"]);
-  var styles=parseStyles(files["xl/styles.xml"]);
-  return {sheets:sheetList.map(function(s){
-    var xml=files[s.path];
+  var sharedStrings=parseSharedStrings(text("xl/sharedStrings.xml"));
+  var styles=parseStyles(text("xl/styles.xml"));
+  return {entries:entries, sheets:sheetList.map(function(s){
+    var xml=text(s.path);
     var parsed=xml?parseSheetXml(xml,sharedStrings,styles.xfKind):{rows:[],merges:[]};
-    return {name:s.name, rows:parsed.rows, merges:parsed.merges};
+    return {name:s.name, path:s.path, xml:xml, rows:parsed.rows, merges:parsed.merges};
   })};
+}
+
+/* =====================================================================
+   Build an .xlsx copy with the CURRENTLY SELECTED sheet's merges resolved
+   (mergeCells declarations removed, previously-blank cells inside each
+   merged range filled in as plain inlineStr cells) and every other part
+   of the workbook — other sheets, styles, column widths, row heights —
+   left byte-for-byte as in the source entries. Only cells that fillMerges
+   actually filled (fillResult.filled) are touched; the merge's own
+   top-left cell (which already held the value) is never rewritten.
+   ===================================================================== */
+function cellInlineStrXml(ref, styleAttr, text){
+  text=text===undefined||text===null?"":String(text);
+  var preserve=/^\s|\s$/.test(text)?' xml:space="preserve"':'';
+  var sAttr=(styleAttr!==null&&styleAttr!==undefined)?(' s="'+styleAttr+'"'):'';
+  return '<c r="'+ref+'"'+sAttr+' t="inlineStr"><is><t'+preserve+'>'+encodeXmlText(text)+'</t></is></c>';
+}
+function removeMergeCellsBlock(xml){
+  var block=findTags(xml,"mergeCells")[0];
+  if(!block) return xml;
+  return xml.slice(0,block.start)+xml.slice(block.end);
+}
+function buildMergeFilledSheetXml(xml, fillResult){
+  var filledByRow={};
+  var totalFills=0;
+  Object.keys(fillResult.filled).forEach(function(k){
+    var parts=k.split(","), r=parseInt(parts[0],10), c=parseInt(parts[1],10);
+    (filledByRow[r]=filledByRow[r]||[]).push(c);
+    totalFills++;
+  });
+  var newXml=xml, appliedCount=0;
+  var sheetDataBlock=findTags(newXml,"sheetData")[0];
+  if(sheetDataBlock && !sheetDataBlock.selfClose && totalFills>0){
+    var rowTags=findTags(sheetDataBlock.inner,"row");
+    var newRowsInner="", last=0;
+    rowTags.forEach(function(row,idx){
+      newRowsInner+=sheetDataBlock.inner.slice(last,row.start);
+      var cols=filledByRow[idx];
+      if(!cols){
+        newRowsInner+= row.selfClose ? row.openText : (row.openText+(row.inner||"")+"</row>");
+        last=row.end; return;
+      }
+      var rowNum=row.attrs.r || String(idx+1);
+      cols=cols.slice().sort(function(a,b){return a-b});
+      if(row.selfClose){
+        var cellsXml="";
+        cols.forEach(function(c){
+          var val=(fillResult.rows[idx]&&fillResult.rows[idx][c]!==undefined)?fillResult.rows[idx][c]:"";
+          cellsXml+=cellInlineStrXml(colIndexToLetter(c)+rowNum,null,val);
+          appliedCount++;
+        });
+        newRowsInner+=row.openText.replace(/\/>\s*$/,">")+cellsXml+"</row>";
+        last=row.end; return;
+      }
+      var cellTags=findTags(row.inner,"c");
+      var colOf=cellTags.map(function(ct){ return ct.attrs.r?colLetterToIndex(ct.attrs.r):null; });
+      var spliceOps=[];
+      cols.forEach(function(c){
+        var val=(fillResult.rows[idx]&&fillResult.rows[idx][c]!==undefined)?fillResult.rows[idx][c]:"";
+        var foundIdx=-1;
+        for(var i=0;i<colOf.length;i++){ if(colOf[i]===c){ foundIdx=i; break; } }
+        if(foundIdx>=0){
+          var ct=cellTags[foundIdx];
+          var styleAttr=ct.attrs.s!==undefined?ct.attrs.s:null;
+          spliceOps.push({start:ct.start,end:ct.end,text:cellInlineStrXml(colIndexToLetter(c)+rowNum,styleAttr,val)});
+        } else {
+          var insertPos=row.inner.length;
+          for(var j=0;j<colOf.length;j++){ if(colOf[j]!==null && colOf[j]>c){ insertPos=cellTags[j].start; break; } }
+          spliceOps.push({start:insertPos,end:insertPos,text:cellInlineStrXml(colIndexToLetter(c)+rowNum,null,val)});
+        }
+        appliedCount++;
+      });
+      spliceOps.sort(function(a,b){return b.start-a.start});
+      var newRowInner=row.inner;
+      spliceOps.forEach(function(op){ newRowInner=newRowInner.slice(0,op.start)+op.text+newRowInner.slice(op.end); });
+      newRowsInner+=row.openText+newRowInner+"</row>";
+      last=row.end;
+    });
+    newRowsInner+=sheetDataBlock.inner.slice(last);
+    newXml=newXml.slice(0,sheetDataBlock.start)+sheetDataBlock.openText+newRowsInner+"</sheetData>"+newXml.slice(sheetDataBlock.end);
+  }
+  newXml=removeMergeCellsBlock(newXml);
+  return {xml:newXml, appliedCount:appliedCount, skippedCount:totalFills-appliedCount};
+}
+async function buildKetsugoXlsx(parsedEntries, sheetPath, sheetXml, fillResult){
+  var enc=new TextEncoder();
+  var built=buildMergeFilledSheetXml(sheetXml, fillResult);
+  var outFiles=parsedEntries.map(function(e){
+    if(e.name===sheetPath) return {name:e.name, bytes:enc.encode(built.xml)};
+    return {name:e.name, bytes:e.bytes};
+  });
+  var zipBytes=await buildZip(outFiles);
+  return {bytes:zipBytes, appliedCount:built.appliedCount, skippedCount:built.skippedCount};
 }
 
 /* =====================================================================
@@ -526,7 +716,7 @@ function serializeCSV(rows){ return rows.map(function(r){return r.map(csvField).
    ===================================================================== */
 var T={
  ja:{title:"Excelの結合セルを解除して値を埋める",
-  sub:"結合セルを解除するとできる空欄を、左上の値で自動的に埋めてからCSVに書き出します。並び替え・フィルター・ピボットができる表に整えたいときに。ファイルはどこにも送信されません。",
+  sub:"結合セルを解除するとできる空欄を、左上の値で自動的に埋めてからCSV、または結合を解除した新しいExcel(.xlsx)ファイルに書き出します（他のシート・書式はそのまま）。並び替え・フィルター・ピボットができる表に整えたいときに。ファイルはどこにも送信されません。",
   dropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択",
   dropzoneHint:"複数ファイルを一度に追加できます。結合セルが無いファイルも、そのままCSV化だけ行えます。",
   optionsHeading:"埋め方の設定",
@@ -535,6 +725,11 @@ var T={
   fileListHeading:"追加したファイル",
   removeBtn:"削除",
   downloadBtn:"CSVダウンロード",
+  downloadXlsxBtn:"Excelファイル(.xlsx)で保存",
+  xlsxBuildingBtn:"作成中…",
+  xlsxSuffix:"_結合解除",
+  xlsxBuildErr:"Excelファイルの書き出し中にエラーが発生しました。",
+  xlsxSkippedMsg:function(n){return "注："+n+"個のセルは元のファイルの行の並びが特殊だったため埋められませんでした（CSVダウンロードでは正しく埋まります）。"},
   loadingLabel:"読み込み中…",
   rowsSuffix:"行",colsSuffix:"列",
   sheetLabel:"シート：",
@@ -545,7 +740,7 @@ var T={
   errEmpty:"シートにデータがありません",
   feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
  en:{title:"Unmerge Excel cells and fill in the blanks",
-  sub:"Fill in the blanks that unmerging creates with the top-left cell's value, then export as CSV — for tables you need to sort, filter or pivot. Nothing is uploaded.",
+  sub:"Fill in the blanks that unmerging creates with the top-left cell's value, then export as CSV or a new Excel (.xlsx) file with the merges actually removed (other sheets and formatting are kept) — for tables you need to sort, filter or pivot. Nothing is uploaded.",
   dropzoneText:"Drag and drop an Excel (.xlsx) file here, or click to choose one",
   dropzoneHint:"You can add several files at once. Files without merged cells are simply converted to CSV as-is.",
   optionsHeading:"Fill options",
@@ -554,6 +749,11 @@ var T={
   fileListHeading:"Added files",
   removeBtn:"Remove",
   downloadBtn:"Download CSV",
+  downloadXlsxBtn:"Save as Excel (.xlsx)",
+  xlsxBuildingBtn:"Building…",
+  xlsxSuffix:"_unmerged",
+  xlsxBuildErr:"Something went wrong while building the Excel file.",
+  xlsxSkippedMsg:function(n){return "Note: "+n+" cell(s) couldn't be filled in because of how the original file's rows were laid out (the CSV download fills them correctly).";},
   loadingLabel:"Loading…",
   rowsSuffix:" rows",colsSuffix:" cols",
   sheetLabel:"Sheet:",
@@ -581,13 +781,14 @@ function computeFilled(f){
 }
 
 function addFile(file){
-  var f={id:state.nextId++, name:file.name, loading:true, error:"", sheets:[], sheetIndex:0, rows:[], merges:[]};
+  var f={id:state.nextId++, name:file.name, loading:true, error:"", sheets:[], sheetIndex:0, rows:[], merges:[], entries:[], xlsxBuilding:false, xlsxMsg:""};
   state.files.push(f);
   render();
   file.arrayBuffer().then(function(buf){
     return parseXlsx(new Uint8Array(buf));
   }).then(function(result){
     f.sheets=result.sheets;
+    f.entries=result.entries;
     if(!f.sheets.length){ f.error=T[lang].errBad; }
     else { applySheet(f); if(!f.rows.length) f.error=T[lang].errEmpty; }
     f.loading=false;
@@ -641,6 +842,7 @@ function renderFileList(){
         h+="</select></label>";
       }
       h+="<button type='button' class='dl' data-id='"+f.id+"'"+(f.rows.length?"":" disabled")+">"+esc(T[lang].downloadBtn)+"</button>";
+      h+="<button type='button' class='dlx' data-id='"+f.id+"'"+((f.rows.length&&!f.xlsxBuilding)?"":" disabled")+">"+esc(f.xlsxBuilding?T[lang].xlsxBuildingBtn:T[lang].downloadXlsxBtn)+"</button>";
     }
     h+="<button type='button' class='remove' data-id='"+f.id+"'>"+esc(T[lang].removeBtn)+"</button>";
     h+="</div>";
@@ -652,6 +854,7 @@ function renderFileList(){
       } else {
         h+="<p class='noMerge'>"+esc(T[lang].noMerge)+"</p>";
       }
+      if(f.xlsxMsg) h+="<p class='hint'>"+esc(f.xlsxMsg)+"</p>";
       h+="<div class='previewSlot' data-id='"+f.id+"'></div>";
     }
     h+="</div>";
@@ -677,6 +880,8 @@ function renderFileList(){
   for(var j=0;j<rms.length;j++){ rms[j].addEventListener("click",function(){ removeFile(parseInt(this.getAttribute("data-id"),10)); }); }
   var dls=box.querySelectorAll(".dl");
   for(var k=0;k<dls.length;k++){ dls[k].addEventListener("click",function(){ downloadFile(parseInt(this.getAttribute("data-id"),10)); }); }
+  var dlxs=box.querySelectorAll(".dlx");
+  for(var m=0;m<dlxs.length;m++){ dlxs[m].addEventListener("click",function(){ downloadXlsx(parseInt(this.getAttribute("data-id"),10)); }); }
 }
 
 function downloadFile(id){
@@ -693,6 +898,27 @@ function downloadFile(id){
   var a=document.createElement("a"); a.href=url; a.download=base+".csv";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+
+function downloadXlsx(id){
+  var f=state.files.filter(function(x){return x.id===id})[0];
+  if(!f || !f.rows.length || f.xlsxBuilding) return;
+  f.xlsxBuilding=true; f.xlsxMsg=""; render();
+  var sh=f.sheets[f.sheetIndex];
+  var result=computeFilled(f);
+  buildKetsugoXlsx(f.entries, sh.path, sh.xml, result).then(function(out){
+    var blob=new Blob([out.bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    var url=URL.createObjectURL(blob);
+    var base=f.name.replace(/\.[^.]+$/,"");
+    var ext=/\.xlsm$/i.test(f.name)?".xlsm":".xlsx";
+    var a=document.createElement("a"); a.href=url; a.download=base+T[lang].xlsxSuffix+ext;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},2000);
+    f.xlsxMsg = out.skippedCount>0 ? T[lang].xlsxSkippedMsg(out.skippedCount) : "";
+    f.xlsxBuilding=false; render();
+  }).catch(function(){
+    f.xlsxMsg=T[lang].xlsxBuildErr; f.xlsxBuilding=false; render();
+  });
 }
 
 function render(){
