@@ -12,7 +12,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 
 <!-- tools:start -->
 - [JSON・YAML・TOML 相互変換エディタ（3形式をリアルタイム同期）](https://tenohira-tools.github.io/config-convert/)
-- [CSVやテキストを開くと文字化けする：文字コード変換ツール（Shift_JIS・EUC-JP→UTF-8、BOM追加/削除）](https://tenohira-tools.github.io/csv-fix/)
+- [ExcelでCSVが文字化けする：文字コード変換ツール（Shift_JIS・EUC-JP→UTF-8、複数ファイルZIP一括変換）](https://tenohira-tools.github.io/csv-fix/)
 - [CSVを列の値ごとに自動分割（グループ分割）](https://tenohira-tools.github.io/csv-group-split/)
 - [CSVのセル内改行で行がずれる・列が崩れるときの削除・置換ツール](https://tenohira-tools.github.io/csv-kaigyo/)
 - [CSVのコード→名称 一括変換ツール（対応表・マスタ結合）](https://tenohira-tools.github.io/csv-master-replace/)
