@@ -7,15 +7,14 @@
 
 並べ方の根拠：閲覧のある個別ページは receipt-sheet・shorui-scan・wareki-toitsu（各2）、csv-fix・xlsx-atai・xlsx-ketsugo（各1）。写真系に加え「日付・表のデータ整形」に信号が出たため、wareki-toitsu関連を上位にした。新規は1日1本まで、同じページの改善は週1回まで。他は着手前に確認検索2件まで。
 注：1番（wareki-toitsu改善）は今週すでに3回改善済み（11-17・11-19×2）のため、週1回ルールにより次回も見送り、2番以降から選ぶこと。
-（旧2番「nenrei-ikkatsuにExcelファイルモードを追加」は2026-11-23に実施済みのため削除。旧2番「xlsx-ketsugoの.xlsx保存」は2026-11-24に実施済みのため削除。）
+（旧2番「nenrei-ikkatsuにExcelファイルモードを追加」は2026-11-23に実施済みのため削除。旧2番「xlsx-ketsugoの.xlsx保存」は2026-11-24に実施済みのため削除。旧2番「csv-fixの複数ファイルZIP一括変換」は2026-11-24（同日2回目）に実施済みのため削除。）
 
 1. 改善：wareki-toitsu のExcelモードで「日付として保存され表示形式だけ和暦」のセル（現在は対象外）も検出・変換し、title・descriptionの先頭に「Excel 和暦 西暦 一括変換」の言い回しを入れる。
-2. 改善：csv-fix に複数ファイルの一括変換（ZIP保存）を追加（未対応なら）。titleの先頭を「ExcelでCSVが文字化けする」の言い回しにする。
-3. 新規：書類・レシート写真のまとめページ（slug案 shashin-trouble）。shorui-scan・receipt-sheet・kuronuri・insho-toka・meishi-matome・meishi-vcard・hoshou-kigen・mibun-teishutsuを症状から選べるようにし、各ページから1本ずつリンク。
-4. 改善：hoshou-kigen に期限の .ics（カレンダー）書き出しを追加し、通知はスマホのカレンダー側に任せる（サーバー・通知機能は作らない）。
-5. 改善：xlsx-atai に複数ファイルの一括変換（ZIP保存）を追加。
-6. 改善：wareki（和暦早見表）に基準日の指定とA4 1枚の印刷レイアウトを追加。
-7. 改善：receipt-sheet の title・descriptionを「領収書 まとめて PDF」「レシート 台紙 印刷」など実際の言い回しで見直す（機能追加はしない）。
+2. 新規：書類・レシート写真のまとめページ（slug案 shashin-trouble）。shorui-scan・receipt-sheet・kuronuri・insho-toka・meishi-matome・meishi-vcard・hoshou-kigen・mibun-teishutsuを症状から選べるようにし、各ページから1本ずつリンク。
+3. 改善：hoshou-kigen に期限の .ics（カレンダー）書き出しを追加し、通知はスマホのカレンダー側に任せる（サーバー・通知機能は作らない）。
+4. 改善：xlsx-atai に複数ファイルの一括変換（ZIP保存）を追加。
+5. 改善：wareki（和暦早見表）に基準日の指定とA4 1枚の印刷レイアウトを追加。
+6. 改善：receipt-sheet の title・descriptionを「領収書 まとめて PDF」「レシート 台紙 印刷」など実際の言い回しで見直す（機能追加はしない）。
 
 （条件未充足のため保留：日本の住所英語変換＝競合多数／文字数カウンター＝AI時代の選び方に抵触しやすい／SNS向け画像切り抜き＝競合多数。差別化角度が見つかるまで着手しない）
 
@@ -24,6 +23,8 @@
 （2026-11-16見送り：マイナンバーカードの番号部分マスキング専用ツール。確認検索で、マイナンバーの裏面コピーは法令で定められた手続き以外は求めてはならない等の法的制約が強く絡む領域で、ツールの案内自体が実質的な法律助言に近づきRULES.md違反のリスクがあると判断し着手しない。一般的な黒塗りはkuronuriで既にカバー済み。今後も再検討しない。）
 
 ### 実施済みの記録
+
+（2026-11-24（同日2回目）実施済み：改善：csv-fixに複数ファイル選択・ZIP一括ダウンロードを追加（1件なら従来どおり単体ダウンロード）。backlog2番。ファイルごとに文字コードを自動判定し一覧から選んでプレビュー・個別に変更可能。titleの先頭を「ExcelでCSVが文字化けする」に変更。詳細はexperiments.json参照。）
 
 （2026-11-24実施済み：改善：xlsx-ketsugoに「xlsxダウンロード」ボタンを追加し、結合解除＋値埋めの結果を.xlsxのまま保存できるようにした（他シート・書式は保持）。backlog2番。既存セルはスタイルを保ったまま書き換え、無いセルは新規挿入、mergeCellsを削除。詳細はexperiments.json参照。）
 

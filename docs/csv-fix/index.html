@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
-<title>CSVやテキストを開くと文字化けする：文字コード変換ツール（Shift_JIS・EUC-JP→UTF-8、BOM追加/削除）| てのひらツール</title>
-<meta name="description" content="CSVやテキストファイルを開くと文字化けする（Shift_JIS・EUC-JPが原因）ときに、ブラウザだけでUTF-8に変換。ExcelでCSVが文字化けする原因のBOM追加・削除にも対応。ファイルはサーバーに送信されません。Fix mojibake: convert Shift_JIS/EUC-JP CSV files to UTF-8 and add or remove a BOM, entirely in your browser.">
+<title>ExcelでCSVが文字化けする：文字コード変換ツール（Shift_JIS・EUC-JP→UTF-8、複数ファイルZIP一括変換）| てのひらツール</title>
+<meta name="description" content="ExcelでCSVを開くと文字化けする（Shift_JIS・EUC-JPが原因）ときに、ブラウザだけでUTF-8に変換。BOM追加・削除にも対応し、複数ファイルを選べばまとめてZIPでダウンロードできます。ファイルはサーバーに送信されません。Fix mojibake: convert Shift_JIS/EUC-JP CSV files to UTF-8, add or remove a BOM, and batch-convert multiple files into one ZIP, entirely in your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/csv-fix/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc}
@@ -31,6 +31,10 @@ label{font-size:.92rem}
 select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 select:focus{outline:2px solid var(--accent);outline-offset:1px}
 #fileInfo{font-size:.92rem;color:var(--muted);margin-top:10px}
+#filesList{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.filerow{display:block;width:100%;text-align:left;font:inherit;font-size:.9rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);cursor:pointer}
+.filerow.active{border-color:var(--accent);background:var(--accent-bg)}
+.filerow .enc{color:var(--muted);font-size:.85rem;margin-left:6px}
 #encStatus{font-weight:600}
 .note{margin-top:8px;padding:8px 12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;font-size:.9rem}
 .note:empty{display:none}
@@ -57,8 +61,8 @@ html[lang=en] .en-only{display:block}
 <p class="top"><a href="../">← てのひらツール</a></p>
 <header>
   <div>
-    <h1 data-i="title">CSVやテキストを開くと文字化けする：文字コード変換ツール</h1>
-    <p class="sub" data-i="sub">CSVやテキストファイルがShift_JISやEUC-JPで文字化けして読めないときに、ブラウザだけでUTF-8に変換します。ExcelでCSVを開くと文字化けする原因のBOM追加・削除にも対応。ファイルはどこにも送信されません。</p>
+    <h1 data-i="title">ExcelでCSVが文字化けする：文字コード変換ツール</h1>
+    <p class="sub" data-i="sub">ExcelでCSVやテキストファイルを開くとShift_JISやEUC-JPで文字化けして読めないときに、ブラウザだけでUTF-8に変換します。BOM追加・削除にも対応し、複数ファイルを選べばまとめてZIPでダウンロードできます。ファイルはどこにも送信されません。</p>
   </div>
   <div class="lang" role="group" aria-label="Language">
     <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
@@ -68,11 +72,16 @@ html[lang=en] .en-only{display:block}
 
 <section class="card">
   <div id="dropzone" tabindex="0" role="button" aria-label="ファイルを選択">
-    <p data-i="dropzoneText"><strong>ここにファイルをドラッグ＆ドロップ</strong>、またはクリックして選択</p>
-    <p class="hint" data-i="dropzoneHint">CSV・TSV・テキストファイル対応。ファイルは選択した端末の中だけで処理されます。</p>
+    <p data-i="dropzoneText"><strong>ここにファイルをドラッグ＆ドロップ</strong>、またはクリックして選択（複数ファイル可）</p>
+    <p class="hint" data-i="dropzoneHint">CSV・TSV・テキストファイル対応。複数選ぶとまとめてZIPで変換できます。ファイルは選択した端末の中だけで処理されます。</p>
   </div>
-  <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/*" style="display:none">
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/*" multiple style="display:none">
   <p id="fileInfo" aria-live="polite"></p>
+</section>
+
+<section class="card" id="fileListCard" style="display:none">
+  <h2 data-i="fileListHeading">選択したファイル（クリックして切り替え）</h2>
+  <ul id="filesList"></ul>
 </section>
 
 <section class="card" id="encCard" style="display:none">
@@ -122,6 +131,8 @@ html[lang=en] .en-only{display:block}
     <p>A. ダウンロード前のプレビュー表で文字が正しく表示されているか確認してください。一部が「�」になっている場合は、上部の文字コードを別の候補に切り替えてみてください。</p>
     <h3>Q. 大きなファイルは扱えますか？</h3>
     <p>A. ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。非常に大きなファイルでは表示が遅くなる場合があります。</p>
+    <h3>Q. 複数のファイルをまとめて変換できますか？</h3>
+    <p>A. はい。ドラッグ＆ドロップまたはファイル選択で複数のファイルを選ぶと、ファイルごとに文字コードを自動判定し、変換結果をまとめて1つのZIPファイルでダウンロードできます（選んだファイルは一覧から選んで個別にプレビュー・文字コードの変更も可能です）。1件だけ選んだ場合はこれまでと同じく直接ダウンロードされます。</p>
   </div>
   <div class="en-only">
     <h2>How to use &amp; FAQ</h2>
@@ -140,6 +151,8 @@ html[lang=en] .en-only{display:block}
     <p>A. Check the preview table before downloading. If some characters show as "�", try a different encoding from the selector above.</p>
     <h3>Q. Can it handle large files?</h3>
     <p>A. Everything runs in browser memory, so it's built for files up to tens of megabytes. Very large files may make the page slower.</p>
+    <h3>Q. Can I convert multiple files at once?</h3>
+    <p>A. Yes. Drop or select several files and each one's encoding is detected automatically; the converted files are downloaded together as a single ZIP (you can click any file in the list to preview it or change its encoding individually). A single selected file still downloads directly, just as before.</p>
   </div>
 </section>
 
@@ -193,7 +206,8 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"このツールにファイルをアップロードしても安全ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。ファイルはサーバーに送信されず、すべてブラウザの中だけで変換されます（サイト全体の閲覧数をCookieなし・匿名で数えるGoatCounterの通信のみ発生します）。"}},
     {"@type":"Question","name":"ExcelでCSVを開くと文字化けするのはなぜですか？","acceptedAnswer":{"@type":"Answer","text":"Windows版Excelは、BOMの無いUTF-8のCSVをShift_JISだと誤認識することがあります。BOM付きUTF-8で保存し直すと解消することが多いです。"}},
     {"@type":"Question","name":"Shift_JISとCP932の違いは何ですか？","acceptedAnswer":{"@type":"Answer","text":"Windowsで作られる日本語CSVのほとんどは、Shift_JISを拡張したCP932です。このツールはブラウザ標準のデコーダーでCP932の文字も扱えます。"}},
-    {"@type":"Question","name":"大きなファイルは扱えますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。"}}
+    {"@type":"Question","name":"大きなファイルは扱えますか？","acceptedAnswer":{"@type":"Answer","text":"ブラウザのメモリ上で処理するため、数十MB程度までを想定しています。"}},
+    {"@type":"Question","name":"複数のファイルをまとめて変換できますか？","acceptedAnswer":{"@type":"Answer","text":"はい。複数ファイルを選ぶと文字コードをファイルごとに自動判定し、変換結果をまとめて1つのZIPファイルでダウンロードできます。"}}
   ]
 }
 </script>
@@ -211,11 +225,12 @@ var ENC_LABEL={
 };
 
 var T={
- ja:{title:"CSVやテキストを開くと文字化けする：文字コード変換ツール",
-  sub:"CSVやテキストファイルがShift_JISやEUC-JPで文字化けして読めないときに、ブラウザだけでUTF-8に変換します。ExcelでCSVを開くと文字化けする原因のBOM追加・削除にも対応。ファイルはどこにも送信されません。",
-  dropzoneText:"ここにファイルをドラッグ＆ドロップ、またはクリックして選択",
-  dropzoneHint:"CSV・TSV・テキストファイル対応。ファイルは選択した端末の中だけで処理されます。",
+ ja:{title:"ExcelでCSVが文字化けする：文字コード変換ツール",
+  sub:"ExcelでCSVやテキストファイルを開くとShift_JISやEUC-JPで文字化けして読めないときに、ブラウザだけでUTF-8に変換します。BOM追加・削除にも対応し、複数ファイルを選べばまとめてZIPでダウンロードできます。ファイルはどこにも送信されません。",
+  dropzoneText:"ここにファイルをドラッグ＆ドロップ、またはクリックして選択（複数ファイル可）",
+  dropzoneHint:"CSV・TSV・テキストファイル対応。複数選ぶとまとめてZIPで変換できます。ファイルは選択した端末の中だけで処理されます。",
   fileLabel:"ファイル",detectedLabel:"検出した文字コード",
+  fileListHeading:"選択したファイル（クリックして切り替え）",
   encSelectLabel:"文字コードを指定（自動判定がおかしい場合に変更）",
   warnReplace:"一部の文字が正しく読み込めませんでした（�で表示されます）。上の文字コードを別の候補に変更してみてください。",
   warnUnknown:"文字コードを自動判定できませんでした。UTF-8として表示しています。手動で文字コードを選び直してください。",
@@ -224,12 +239,14 @@ var T={
   outputHeading:"ダウンロード設定",
   bomLabel:"BOM付きUTF-8で保存する（Excelで文字化けしない設定・おすすめ）",
   downloadBtn:"UTF-8に変換してダウンロード",
+  downloadBtnZip:"UTF-8に変換してZIP（{n}件）でまとめてダウンロード",
   feedback:"フィードバックはこちら",privacy:"アップロードされたファイルはサーバーに送信されません。すべてこのブラウザの中で処理されます。"},
  en:{title:"CSV / Text Mojibake Fixer",
-  sub:"Convert Shift_JIS or EUC-JP files that show garbled text (mojibake) to UTF-8. Also add or remove a BOM to fix CSV files that look garbled in Excel. Nothing is uploaded.",
-  dropzoneText:"Drag and drop a file here, or click to choose one",
-  dropzoneHint:"Works with CSV, TSV and plain text files. Everything happens on this device.",
+  sub:"Convert Shift_JIS or EUC-JP files that show garbled text (mojibake) to UTF-8. Also add or remove a BOM to fix CSV files that look garbled in Excel. Select multiple files to batch-convert them into one ZIP. Nothing is uploaded.",
+  dropzoneText:"Drag and drop files here, or click to choose (multiple files allowed)",
+  dropzoneHint:"Works with CSV, TSV and plain text files. Select several to convert them all at once as a ZIP. Everything happens on this device.",
   fileLabel:"File",detectedLabel:"Detected encoding",
+  fileListHeading:"Selected files (click to switch)",
   encSelectLabel:"Choose encoding manually (if auto-detect looks wrong)",
   warnReplace:"Some characters could not be decoded (shown as �). Try a different encoding above.",
   warnUnknown:"Could not auto-detect the encoding. Showing it as UTF-8 — please choose the correct encoding manually.",
@@ -238,13 +255,103 @@ var T={
   outputHeading:"Download options",
   bomLabel:"Save as UTF-8 with BOM (recommended — avoids mojibake in Excel)",
   downloadBtn:"Convert to UTF-8 and download",
+  downloadBtnZip:"Convert to UTF-8 and download as ZIP ({n} files)",
   feedback:"Feedback",privacy:"Files are never uploaded — everything is processed inside this browser."}
 };
 
 var lang="ja";
 try{var q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="ja"){lang=q}}catch(e){}
 
-var state={bytes:null,name:"",text:""};
+var state={files:[],active:0};
+
+/* ---- ZIP writer (STORE method, no compression; shared pattern with csv-group-split) ---- */
+function crc32(bytes){
+  var table=crc32.table;
+  if(!table){
+    table=crc32.table=[];
+    for(var n=0;n<256;n++){
+      var c=n;
+      for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
+      table[n]=c>>>0;
+    }
+  }
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<bytes.length;i++) crc=table[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function dosDateTime(d){
+  d=d||new Date();
+  var time=((d.getHours()&0x1F)<<11)|((d.getMinutes()&0x3F)<<5)|((d.getSeconds()>>1)&0x1F);
+  var date=(((d.getFullYear()-1980)&0x7F)<<9)|(((d.getMonth()+1)&0xF)<<5)|(d.getDate()&0x1F);
+  return {time:time,date:date};
+}
+function makeZip(files){
+  var dt=dosDateTime();
+  var localParts=[], centralParts=[], offset=0;
+  var enc=new TextEncoder();
+  files.forEach(function(f){
+    var nameBytes=enc.encode(f.name);
+    var crc=crc32(f.bytes);
+    var size=f.bytes.length;
+    var local=new Uint8Array(30+nameBytes.length);
+    var dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true);
+    dv.setUint16(4,20,true);
+    dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,0,true);
+    dv.setUint16(10,dt.time,true);
+    dv.setUint16(12,dt.date,true);
+    dv.setUint32(14,crc,true);
+    dv.setUint32(18,size,true);
+    dv.setUint32(22,size,true);
+    dv.setUint16(26,nameBytes.length,true);
+    dv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,f.bytes);
+
+    var central=new Uint8Array(46+nameBytes.length);
+    var cdv=new DataView(central.buffer);
+    cdv.setUint32(0,0x02014b50,true);
+    cdv.setUint16(4,20,true);
+    cdv.setUint16(6,20,true);
+    cdv.setUint16(8,0x0800,true);
+    cdv.setUint16(10,0,true);
+    cdv.setUint16(12,dt.time,true);
+    cdv.setUint16(14,dt.date,true);
+    cdv.setUint32(16,crc,true);
+    cdv.setUint32(20,size,true);
+    cdv.setUint32(24,size,true);
+    cdv.setUint16(28,nameBytes.length,true);
+    cdv.setUint16(30,0,true);
+    cdv.setUint16(32,0,true);
+    cdv.setUint16(34,0,true);
+    cdv.setUint16(36,0,true);
+    cdv.setUint32(38,0,true);
+    cdv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+    offset += local.length + f.bytes.length;
+  });
+  var centralSize=centralParts.reduce(function(s,p){return s+p.length;},0);
+  var centralOffset=offset;
+  var eocd=new Uint8Array(22);
+  var edv=new DataView(eocd.buffer);
+  edv.setUint32(0,0x06054b50,true);
+  edv.setUint16(4,0,true);
+  edv.setUint16(6,0,true);
+  edv.setUint16(8,files.length,true);
+  edv.setUint16(10,files.length,true);
+  edv.setUint32(12,centralSize,true);
+  edv.setUint32(16,centralOffset,true);
+  edv.setUint16(20,0,true);
+  var totalLen=0;
+  localParts.forEach(function(p){totalLen+=p.length});
+  centralParts.forEach(function(p){totalLen+=p.length});
+  totalLen+=eocd.length;
+  var out=new Uint8Array(totalLen), pos=0;
+  localParts.concat(centralParts,[eocd]).forEach(function(p){ out.set(p,pos); pos+=p.length; });
+  return out;
+}
 
 function tryDecode(bytes,label){
   try{ return new TextDecoder(label,{fatal:true}).decode(bytes); }
@@ -302,16 +409,17 @@ function renderPreview(text){
 }
 
 function applyEncoding(enc, forcedFallback){
-  var bytes=state.bytes;
-  var t=tryDecode(bytes,enc);
+  var f=state.files[state.active];
+  if(!f) return;
+  var t=tryDecode(f.bytes,enc);
   var warn="";
   if(t===null){
-    t=new TextDecoder(enc,{fatal:false}).decode(bytes);
+    t=new TextDecoder(enc,{fatal:false}).decode(f.bytes);
     warn=T[lang].warnReplace;
   } else if(forcedFallback){
     warn=T[lang].warnUnknown;
   }
-  state.text=t;
+  f.enc=enc; f.forcedFallback=forcedFallback; f.text=t; f.warn=warn;
   var label=ENC_LABEL[enc]?ENC_LABEL[enc][lang]:enc;
   $("encStatus").innerHTML="<span id='encStatusLabel'>"+esc(label)+"</span>";
   $("warnBox").textContent=warn;
@@ -319,18 +427,53 @@ function applyEncoding(enc, forcedFallback){
   $("previewCard").style.display="";
   $("outCard").style.display="";
   $("downloadBtn").disabled=false;
+  $("downloadBtn").textContent = state.files.length>1
+    ? T[lang].downloadBtnZip.replace("{n}", state.files.length)
+    : T[lang].downloadBtn;
+  renderFileList();
 }
 
-function handleFile(file){
-  state.name=file.name;
-  file.arrayBuffer().then(function(buf){
-    state.bytes=new Uint8Array(buf);
-    var d=detectEncoding(state.bytes);
-    $("encSelect").value=d.enc;
-    $("encCard").style.display="";
-    var bom=hasBOM(state.bytes);
-    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(bom?", BOM":"")+")";
-    applyEncoding(d.enc, !d.ok);
+function renderFileList(){
+  var card=$("fileListCard");
+  if(state.files.length<=1){ card.style.display="none"; return; }
+  card.style.display="";
+  var h="";
+  state.files.forEach(function(f,i){
+    var label=ENC_LABEL[f.enc]?ENC_LABEL[f.enc][lang]:f.enc;
+    var active=i===state.active;
+    h+="<li><button type='button' class='filerow"+(active?" active":"")+"' data-idx='"+i+"'>"+
+       esc(f.name)+" <span class='enc'>"+esc(label)+(f.warn?" ⚠":"")+"</span></button></li>";
+  });
+  $("filesList").innerHTML=h;
+}
+
+function activateFile(i){
+  var f=state.files[i];
+  if(!f) return;
+  state.active=i;
+  $("encSelect").value=f.enc;
+  $("encCard").style.display="";
+  var bom=hasBOM(f.bytes);
+  $("fileInfo").textContent=(state.files.length>1?(i+1)+"/"+state.files.length+" — ":"")+T[lang].fileLabel+": "+f.name+" ("+f.bytes.length+" bytes"+(bom?", BOM":"")+")";
+  applyEncoding(f.enc, f.forcedFallback);
+}
+
+function handleFiles(fileList){
+  var files=Array.prototype.slice.call(fileList);
+  if(!files.length) return;
+  Promise.all(files.map(function(file){
+    return file.arrayBuffer().then(function(buf){
+      var bytes=new Uint8Array(buf);
+      var d=detectEncoding(bytes);
+      var t=tryDecode(bytes,d.enc);
+      var warn="";
+      if(t===null){ t=new TextDecoder(d.enc,{fatal:false}).decode(bytes); warn=T[lang].warnReplace; }
+      else if(!d.ok){ warn=T[lang].warnUnknown; }
+      return {name:file.name, bytes:bytes, enc:d.enc, forcedFallback:!d.ok, text:t, warn:warn};
+    });
+  })).then(function(entries){
+    state.files=entries;
+    activateFile(0);
   }).catch(function(){
     $("fileInfo").textContent=T[lang].warnUnknown;
   });
@@ -340,38 +483,69 @@ var dz=$("dropzone");
 ["dragenter","dragover"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add("drag")})});
 ["dragleave","drop"].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove("drag")})});
 dz.addEventListener("drop",function(e){
-  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-  if(f) handleFile(f);
+  var files=e.dataTransfer && e.dataTransfer.files;
+  if(files && files.length) handleFiles(files);
 });
 dz.addEventListener("click",function(){$("fileInput").click()});
 dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click()} });
 $("fileInput").addEventListener("change",function(e){
-  var f=e.target.files && e.target.files[0];
-  if(f) handleFile(f);
+  if(e.target.files && e.target.files.length) handleFiles(e.target.files);
+});
+$("filesList").addEventListener("click",function(e){
+  var btn=e.target.closest ? e.target.closest(".filerow") : null;
+  if(!btn) return;
+  var idx=parseInt(btn.getAttribute("data-idx"),10);
+  if(!isNaN(idx)) activateFile(idx);
 });
 $("encSelect").addEventListener("change",function(){
-  if(state.bytes) applyEncoding(this.value,false);
+  if(state.files.length) applyEncoding(this.value,false);
 });
-$("downloadBtn").addEventListener("click",function(){
-  if(!state.text) return;
-  var addBom=$("bomCheck").checked;
-  var encoded=new TextEncoder().encode(state.text);
-  var out;
-  if(addBom){
-    out=new Uint8Array(encoded.length+3);
-    out[0]=0xEF;out[1]=0xBB;out[2]=0xBF;
-    out.set(encoded,3);
-  } else out=encoded;
-  var blob=new Blob([out],{type:"text/csv;charset=utf-8"});
-  var m=/\.[^.]+$/.exec(state.name);
-  var ext=m?m[0]:".csv";
-  var base=state.name.replace(/\.[^.]+$/,"")||"file";
-  var outName=base+"_utf8"+ext;
+
+function encodeWithBom(text, addBom){
+  var encoded=new TextEncoder().encode(text);
+  if(!addBom) return encoded;
+  var out=new Uint8Array(encoded.length+3);
+  out[0]=0xEF;out[1]=0xBB;out[2]=0xBF;
+  out.set(encoded,3);
+  return out;
+}
+function downloadBlob(blob,name){
   var url=URL.createObjectURL(blob);
   var a=document.createElement("a");
-  a.href=url;a.download=outName;
+  a.href=url;a.download=name;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url)},2000);
+}
+function outName(name){
+  var m=/\.[^.]+$/.exec(name);
+  var ext=m?m[0]:".csv";
+  var base=name.replace(/\.[^.]+$/,"")||"file";
+  return {base:base, ext:ext};
+}
+$("downloadBtn").addEventListener("click",function(){
+  if(!state.files.length) return;
+  var addBom=$("bomCheck").checked;
+  if(state.files.length===1){
+    var f=state.files[0];
+    if(!f.text) return;
+    var out=encodeWithBom(f.text, addBom);
+    var blob=new Blob([out],{type:"text/csv;charset=utf-8"});
+    var n=outName(f.name);
+    downloadBlob(blob, n.base+"_utf8"+n.ext);
+    return;
+  }
+  var used={};
+  var zipFiles=state.files.map(function(f){
+    var n=outName(f.name);
+    var name=n.base+"_utf8"+n.ext;
+    var i=2;
+    while(used[name]){ name=n.base+"_utf8("+i+")"+n.ext; i++; }
+    used[name]=true;
+    return {name:name, bytes:encodeWithBom(f.text, addBom)};
+  });
+  var zipBytes=makeZip(zipFiles);
+  var blob=new Blob([zipBytes],{type:"application/zip"});
+  downloadBlob(blob, "mojibake_fix_utf8.zip");
 });
 
 function applyLang(){
@@ -380,9 +554,8 @@ function applyLang(){
   for(var i=0;i<els.length;i++){var k=els[i].getAttribute("data-i");if(T[lang][k]!==undefined)els[i].textContent=T[lang][k]}
   var bs=document.querySelectorAll(".lang button");
   for(var j=0;j<bs.length;j++)bs[j].setAttribute("aria-pressed",bs[j].getAttribute("data-lang")===lang?"true":"false");
-  if(state.bytes){
-    $("fileInfo").textContent=T[lang].fileLabel+": "+state.name+" ("+state.bytes.length+" bytes"+(hasBOM(state.bytes)?", BOM":"")+")";
-    applyEncoding($("encSelect").value,false);
+  if(state.files.length){
+    activateFile(state.active);
   }
 }
 var langBtns=document.querySelectorAll(".lang button");
