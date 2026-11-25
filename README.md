@@ -48,6 +48,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [レシートの写真を複数まとめて1枚のPDFに｜領収書まとめてPDF変換・台紙メーカー](https://tenohira-tools.github.io/receipt-sheet/)
 - [正規表現テスター（日本語で自動解説）](https://tenohira-tools.github.io/regex-ja/)
 - [社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す](https://tenohira-tools.github.io/sakusha-kesu/)
+- [書類・名刺・身分証の写真で困ったときの対策まとめ｜症状から探す8ツール](https://tenohira-tools.github.io/shashin-trouble/)
 - [証憑ファイル名整理ツール｜領収書・請求書のファイル名を一括作成](https://tenohira-tools.github.io/shohyo-rename/)
 - [書類写真のスキャン風補正｜四隅をドラッグして台形補正・影を消して白く・白黒くっきり化](https://tenohira-tools.github.io/shorui-scan/)
 - [和暦・西暦 混在日付の一括統一（文章・CSV・Excel対応）](https://tenohira-tools.github.io/wareki-toitsu/)
