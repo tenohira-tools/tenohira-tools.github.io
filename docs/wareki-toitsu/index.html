@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
-<title>和暦・西暦 混在日付の一括統一（文章・CSV・Excel対応）| てのひらツール</title>
-<meta name="description" content="「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した日付表記を、文章・CSV・Excel（.xlsx）のセルからまとめて検出して指定の形式に統一。平成31年5月1日のような元号の境目を越えた存在しない日付は、変換せずに知らせます。すべてブラウザ内で処理し、送信されません。Find and unify mixed Japanese-era and Western date formats in text, CSV or Excel (.xlsx) cells, entirely in your browser — dates that fall outside a real era boundary are flagged, never silently guessed.">
+<title>Excel 和暦 西暦 一括変換｜混在日付の一括統一（文章・CSV対応）| てのひらツール</title>
+<meta name="description" content="Excelで和暦・西暦の日付表記が混在しているときに、セルの文字列だけでなく「表示形式だけ和暦」の日付シリアル値セルもまとめて検出して指定の形式に統一。「令和6年1月2日」「R6.1.2」「H31/4/1」「2024/1/2」のように混在した文章・CSVの日付表記も同じ要領で変換します。平成31年5月1日のような元号の境目を越えた存在しない日付は、変換せずに知らせます。すべてブラウザ内で処理し、送信されません。Unify mixed Japanese-era and Western dates in Excel, including cells whose value is a date serial merely displayed in Japanese-era style — plus the same engine for text and CSV. Dates outside a real era boundary are flagged, never silently guessed, all inside your browser.">
 <link rel="canonical" href="https://tenohira-tools.github.io/wareki-toitsu/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--diff:#c0392b;--err:#8a5a00;--err-bg:#fdf3dc}
@@ -195,7 +195,7 @@ html[lang=en] .en-only{display:block}
       <li>平成31年5月1日のように、元号の境目を越えて実在しない日付は変換せず、その場に残したうえで「検出した日付」に理由つきで表示します。</li>
     </ol>
     <h3>Q. Excelファイル（.xlsx）にも対応していますか？</h3>
-    <p>A. はい。「Excelファイル」モードでファイルを追加すると、全シートのセルの文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、変換後の内容を新しいファイルとしてダウンロードできます。セルに「令和6年1月2日」のような文字列として日付が入力されている場合が対象で、Excel内部で実際の日付値（シリアル値）として保存され表示形式だけで和暦・西暦が切り替わっているセルは、そもそも表記が混在していないため対象外です。同じ文字列が複数のセルで共有されている場合、1件の変換がそれを参照する全セルに反映されます（検出した日付の一覧に「共有文字列（○セルで使用）」として表示）。一度に複数ファイルを追加できます。ファイルごとに検出結果とダウンロードボタンが並び、個別にダウンロードします（まとめてZIPにはしません）。古い.xls形式やパスワード保護されたファイルは読み込めません。</p>
+    <p>A. はい。「Excelファイル」モードでファイルを追加すると、全シートのセルの文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、変換後の内容を新しいファイルとしてダウンロードできます。セルに「令和6年1月2日」のような文字列として日付が入力されている場合に加えて、セルの値が実際の日付（シリアル値）として保存され、セルの表示形式（書式）だけで和暦が表示されているセル（見た目には「令和6年1月2日」としか見えないが、中身は数値のセル）も検出・変換の対象です。これは見た目は和暦の文字列と区別がつかず、他のセルの文字列表記と混在した状態になるためです。なお「2024/1/2」のような西暦表示の日付シリアル値セル（表示形式が和暦ではないもの）は、表記の混在ではないため対象外のままです。同じ文字列が複数のセルで共有されている場合、1件の変換がそれを参照する全セルに反映されます（検出した日付の一覧に「共有文字列（○セルで使用）」として表示）。一度に複数ファイルを追加できます。ファイルごとに検出結果とダウンロードボタンが並び、個別にダウンロードします（まとめてZIPにはしません）。古い.xls形式やパスワード保護されたファイルは読み込めません。</p>
     <h3>Q. なぜ「令和1年3月1日」のような日付は変換されないのですか？</h3>
     <p>A. 令和は2019年5月1日に始まった元号なので、それより前の日付には使えません（2019年3月1日は平成31年にあたります）。同様に「平成31年5月1日」も、平成が2019年4月30日までしかないため実在しません。このツールは元号の開始日・終了日をもとに存在しない組み合わせを検出し、正しく直せない場合は黙って変換せず、そのまま残してお知らせします。</p>
     <h3>Q. 「2024/13/40」のような日付はどうなりますか？</h3>
@@ -216,7 +216,7 @@ html[lang=en] .en-only{display:block}
       <li>A date that doesn't actually exist — for example one that crosses an era boundary — is left unchanged and listed, with a reason, under "Dates found".</li>
     </ol>
     <h3>Q. Does it also support Excel (.xlsx) files?</h3>
-    <p>A. Yes. Add a file in "Excel file" mode and it scans every sheet's cell text (shared strings and inline strings) with the same engine, letting you download the result as a new file. It targets cells where a date is stored as text, like 令和6年1月2日 — a cell whose underlying value is an actual date serial, merely displayed in a different format, isn't a mixed-notation case to begin with, so it's out of scope. If a string is shared across cells, one conversion updates every cell referencing it (shown as "shared string, used in N cells" in the list). You can add several files at once — each gets its own card with its own results and download button (downloaded individually, not bundled into a ZIP). The older .xls format and password-protected files can't be read.</p>
+    <p>A. Yes. Add a file in "Excel file" mode and it scans every sheet's cell text (shared strings and inline strings) with the same engine, letting you download the result as a new file. On top of cells where a date is stored as text (like 令和6年1月2日), it also catches a numeric date cell whose number format displays it in Japanese-era style — visually indistinguishable from an era text string, so it's just as "mixed" with the rest of the sheet, even though the underlying value is really a serial number. A numeric date cell formatted in plain Western style (like 2024/1/2) stays out of scope, since that isn't a mixed-notation case. If a string is shared across cells, one conversion updates every cell referencing it (shown as "shared string, used in N cells" in the list). You can add several files at once — each gets its own card with its own results and download button (downloaded individually, not bundled into a ZIP). The older .xls format and password-protected files can't be read.</p>
     <h3>Q. Why isn't "令和1年3月1日" (Reiwa 1, March 1) converted?</h3>
     <p>A. The Reiwa era began on 2019-05-01, so no date before that can be "Reiwa" — 2019-03-01 actually falls in Heisei 31. Likewise "Heisei 31, May 1" doesn't exist either, since Heisei ended on 2019-04-30. This tool checks each era's real start and end dates and never guesses when a combination doesn't exist — it leaves it untouched and flags it instead.</p>
     <h3>Q. What about a date like "2024/13/40"?</h3>
@@ -281,7 +281,7 @@ html[lang=en] .en-only{display:block}
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type":"Question","name":"Excelファイル（.xlsx）にも対応していますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「Excelファイル」モードで全シートのセル文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、新しいファイルとしてダウンロードできます。セルの値が実際の日付シリアル値のものは対象外です。同じ文字列が複数のセルで共有されている場合、1件の変換が参照する全セルに反映されます。一度に複数ファイルを追加でき、ファイルごとに個別ダウンロードできます。古い.xls形式やパスワード保護されたファイルは読み込めません。"}},
+    {"@type":"Question","name":"Excelファイル（.xlsx）にも対応していますか？","acceptedAnswer":{"@type":"Answer","text":"はい。「Excelファイル」モードで全シートのセル文字列（共有文字列・インライン文字列）を対象に同じ検出・変換を行い、新しいファイルとしてダウンロードできます。文字列として入力された日付に加えて、日付シリアル値のセルでも表示形式が和暦のものは検出・変換の対象です（表示形式が西暦のシリアル値セルは対象外）。同じ文字列が複数のセルで共有されている場合、1件の変換が参照する全セルに反映されます。一度に複数ファイルを追加でき、ファイルごとに個別ダウンロードできます。古い.xls形式やパスワード保護されたファイルは読み込めません。"}},
     {"@type":"Question","name":"なぜ「令和1年3月1日」のような日付は変換されないのですか？","acceptedAnswer":{"@type":"Answer","text":"令和は2019年5月1日に始まった元号のため、それより前の日付には使えません（2019年3月1日は平成31年です）。元号の開始日・終了日をもとに存在しない組み合わせを検出し、正しく直せない場合は変換せずそのまま残してお知らせします。"}},
     {"@type":"Question","name":"「2024/13/40」のような日付はどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"実在しないカレンダー上の日付も変換せず、検出した日付の一覧に理由を添えて表示します。うるう年の2月29日は実際にうるう年である年だけ正しく変換されます。"}},
     {"@type":"Question","name":"すべての日付表記を見つけられますか？","acceptedAnswer":{"@type":"Answer","text":"いいえ。誤検出を避けるため、西暦のスラッシュ・ハイフン区切りは1900〜2099年の範囲のみを対象にし、元号の略記も年数が極端に大きいものは対象外です。変換前にプレビューで確認してください。"}},
@@ -678,7 +678,106 @@ async function parseXlsxFile(bytes){
   }).filter(function(s){return s.xml});
   if(!sheets.length) throw new Error("NOT_XLSX");
   var sssEntry=byName["xl/sharedStrings.xml"];
-  return {entries:entries, sheets:sheets, sssPath:sssEntry?sssEntry.name:null, sssXml:sssEntry?dec.decode(sssEntry.bytes):""};
+  var stylesEntry=byName["xl/styles.xml"];
+  var styleInfo=parseStylesForEraFmt(stylesEntry?dec.decode(stylesEntry.bytes):"");
+  return {entries:entries, sheets:sheets, sssPath:sssEntry?sssEntry.name:null, sssXml:sssEntry?dec.decode(sssEntry.bytes):"",
+    xfNumFmtIds:styleInfo.xfNumFmtIds, eraFmtIds:styleInfo.eraFmtIds};
+}
+/* Excel internally can store a date as a plain serial number (days since
+   1899-12-30) whose cell is merely *displayed* in Japanese-era style via
+   a custom number format (e.g. "ggge\"年\"m\"月\"d\"日\""). Text-run
+   scanning above never sees these — the cell has no date text at all,
+   only a number plus a style index — so they used to be silently left
+   out of "混在" detection even though, to the eyes, they look exactly
+   like the era text this tool already converts. This pass finds that
+   style index via styles.xml / cellXfs and reads the serial value. */
+function stripQuotedNumFmtLiterals(code){
+  return String(code).replace(/"[^"]*"/g,"").replace(/\\./g,"");
+}
+/* Japanese-era calendar codes (g, gg, ggg, ggge, e, ...) always use a
+   lowercase "g" — no ordinary Gregorian date/number token does, and the
+   only built-in code that contains an uppercase "G" is the literal
+   keyword "General", which this check (case-sensitive, quoted text
+   stripped first) does not match. */
+function isEraFormatCode(code){
+  if(!code) return false;
+  return /g/.test(stripQuotedNumFmtLiterals(code));
+}
+function parseStylesForEraFmt(stylesXml){
+  var out={xfNumFmtIds:[],eraFmtIds:{}};
+  if(!stylesXml) return out;
+  var numFmtsBlock=findTags(stylesXml,"numFmts")[0];
+  if(numFmtsBlock && !numFmtsBlock.selfClose){
+    findTags(numFmtsBlock.inner,"numFmt").forEach(function(n){
+      var id=parseInt(n.attrs.numFmtId,10);
+      if(!isNaN(id) && isEraFormatCode(n.attrs.formatCode)) out.eraFmtIds[id]=true;
+    });
+  }
+  var cellXfsBlock=findTags(stylesXml,"cellXfs")[0];
+  if(cellXfsBlock && !cellXfsBlock.selfClose){
+    out.xfNumFmtIds=findTags(cellXfsBlock.inner,"xf").map(function(xf){
+      return xf.attrs.numFmtId!==undefined?parseInt(xf.attrs.numFmtId,10):0;
+    });
+  }
+  return out;
+}
+/* 1900-02-29 is Excel's famous fictitious leap day; everything from day
+   61 on needs the -1 correction for it. Mirrors hizuke-modosu's engine. */
+function excelSerialToYMD(n){
+  if(n===60) return null;
+  var days=n<60?n:n-1;
+  var ms=Date.UTC(1899,11,31)+days*86400000;
+  var dt=new Date(ms);
+  return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()};
+}
+/* Scans one sheet's <c> cells for ones that are plain numeric (t absent
+   or t="n" — never touches text/boolean/error/formula-string cells) and
+   whose style points at an era-formatted numFmt. Replaces the whole
+   cell with an inlineStr holding the chosen output text, dropping the
+   numFmt reference (irrelevant once the cell is text) but keeping s= so
+   border/fill/font stay put. Returns both the raw edits (applied in
+   buildConvertedXlsx) and display items (same raw/rep shape as the
+   text-run items above). */
+function findEraDateCellEdits(sheetXml,xfNumFmtIds,eraFmtIds,fmt,lang){
+  var edits=[],items=[];
+  findTags(sheetXml,"c").forEach(function(c){
+    var t=c.attrs.t;
+    if(t!==undefined && t!=="n") return;
+    if(c.selfClose || c.inner===null) return;
+    var sAttr=c.attrs.s;
+    var sIdx=sAttr!==undefined?parseInt(sAttr,10):0;
+    var numFmtId=xfNumFmtIds[sIdx];
+    if(numFmtId===undefined || !eraFmtIds[numFmtId]) return;
+    var vTag=findTags(c.inner,"v")[0];
+    if(!vTag || vTag.inner===null) return;
+    var num=parseFloat(decodeXmlEntities(vTag.inner));
+    if(isNaN(num)) return;
+    var serial=Math.floor(num);
+    if(serial<1||serial>2958465) return;
+    var ymd=excelSerialToYMD(serial);
+    if(!ymd || !validYMD(ymd.y,ymd.m,ymd.d)) return;
+    var newText=fmtDate(ymd.y,ymd.m,ymd.d,fmt,lang);
+    var needsPreserve=/^\s|\s$/.test(newText);
+    var cellXml="<c r=\""+c.attrs.r+"\""+(sAttr!==undefined?(" s=\""+sAttr+"\""):"")+" t=\"inlineStr\"><is>"
+      +(needsPreserve?"<t xml:space=\"preserve\">":"<t>")+encodeXmlText(newText)+"</t></is></c>";
+    edits.push({start:c.start,end:c.end,xml:cellXml});
+    var oldApprox=fmtDate(ymd.y,ymd.m,ymd.d,"wera",lang)
+      +(lang==="ja"?"相当（日付セルの和暦表示形式）":" equivalent (date cell shown in Japanese-era number format)");
+    items.push({ref:c.attrs.r,raw:oldApprox,rep:newText});
+  });
+  return {edits:edits,items:items};
+}
+function buildTextEditXml(e){
+  var needsPreserve=/^\s|\s$/.test(e.newText) && !/xml:space\s*=\s*["']preserve["']/.test(e.openText);
+  var openTag=needsPreserve?"<t xml:space=\"preserve\">":e.openText;
+  return openTag+encodeXmlText(e.newText)+"</t>";
+}
+function applyMixedEdits(xml,edits){
+  if(!edits.length) return xml;
+  var sorted=edits.slice().sort(function(a,b){return b.start-a.start});
+  var out=xml;
+  sorted.forEach(function(e){ out=out.slice(0,e.start)+e.xml+out.slice(e.end); });
+  return out;
 }
 
 /* Scans every <t> text run (shared strings or a sheet's inline strings),
@@ -735,7 +834,7 @@ function processXmlForDates(xml,spanTag,fmt,lang){
    a sheet name + cell reference) plus the edits needed to rewrite the
    file. */
 function analyzeXlsxDates(parsed,fmt,lang){
-  var sharedEdits=[], inlineEditsByPath={}, items=[];
+  var sharedEdits=[], inlineEditsByPath={}, cellEditsByPath={}, items=[];
   if(parsed.sssXml){
     var sProc=processXmlForDates(parsed.sssXml,"si",fmt,lang);
     var usage=countSharedStringUsage(parsed.sheets.map(function(s){return s.xml}));
@@ -765,8 +864,13 @@ function analyzeXlsxDates(parsed,fmt,lang){
         r.errors.forEach(function(t){ items.push({label:label,raw:t.raw,reason:errorReason(t,lang),isErr:true}); });
       });
     });
+    var eraDet=findEraDateCellEdits(sh.xml,parsed.xfNumFmtIds||[],parsed.eraFmtIds||{},fmt,lang);
+    if(eraDet.edits.length) cellEditsByPath[sh.path]=eraDet.edits;
+    eraDet.items.forEach(function(it){
+      items.push({label:sh.name+" "+it.ref,raw:it.raw,rep:it.rep,isErr:false});
+    });
   });
-  return {items:items,sharedEdits:sharedEdits,inlineEditsByPath:inlineEditsByPath};
+  return {items:items,sharedEdits:sharedEdits,inlineEditsByPath:inlineEditsByPath,cellEditsByPath:cellEditsByPath};
 }
 async function buildConvertedXlsx(parsed,analysis){
   var enc=new TextEncoder();
@@ -775,9 +879,11 @@ async function buildConvertedXlsx(parsed,analysis){
       return {name:e.name, bytes:enc.encode(applyEditsToXml(parsed.sssXml,analysis.sharedEdits))};
     }
     var sheetEdits=analysis.inlineEditsByPath[e.name];
-    if(sheetEdits){
+    var cellEdits=analysis.cellEditsByPath[e.name];
+    if(sheetEdits || cellEdits){
       var sh=parsed.sheets.filter(function(s){return s.path===e.name})[0];
-      return {name:e.name, bytes:enc.encode(applyEditsToXml(sh.xml,sheetEdits))};
+      var mixed=(sheetEdits||[]).map(function(r){ return {start:r.start,end:r.end,xml:buildTextEditXml(r)}; }).concat(cellEdits||[]);
+      return {name:e.name, bytes:enc.encode(applyMixedEdits(sh.xml,mixed))};
     }
     return {name:e.name, bytes:e.bytes};
   });
@@ -812,7 +918,7 @@ var T={
   rowCol:"行",colCol:"列",
   modeXlsx:"Excelファイル",
   xlsxDropzoneText:"ここにExcel(.xlsx)ファイルをドラッグ＆ドロップ、またはクリックして選択（複数可）",
-  xlsxDropzoneHint:"全シートのセルの文字列（共有文字列・インライン文字列）を対象に検出します。複数ファイルを一度に追加し、ファイルごとにダウンロードできます。ファイルは選択した端末の中だけで処理されます。",
+  xlsxDropzoneHint:"全シートのセルの文字列（共有文字列・インライン文字列）に加えて、表示形式だけ和暦になっている日付シリアル値のセルも検出します。複数ファイルを一度に追加し、ファイルごとにダウンロードできます。ファイルは選択した端末の中だけで処理されます。",
   downloadXlsxBtn:"変換してダウンロード",
   errBadXlsx:"読み込めませんでした（.xlsx以外の形式か、パスワード保護の可能性があります）",
   loadingLabel:"読み込み中…",
@@ -843,7 +949,7 @@ var T={
   rowCol:"row",colCol:"col",
   modeXlsx:"Excel file",
   xlsxDropzoneText:"Drag and drop Excel (.xlsx) file(s) here, or click to choose (multiple allowed)",
-  xlsxDropzoneHint:"Scans every sheet's cell text (shared strings and inline strings). Add several files at once and download each one separately. Everything happens on this device.",
+  xlsxDropzoneHint:"Scans every sheet's cell text (shared strings and inline strings), plus any numeric date cell whose display format is Japanese-era style. Add several files at once and download each one separately. Everything happens on this device.",
   downloadXlsxBtn:"Convert & download",
   errBadXlsx:"Could not read this file (it may not be .xlsx, or it's password-protected)",
   loadingLabel:"Loading…",
@@ -1098,7 +1204,7 @@ function renderXlsxFileCard(f){
     } else {
       h+="<p class='hint'>"+esc(t.noneFound)+"</p>";
     }
-    var hasEdits=f.analysis.sharedEdits.length>0 || Object.keys(f.analysis.inlineEditsByPath).length>0;
+    var hasEdits=f.analysis.sharedEdits.length>0 || Object.keys(f.analysis.inlineEditsByPath).length>0 || Object.keys(f.analysis.cellEditsByPath).length>0;
     h+="<p style='margin-top:12px'><button type='button' class='primary buildBtn' data-id='"+f.id+"' "+((!hasEdits||f.building)?"disabled":"")+">"+esc(f.building?t.buildBtnBusy:t.downloadXlsxBtn)+"</button></p>";
     if(f.buildMsg) h+="<p class='buildMsg'>"+esc(f.buildMsg)+"</p>";
   }
@@ -1132,7 +1238,7 @@ function suggestXlsxOutName(name){
 function buildAndDownloadXlsx(id){
   var f=xFiles.filter(function(x){return x.id===id})[0];
   if(!f||!f.analysis||f.building) return;
-  var hasEdits=f.analysis.sharedEdits.length>0 || Object.keys(f.analysis.inlineEditsByPath).length>0;
+  var hasEdits=f.analysis.sharedEdits.length>0 || Object.keys(f.analysis.inlineEditsByPath).length>0 || Object.keys(f.analysis.cellEditsByPath).length>0;
   if(!hasEdits) return;
   var t=T[lang];
   f.building=true; f.buildMsg=""; renderXlsxFiles();

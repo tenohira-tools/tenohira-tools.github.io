@@ -870,3 +870,9 @@
 - やったこと：backlog1番（wareki-toitsu改善）は週1回ルールに抵触するため見送り、2番（csv-fix）を実施。複数ファイルの選択・ドラッグ＆ドロップに対応し、ファイルごとに文字コードを自動判定、一覧から選んでプレビュー・個別に文字コードを変更可能にした。ダウンロードは1件なら従来どおり単体、2件以上ならcsv-group-splitと同じSTORE方式のZIPライターを再利用してまとめて1つのZIPに保存（同名ファイルは連番）。titleとh1の先頭を実際の検索言い回し「ExcelでCSVが文字化けする」に変更。
 - 検証：node --checkで構文確認、HTMLParser・json.loadsでHTML・JSON-LDを確認。Playwright（ja/en・390/1280px）でShift_JIS・EUC-JP・UTF-8(BOM付き)の3ファイルを同時選択し、一覧での切替・各ファイルの自動判定結果、ZIPダウンロードをPythonのzipfileで再展開して3ファイルとも正しい内容・BOMであることを確認。1件だけ選んだ場合は従来と同じ単体ダウンロードになることも確認。開発中、一覧で切り替えずに選んだだけのファイルのテキストが初期化されずZIPに空（BOMのみ）で入る不具合を見つけ、全ファイルを読み込み時点でデコードするよう修正。重複ファイル名の連番・BOM無しダウンロードも確認。JSエラーなし・横スクロールなし（GoatCounter遮断のみ既知）。
 - 次回：csv-fixのZIP一括ダウンロード利用有無を確認。backlogは6件（次回は1番wareki-toitsu改善か他の閲覧ありページの改善）。
+
+## 2026-11-25 実験98（改善）
+- 計測：GoatCounter取得成功（72パス・TOTAL全て成功。累計19で変化なし、個別6ページ（receipt-sheet2・shorui-scan2・wareki-toitsu2・xlsx-atai1・xlsx-ketsugo1・csv-fix1）も不変）。health.md（72ページ・問題0件）・計測タグ（全74 index.html）・表記（「追跡なし」なし）・匿名性（grep一致なし）いずれも不備なし。backlog6件。
+- やったこと：backlog旧1番（wareki-toitsu改善）を実施。前週（11-17・11-19×2）の週1回ルールは新しい週に入って解消されたため着手。Excelモードが従来「セルの文字列」しか見ておらず、セルの実体は日付シリアル値だが表示形式（numFmt）だけ和暦（ggge等）になっているセルが対象外だったのを、styles.xmlのcellXfs/numFmtを解析して検出・変換対象に追加（西暦表示のシリアル値セルは表記の混在ではないため対象外のまま）。title・descriptionの先頭に「Excel 和暦 西暦 一括変換」を追加。
+- 検証：Node.js単体テスト32件（numFmt判定の誤検出防止・既知のシリアル値・対象/対象外セルの判定・XML書き換え結果）。openpyxl製と手組みzipfile製の両方の実ファイル（和暦numFmtの日付シリアル値セル、既存の文字列和暦、無関係な数値セルを混在）をPlaywright（ja/en・390/1280px）で検証し、ダウンロードしたファイルをopenpyxlで再読込して変換後の値・スタイル保持、他シート・他パーツ（styles.xml等）がバイト単位で無変更であることを確認。LibreOffice headlessでのPDF変換も確認。JSエラーなし・横スクロールなし（GoatCounter遮断のみ既知）。
+- 次回：wareki-toitsuの閲覧増減を確認。backlogは5件（次回は1番shashin-trouble新規か他の閲覧ありページの改善）。
