@@ -870,3 +870,10 @@
 - やったこと：backlog1番（wareki-toitsu改善）は週1回ルールに抵触するため見送り、2番（csv-fix）を実施。複数ファイルの選択・ドラッグ＆ドロップに対応し、ファイルごとに文字コードを自動判定、一覧から選んでプレビュー・個別に文字コードを変更可能にした。ダウンロードは1件なら従来どおり単体、2件以上ならcsv-group-splitと同じSTORE方式のZIPライターを再利用してまとめて1つのZIPに保存（同名ファイルは連番）。titleとh1の先頭を実際の検索言い回し「ExcelでCSVが文字化けする」に変更。
 - 検証：node --checkで構文確認、HTMLParser・json.loadsでHTML・JSON-LDを確認。Playwright（ja/en・390/1280px）でShift_JIS・EUC-JP・UTF-8(BOM付き)の3ファイルを同時選択し、一覧での切替・各ファイルの自動判定結果、ZIPダウンロードをPythonのzipfileで再展開して3ファイルとも正しい内容・BOMであることを確認。1件だけ選んだ場合は従来と同じ単体ダウンロードになることも確認。開発中、一覧で切り替えずに選んだだけのファイルのテキストが初期化されずZIPに空（BOMのみ）で入る不具合を見つけ、全ファイルを読み込み時点でデコードするよう修正。重複ファイル名の連番・BOM無しダウンロードも確認。JSエラーなし・横スクロールなし（GoatCounter遮断のみ既知）。
 - 次回：csv-fixのZIP一括ダウンロード利用有無を確認。backlogは6件（次回は1番wareki-toitsu改善か他の閲覧ありページの改善）。
+
+## 2026-11-25 実験98（新規）
+- 計測：GoatCounter取得成功（72パス・TOTAL全て成功。累計19で11-24夜から変化なし、個別6ページ内訳も不変）。health.md（72ページ・問題0件）・計測タグ（全75 index.html）・表記（「追跡なし」なし）・匿名性（grep一致なし）いずれも不備なし。backlog6件。
+- やったこと：backlog1番（wareki-toitsu改善）は11-19から7日以内で週1回ルールに抵触するため見送り、2番（shashin-trouble新規）を実施。書類・名刺・身分証の写真整理トラブル解決ガイド（shashin-trouble）を公開し、shorui-scan・receipt-sheet・kuronuri・insho-toka・meishi-matome・meishi-vcard・hoshou-kigen・mibun-teishutsuを症状から選べるようにした。keihi-trouble等既存のまとめページと同じ構成（症状ジャンプナビ・FAQ/JSON-LD・ja/en切替）を流用。
+- 内部リンク：8ツールそれぞれの関連ツール欄（ja/en）に本ページへのリンクを追加し、grepで9ファイル一致（本体+8ツール）を確認。docs/index.htmlにもkeihi-trouble直後に追加。
+- 検証：HTMLParser・json.loadsでHTML・JSON-LD構文を確認。Playwright（ja/en・390/1280px）でh1・リンク数・JSエラー・横スクロールなしを確認。8ツールへのリンク先が全て存在することをスクリプトで確認。
+- 次回：shashin-trouble・各ツールへの流入変化を確認。backlogは5件（次回は1番wareki-toitsu改善か他の閲覧ありページの改善）。

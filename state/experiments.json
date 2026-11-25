@@ -3914,6 +3914,27 @@
      "class": "継続（Excelファイルモードを追加。shared string・inline stringの両方の実ファイルでPlaywright検証し、新しい列を追加したシート以外（他シート・既存列）がバイト単位で不変であることをopenpyxlで確認、LibreOffice headlessでのPDF変換も確認。）"
     }
    ]
+  },
+  {
+   "slug": "shashin-trouble",
+   "title": "書類・名刺・身分証の写真整理トラブル解決ガイド",
+   "url": "https://tenohira-tools.github.io/shashin-trouble/",
+   "published": "2026-11-25",
+   "status": "継続",
+   "lang": [
+    "ja",
+    "en"
+   ],
+   "source": "2026-11-21週次レビューで並べ替えたbacklog2番（旧2番3件は実施済みで削除済み）。1番のwareki-toitsu改善は11-19から7日以内で週1回ルールに抵触するため見送り。",
+   "why": "写真系ツール（shorui-scan・receipt-sheet）はSTRATEGY.mdで唯一の継続的な閲覧シグナルがある分野。症状から8ツール（shorui-scan・receipt-sheet・kuronuri・insho-toka・meishi-matome・meishi-vcard・hoshou-kigen・mibun-teishutsu）を選べる案内ページを作ることで、既存のkeihi-trouble/excel-trouble/csv-trouble/office-trouble同様にこの分野の内部リンクの入口を1つ増やす。新規ツールではなく既存8ツールのハブなので検索流入が無くても内部リンク強化として機能する。",
+   "metrics": [
+    {
+     "date": "2026-11-25T20:24:46Z",
+     "note": "公開直後。新ページはsitemap反映直後のためこの回の計測対象に含まれず、次回から対象に加わる。"
+    }
+   ],
+   "notes": "keihi-trouble/index.htmlの構成（症状ジャンプナビ＋カード＋FAQ/JSON-LD＋ja/en切替）を流用。8ツールそれぞれの関連ツール欄（ja/en両方）に本ページへのリンクを1本追加し、双方向リンクをgrepで確認（9ファイルでshashin-trouble一致：本体+8ツール）。docs/index.htmlのツール一覧にkeihi-trouble直後に追加。",
+   "reviews": []
   }
  ],
  "review_summary_2026-10-24": {
