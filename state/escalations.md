@@ -49,3 +49,8 @@ Google Search Console への登録・サイトマップ送信は完了済みと�
 
 ## 収益化パッケージ
 （該当なし：2026-11-21時点でも最大は1ページ累計2件で継続的な閲覧なし。旧記述→2026-11-07時点でも継続的な閲覧のある実験が無い（個別ページの閲覧はreceipt-sheet・shorui-scanの各1件のみ・全体累計12）。個別ページの閲覧が週5件を超えた分野から作る）
+
+## 2026-11-25（量産担当より）依頼：mainへの直接pushができず、claude/brave-hawking-1qvbuvへpush
+何が起きているか：今回のセッションの実行環境がclaude/brave-hawking-1qvbuvブランチへのpushのみを許可しており、RULES.mdの指示通りmainへ直接pushすることができなかった（origin/mainとの差分は無く遅れてはいない。今回の作業内容だけがmainに未反映）。
+対応：RULES.mdのフォールバック手順に従い、claude/brave-hawking-1qvbuvへpush済み（wareki-toitsuのExcelモード改善）。
+判断してほしいこと：claude/brave-hawking-1qvbuvの内容をmainへ反映してほしい（オーナーまたは別の権限でのマージ・pushが必要）。
