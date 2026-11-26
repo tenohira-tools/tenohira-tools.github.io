@@ -877,3 +877,9 @@
 - 内部リンク：8ツールそれぞれの関連ツール欄（ja/en）に本ページへのリンクを追加し、grepで9ファイル一致（本体+8ツール）を確認。docs/index.htmlにもkeihi-trouble直後に追加。
 - 検証：HTMLParser・json.loadsでHTML・JSON-LD構文を確認。Playwright（ja/en・390/1280px）でh1・リンク数・JSエラー・横スクロールなしを確認。8ツールへのリンク先が全て存在することをスクリプトで確認。
 - 次回：shashin-trouble・各ツールへの流入変化を確認。backlogは5件（次回は1番wareki-toitsu改善か他の閲覧ありページの改善）。
+
+## 2026-11-26 実験99（改善）
+- 計測：GoatCounter取得成功（73パス・TOTAL全て成功。累計19で11-25夜から変化なし、個別6ページ内訳も不変）。health.md（73ページ・問題0件）・計測タグ（全76 index.html）・表記（「追跡なし」なし）・匿名性（grep一致なし）いずれも不備なし。backlog1番は直近改善11-19から7日経過し週1回ルールの対象外のため実施。
+- やったこと：wareki-toitsuのExcelモードで、セルの値が実際の日付シリアル値（t="n"）で、表示形式（numFmt）だけが和暦（ggge/ge等のEra書式）になっているセルも検出・変換できるように拡張（従来は「表記が混在していないため対象外」としていた）。styles.xmlを解析して対象セルのxfを特定し、値は変更せず、選んだ出力形式のnumFmtを1件追加・対象xfだけ複製してs属性を向け直す設計（既存のnumFmt・xf・他セルは不変）。時刻を含む表示形式は対象外。title・description・FAQ(ja/en)・JSON-LDも新挙動に合わせて更新し、先頭に「Excel 和暦 西暦 一括変換」を追加。
+- 検証：Node.js単体テスト22件（era書式判定・シリアル値→年月日・numFmt/xf追加とremap・Generalとの誤検出防止）、openpyxl製の実ファイル（ggge全表記・ge略記・西暦書式・日付+時刻混在）とPythonのzipfileで手組みした最小ファイル（xfに子要素がある場合・applyNumberFormat上書き）で統合テストし、ダウンロードファイルをopenpyxlで再読込して値・表示形式・無関係セルの不変を確認。Playwright（ja/en・390/1280px）でアップロード→出力形式切替→ダウンロードが参照出力とバイト単位で一致することを確認。JSエラー無し・横スクロール無し（GoatCounter遮断のみ既知）。
+- 次回：wareki-toitsuへの反応変化を確認。backlogは4件（次回は2番hoshou-kigenのics書き出しか他の閲覧ありページの改善）。
