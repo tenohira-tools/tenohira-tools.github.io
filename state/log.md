@@ -883,3 +883,9 @@
 - やったこと：wareki-toitsuのExcelモードで、セルの値が実際の日付シリアル値（t="n"）で、表示形式（numFmt）だけが和暦（ggge/ge等のEra書式）になっているセルも検出・変換できるように拡張（従来は「表記が混在していないため対象外」としていた）。styles.xmlを解析して対象セルのxfを特定し、値は変更せず、選んだ出力形式のnumFmtを1件追加・対象xfだけ複製してs属性を向け直す設計（既存のnumFmt・xf・他セルは不変）。時刻を含む表示形式は対象外。title・description・FAQ(ja/en)・JSON-LDも新挙動に合わせて更新し、先頭に「Excel 和暦 西暦 一括変換」を追加。
 - 検証：Node.js単体テスト22件（era書式判定・シリアル値→年月日・numFmt/xf追加とremap・Generalとの誤検出防止）、openpyxl製の実ファイル（ggge全表記・ge略記・西暦書式・日付+時刻混在）とPythonのzipfileで手組みした最小ファイル（xfに子要素がある場合・applyNumberFormat上書き）で統合テストし、ダウンロードファイルをopenpyxlで再読込して値・表示形式・無関係セルの不変を確認。Playwright（ja/en・390/1280px）でアップロード→出力形式切替→ダウンロードが参照出力とバイト単位で一致することを確認。JSエラー無し・横スクロール無し（GoatCounter遮断のみ既知）。
 - 次回：wareki-toitsuへの反応変化を確認。backlogは4件（次回は2番hoshou-kigenのics書き出しか他の閲覧ありページの改善）。
+
+## 2026-11-26 実験100（改善・同日2回目）
+- 計測：GoatCounter取得成功（73パス・TOTAL全て成功。累計19で今朝の実験99から変化なし、個別6ページ内訳も不変）。health.md（73ページ・問題0件）・計測タグ（全76 index.html）・表記（「追跡なし」なし）・匿名性（grep一致なし）いずれも不備なし。
+- やったこと：backlog1番（hoshou-kigenのics書き出し）は直近改善11-21から7日未満のため週1回ルールで見送り。2番（xlsx-atai複数ファイルZIP対応）は、単一ファイルの状態保持を前提にした既存コード全体の書き換えが要り1回の実行に収まらないため今回は見送り、3番（wareki改善）を実施。年齢早見表に「基準日」の日付入力を追加し、今日以外の日付を基準にした早見表（誕生日後／誕生日前の判定・キャプション表記）を表示できるようにした。あわせて「A4で印刷する」ボタンを追加し、同じ内容を2列に分けてA4用紙1枚に収める印刷専用レイアウト（@media printでmain全体を隠しprintAreaのみ表示）を実装。
+- 検証：node --checkでJS構文、HTMLParser・json.loadsでHTML・JSON-LD構文を確認。Playwright（ja/en・390/1280px）で基準日変更時の行数・キャプション再計算・「今日」ボタンでのリセット・横スクロール無しを確認。page.pdf()でA4 1ページに収まること（pdfinfoでPages:1）、pdftoppmで画像化し2列とも最終行まで欠けなく表示されることを目視確認。FAQ（ja/en・JSON-LD）・meta descriptionも更新。
+- 次回：wareki・年齢早見表の印刷機能の利用有無を確認。backlogは3件（次回は2番xlsx-atai ZIPか4番receipt-sheet検索語寄せ、または閲覧ありページの改善）。

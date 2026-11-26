@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%232f6f4f%22/%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2219%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3E%E6%89%8B%3C/text%3E%3C/svg%3E">
 <title>和暦・西暦・年齢 変換と早見表（令和・平成・昭和・大正・明治）｜入学・卒業年も | てのひらツール</title>
-<meta name="description" content="西暦と和暦（令和・平成・昭和・大正・明治）の相互変換、生年月日から満年齢・数え年・干支、履歴書用の入学・卒業年を計算。年齢早見表つき。登録不要・ブラウザ内で完結。Japanese era (wareki) ⇄ Western year converter and age chart.">
+<meta name="description" content="西暦と和暦（令和・平成・昭和・大正・明治）の相互変換、生年月日から満年齢・数え年・干支、履歴書用の入学・卒業年を計算。年齢早見表は基準日を指定でき、A4用紙1枚に収まる2列の印刷用レイアウトにも対応。登録不要・ブラウザ内で完結。Japanese era (wareki) ⇄ Western year converter and age chart, printable on A4.">
 <link rel="canonical" href="https://tenohira-tools.github.io/wareki/">
 <style>
 :root{--bg:#fafaf8;--fg:#1c1c1a;--muted:#6b6b66;--card:#fff;--line:#e3e3de;--accent:#2f6f4f;--accent-bg:#e8f2ec;--warn:#8a5a00;--warn-bg:#fdf3dc;--hl:#fff7d6}
@@ -48,6 +48,20 @@ footer a{color:var(--accent)}
 .en-only{display:none}
 html[lang=en] .ja-only{display:none}
 html[lang=en] .en-only{display:block}
+button.btn{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;min-height:42px}
+button.btn:hover{border-color:var(--accent)}
+#printArea{display:none}
+@media print{
+  main{display:none}
+  #printArea{display:block;color:#000;background:#fff;font:12px/1.4 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+  #printArea h1{font-size:15px;margin:0 0 10px}
+  #printCols{display:flex;gap:14px}
+  #printCols table{flex:1 1 50%;width:50%;border-collapse:collapse;font-size:10px}
+  #printCols th,#printCols td{border-bottom:1px solid #999;padding:2px 4px;text-align:left;white-space:nowrap}
+  #printCols th{font-weight:700}
+  #printCols tr.now td{background:#eee}
+  @page{size:A4;margin:12mm}
+}
 </style>
 </head>
 <body>
@@ -104,13 +118,20 @@ html[lang=en] .en-only{display:block}
 
 <section class="card" id="chart">
   <h2 data-i="h_chart">年齢早見表</h2>
-  <p class="hint" style="margin:0 0 8px" id="chartCaption"></p>
+  <div class="row">
+    <label for="chartBase" data-i="chartBaseLabel">基準日</label>
+    <input type="date" id="chartBase" min="1920-01-01" max="2200-12-31">
+    <button type="button" class="btn" id="chartTodayBtn" data-i="chartTodayBtn">今日</button>
+    <button type="button" class="btn" id="chartPrintBtn" data-i="chartPrintBtn">A4で印刷する</button>
+  </div>
+  <p class="hint" style="margin:8px 0 8px" id="chartCaption"></p>
   <div class="scroll">
     <table>
       <thead><tr><th data-i="c_birthyear">生まれ年（西暦）</th><th data-i="c_wareki">和暦</th><th data-i="c_eto">干支</th><th data-i="c_after">誕生日後</th><th data-i="c_before">誕生日前</th></tr></thead>
       <tbody id="chartBody"></tbody>
     </table>
   </div>
+  <p class="hint" data-i="chartPrintHint">「A4で印刷する」は、この表を2列に分けてA4用紙1枚に収まる印刷用レイアウトで表示します（ブラウザの印刷機能を使用。入力内容は送信されません）。</p>
 </section>
 
 <section class="card about">
@@ -131,6 +152,8 @@ html[lang=en] .en-only{display:block}
     <p>A. 1872年（明治5年）以前は日本では旧暦が使われていたため、それ以前の月日の換算は目安としてご利用ください。</p>
     <h3>Q. 入力した内容はどこかに送信されますか？</h3>
     <p>A. されません。入力内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。</p>
+    <h3>Q. 年齢早見表をA4用紙で印刷できますか？</h3>
+    <p>A. できます。表の下にある「A4で印刷する」ボタンを押すと、表を2列に分けてA4用紙1枚に収まるレイアウトでブラウザの印刷プレビューが開き、他の入力欄などは印刷されません。今日以外の日付を基準にしたい場合は、先に「基準日」を変更してください（施設や書類に添える早見表を特定の日付で作りたいときに使えます）。</p>
   </div>
   <div class="en-only">
     <h2>How to use &amp; FAQ</h2>
@@ -149,6 +172,8 @@ html[lang=en] .en-only{display:block}
     <p>A. Japan used a lunisolar calendar before 1872, so conversions for dates before then are approximate only.</p>
     <h3>Q. Is anything I enter sent anywhere?</h3>
     <p>A. No. Everything runs in this browser and nothing you enter is sent to a server (only an anonymous, cookie-free page-view count for this page is collected, via GoatCounter).</p>
+    <h3>Q. Can I print the age chart on A4 paper?</h3>
+    <p>A. Yes. "Print (A4)" below the chart opens your browser's print dialog with a layout built for this: the table is split into two columns side by side so the whole chart fits on a single A4 sheet, with everything else on the page hidden. Change "As of" first if you want a chart dated to a specific day rather than today — printed forms often need an effective date.</p>
   </div>
 </section>
 
@@ -174,6 +199,13 @@ html[lang=en] .en-only{display:block}
   <p data-i="privacy">このページは入力内容を送信・保存しません。</p>
 </footer>
 </main>
+<div id="printArea">
+  <h1 id="printTitle"></h1>
+  <div id="printCols">
+    <table><thead id="printHeadA"></thead><tbody id="printBodyA"></tbody></table>
+    <table><thead id="printHeadB"></thead><tbody id="printBodyB"></tbody></table>
+  </div>
+</div>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -184,7 +216,8 @@ html[lang=en] .en-only{display:block}
     {"@type":"Question","name":"「平成32年」のように存在しない年を入れたらどうなりますか？","acceptedAnswer":{"@type":"Answer","text":"元号の終わりを越えた年も西暦に換算し、新しい元号での表記をあわせて表示します。"}},
     {"@type":"Question","name":"元号の開始日はいつですか？","acceptedAnswer":{"@type":"Answer","text":"明治 1868年1月25日（慶応4年1月1日に遡って適用）／大正 1912年7月30日／昭和 1926年12月25日／平成 1989年1月8日／令和 2019年5月1日です。"}},
     {"@type":"Question","name":"明治5年より前の日付も正確に変換できますか？","acceptedAnswer":{"@type":"Answer","text":"1872年（明治5年）以前は日本では旧暦が使われていたため、それ以前の月日の換算は目安としてご利用ください。"}},
-    {"@type":"Question","name":"入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。入力内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}}
+    {"@type":"Question","name":"入力した内容はどこかに送信されますか？","acceptedAnswer":{"@type":"Answer","text":"されません。入力内容はこの端末のブラウザの中だけで処理され、外部のサーバーに送信されることはありません（このページの閲覧数だけ、Cookieなし・個人を特定しない方法で計測しています）。"}},
+    {"@type":"Question","name":"年齢早見表をA4用紙で印刷できますか？","acceptedAnswer":{"@type":"Answer","text":"できます。「A4で印刷する」ボタンで、表を2列に分けてA4用紙1枚に収まるレイアウトの印刷プレビューが開きます。基準日を変えれば、今日以外の日付時点の早見表も印刷できます。"}}
   ]
 }
 </script>
@@ -208,6 +241,8 @@ var T={
   h_school:"入学・卒業年（履歴書の学歴欄用・順調に進学した場合）",c_event:"項目",c_ad:"西暦",c_wareki:"和暦",
   school_hint:"4月2日〜翌年4月1日生まれが同じ学年です。浪人・留年・海外の学校などは含みません。",
   h_chart:"年齢早見表",c_birthyear:"生まれ年（西暦）",c_eto:"干支",c_after:"誕生日後",c_before:"誕生日前",
+  chartBaseLabel:"基準日",chartTodayBtn:"今日",chartPrintBtn:"A4で印刷する",
+  chartPrintHint:"「A4で印刷する」は、この表を2列に分けてA4用紙1枚に収まる印刷用レイアウトで表示します（ブラウザの印刷機能を使用。入力内容は送信されません）。",
   feedback:"フィードバックはこちら",privacy:"このページは入力内容を送信・保存しません。"},
  en:{title:"Japanese Era (Wareki) ⇄ Western Year & Age Chart",sub:"Convert between Reiwa, Heisei, Showa, Taisho, Meiji and Western years; get age, zodiac and Japanese school years. Nothing you enter leaves your browser.",
   h_s2w:"Western year → Japanese era",h_w2s:"Japanese era → Western year",nen:"",h_age:"Age, zodiac and school years from date of birth",birth:"Date of birth",base:"As of",
@@ -215,6 +250,8 @@ var T={
   h_school:"School entry / graduation years in Japan (no gaps or repeats)",c_event:"Stage",c_ad:"Year",c_wareki:"Japanese era",
   school_hint:"In Japan, children born April 2 – April 1 of the next year share a school year. Assumes no gap years.",
   h_chart:"Age chart",c_birthyear:"Birth year",c_eto:"Zodiac",c_after:"After birthday",c_before:"Before birthday",
+  chartBaseLabel:"As of",chartTodayBtn:"Today",chartPrintBtn:"Print (A4)",
+  chartPrintHint:"\"Print (A4)\" shows this table split into two side-by-side columns, sized to fit one A4 sheet (uses your browser's print dialog; nothing is sent anywhere).",
   feedback:"Feedback",privacy:"This page does not send or store anything you enter."}
 };
 var lang="ja";
@@ -319,15 +356,31 @@ function renderAge(){
 }
 
 /* chart */
+function getChartBase(){
+  var d=parseDate($("chartBase").value);
+  return d&&d.y>=1920?d:todayObj();
+}
+function fmtFullDate(t){return lang==="ja"?t.y+"年"+t.m+"月"+t.d+"日":t.y+"-"+pad(t.m)+"-"+pad(t.d)}
+function chartHeadRow(){
+  var hs=lang==="ja"?["生まれ年（西暦）","和暦","干支","誕生日後","誕生日前"]:["Birth year","Era","Zodiac","After","Before"];
+  var h="<tr>";for(var i=0;i<hs.length;i++)h+="<th>"+hs[i]+"</th>";return h+"</tr>";
+}
 function renderChart(){
-  var t=todayObj(),h="";
-  $("chartCaption").textContent=lang==="ja"?t.y+"年の年齢（今年の誕生日を迎えた後／迎える前）":"Ages in "+t.y+" (after / before this year's birthday)";
+  var t=getChartBase(),rows=[];
+  var cap=lang==="ja"?fmtFullDate(t)+"時点の年齢（"+t.y+"年の誕生日を迎えた後／迎える前）":"Ages as of "+fmtFullDate(t)+" (after / before the "+t.y+" birthday)";
+  $("chartCaption").textContent=cap;
   for(var y=t.y;y>=1920;y--){
     var idx=erasInYear(y),w=[];for(var j=0;j<idx.length;j++)w.push(yearStr(idx[j],y));
     var aft=t.y-y,bef=aft-1;
-    h+="<tr"+(y===t.y?" class='now'":"")+"><td class='num'>"+y+"</td><td>"+esc(w.join(lang==="ja"?"・":" / "))+"</td><td>"+esc(eto(y))+"</td><td class='num'>"+aft+(lang==="ja"?"歳":"")+"</td><td class='num'>"+(bef<0?"—":bef+(lang==="ja"?"歳":""))+"</td></tr>";
+    rows.push("<tr"+(y===t.y?" class='now'":"")+"><td class='num'>"+y+"</td><td>"+esc(w.join(lang==="ja"?"・":" / "))+"</td><td>"+esc(eto(y))+"</td><td class='num'>"+aft+(lang==="ja"?"歳":"")+"</td><td class='num'>"+(bef<0?"—":bef+(lang==="ja"?"歳":""))+"</td></tr>");
   }
-  $("chartBody").innerHTML=h;
+  $("chartBody").innerHTML=rows.join("");
+  var headHtml=chartHeadRow();
+  $("printHeadA").innerHTML=headHtml; $("printHeadB").innerHTML=headHtml;
+  $("printTitle").textContent=(lang==="ja"?"年齢早見表 — ":"Age chart — ")+cap;
+  var half=Math.ceil(rows.length/2);
+  $("printBodyA").innerHTML=rows.slice(0,half).join("");
+  $("printBodyB").innerHTML=rows.slice(half).join("");
 }
 
 function applyLang(){
@@ -342,11 +395,15 @@ var t=todayObj();
 $("seireki").value=t.y;
 $("eraYear").value=t.y-ERAS[ERAS.length-1].y+1;
 $("base").value=t.y+"-"+pad(t.m)+"-"+pad(t.d);
+$("chartBase").value=t.y+"-"+pad(t.m)+"-"+pad(t.d);
 $("seireki").addEventListener("input",renderS2W);
 $("era").addEventListener("change",renderW2S);
 $("eraYear").addEventListener("input",renderW2S);
 $("birth").addEventListener("input",renderAge);
 $("base").addEventListener("input",renderAge);
+$("chartBase").addEventListener("input",renderChart);
+$("chartTodayBtn").addEventListener("click",function(){var n=todayObj();$("chartBase").value=n.y+"-"+pad(n.m)+"-"+pad(n.d);renderChart()});
+$("chartPrintBtn").addEventListener("click",function(){window.print()});
 var bs=document.querySelectorAll(".lang button");
 for(var i=0;i<bs.length;i++)bs[i].addEventListener("click",function(){lang=this.getAttribute("data-lang");applyLang()});
 applyLang();
