@@ -51,7 +51,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [書類・名刺・身分証の写真で困ったときの対策まとめ｜症状から探す8ツール](https://tenohira-tools.github.io/shashin-trouble/)
 - [証憑ファイル名整理ツール｜領収書・請求書のファイル名を一括作成](https://tenohira-tools.github.io/shohyo-rename/)
 - [書類写真のスキャン風補正｜四隅をドラッグして台形補正・影を消して白く・白黒くっきり化](https://tenohira-tools.github.io/shorui-scan/)
-- [和暦・西暦 混在日付の一括統一（文章・CSV・Excel対応）](https://tenohira-tools.github.io/wareki-toitsu/)
+- [Excel 和暦 西暦 一括変換｜和暦・西暦 混在日付の一括統一（文章・CSV対応）](https://tenohira-tools.github.io/wareki-toitsu/)
 - [和暦・西暦・年齢 変換と早見表（令和・平成・昭和・大正・明治）｜入学・卒業年も](https://tenohira-tools.github.io/wareki/)
 - [Excelの数式を値に変換：外部ファイルへのリンクが解除できないときに](https://tenohira-tools.github.io/xlsx-atai/)
 - [Excelのシートを1枚ずつ別ファイルに分けて保存：一括分割ツール](https://tenohira-tools.github.io/xlsx-bunkatsu/)
