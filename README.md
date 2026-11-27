@@ -45,7 +45,7 @@ A collection of small, free tools that run entirely in your browser. No sign-up.
 - [別のPCで文字化け・レイアウト崩れする原因を確認：PowerPointの使用フォント一覧（スライド・マスター別、テーマフォント解決）](https://tenohira-tools.github.io/pptx-font/)
 - [社外に渡す前に：PowerPointのノート（発表者メモ）・非表示スライド・コメントを一覧化、ノートはまとめて削除](https://tenohira-tools.github.io/pptx-kakure/)
 - [「パワーポイントが重い」原因を診断：ファイル内訳チェッカー](https://tenohira-tools.github.io/pptx-omoi/)
-- [レシートの写真を複数まとめて1枚のPDFに｜領収書まとめてPDF変換・台紙メーカー](https://tenohira-tools.github.io/receipt-sheet/)
+- [レシート・領収書を台紙にまとめて印刷：複数枚を1枚のPDFに自動配置｜領収書まとめ台紙メーカー](https://tenohira-tools.github.io/receipt-sheet/)
 - [正規表現テスター（日本語で自動解説）](https://tenohira-tools.github.io/regex-ja/)
 - [社外に渡す前に、Excel・Word・PowerPointの「作成者・最終更新者・コメントの投稿者名」を消す](https://tenohira-tools.github.io/sakusha-kesu/)
 - [書類・名刺・身分証の写真で困ったときの対策まとめ｜症状から探す8ツール](https://tenohira-tools.github.io/shashin-trouble/)
